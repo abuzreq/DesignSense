@@ -1,0 +1,40 @@
+{
+  "name": "empty-project",
+  "version": "1.0.0",
+  "description": "Empty project.",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "clean": "rm dist/bundle.js",
+    "build-dev": "webpack -d --mode development",
+    "build-prod": "webpack -p --mode production"
+  },
+  "dependencies": {
+    "lodash": "^4.17.15",
+    "vue": "^2.6.11"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.0",
+    "@babel/preset-env": "^7.8.0",
+    "babel-loader": "^8.0.6",
+    "css-loader": "^3.4.2",
+    "eslint": "^6.8.0",
+    "file-loader": "^5.0.2",
+    "lodash-webpack-plugin": "^0.11.5",
+    "url-loader": "^3.0.0",
+    "vue-loader": "^15.8.3",
+    "vue-template-compiler": "^2.6.11",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abuzreq/DesignSense.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abuzreq/DesignSense/issues"
+  },
+  "homepage": "https://github.com/abuzreq/DesignSense#readme"
+}
