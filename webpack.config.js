@@ -2,6 +2,7 @@ const webpack = require('webpack');
 const path = require('path');
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
+const HtmlWebpackPlugin = require('vue-html-webpack-plugin')
 
 const config = {
   entry: './src/index.js',
@@ -63,7 +64,10 @@ const config = {
   },
   plugins: [
     new VueLoaderPlugin(),
-    new LodashModuleReplacementPlugin
+    new LodashModuleReplacementPlugin,
+    new HtmlWebpackPlugin({
+      vue: true
+    })
   ]
 };
 
