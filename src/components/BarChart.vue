@@ -86,7 +86,7 @@ el : "barChart",
   },
   created(){
      this.$store.watch(
-      (state, getters) => getters.count,
+      (state, getters) => getters.data,
       (newValue, oldValue) => 
       {
             this.chartData = newValue;
