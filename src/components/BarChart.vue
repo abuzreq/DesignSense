@@ -7,6 +7,8 @@
 
 <script>
 import * as d3 from "d3";
+import store from "@/store";
+
 export default {
 el : "barChart",
   name: "BarChart",
@@ -22,6 +24,7 @@ el : "barChart",
        })
         console.log(data);
         this.chartData = data;
+        this.chartData = this.$store.state.data
         this.width = 400;
         this.height = 400;
         this.barPadding = 10;
@@ -65,22 +68,36 @@ el : "barChart",
           let translate = [barWidth * i, 0];
           return "translate(" + translate + ")";
         })
+        .attr("fill", (d,i) => d.selected? "red":"black")
         .on('mouseover', (d,i)=>
          {
-            this.$parent.$refs.bar1.add(i)
-            this.$parent.$refs.bar2.add(i)
-
+            //this.$parent.$refs.bar1.add(i)
+            //this.$parent.$refs.bar2.add(i)
+            this.$store.commit("increment",i)
+            this.$store.commit("select",i)
+         })
+         .on('mouseout', (d,i)=>
+         {
+            this.$store.commit("unselect",i)
          });
 
          //this.svg.selectAll("rect").exit().remove()
     },
+  },
+  created(){
+     this.$store.watch(
+      (state, getters) => getters.count,
+      (newValue, oldValue) => 
+      {
+            this.chartData = newValue;
+            //this.createBarChart();
+      })
   },
   watch: {
     chartData: {
         handler: function() 
         {
             this.createBarChart();
-
         }, deep :true
     },
     width: function() {

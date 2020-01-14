@@ -5,7 +5,7 @@ const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const HtmlWebpackPlugin = require('vue-html-webpack-plugin')
 
 const config = {
-  entry: './src/index.js',
+  entry: './src/main.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js'
@@ -22,27 +22,30 @@ const config = {
         exclude: /node_modules/
       },
       {
-        test: /\.css$/,
+        test: /\.s(c|a)ss$/,
         use: [
           'vue-style-loader',
-          'css-loader'
-        ],
-        exclude: /\.module\.css$/
-      },
-      {
-        test: /\.css$/,
-        use: [
-          'vue-style-loader',
+          'css-loader',
           {
-            loader: 'css-loader',
+            loader: 'sass-loader',
+            // Requires sass-loader@^7.0.0
             options: {
-              importLoaders: 1,
-              modules: true
-            }
-          }
+              implementation: require('sass'),
+              fiber: require('fibers'),
+              indentedSyntax: true // optional
+            },
+            // Requires sass-loader@^8.0.0
+            options: {
+              implementation: require('sass'),
+              sassOptions: {
+                fiber: require('fibers'),
+                indentedSyntax: true // optional
+              },
+            },
+          },
         ],
-        include: /\.module\.css$/
       },
+
       {
         test: /\.png$/,
         use: [
@@ -60,7 +63,10 @@ const config = {
     extensions: [
       '.js',
       '.vue'
-    ]
+    ],
+    alias: {
+      '@': path.resolve('src')
+    }
   },
   plugins: [
     new VueLoaderPlugin(),
