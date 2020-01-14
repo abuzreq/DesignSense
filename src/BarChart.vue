@@ -8,6 +8,7 @@
 <script>
 import * as d3 from "d3";
 export default {
+el : "barChart",
   name: "BarChart",
   props: ["chartData", "width", "height", "barPadding"],
   mounted() {
@@ -17,47 +18,70 @@ export default {
     {
         let values = []
         data.forEach((d) => {
-            values.push(+d.value)
-            console.log(+d.value)
-        })
-        console.log(values);
-        this.chartData = values;
+            d.value = +d.value         
+       })
+        console.log(data);
+        this.chartData = data;
         this.width = 400;
         this.height = 400;
         this.barPadding = 10;
         this.createBarChart();
      })
-
-    
+  }, 
+  computed:
+  {
+      svg: function()
+      {   
+        return d3.select(this.$el)
+            .select("svg")
+            .attr("width", this.width)
+            .attr("height", this.height);
+      }
   },
   methods: {
-    createBarChart: function() {
-      let barWidth = this.width / this.chartData.length;
-      let svg = d3
-        .select("svg")
-        .attr("width", this.width)
-        .attr("height", this.height);
-      svg
+    add: function(i)
+    {
+        console.log(this.chartData[i].value)      
+        this.chartData[i].value += 10
+        console.log("after",this.chartData[i].value)
+    },  
+    createBarChart: function() 
+    {
+     
+      let barWidth = this.width / this.chartData.length; 
+        
+      this.svg
         .selectAll("rect")
         .data(this.chartData)
-        .enter()
-        .append("rect")
+        .join("rect")
         .attr("y", d => {
-          this.height - d;
+          this.height - d.value;
         })
         .attr("height", d => {
-          return d;
+          return d.value;
         })
         .attr("width", barWidth - this.barPadding)
         .attr("transform", (d, i) => {
           let translate = [barWidth * i, 0];
           return "translate(" + translate + ")";
-        });
-    }
+        })
+        .on('mouseover', (d,i)=>
+         {
+            this.$parent.$refs.bar1.add(i)
+            this.$parent.$refs.bar2.add(i)
+
+         });
+
+         //this.svg.selectAll("rect").exit().remove()
+    },
   },
   watch: {
-    chartData: function() {
-      this.createBarChart();
+    chartData: {
+        handler: function() 
+        {
+            this.createBarChart();
+
+        }, deep :true
     },
     width: function() {
       this.createBarChart();
