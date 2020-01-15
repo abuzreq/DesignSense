@@ -46,7 +46,7 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
         {
             console.log(json_data,error)
             json_data = json_data.alternatives
-            let data = getParallelDataFromAlternatives(globalURL, json_data)
+            const data = getParallelDataFromAlternatives(globalURL, json_data)
             new Vue({
               router,
               store: store(data),

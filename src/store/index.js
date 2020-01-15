@@ -9,48 +9,64 @@ function preprocess(data)
 {
     for(var el of data)
     {
-        el['highlighted'] = false;
+        el['highlighted'] = 0;
     }
     return data
 }
 
+function prepare_map(data)
+{
+    let map = {}
+    data.forEach(element => 
+    {
+        map[element._id] = 0
+    })
+    //let mask = new Array(len).fill(0);
+    return map
+}
 
 function builder(new_data) 
 {
 
     return new Vuex.Store({
         state: {
-            data: preprocess(new_data)
+            data: preprocess(new_data),
+            highlighted: prepare_map(new_data) //TODO: [Fix] Assumes data will not change, need to update the map so it includes additional data when it arrives
         },
         mutations: {
-            highlight(state, ids) 
+            
+            highlight(state, selection) 
             {
-
-                state.data.forEach(element => {
-                    if(ids.contains(element._id))
+                selection.forEach(element => 
+                {
+                    state.highlighted[element._id] = 1
+                })
+                /*
+                //console.log("highlight",selection)
+                let ids = selection.map(e => e._id)
+                state.data.forEach(element => 
+                {
+                    if(ids.includes(element._id))
                     {
-                        element['highlighted'] = true;
-                    }
-                
-                    console.log(element)
-                });
+                        element['highlighted'] = 1;                 
+                    } 
+                });*/
             },
-            select(state, i) {
-                state.data[i].selected = true;
-            },
-            unselect(state, i) {
-                state.data[i].selected = false;
+            unhighlight(state, selection) 
+            {
+                selection.forEach(element => 
+                {
+                    state.highlighted[element._id] = 0
+                })
             }
         },
         actions: {
         },
         modules: {},
         getters: {
-            data: state => {
-                return state.data
-            }
-
+            data: state => {return state.data},     
         }
+
     });
 
 

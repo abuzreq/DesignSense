@@ -18,22 +18,21 @@ import * as d3 from "d3";
 let colorRange = d3.scaleOrdinal(d3.schemeCategory10).range();
 
 export default {
-  name: "CompareView",
-  props: ["chartData", "width", "height", "excluded_dimensions", "colorColumn"],
+  name: "ParCoordsView",
+  props: ["chart","chartData", "width", "height", "excluded_dimensions", "colorColumn"],
   mounted() 
   {
-      this.width = 1400;
+      this.width = 1200;
       this.height = 450;
       this.colorColumn = 'collection';
-      var excluded = ['img','ID'] //'GeometryHash'
+      var excluded = ['img','ID','_id','highlighted'] //'GeometryHash' ,'highlighted'
       this.excluded_dimensions = []
       for(var e of excluded)
       {
           this.excluded_dimensions.push(e)
       }
-
-      this.chartData = this.$store.state.data
-      this.createChart();
+      this.chartData = this.$store.state.data;
+      this.chart = this.createChart();
   }, 
   computed:
   {
@@ -42,6 +41,7 @@ export default {
   methods: {
     createChart: function() 
     {
+
         //this.destroyPrCoords()
         //console.log(d3.select('#parcoords'))
         const chart = ParCoords()("#parcoords")
@@ -54,19 +54,29 @@ export default {
         //.margin({ top: 40, left: 20, bottom: 20, right: 20 })
         .brushMode("1D-axes")
         .alphaOnBrushed(0.2) 
-       // .reorderable()
+        .reorderable()
         .mode("queue")
         .render()
-        .on('brushend', function(brushed, args)
+        .on('brush', (brushed, args) =>
+        {  
+           
+        }).on('brushend', (brushed, args)=>
         {
-            //            this.$store.commit("highlight",brushed)
-          
-          console.log(brushed)
-        })
-        
+          if(chart.brushed().length == chart.data().length)
+          {
+            this.$store.commit("unhighlight", chart.data()) 
+          }
+          else
+          {
+            this.$store.commit("highlight", brushed)     
+          }
+              
+        });
+
         //1D-axes  2D-strums   angular
         var colors = d3.scaleOrdinal(d3.schemeCategory10)//d3.scale.ordinal().range(colorRange);
         chart.color(d => colors(d[this.colorColumn])).render()
+        return chart;
     }, 
     destroyPrCoords: function() {
       let node = this.$refs["parcoords"];
@@ -77,15 +87,45 @@ export default {
     }
   },
   created()
-  {
-    
-     this.$store.watch(
-      (state, getters) => getters.data,
-      (newValue, oldValue) => 
-      {
-            this.chartData = newValue;        
-            this.createChart();
-      })
+  {  
+    this.$store.watch(
+    (state) => {
+        let on = [];
+        let off =[];
+
+        let it = 0;
+        for(var id in state.highlighted)
+        {
+            if( state.highlighted[id] == 1)
+            {
+              on.push(state.data[it])
+            }
+            else
+            {
+              off.push(state.data[it])         
+            }
+            it += 1
+        }
+
+        return [on, off]
+        //return .array.filter(d => highlighted[d] == 1)
+       // return state.highlighted;
+    },
+    (newValue, oldValue) => 
+    {
+          let on = newValue[0]
+          let off = newValue[1]
+          console.log("newvalue",on,off)
+           // this.chartData = newValue;        
+          // this.chart.highlight(on);
+         //  this.chart.unhighlight(off);
+    },
+    {
+        deep: true //add this if u need to watch object properties change etc.
+    });
+
+
+
   },
   /*
   watch: {

@@ -1,17 +1,17 @@
 <template>
   <div>
-        <CompareView ref = "bar1">
-        </CompareView>
+        <ParCoordsView>
+        </ParCoordsView>
 </div>
 </template>
 
 <script>
-import CompareView from "@/components/CompareView.vue";
+import ParCoordsView from "@/components/ParCoordsView.vue";
 
 export default {
   name: "App",
   components: {
-    CompareView
+    ParCoordsView
   }
 };
 
