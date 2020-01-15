@@ -1,10 +1,8 @@
 <template>
-<v-app>
-    <v-content>
+  <div>
         <CompareView ref = "bar1">
         </CompareView>
-     </v-content>
-  </v-app>
+</div>
 </template>
 
 <script>
