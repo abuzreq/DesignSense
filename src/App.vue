@@ -1,8 +1,11 @@
 <template>
-  <div>
+  <v-app>
+    <v-content>
         <ParCoordsView>
         </ParCoordsView>
-</div>
+
+    </v-content>
+  </v-app>
 </template>
 
 <script>

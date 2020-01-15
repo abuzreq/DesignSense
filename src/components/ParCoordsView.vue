@@ -1,12 +1,16 @@
 
 
 <template>
+<v-container>
+    <v-row justify="left">
           <div 
               class="parcoords"
               id="parcoords"
               ref="parcoords"    
               style="position: relative"          
           ></div >
+      </v-row >
+  </v-container>
 </template>
 
 

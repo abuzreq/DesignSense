@@ -2,6 +2,7 @@ import Vue from 'vue';
 import App from './App';
 import router from "./router";
 import store from "./store";
+import vuetify from "./plugins/vuetify";
 import * as d3 from "d3";
 
 
@@ -48,6 +49,7 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
             json_data = json_data.alternatives
             const data = getParallelDataFromAlternatives(globalURL, json_data)
             new Vue({
+              vuetify,
               router,
               store: store(data),
               el: '#app',
