@@ -76,8 +76,7 @@ function builder(new_data)
                         result.push(state.data[it])
                     }
                     it+=1;
-                }
-                
+                }          
                 return result;
             }
         }

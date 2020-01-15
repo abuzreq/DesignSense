@@ -1,21 +1,39 @@
 <template>
   <v-app>
-    <v-content>
-      <v-container grid-list-xl>
-        <v-layout row >
-          <v-flex md12>
-            <v-card height="500px" width="1200px">
+    <v-content >
+      <v-container fluid grid-list-xl  >
+
+         <!-- TOP -->
+        <v-layout row>
+          <v-flex md8>
+            <v-card height="500px">
+               <!-- pcoords -->
               <ParCoordsView></ParCoordsView>
             </v-card>
           </v-flex>
+           <v-flex md4>
+            <v-card height="500px">
+              <!-- Scatterplot -->
+            </v-card>
+          </v-flex>
         </v-layout>
-        <v-layout row  >
-          <v-flex md12>
-            <v-card height="450px" scroll-y>
+
+         <!-- BOTTOM -->
+        <v-layout row >
+           <v-flex md3 >
+            <v-card height="450px"  >
+               <!-- Similarity-->
+            </v-card>
+          </v-flex>
+          <v-flex md9 >
+            <v-card height="450px" >
+               <!-- Grid -->
               <GridView></GridView>
             </v-card>
           </v-flex>
         </v-layout>
+
+
       </v-container>
     </v-content>
   </v-app>

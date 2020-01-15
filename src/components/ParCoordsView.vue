@@ -1,7 +1,7 @@
 
 
 <template>
-<v-container >
+<v-container fluid >
           <div 
               class="parcoords"
               id="parcoords"
@@ -116,7 +116,7 @@ export default {
     {
           let on = newValue[0]
           let off = newValue[1]
-          console.log("newvalue",on,off)
+         // console.log("newvalue",on,off)
            // this.chartData = newValue;        
           // this.chart.highlight(on);
          //  this.chart.unhighlight(off);
