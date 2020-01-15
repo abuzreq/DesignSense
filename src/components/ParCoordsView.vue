@@ -1,15 +1,12 @@
 
 
 <template>
-<v-container>
-    <v-row justify="left">
+<v-container >
           <div 
               class="parcoords"
               id="parcoords"
               ref="parcoords"    
-              style="position: relative"          
           ></div >
-      </v-row >
   </v-container>
 </template>
 
@@ -98,9 +95,9 @@ export default {
         let off =[];
 
         let it = 0;
-        for(var id in state.highlighted)
+        for(var id in state.highlighted_map)
         {
-            if( state.highlighted[id] == 1)
+            if( state.highlighted_map[id] == 1)
             {
               on.push(state.data[it])
             }

@@ -31,7 +31,7 @@ function builder(new_data)
     return new Vuex.Store({
         state: {
             data: preprocess(new_data),
-            highlighted: prepare_map(new_data) //TODO: [Fix] Assumes data will not change, need to update the map so it includes additional data when it arrives
+            highlighted_map: prepare_map(new_data) //TODO: [Fix] Assumes data will not change, need to update the map so it includes additional data when it arrives
         },
         mutations: {
             
@@ -39,7 +39,7 @@ function builder(new_data)
             {
                 selection.forEach(element => 
                 {
-                    state.highlighted[element._id] = 1
+                    state.highlighted_map[element._id] = 1
                 })
                 /*
                 //console.log("highlight",selection)
@@ -56,7 +56,7 @@ function builder(new_data)
             {
                 selection.forEach(element => 
                 {
-                    state.highlighted[element._id] = 0
+                    state.highlighted_map[element._id] = 0
                 })
             }
         },
@@ -65,6 +65,21 @@ function builder(new_data)
         modules: {},
         getters: {
             data: state => {return state.data},     
+            highlighted: state => 
+            {
+                var result = [];
+                let it = 0;
+                for(var id in state.highlighted_map)
+                {
+                    if( state.highlighted_map[id] == 1)
+                    {
+                        result.push(state.data[it])
+                    }
+                    it+=1;
+                }
+                
+                return result;
+            }
         }
 
     });
