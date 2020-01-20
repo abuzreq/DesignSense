@@ -14,6 +14,7 @@
            <v-flex md4>
             <v-card height="500px">
               <!-- Scatterplot -->
+              <SPLOMView></SPLOMView>
             </v-card>
           </v-flex>
         </v-layout>
@@ -23,6 +24,7 @@
            <v-flex md3 >
             <v-card height="450px"  >
                <!-- Similarity-->
+               <DendrogramView></DendrogramView>
             </v-card>
           </v-flex>
           <v-flex md9 >
@@ -42,12 +44,17 @@
 <script>
 import ParCoordsView from "@/components/ParCoordsView.vue";
 import GridView from "@/components/GridView.vue";
+import SPLOMView from "@/components/SPLOMView.vue";
+import DendrogramView from "@/components/DendrogramView.vue";
+
 
 export default {
   name: "App",
   components: {
     ParCoordsView,
-    GridView
+    GridView,
+    SPLOMView,
+    DendrogramView
   }
 };
 
