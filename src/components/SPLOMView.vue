@@ -14,15 +14,16 @@ let colorRange = d3.scaleOrdinal(d3.schemeCategory10).range();
 
 export default {
   name: "SPLOMView",
-  props: ["chartData", "padding", "width", "dimensions", "colorColumn"],
+  props: ["chart","cells","chartData", "padding", "width", "columns", "colorColumn"],
   mounted() {
     this.width = 475;
     this.padding = 10;
     this.colorColumn = "collection";
-    this.dimensions = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
+    this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
     this.chartData = this.$store.state.data;
-
-    this.createChart();
+    [this.chart, this.cells]  = this.createChart();
+     
+    this.highlight();
   },
   computed: {},
   methods: {
@@ -30,7 +31,7 @@ export default {
       console.log(this.chartData);
       let colorColumn = this.colorColumn;
 
-      let columns = this.dimensions;
+      let columns = this.columns;
 
       let padding = this.padding;
       let width = this.width;
@@ -158,6 +159,7 @@ export default {
           const [[x0, y0], [x1, y1]] = d3.event.selection;
 
           let brushed = [];
+          let brushedMask = [];
           circle.classed("hidden", d => {
             if (
               x0 > x[columns[i]](d[columns[i]]) ||
@@ -166,11 +168,15 @@ export default {
               y1 < y[columns[j]](d[columns[j]])
             ) {
               return true;
+              brushedMask.push(0);
             } else {
               brushed.push(d);
+              brushedMask.push(1);
               return false;
             }
           });
+
+        circle.classed("hidden",(d,i) => brushedMask?true:false  )
 
           console.log(this);
           if (brushed.length > 0) {
@@ -232,7 +238,7 @@ export default {
       cells.append("g").call(xAxis);
 
       cells.append("g").call(yAxis);
-
+  
       cells.each(([i, j]) => {
         let circles = d3
           .select(cells._groups[0][i + columns.length * j])
@@ -265,35 +271,26 @@ export default {
         .attr("y", padding)
         .attr("dy", ".71em")
         .text(d => d);
+
+        return [svg,cells];
+    },
+    highlight: function(highlightMask)
+    {
+     this.cells.each(([i, j]) => {
+        let circles = d3
+          .select(this.cells._groups[0][i + this.columns.length * j])
+          .selectAll("circle")
+
+            circles.classed("hidden",(d,i) => highlightMask[i]?true:false  )
+         })    
     }
   },
   created() {
     this.$store.watch(
-      state => {
-        let on = [];
-        let off = [];
-
-        let it = 0;
-        for (var id in state.highlighted_map) {
-          if (state.highlighted_map[id] == 1) {
-            on.push(state.data[it]);
-          } else {
-            off.push(state.data[it]);
-          }
-          it += 1;
-        }
-
-        return [on, off];
-        //return .array.filter(d => highlighted[d] == 1)
-        // return state.highlighted;
-      },
-      (newValue, oldValue) => {
-        let on = newValue[0];
-        let off = newValue[1];
-        // console.log("newvalue",on,off)
-        // this.chartData = newValue;
-        // this.chart.highlight(on);
-        //  this.chart.unhighlight(off);
+      (state, getters) => getters.highlightedMask,
+      (newValue, oldValue) => 
+      {
+        this.highlight(newValue);
       },
       {
         deep: true //add this if u need to watch object properties change etc.

@@ -78,6 +78,16 @@ function builder(new_data)
                     it+=1;
                 }          
                 return result;
+            },
+            highlightedMask: state => 
+            {
+                var result = [];
+                let it = 0;
+                for(var id in state.highlighted_map)
+                {
+                    result.push(state.highlighted_map[id] )                   
+                }          
+                return result;
             }
         }
 
