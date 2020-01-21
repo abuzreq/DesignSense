@@ -26,7 +26,7 @@ export default {
       this.width = 1200;
       this.height = 450;
       this.colorColumn = 'collection';
-      var excluded = ['img','ID','_id','highlighted'] //'GeometryHash' ,'highlighted'
+      var excluded = ['image','gltf','geometry','ID','_id','highlighted','collection'] //'GeometryHash' ,'highlighted'
       this.excluded_dimensions = []
       for(var e of excluded)
       {

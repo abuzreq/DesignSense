@@ -20,10 +20,11 @@ export default {
     this.padding = 10;
     this.colorColumn = "collection";
     this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
+    this.columns = [ "objective_value","surface_area","weight", "total_load"];
+
     this.chartData = this.$store.state.data;
     [this.chart, this.cells]  = this.createChart();
      
-    this.highlight();
   },
   computed: {},
   methods: {
@@ -281,16 +282,44 @@ export default {
           .select(this.cells._groups[0][i + this.columns.length * j])
           .selectAll("circle")
 
-            circles.classed("hidden",(d,i) => highlightMask[i]?true:false  )
+            circles.classed("hidden",(d,i) => highlightMask[i]?false:true  )
          })    
-    }
+    }, 
+    unhighlightAll: function()
+    {
+     this.cells.each(([i, j]) => {
+        let circles = d3
+          .select(this.cells._groups[0][i + this.columns.length * j])
+          .selectAll("circle")
+            circles.classed("hidden",false)
+         })    
+    },
+
   },
   created() {
     this.$store.watch(
       (state, getters) => getters.highlightedMask,
       (newValue, oldValue) => 
       {
-        this.highlight(newValue);
+          var atLeastOne = false;
+          for(var on of newValue)
+          {
+              console.log(on)
+              if(on)
+              {
+                  atLeastOne = true;
+                  break;
+              }
+          }
+
+          if(atLeastOne)
+          {
+            this.highlight(newValue);
+          }
+          else
+          {
+            this.unhighlightAll();
+          }
       },
       {
         deep: true //add this if u need to watch object properties change etc.

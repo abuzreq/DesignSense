@@ -7,12 +7,12 @@
             <v-col  
               v-for="(item, index) in props.items"
               :key="index"
-              :cols="possibleColSpans[colSpan]"
-              
+              :cols="possibleColSpans[colSpan]"            
             >
               <v-card >
+                <v-img v-if="true" :src="item.image" ></v-img>
                 <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
-                <v-img :src="item.img" ></v-img>
+                <model-gltf v-else  :src="item.gltf" ></model-gltf >
                 <!--</router-link>-->
               </v-card>
             </v-col>
@@ -26,14 +26,20 @@
 <style scoped>
 .col-1{
      padding:3px;
+     min-width: 300px;
   }
 </style>
 
 <script>
+//https://hujiulong.github.io/vue-3d-model/#/demo-gltf
+import { ModelGltf  } from 'vue-3d-model';
+
 import * as d3 from "d3";
 export default {
   name: "GridCards",
+  components: { ModelGltf  },
   mounted() {
+    console.log(d3.select("model-obj"))
     this.csvData = this.$store.state.highlighted;
   },
   data: function() {

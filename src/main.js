@@ -19,8 +19,10 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
     //var blob = b64toBlob(alt.image, { type: 'image/png' })
     //var url = window.URL.createObjectURL(blob)
     var imgURL = url + "/" + alt.image
+    var gltfURL = url + "/" + alt.gltf
+    var geometryURL = url +"/" + alt.geometry;
     //console.log(url)
-    temp.push({ '_id': alt._id,'ID': alt.tags[0] ,'img': imgURL, 'collection': alt.collectionName, ...alt.attributes });
+    temp.push({ '_id': alt._id,'ID': alt.tags[0] ,'image': imgURL,'gltf': gltfURL,'geometry': geometryURL, 'collection': alt.collectionName, ...alt.attributes });
   });
 
   temp.map((obj) => {
@@ -29,7 +31,7 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
 
         const eachPoint = { [o.key]: o.value };
 
-        mergedObject = Object.assign(mergedObject, { '_id': obj._id },{ 'ID': obj.ID }, { 'img': obj.img }, { 'collection': obj.collection }, eachPoint);
+        mergedObject = Object.assign(mergedObject, { '_id': obj._id },{ 'ID': obj.ID }, { 'image': obj.image },{ 'gltf': obj.gltf },{ 'geometry': obj.geometry }, { 'collection': obj.collection }, eachPoint);
       }
     });
     parallelData.push(mergedObject);
@@ -42,6 +44,7 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
 }
 
 let globalURL = "http://sr-02645.iat.sfu.ca:5052"
+ globalURL = "http://142.58.183.69:5050"
     var collection = "feas";//"c-ZNTs0"
         d3.json(globalURL + "/alternatives").then( (json_data, error) =>
         {
