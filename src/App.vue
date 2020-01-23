@@ -1,41 +1,41 @@
 <template>
   <v-app>
-    <v-content >
-      <v-container fluid grid-list-xl  >
-
-         <!-- TOP -->
+    <v-content>
+      <v-container 
+        fluid
+        grid-list-xl
+      >
+        <!-- TOP -->
         <v-layout row>
           <v-flex md8>
             <v-card height="500px">
-               <!-- pcoords -->
-              <ParCoordsView></ParCoordsView>
+              <!-- pcoords -->
+              <ParCoordsView />
             </v-card>
           </v-flex>
-           <v-flex md4>
+          <v-flex md4>
             <v-card height="500px">
               <!-- Scatterplot -->
-              <SPLOMView></SPLOMView>
+              <SPLOMView />
             </v-card>
           </v-flex>
         </v-layout>
 
-         <!-- BOTTOM -->
-        <v-layout row >
-           <v-flex md3 >
-            <v-card height="450px"  >
-               <!-- Similarity-->
-               <DendrogramView></DendrogramView>
+        <!-- BOTTOM -->
+        <v-layout row>
+          <v-flex md3>
+            <v-card height="450px">
+              <!-- Similarity-->
+              <DendrogramView />
             </v-card>
           </v-flex>
-          <v-flex md9 >
-            <v-card height="450px" >
-               <!-- Grid -->
-              <GridView></GridView>
+          <v-flex md9>
+            <v-card height="450px">
+              <!-- Grid -->
+              <GridView />
             </v-card>
           </v-flex>
         </v-layout>
-
-
       </v-container>
     </v-content>
   </v-app>

@@ -2,7 +2,7 @@
 
 <template>
   <v-container fluid>
-    <div class="splom" id="splom" ref="splom"></div>
+    <div id="splom" ref="splom" class="splom" />
   </v-container>
 </template>
 
@@ -10,23 +10,52 @@
 <script>
 import * as d3 from "d3";
 
-let colorRange = d3.scaleOrdinal(d3.schemeCategory10).range();
-
 export default {
   name: "SPLOMView",
-  props: ["chart","cells","chartData", "padding", "width", "columns", "colorColumn"],
+  props: [
+    "chart",
+    "cells",
+    "chartData",
+    "padding",
+    "width",
+    "columns",
+    "colorColumn"
+  ],
+  computed: {},
   mounted() {
     this.width = 475;
     this.padding = 10;
     this.colorColumn = "collection";
     this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
-    this.columns = [ "objective_value","surface_area","weight", "total_load"];
+    this.columns = ["objective_value", "surface_area", "weight", "total_load"];
 
     this.chartData = this.$store.state.data;
-    [this.chart, this.cells]  = this.createChart();
-     
+    [this.chart, this.cells] = this.createChart();
   },
-  computed: {},
+  created() {
+    this.$store.watch(
+      (state, getters) => getters.highlightedMask,
+      (newValue, oldValue) => {
+        var atLeastOne = false;
+        for (var on of newValue) {
+          console.log(on);
+          if (on) {
+            atLeastOne = true;
+            break;
+          }
+        }
+
+        if (atLeastOne) {
+          this.highlight(newValue);
+        } else {
+          this.unhighlightAll();
+        }
+      },
+      {
+        deep: true //add this if u need to watch object properties change etc.
+      }
+    );
+  },
   methods: {
     createChart: function() {
       console.log(this.chartData);
@@ -42,8 +71,8 @@ export default {
       let totalSize = size * columns.length;
       var margin = { top: 0, right: 10, bottom: 10, left: 50 };
       let markSize = size / 50;
-      let columnTitleSize = size /15;
-      let columnTickTextSize = size /15;
+      let columnTitleSize = size / 15;
+      let columnTickTextSize = size / 15;
       let z = d3
         .scaleOrdinal()
         .domain(this.chartData.map(d => d[colorColumn]))
@@ -99,7 +128,7 @@ export default {
               .attr("stroke", "#ddd")
               .attr("stroke-width", size / 200)
           )
-          .style("font", columnTickTextSize+ "px bold sans-serif");
+          .style("font", columnTickTextSize + "px bold sans-serif");
       };
 
       let yAxis = g => {
@@ -168,8 +197,8 @@ export default {
               y0 > y[columns[j]](d[columns[j]]) ||
               y1 < y[columns[j]](d[columns[j]])
             ) {
-              return true;
               brushedMask.push(0);
+              return true;
             } else {
               brushed.push(d);
               brushedMask.push(1);
@@ -177,25 +206,21 @@ export default {
             }
           });
 
-        circle.classed("hidden",(d,i) => brushedMask?true:false  )
+          circle.classed("hidden", (d, i) => (brushedMask ? true : false));
 
           console.log(this);
           if (brushed.length > 0) {
             vueThis.$store.commit("highlight", brushed);
             // this.$store.commit("unhighlight", chart.data())
-          } else {
           }
         }
 
         // If the brush is empty, select all circles.
-        function brushended() 
-        {
-          if (d3.event.selection !== null) 
-                return;
+        function brushended() {
+          if (d3.event.selection !== null) return;
 
-            circle.classed("hidden", false);
-            vueThis.$store.commit("unhighlight", vueThis.chartData)
-
+          circle.classed("hidden", false);
+          vueThis.$store.commit("unhighlight", vueThis.chartData);
         }
       };
 
@@ -239,7 +264,7 @@ export default {
       cells.append("g").call(xAxis);
 
       cells.append("g").call(yAxis);
-  
+
       cells.each(([i, j]) => {
         let circles = d3
           .select(cells._groups[0][i + columns.length * j])
@@ -273,58 +298,25 @@ export default {
         .attr("dy", ".71em")
         .text(d => d);
 
-        return [svg,cells];
+      return [svg, cells];
     },
-    highlight: function(highlightMask)
-    {
-     this.cells.each(([i, j]) => {
+    highlight: function(highlightMask) {
+      this.cells.each(([i, j]) => {
         let circles = d3
           .select(this.cells._groups[0][i + this.columns.length * j])
-          .selectAll("circle")
+          .selectAll("circle");
 
-            circles.classed("hidden",(d,i) => highlightMask[i]?false:true  )
-         })    
-    }, 
-    unhighlightAll: function()
-    {
-     this.cells.each(([i, j]) => {
+        circles.classed("hidden", (d, i) => (highlightMask[i] ? false : true));
+      });
+    },
+    unhighlightAll: function() {
+      this.cells.each(([i, j]) => {
         let circles = d3
           .select(this.cells._groups[0][i + this.columns.length * j])
-          .selectAll("circle")
-            circles.classed("hidden",false)
-         })    
-    },
-
-  },
-  created() {
-    this.$store.watch(
-      (state, getters) => getters.highlightedMask,
-      (newValue, oldValue) => 
-      {
-          var atLeastOne = false;
-          for(var on of newValue)
-          {
-              console.log(on)
-              if(on)
-              {
-                  atLeastOne = true;
-                  break;
-              }
-          }
-
-          if(atLeastOne)
-          {
-            this.highlight(newValue);
-          }
-          else
-          {
-            this.unhighlightAll();
-          }
-      },
-      {
-        deep: true //add this if u need to watch object properties change etc.
-      }
-    );
+          .selectAll("circle");
+        circles.classed("hidden", false);
+      });
+    }
   }
   /*
   watch: {

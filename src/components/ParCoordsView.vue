@@ -1,12 +1,12 @@
 
 
 <template>
-<v-container fluid >
-          <div 
-              class="parcoords"
-              id="parcoords"
-              ref="parcoords"    
-          ></div >
+  <v-container fluid>
+    <div 
+      id="parcoords"
+      ref="parcoords"    
+      class="parcoords"
+    />
   </v-container>
 </template>
 
@@ -16,11 +16,17 @@ import 'parcoord-es/dist/parcoords.css';
 import ParCoords from 'parcoord-es';
 import * as d3 from "d3";
 
-let colorRange = d3.scaleOrdinal(d3.schemeCategory10).range();
-
 export default {
   name: "ParCoordsView",
   props: ["chart","chartData", "width", "height", "excluded_dimensions", "colorColumn"],
+  /*data()
+  { 
+    return {chart: null,chartData: [], width: 0, height: 0, excluded_dimensions: [], colorColumn: ""}
+  },*/
+  computed:
+  {
+
+  },
   mounted() 
   {
       this.width = 1200;
@@ -34,9 +40,46 @@ export default {
       }
       this.chartData = this.$store.state.data;
       this.chart = this.createChart();
-  }, 
-  computed:
-  {
+  },
+  created()
+  {  
+    this.$store.watch(
+    (state) => {
+        let on = [];
+        let off =[];
+
+        let it = 0;
+        for(var id in state.highlighted_map)
+        {
+            if( state.highlighted_map[id] == 1)
+            {
+              on.push(state.data[it])
+            }
+            else
+            {
+              off.push(state.data[it])         
+            }
+            it += 1
+        }
+
+        return [on, off]
+        //return .array.filter(d => highlighted[d] == 1)
+       // return state.highlighted;
+    },
+    (newValue, oldValue) => 
+    {
+          let on = newValue[0]
+          let off = newValue[1]
+         // console.log("newvalue",on,off)
+           // this.chartData = newValue;        
+          // this.chart.highlight(on);
+         //  this.chart.unhighlight(off);
+    },
+    {
+        deep: true //add this if u need to watch object properties change etc.
+    });
+
+
 
   },
   methods: {
@@ -86,47 +129,6 @@ export default {
         node.removeChild(node.firstChild);
       }
     }
-  },
-  created()
-  {  
-    this.$store.watch(
-    (state) => {
-        let on = [];
-        let off =[];
-
-        let it = 0;
-        for(var id in state.highlighted_map)
-        {
-            if( state.highlighted_map[id] == 1)
-            {
-              on.push(state.data[it])
-            }
-            else
-            {
-              off.push(state.data[it])         
-            }
-            it += 1
-        }
-
-        return [on, off]
-        //return .array.filter(d => highlighted[d] == 1)
-       // return state.highlighted;
-    },
-    (newValue, oldValue) => 
-    {
-          let on = newValue[0]
-          let off = newValue[1]
-         // console.log("newvalue",on,off)
-           // this.chartData = newValue;        
-          // this.chart.highlight(on);
-         //  this.chart.unhighlight(off);
-    },
-    {
-        deep: true //add this if u need to watch object properties change etc.
-    });
-
-
-
   },
   /*
   watch: {
