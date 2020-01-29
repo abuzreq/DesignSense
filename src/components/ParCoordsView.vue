@@ -70,6 +70,7 @@ export default {
     {
           let on = newValue[0]
           let off = newValue[1]
+          
          // console.log("newvalue",on,off)
            // this.chartData = newValue;        
           // this.chart.highlight(on);
@@ -96,7 +97,7 @@ export default {
         .alpha(1)
         .createAxes()
         //.margin({ top: 40, left: 20, bottom: 20, right: 20 })
-        .brushMode("1D-axes")
+        .brushMode("1D-axes")//1D-axes-multi
         .alphaOnBrushed(0.2) 
         .reorderable()
         .mode("queue")
@@ -106,13 +107,15 @@ export default {
            
         }).on('brushend', (brushed, args)=>
         {
+          
           if(chart.brushed().length == chart.data().length)
           {
             this.$store.commit("unhighlight", chart.data()) 
           }
           else
           {
-            this.$store.commit("highlight", brushed)     
+            this.$store.commit("highlight", brushed)   
+            // chart.clear('brushed') 
           }
               
         });

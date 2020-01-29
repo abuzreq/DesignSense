@@ -21,7 +21,6 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
     var imgURL = url + "/" + alt.image
     var gltfURL = url + "/" + alt.gltf
     var geometryURL = url +"/" + alt.geometry;
-    //console.log(url)
     temp.push({ '_id': alt._id,'ID': alt.tags[0] ,'image': imgURL,'gltf': gltfURL,'geometry': geometryURL, 'collection': alt.collectionName, ...alt.attributes });
   });
 
@@ -44,21 +43,21 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
 }
 
 let globalURL = "http://sr-02645.iat.sfu.ca:5052"
- globalURL = "http://142.58.183.69:5050"
+ globalURL = "http://142.58.183.69:5051"
     //var collection = "feas";//"c-ZNTs0"
-        d3.json(globalURL + "/alternatives").then( (json_data, error) =>
-        {
-            console.log(json_data,error)
-            json_data = json_data.alternatives
-            const data = getParallelDataFromAlternatives(globalURL, json_data)
-            new Vue({
-              vuetify,
-              router,
-              store: store(data),
-              el: '#app',
-              render: h => h(App),
-            });
-        })
+  d3.json(globalURL + "/alternatives").then( (json_data, error) =>
+  {
+      console.log(json_data,error)
+      json_data = json_data.alternatives
+      const data = getParallelDataFromAlternatives(globalURL, json_data)
+      new Vue({
+        vuetify,
+        router,
+        store: store(data),
+        el: '#app',
+        render: h => h(App),
+      });
+  })
 
 
 

@@ -2,7 +2,11 @@
 
 <template>
   <v-container fluid>
-    <div id="splom" ref="splom" class="splom" />
+    <div 
+      id="splom" 
+      ref="splom" 
+      class="splom" 
+    />
   </v-container>
 </template>
 
@@ -27,10 +31,13 @@ export default {
     this.padding = 10;
     this.colorColumn = "collection";
     this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
-    this.columns = ["objective_value", "surface_area", "weight", "total_load"];
+    //this.columns = ["objective_value", "surface_area", "weight", "total_load"];
 
     this.chartData = this.$store.state.data;
     [this.chart, this.cells] = this.createChart();
+    //console.log("SPLOM")
+    //console.log(this.chart._groups)
+    //console.log(this.cells._groups)
   },
   created() {
     this.$store.watch(
@@ -38,7 +45,7 @@ export default {
       (newValue, oldValue) => {
         var atLeastOne = false;
         for (var on of newValue) {
-          console.log(on);
+          //console.log(on);
           if (on) {
             atLeastOne = true;
             break;
@@ -58,7 +65,6 @@ export default {
   },
   methods: {
     createChart: function() {
-      console.log(this.chartData);
       let colorColumn = this.colorColumn;
 
       let columns = this.columns;
@@ -208,7 +214,6 @@ export default {
 
           circle.classed("hidden", (d, i) => (brushedMask ? true : false));
 
-          console.log(this);
           if (brushed.length > 0) {
             vueThis.$store.commit("highlight", brushed);
             // this.$store.commit("unhighlight", chart.data())

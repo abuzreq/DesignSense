@@ -28,12 +28,12 @@ export default {
     this.height = 450;
 
     this.chartData = this.$store.state.data;
-
+    /*
     let treeJSON = d3.json("public/form.json").then((treeData) =>
     {
         this.hierarchyData = treeData;
         this.chart = this.createChart();  
-    })
+    })*/
 
   },
   computed: {},

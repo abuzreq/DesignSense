@@ -23,10 +23,12 @@
                   :src="item.image" 
                 />
                 <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
-                <model-gltf 
-                  v-else
-                  :src="item.gltf" 
-                />
+                <!--
+                  <model-gltf 
+                    v-else
+                    :src="item.gltf" 
+                  />
+                -->
                 <!--</router-link>-->
               </v-card>
             </v-col>
@@ -46,7 +48,7 @@
 
 <script>
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
-import { ModelGltf  } from 'vue-3d-model';
+import {ModelGltf} from 'vue-3d-model';
 
 import * as d3 from "d3";
 export default {
@@ -75,13 +77,14 @@ export default {
     }
   },
   mounted() {
-    console.log(d3.select("model-obj"))
+    //console.log(d3.select("model-obj"))
     this.csvData = this.$store.state.highlighted;
   },
   created() {
     this.$store.watch(
       (state, getters) => getters.highlighted,
       (newValue, oldValue) => {
+        console.log("newValue")
         this.csvData = newValue;
       },
       {

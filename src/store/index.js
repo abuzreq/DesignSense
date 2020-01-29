@@ -25,6 +25,15 @@ function prepare_map(data)
     return map
 }
 
+function reset_map(map)
+{
+    for(var key in map)
+    {
+        map[key] = 0
+    }
+    return map
+}
+
 function builder(new_data) 
 {
 
@@ -37,10 +46,19 @@ function builder(new_data)
             
             highlight(state, selection) 
             {
+                console.log("selection",selection);
+                
+                state.highlighted_map = reset_map(state.highlighted_map);
+                console.log("highlight",state.highlighted_map)
                 selection.forEach(element => 
                 {
-                    state.highlighted_map[element._id] = 1
+                   // let x  = state.highlighted_map[element._id]
+                    
+                    state.highlighted_map[element._id] =  1; // &&  state.highlighted_map[element._id]
+                    
                 })
+                console.log("highlight2",state.highlighted_map)
+
                 /*
                 //console.log("highlight",selection)
                 let ids = selection.map(e => e._id)
@@ -51,6 +69,8 @@ function builder(new_data)
                         element['highlighted'] = 1;                 
                     } 
                 });*/
+
+
             },
             unhighlight(state, selection) 
             {
