@@ -8,11 +8,9 @@ export default class ScatterPlot {
 
     var margin = { left: 60, top: 5, right: 10, bottom: 60 };
 
-    var rMin = 2; // "r" stands for radius
-    var rMax = 300;
+
     var xColumn = "No X column configured";
     var yColumn = "No Y column configured";
-    var rColumn = null;
     var colorColumn = "No color column configured";
     var colorRange = d3.scaleOrdinal(d3.schemeCategory10).range();
 
@@ -24,30 +22,18 @@ export default class ScatterPlot {
 
     var xScale = d3.scaleLinear();
     var yScale = d3.scaleLinear();
-    var rScale = d3.scaleLinear();
     var colorScale = d3.scaleOrdinal();
-    /*
-      var xAxis = d3.svg.axis().scale(xScale).orient("bottom")
-      .tickFormat(d3.format("s"))
-      .outerTickSize(0);
-    */
+
     var xAxis = d3
       .axisBottom()
       .ticks(6)
       .tickFormat(d3.format("s"))
-    //.tickSize( columns.length);
     var xTicks = 5;
 
-    /*
-      var yAxis = d3.svg.axis().scale(yScale).orient("left")
-      .tickFormat(d3.format("s"))
-      .outerTickSize(0);
-    */
     var yAxis = d3
       .axisLeft()
       .ticks(6)
       .tickFormat(d3.format("s"))
-
     var yTicks = 5;
 
     function chart(selection) {
@@ -57,25 +43,10 @@ export default class ScatterPlot {
       colorScale.range(colorRange);
       xScale.range([0, innerWidth]);
       yScale.range([innerHeight, 0]);
-      rScale.range([rMin, rMax]);
-
-
-
-
-      //xAxis.ticks(xTicks);
-      //yAxis.ticks(yTicks);
 
       selection.each(function (data) {
-        /*
-              var svg = d3.select(this).selectAll("svg").data([data]);
-              var gEnter = svg.enter().append("svg").append("g");
-    */
-
         var svg = d3.select(this).append("svg");
         var g = svg.append("g");
-
-        //var g = gEnter ;//svg.select("g");
-
 
         var circles = g.selectAll("circle").data(data).enter().append('circle');
 
@@ -95,8 +66,6 @@ export default class ScatterPlot {
 
         xScale.domain(d3.extent(data, function (d) { return d[xColumn]; }));
         yScale.domain(d3.extent(data, function (d) { return d[yColumn]; }));
-        
-        rScale.domain(d3.extent(data, function (d) { return d[rColumn]; }));
 
         var brush = d3.brush().extent([[0,0],[innerWidth,innerHeight]])
         .on("start", brushstart)
@@ -109,7 +78,7 @@ export default class ScatterPlot {
           .attr("height", outerHeight);
 
         g.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+        
         g
           .select(".x.axis")
           .attr("transform", "translate(0," + innerHeight + ")")
@@ -119,6 +88,7 @@ export default class ScatterPlot {
           .attr("y", xAxisLabelOffset)
           .text(xAxisLabel);
 
+        console.log( g.select(".x.axis").select("text"))
         g
           .select(".y.axis")
           .call(d3.axisLeft(yScale))
@@ -130,7 +100,7 @@ export default class ScatterPlot {
         circles
           .attr("cx", function (d) { return xScale(d[xColumn]); })
           .attr("cy", function (d) { return yScale(d[yColumn]); })
-          .attr("r", function (d) { return rScale(d[rColumn]); })
+          .attr("r", function (d) { return 3;})
           .attr("fill", function (d) { return colorScale(d[colorColumn]); });
 
         circles.exit().remove();
@@ -150,45 +120,33 @@ export default class ScatterPlot {
         }
 
         // Highlight the selected circles.
-        function brushmove(p) {
-          var e = brush.extent()();
+        function brushmove(p) 
+        {
+          //var e = brush.extent()();
           //TODO change to:
-          //const [[x0, y0], [x1, y1]] = d3.event.selection;
+          const e = d3.event.selection;
           
           var current_active_selection = [];
           g.selectAll("circle").style("opacity", function (d) {
-            var cx = d[xColumn]
-            var cy = d[yColumn]
+            var cx = xScale(d[xColumn])
+            var cy = yScale(d[yColumn])
+           // console.log(e, cx,cy)
             if (!(e[0][0] > cx || cx > e[1][0]
-              || e[0][1] > cy || cy > e[1][1])) {
-
-              current_active_selection.push(d);
-            }
+              || e[0][1] > cy || cy > e[1][1])) 
+              {
+                return 0.3;
+                  //console.log(d3.select(this))
+                // d3.select(this).classed('hidden')
+                current_active_selection.push(d);
+              }
+              else 
+              return 1;
           });
-          
-          /*
-            chart.highlight(current_active_selection);
-            updateModels(current_active_selection);
-            //parcoords.data(current_active_selection).render();
-            parcoords.highlight(current_active_selection)
-            //dndtree.highlight(current_active_selection);
-          */
-
-
         }
+
         // If the brush is empty, select all circles.
         function brushend() {
           if (d3.event.selection !== null) return;
-         
-          /*
-          if (brush.empty()) {
-            //chart.unhighlight()
-            //parcoords.data(data).render();
-            //parcoords.unhighlight();
-            //updateModels([]);
-            //dndtree.unhighlight()
-          }
-          */
         }
 
         g.call(brush);
@@ -222,23 +180,6 @@ export default class ScatterPlot {
       return chart;
     };
 
-    chart.rColumn = function (_) {
-      if (!arguments.length) return rColumn;
-      rColumn = _;
-      return chart;
-    };
-
-    chart.rMin = function (_) {
-      if (!arguments.length) return rMin;
-      rMin = _;
-      return chart;
-    };
-
-    chart.rMax = function (_) {
-      if (!arguments.length) return rMax;
-      rMax = _;
-      return chart;
-    };
 
     chart.colorRange = function (_) {
       if (!arguments.length) return colorRange;

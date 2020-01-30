@@ -2,28 +2,56 @@
 
 <template>
   <v-container fluid>
-    <div 
-      id="scatter" 
-      ref="scatter" 
-      class="scatter" 
-    />
+    <div id="scatter" ref="scatter" class="scatter" />
   </v-container>
 </template>
 
+<style scoped>
 
+div >>> .axis,
+.frame {
+  shape-rendering: crispEdges;
+}
+
+div >>> .axis line {
+  stroke: #ddd;
+}
+
+div >>> .axis path {
+  display: none;
+}
+
+div >>> .cell text {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+div >>> .frame {
+  fill: none;
+  stroke: #aaa;
+}
+
+div >>> circle {
+  fill-opacity: 0.7;
+}
+
+div >>> circle.hidden {
+  fill: #ccc !important;
+}
+
+div >>> .extent {
+  fill: #000;
+  fill-opacity: 0.125;
+  stroke: #fff;
+}
+</style>
 <script>
 import * as d3 from "d3";
 import ScatterPlot from "@/components/Scatterplot.js";
 
 export default {
   name: "ScatterplotView",
-  props: [
-    "chart",
-    "chartData",
-    "width",
-    "columns",
-    "colorColumn"
-  ],
+  props: ["chart", "chartData", "width", "columns", "colorColumn"],
   computed: {},
   mounted() {
     this.width = 650;
@@ -34,37 +62,30 @@ export default {
 
     this.chartData = this.$store.state.data;
     this.chart = this.createChart();
-
   },
-  created() {
-
-  },
+  created() {},
   methods: {
-    createChart: function() 
-    {
-        var scatterPlot = new ScatterPlot();
+    createChart: function() {
+      var scatterPlot = new ScatterPlot();
 
-        scatterPlot
-        .outerWidth(this.width )
-        .outerHeight(this.height )
+      scatterPlot
+        .outerWidth(this.width)
+        .outerHeight(this.height)
         .margin({ left: 50, top: 10, right: 10, bottom: 30 })
         .xColumn("TotalFlrArea")
         .xAxisLabel("TotalFlrArea")
-        .xAxisLabelOffset(70)
+        .xAxisLabelOffset(30)
         .xTicks(20)
         .yColumn("NetSolar")
         .yAxisLabel("NetSolar")
-        .yAxisLabelOffset(50)
+        .yAxisLabelOffset(30)
         .yTicks(20)
         .colorColumn("collection")
-        .rColumn("EnergyUse")// "r" stands for radius
-        .rMin(2)
-        .rMax(13)
         .colorRange(["#00c65c", "#8400c6", "#e54100"]);
 
-        d3.select("#scatter")
-            .datum( this.chartData)
-            .call(scatterPlot);
+      d3.select("#scatter")
+        .datum(this.chartData)
+        .call(scatterPlot);
     },
     highlight: function(highlightMask) {
       this.cells.each(([i, j]) => {
@@ -94,9 +115,5 @@ export default {
     }
   }*/
 };
-
-
-
-
 </script>
 
