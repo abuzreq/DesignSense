@@ -16,7 +16,8 @@
           <v-flex md4>
             <v-card height="500px">
               <!-- Scatterplot -->
-              <SPLOMView />
+               <!-- <SPLOMView /> -->
+              <ScatterplotView />
             </v-card>
           </v-flex>
         </v-layout>
@@ -47,6 +48,7 @@ import GridView from "@/components/GridView.vue";
 import SPLOMView from "@/components/SPLOMView.vue";
 import DendrogramView from "@/components/DendrogramView.vue";
 
+import ScatterplotView from "@/components/ScatterplotView.vue";
 
 export default {
   name: "App",
@@ -54,7 +56,8 @@ export default {
     ParCoordsView,
     GridView,
     SPLOMView,
-    DendrogramView
+    DendrogramView,
+    ScatterplotView
   }
 };
 
