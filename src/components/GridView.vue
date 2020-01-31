@@ -84,7 +84,6 @@ export default {
     this.$store.watch(
       (state, getters) => getters.highlighted,
       (newValue, oldValue) => {
-        console.log("newValue")
         this.csvData = newValue;
       },
       {

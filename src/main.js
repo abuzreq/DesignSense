@@ -50,13 +50,22 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
       console.log(json_data,error)
       json_data = json_data.alternatives
       const data = getParallelDataFromAlternatives(globalURL, json_data)
-      new Vue({
+      var app = new Vue({
         vuetify,
         router,
         store: store(data),
         el: '#app',
         render: h => h(App),
       });
+
+      document.addEventListener('click', 
+      function(e)
+      {
+        console.log(e.shiftKey)
+        app.$store.ctrlOn = e.ctrlKey;
+        app.$store.shiftOn = e.shiftKey;
+      });
+      
   })
 
 

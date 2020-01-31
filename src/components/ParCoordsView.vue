@@ -1,7 +1,7 @@
 
 
 <template>
-  <v-container fluid>
+  <v-container>
     <div 
       id="parcoords"
       ref="parcoords"    
@@ -89,15 +89,15 @@ export default {
 
         //this.destroyPrCoords()
         //console.log(d3.select('#parcoords'))
-        const chart = ParCoords()("#parcoords")
+        const chart = ParCoords({nullValueSeparator: "bottom"})("#parcoords")
         .data(this.chartData)
         .width(this.width)
         .height(this.height)
         .hideAxis(this.excluded_dimensions)
-        .alpha(1)
+        .alpha(1.0)
         .createAxes()
         //.margin({ top: 40, left: 20, bottom: 20, right: 20 })
-        .brushMode("1D-axes")//1D-axes-multi
+        .brushMode("1D-axes-multi")//1D-axes-multi
         .alphaOnBrushed(0.2) 
         .reorderable()
         .mode("queue")
@@ -107,22 +107,33 @@ export default {
            
         }).on('brushend', (brushed, args)=>
         {
-          
-          if(chart.brushed().length == chart.data().length)
+
+         // d3.select('#parcoords').selectAll('.selection').style("display", "none");
+
+          if(chart.brushed().length == chart.data().length )
           {
             this.$store.commit("unhighlight", chart.data()) 
           }
+          else if (this.$store.shiftOn)
+          {
+            console.log("Hello")
+            this.$store.commit("unhighlight",brushed) 
+          }
           else
           {
+            console.log(this.$store.shiftOn)
             this.$store.commit("highlight", brushed)   
             // chart.clear('brushed') 
           }
               
-        });
+        }).on('highlight',(e)=>{console.log(e)});
 
         //1D-axes  2D-strums   angular
         var colors = d3.scaleOrdinal(d3.schemeCategory10)//d3.scale.ordinal().range(colorRange);
         chart.color(d => colors(d[this.colorColumn])).render()
+
+        chart.brushPredicate("OR")
+
         return chart;
     }, 
     destroyPrCoords: function() {

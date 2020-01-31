@@ -126,22 +126,39 @@ export default class ScatterPlot {
           //TODO change to:
           const e = d3.event.selection;
           
-          var current_active_selection = [];
-          g.selectAll("circle").style("opacity", function (d) {
+          let brushed = [];
+          let brushedMask = [];
+
+          g.selectAll("circle").classed("hidden",  (d) => 
+          {
             var cx = xScale(d[xColumn])
             var cy = yScale(d[yColumn])
            // console.log(e, cx,cy)
             if (!(e[0][0] > cx || cx > e[1][0]
               || e[0][1] > cy || cy > e[1][1])) 
               {
-                return 0.3;
-                  //console.log(d3.select(this))
-                // d3.select(this).classed('hidden')
-                current_active_selection.push(d);
+                brushedMask.push(0);
+                return true;
               }
               else 
-              return 1;
+              {
+                brushed.push(d);
+                brushedMask.push(1);
+                return false;
+              }           
           });
+          
+          //circle.classed("hidden", (d, i) => (brushedMask ? true : false));
+          console.log("brush",this);
+          if (brushed.length > 0) {
+            vueThis.$store.commit("highlight", brushed);
+            // this.$store.commit("unhighlight", chart.data())
+          }
+          
+
+
+
+
         }
 
         // If the brush is empty, select all circles.
