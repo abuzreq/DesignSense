@@ -54,6 +54,7 @@ export default {
   computed: {},
   mounted() {
     vueThis = this;
+
     this.width = 650;
     this.height = 450;
     this.colorColumn = "collection";
@@ -63,7 +64,32 @@ export default {
     this.chartData = this.$store.state.data;
     this.chart = this.createChart();
   },
-  created() {},
+  created() {
+
+    this.$store.watch(
+      (state, getters) => getters.highlightedMask,
+      (newValue, oldValue) => {
+        var atLeastOne = false;
+        for (var on of newValue) {
+          //console.log(on);
+          if (on) {
+            atLeastOne = true;
+            break;
+          }
+        }
+
+
+        if (atLeastOne) {
+          vueThis.chart.highlight(newValue);
+        } else {
+          vueThis.chart.unhighlightAll();
+        }
+      },
+      {
+        deep: true //add this if u need to watch object properties change etc.
+      }
+    );
+  },
   methods: {
     createChart: function() {
       var scatterPlot = new ScatterPlot();
@@ -86,6 +112,7 @@ export default {
       d3.select("#scatter")
         .datum(this.chartData)
         .call(scatterPlot);
+    return scatterPlot;
     }
   }
 };
@@ -122,7 +149,7 @@ class ScatterPlot {
       .ticks(6)
       .tickFormat(d3.format("s"));
     var yTicks = 5;
-
+    let thisG = null;
     function chart(selection) {
       var innerWidth = outerWidth - margin.left - margin.right;
       var innerHeight = outerHeight - margin.top - margin.bottom;
@@ -130,6 +157,7 @@ class ScatterPlot {
       colorScale.range(colorRange);
       xScale.range([0, innerWidth]);
       yScale.range([innerHeight, 0]);
+      let thisChart = this;
 
       selection.each(function(data) {
         var svg = d3.select(this).append("svg");
@@ -242,22 +270,20 @@ class ScatterPlot {
           let brushed = [];
           let brushedMask = [];
 
-          g.selectAll("circle").classed("hidden", d => {
+          g.selectAll("circle").each(d => {
             var cx = xScale(d[xColumn]);
             var cy = yScale(d[yColumn]);
-            if (
-              !(e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1])
-            ) 
-            {
-                   brushed.push(d);
-              brushedMask.push(1);
-            
-              return false;
-            } else {
-                brushedMask.push(0);
+            // console.log(e, cx,cy)
+            if (e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1]) {
+              brushedMask.push(0);
               return true;
+            } else {
+              brushed.push(d);
+              brushedMask.push(1);
+              return false;
             }
           });
+          //highlight(brushedMask);
 
           //circle.classed("hidden", (d, i) => (brushedMask ? true : false));
           //console.log("brush", brushed);
@@ -267,13 +293,26 @@ class ScatterPlot {
           }
         }
 
+        var highlight = function(selectionMask) {
+          thisG
+            .selectAll("circle")
+            .classed("hidden", (d, i) => (selectionMask[i] ? false : true));
+        };
+        var unhighlightAll = function(selectionMask) {
+          thisG
+            .selectAll("circle")
+            .classed("hidden", false);
+        };
+
+        chart.highlight = highlight;
+        chart.unhighlightAll = unhighlightAll;
         // If the brush is empty, select all circles.
         function brushend() {
           if (d3.event.selection !== null) return;
-          
         }
 
         g.call(brush);
+        thisG = g;
       });
     }
 

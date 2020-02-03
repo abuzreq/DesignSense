@@ -148,7 +148,8 @@ export default class ScatterPlot {
               }           
           });
           
-          //circle.classed("hidden", (d, i) => (brushedMask ? true : false));
+          
+          //g.selectAll("circle").classed("hidden", (d, i) => (brushedMask ? true : false));
           console.log("brush",this);
           if (brushed.length > 0) {
             vueThis.$store.commit("highlight", brushed);
