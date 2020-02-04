@@ -47,6 +47,8 @@ div >>> .extent {
 <script>
 import * as d3 from "d3";
 //import ScatterPlot from "@/components/Scatterplot.js";
+import views from "@/components/constants.js";
+
 let vueThis;
 export default {
   name: "ScatterplotView",
@@ -294,7 +296,7 @@ class ScatterPlot {
             //circle.classed("hidden", (d, i) => (brushedMask ? true : false));
             //console.log("brush", brushed);
             if (brushed.length > 0) {
-              vueThis.$store.commit("highlight", brushed);
+              vueThis.$store.commit("highlight", [brushed, views.SCATTERPLOT]);
             }
           }
         }

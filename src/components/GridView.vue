@@ -78,11 +78,11 @@ export default {
   },
   mounted() {
     //console.log(d3.select("model-obj"))
-    this.csvData = this.$store.state.highlighted;
+    this.csvData = this.$store.state.highlighted_forms;
   },
   created() {
     this.$store.watch(
-      (state, getters) => getters.highlighted,
+      (state, getters) => getters.highlighted_forms,
       (newValue, oldValue) => {
         this.csvData = newValue;
       },

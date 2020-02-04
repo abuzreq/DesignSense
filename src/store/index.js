@@ -1,5 +1,6 @@
 import Vue from "vue";
 import Vuex from "vuex";
+import views from "@/components/constants.js";
 
 Vue.use(Vuex);
 
@@ -41,24 +42,38 @@ function builder(new_data)
         state: {
             data: preprocess(new_data),
             highlighted_map: prepare_map(new_data), //TODO: [Fix] Assumes data will not change, need to update the map so it includes additional data when it arrives
+            highlighted_forms_map: prepare_map(new_data),
             ctrlOn: false,
             shiftOn: false
         },
         mutations: {
             
-            highlight(state, selection) 
+            highlight(state, args) 
             {
-                //console.log("selection",selection);
+                let selection = args[0]
+                let source =  args[1]
                 
-                state.highlighted_map = reset_map(state.highlighted_map);
-                //console.log("highlight",state.highlighted_map)
-                selection.forEach(element => 
+
+                if(source == views.SCATTERPLOT)
                 {
-                   // let x  = state.highlighted_map[element._id]
-                    
-                    state.highlighted_map[element._id] =  1; // &&  state.highlighted_map[element._id]
-                    
-                })
+                    state.highlighted_forms_map = reset_map(state.highlighted_forms_map);
+                    selection.forEach(element => 
+                    {
+                        // let x  = state.highlighted_map[element._id]                
+                        state.highlighted_forms_map[element._id] =  1; // &&  state.highlighted_map[element._id]               
+                    })
+                }
+                else if(source == views.PCOORDS)
+                {
+                    state.highlighted_map = reset_map(state.highlighted_map);
+                    selection.forEach(element => 
+                    {
+                        // let x  = state.highlighted_map[element._id]                
+                        state.highlighted_map[element._id] =  1; // &&  state.highlighted_map[element._id]  
+                        state.highlighted_forms_map[element._id] =  1;             
+                    })
+                }
+
                 //console.log("highlight2",state.highlighted_map)
 
                 /*
@@ -94,6 +109,20 @@ function builder(new_data)
                 for(var id in state.highlighted_map)
                 {
                     if( state.highlighted_map[id] == 1)
+                    {
+                        result.push(state.data[it])
+                    }
+                    it+=1;
+                }          
+                return result;
+            },
+            highlighted_forms: state => 
+            {
+                var result = [];
+                let it = 0;
+                for(var id in state.highlighted_forms_map)
+                {
+                    if( state.highlighted_forms_map[id] == 1)
                     {
                         result.push(state.data[it])
                     }

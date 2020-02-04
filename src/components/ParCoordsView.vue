@@ -13,6 +13,8 @@
 
 <script>
 import 'parcoord-es/dist/parcoords.css';
+import views from "@/components/constants.js";
+
 import ParCoords from 'parcoord-es';
 import * as d3 from "d3";
 
@@ -122,7 +124,8 @@ export default {
           else
           {
             console.log(this.$store.shiftOn)
-            this.$store.commit("highlight", brushed)   
+            
+            this.$store.commit("highlight", [brushed,views.PCOORDS])   
             // chart.clear('brushed') 
           }
               

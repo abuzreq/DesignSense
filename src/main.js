@@ -44,6 +44,8 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
 
 let globalURL = "http://sr-02645.iat.sfu.ca:5052"
  globalURL = "http://142.58.183.69:5051"
+ //globalURL = "http://142.58.183.69:5050"
+ 
     //var collection = "feas";//"c-ZNTs0"
   d3.json(globalURL + "/alternatives").then( (json_data, error) =>
   {
