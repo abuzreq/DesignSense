@@ -65,7 +65,6 @@ export default {
     this.chart = this.createChart();
   },
   created() {
-
     this.$store.watch(
       (state, getters) => getters.highlightedMask,
       (newValue, oldValue) => {
@@ -77,7 +76,6 @@ export default {
             break;
           }
         }
-
 
         if (atLeastOne) {
           vueThis.chart.highlight(newValue);
@@ -112,7 +110,7 @@ export default {
       d3.select("#scatter")
         .datum(this.chartData)
         .call(scatterPlot);
-    return scatterPlot;
+      return scatterPlot;
     }
   }
 };
@@ -262,34 +260,42 @@ class ScatterPlot {
         }
 
         // Highlight the selected circles.
-        function brushmove(p) {
-          //var e = brush.extent()();
-          //TODO change to:
-          const e = d3.event.selection;
+        function brushmove(p) {}
 
-          let brushed = [];
-          let brushedMask = [];
+        // If the brush is empty, select all circles.
+        function brushend() {
+          if (d3.event.selection !== null) {
+            const e = d3.event.selection;
 
-          g.selectAll("circle").each(d => {
-            var cx = xScale(d[xColumn]);
-            var cy = yScale(d[yColumn]);
-            // console.log(e, cx,cy)
-            if (e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1]) {
-              brushedMask.push(0);
-              return true;
-            } else {
-              brushed.push(d);
-              brushedMask.push(1);
-              return false;
+            let brushed = [];
+            let brushedMask = [];
+            let currentMask = vueThis.$store.getters.highlightedMask;
+
+            let circles = g.selectAll("circle");
+            circles.each((d, i) => {
+              var cx = xScale(d[xColumn]);
+              var cy = yScale(d[yColumn]);
+              // console.log(e, cx,cy)
+              var isOutside =
+                e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1];
+
+              if (isOutside) {
+                brushedMask.push(0);
+              } else if (!isOutside && currentMask[i]) 
+              {
+                
+                  brushed.push(d);
+                  brushedMask.push(1);
+              }
+            });
+
+            //highlight(brushedMask);
+
+            //circle.classed("hidden", (d, i) => (brushedMask ? true : false));
+            //console.log("brush", brushed);
+            if (brushed.length > 0) {
+              vueThis.$store.commit("highlight", brushed);
             }
-          });
-          //highlight(brushedMask);
-
-          //circle.classed("hidden", (d, i) => (brushedMask ? true : false));
-          //console.log("brush", brushed);
-          if (brushed.length > 0) {
-            vueThis.$store.commit("highlight", brushed);
-            // this.$store.commit("unhighlight", chart.data())
           }
         }
 
@@ -299,17 +305,11 @@ class ScatterPlot {
             .classed("hidden", (d, i) => (selectionMask[i] ? false : true));
         };
         var unhighlightAll = function(selectionMask) {
-          thisG
-            .selectAll("circle")
-            .classed("hidden", false);
+          thisG.selectAll("circle").classed("hidden", false);
         };
 
         chart.highlight = highlight;
         chart.unhighlightAll = unhighlightAll;
-        // If the brush is empty, select all circles.
-        function brushend() {
-          if (d3.event.selection !== null) return;
-        }
 
         g.call(brush);
         thisG = g;
