@@ -17,7 +17,8 @@
             <v-card height="500px">
               <!-- Scatterplot -->
                <!-- <SPLOMView /> -->
-              <ScatterplotView />
+              <!-- <ScatterplotView /> -->
+              <TSNEView />
             </v-card>
           </v-flex>
         </v-layout>
@@ -49,6 +50,8 @@ import SPLOMView from "@/components/SPLOMView.vue";
 import DendrogramView from "@/components/DendrogramView.vue";
 
 import ScatterplotView from "@/components/ScatterplotView.vue";
+import TSNEView from "@/components/TSNEView.vue";
+
 
 export default {
   name: "App",
@@ -57,7 +60,8 @@ export default {
     GridView,
     SPLOMView,
     DendrogramView,
-    ScatterplotView
+    ScatterplotView,
+    TSNEView
   }
 };
 
