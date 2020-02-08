@@ -10,15 +10,27 @@
           <v-flex md8>
             <v-card height="500px">
               <!-- pcoords -->
-              <ParCoordsView />
+              <ParCoordsView :chartData="this.$store.state.data" />
             </v-card>
           </v-flex>
           <v-flex md4>
             <v-card height="500px">
               <!-- Scatterplot -->
                <!-- <SPLOMView /> -->
-              <!-- <ScatterplotView /> -->
-              <TSNEView />
+               <ScatterplotView 
+                  :chartData="this.$store.state.data">
+               </ScatterplotView>
+
+               <!--
+                 <ScatterplotView 
+                :chartData="this.$store.state.data"
+                :xColumn="TotalFlrArea"
+                :yColumn="NetSolar"
+                :colorColumn="collection">
+              </ScatterplotView>  
+              -->
+
+              <!-- <TSNEView /> -->
             </v-card>
           </v-flex>
         </v-layout>

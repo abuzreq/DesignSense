@@ -20,11 +20,11 @@ import * as d3 from "d3";
 
 export default {
   name: "ParCoordsView",
-  props: ["chart","chartData", "width", "height", "excluded_dimensions", "colorColumn"],
-  /*data()
+  props: ["chartData"],
+  data()
   { 
-    return {chart: null,chartData: [], width: 0, height: 0, excluded_dimensions: [], colorColumn: ""}
-  },*/
+    return {chart: null, width: 0, height: 0, excluded_dimensions: [], colorColumn: ""}
+  },
   computed:
   {
 
@@ -40,7 +40,7 @@ export default {
       {
           this.excluded_dimensions.push(e)
       }
-      this.chartData = this.$store.state.data;
+      //this.chartData = this.$store.state.data;
       this.chart = this.createChart();
   },
   created()

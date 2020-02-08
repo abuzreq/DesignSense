@@ -2,7 +2,7 @@
 
 <template>
   <v-container fluid>
-    <div id="scatter" ref="scatter" class="scatter" />
+    <div :id="id" ref="scatter" class="scatter" />
   </v-container>
 </template>
 
@@ -52,19 +52,50 @@ import views from "@/components/constants.js";
 let vueThis;
 export default {
   name: "ScatterplotView",
-  props: ["chart", "chartData", "width", "columns", "colorColumn"],
-  computed: {},
+  props: ["chartData"],
+  data:   function() {
+      return {
+          chart: null,
+          xColumn:"TotalFlrArea",
+          yColumn:"NetSolar",
+          colorColumn:"collection",
+          width: 650,
+          height: 450
+      };
+    },
+  computed: 
+  {
+    id () {return 'id'+this._uid}
+  },
   mounted() {
     vueThis = this;
-
-    this.width = 650;
-    this.height = 450;
-    this.colorColumn = "collection";
-    this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
+    
+    //this.width = 650;
+    //this.height = 450;
+    //this.colorColumn = "collection";
+    //this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
     //this.columns = ["objective_value", "surface_area", "weight", "total_load"];
 
-    this.chartData = this.$store.state.data;
     this.chart = this.createChart();
+  },
+  watch: { 
+    width: function(newValue, oldValue)
+    {
+      this.createChart();
+     /* this.chart.outerWidth(newValue)
+      d3.select("#"+this.id)
+        .datum(this.chartData)
+        .call(this.chart);*/
+    },
+    height: function(newValue, oldValue)
+    {
+      this.createChart();
+      /*
+            this.chart.outerWidth(newValue)
+      d3.select("#"+this.id)
+        .datum(this.chartData)
+        .call(this.chart);*/
+    }
   },
   created() {
     this.$store.watch(
@@ -98,18 +129,19 @@ export default {
         .outerWidth(this.width)
         .outerHeight(this.height)
         .margin({ left: 50, top: 10, right: 10, bottom: 30 })
-        .xColumn("TotalFlrArea")
-        .xAxisLabel("TotalFlrArea")
+        .xColumn(this.xColumn)
+        .xAxisLabel(this.xColumn)
         .xAxisLabelOffset(30)
         .xTicks(20)
-        .yColumn("NetSolar")
-        .yAxisLabel("NetSolar")
+        .yColumn(this.yColumn)
+        .yAxisLabel(this.yColumn)
         .yAxisLabelOffset(30)
         .yTicks(20)
-        .colorColumn("collection")
+        .colorColumn(this.colorColumn)
         .colorRange(["#00c65c", "#8400c6", "#e54100"]);
 
-      d3.select("#scatter")
+      console.log("#"+this.id)
+      d3.select("#"+this.id)
         .datum(this.chartData)
         .call(scatterPlot);
       return scatterPlot;
@@ -118,10 +150,10 @@ export default {
 };
 class ScatterPlot {
   constructor() {
-    var outerWidth = 100;
-    var outerHeight = 100;
+    var outerWidth = 0;
+    var outerHeight = 0;
 
-    var margin = { left: 60, top: 5, right: 10, bottom: 60 };
+    var margin = { left: 10, top: 5, right: 10, bottom: 10 };
 
     var xColumn = "No X column configured";
     var yColumn = "No Y column configured";
@@ -160,7 +192,15 @@ class ScatterPlot {
       let thisChart = this;
 
       selection.each(function(data) {
-        var svg = d3.select(this).append("svg");
+        
+        var div = d3.select(this); 
+        var svg = div.select("svg").empty()?div.select("svg").append("svg"): div.select("svg").remove();
+
+        if(!svg || svg.empty())
+        {
+          svg = div.append("svg");
+        }
+        
         var g = svg.append("g");
 
         var circles = g

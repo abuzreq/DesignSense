@@ -8,26 +8,21 @@
 
 
 <script>
-import "parcoord-es/dist/parcoords.css";
-import ParCoords from "parcoord-es";
+
 import * as d3 from "d3";
 
 let colorRange = d3.scaleOrdinal(d3.schemeCategory10).range();
 export default {
-  name: "ParCoordsView",
+  name: "Dendrogram",
   props: [
     "chart",
     "chartData",
-    "width",
-    "height",
-    "excluded_dimensions",
-    "colorColumn"
   ],
   mounted() {
-    this.width = 450;
-    this.height = 450;
+    //this.width = 450;
+    //this.height = 450;
 
-    this.chartData = this.$store.state.data;
+    //this.chartData = this.$store.state.data;
     /*
     let treeJSON = d3.json("public/form.json").then((treeData) =>
     {
