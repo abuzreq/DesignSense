@@ -1,9 +1,17 @@
 <template>
-  <v-app>
+  <v-app >
+      <!--
+    <v-app-bar app dark dense flat  color=" red--text text--lighten-1">
+       DesignSense
+      </v-app-bar>
+      -->
     <v-content>
       <v-container 
         fluid
-        grid-list-xl
+        grid-list-sm
+        align-start
+        justify-start
+        pt-0
       >
         <!-- TOP -->
         <v-layout row>
@@ -46,18 +54,21 @@
           <v-flex md9>
             <v-card height="450px">
               <!-- Grid -->
-              <GridView />
+              <AugmentedGridView />
             </v-card>
           </v-flex>
         </v-layout>
       </v-container>
     </v-content>
+    
   </v-app>
 </template>
 
 <script>
 import ParCoordsView from "@/components/ParCoordsView.vue";
 import GridView from "@/components/GridView.vue";
+import AugmentedGridView from "@/components/AugmentedGridView.vue";
+
 import SPLOMView from "@/components/SPLOMView.vue";
 import DendrogramView from "@/components/DendrogramView.vue";
 
@@ -70,6 +81,7 @@ export default {
   components: {
     ParCoordsView,
     GridView,
+    AugmentedGridView,
     SPLOMView,
     DendrogramView,
     ScatterplotView,

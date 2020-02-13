@@ -25,11 +25,24 @@ const config = {
         exclude: /node_modules/
       },
       {
+        test: /\.(png|jpe?g|gif|svg|eot|ttf|woff|woff2)(\?.+)?$/,
+
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              limit: 10000,
+            },
+          },
+        ],
+      },
+      {
         test: /\.css$/i,
         use: [ 'style-loader','css-loader'],
       },
       {
         test: /\.s(c|a)ss$/,
+ 
         use: [
           'vue-style-loader',
           'css-loader',
