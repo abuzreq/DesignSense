@@ -1,6 +1,6 @@
 <template>
   <v-container  justify-start align-start>
-    <v-layout >
+  
     <v-data-iterator
       :items="csvData"
       hide-default-footer
@@ -43,12 +43,12 @@
         <v-layout grid-list-sm column style="height: 75vh">
           <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
             <v-row dense>
-              <v-col
+              <v-col 
                 v-for="(item, index) in props.items"
                 :key="index"
                 :cols="possibleColSpans[colSpan]"
               >
-                <v-card>
+                <v-card v-on:click="addSelection(index)" :class="{'outlined':selected.includes(index)}">
                   <v-img v-if="true" :src="item.image" />
                   <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
                   <!--
@@ -65,7 +65,7 @@
         </v-layout>
       </template>
     </v-data-iterator>
-    </v-layout>
+    
   </v-container>
 </template>
 
@@ -75,6 +75,9 @@
      padding:3px;
      
   }*/
+  .v-card.outlined {
+                  border: 2px solid red;
+}
 </style>
 
 <script>
