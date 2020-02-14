@@ -1,6 +1,6 @@
 <template>
-  <v-container  justify-start align-start>
-  
+  <v-container id="grid" justify-start align-start>
+
     <v-data-iterator
       :items="csvData"
       hide-default-footer
@@ -11,7 +11,7 @@
       <template v-slot:header>
         <v-toolbar dense fixed dark color="blue darken-3" class="mb-1">
           <v-select
-          dense
+            dense
             v-model="sortByVar"
             flat
             solo-inverted
@@ -20,6 +20,11 @@
             :items="keys"
             label="Sort by"
           ></v-select>
+          <v-spacer></v-spacer>
+          <v-checkbox dense v-model="enableContext">
+              <v-icon v-if="enableContext">eye</v-icon>
+              <v-icon v-else>eye-off</v-icon>
+            </v-checkbox>
           <v-spacer></v-spacer>
             <v-slider
               min="0"
@@ -48,10 +53,12 @@
                 :key="index"
                 :cols="possibleColSpans[colSpan]"
               >
-                <v-card v-on:click="addSelection(index)" :class="{'outlined':selected.includes(index)}">
+                <v-card v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">
                   <v-img v-if="true" :src="item.image" />
+                     <!--:id='"card_"+item._id' -->
                   <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
-                  <!--
+               
+                  <!--:id='"card_"+item._id'
                   <model-gltf 
                     v-else
                     :src="item.gltf" 
@@ -85,6 +92,8 @@
 import { ModelGltf } from "vue-3d-model";
 
 import * as d3 from "d3";
+
+var vueThis;
 export default {
   name: "AugmentedGridCards",
   components: { ModelGltf },
@@ -99,7 +108,8 @@ export default {
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
       selected: [],
       sortByVar: "height",
-      isSortDesc: false
+      isSortDesc: false,
+      enableContext: true
     };
   },
   computed: {
@@ -112,16 +122,34 @@ export default {
     values() {
       return Object.values(this.csvData);
     }
+
   },
   mounted() {
+    vueThis = this
     //console.log(d3.select("model-obj"))
-    this.csvData = this.$store.state.highlighted_forms;
+    this.csvData = this.$store.state.data;//this.$store.state.highlighted_forms;
   },
   created() {
     this.$store.watch(
-      (state, getters) => getters.highlighted_forms,
-      (newValue, oldValue) => {
-        this.csvData = newValue;
+      (state, getters) => getters.highlightedMask,
+      (newValue, oldValue) => 
+      {
+        var atLeastOne = false;
+        for (var on of newValue) {
+          //console.log(on);
+          if (on) {
+            atLeastOne = true;
+            break;
+          }
+        }
+
+        if (atLeastOne) {
+          this.highlight(newValue);
+        } else {
+          console.log('ununununun')
+          this.unhighlightAll();
+        }
+        //this.csvData = newValue;
       },
       {
         deep: true //add this if u need to watch object properties change etc.
@@ -129,6 +157,18 @@ export default {
     );
   },
   methods: {
+    highlight(mask)
+    {
+        var it = 0;
+        d3.select("#grid").selectAll('.v-card').classed('outlined', function(){if(mask[it]) vueThis.addSelection(it); return mask[it++]});//function() { return selection.includes(this.id.substring(5));})
+        
+        //class="{'outlined':selected.includes(index)}
+
+    },
+    unhighlightAll()
+    {
+        d3.select("#grid").selectAll('.v-card').classed('outlined', false)
+    },
     addSelection(id) {
       if (!this.selected.includes(id)) this.selected.push(id);
       else this.selected.splice(this.selected.indexOf(id), 1);
