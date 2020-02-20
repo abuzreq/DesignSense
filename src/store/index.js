@@ -145,7 +145,6 @@ function builder(new_data)
                 let ID = ""
                 if(Object.entries(state.markingsMap).length == 0)
                 {
-                    console.log("Default 123");
                     ID = state.defaultMarkingID;
                 }
                 else
@@ -154,7 +153,7 @@ function builder(new_data)
                 }
                 
                 state.markingsMap[ID] = createMarkingObject(state.data);
-                state.markingsDefault = state.markingsMap[ID]
+                //state.markingsDefault = state.markingsMap[ID]
                 //TODO find a proper ID for the marking
                 //TODO create a marking object (which uses all the data available now)
                 //markingsMap[ID] = marking object
@@ -165,7 +164,6 @@ function builder(new_data)
                 let markingID = "";
                 if(!(payload.hasOwnProperty("markingID")))
                 {
-                    console.log("default marking assigned")
                     markingID = state.defaultMarkingID;
                 }
                 else
@@ -173,14 +171,12 @@ function builder(new_data)
                     
                     markingID = payload.markingID;
                 }
-                console.log("markingID ",payload)
                 if(!state.view2markingIDs.has(view))
                 {
                     state.view2markingIDs.set(view, new Set())
                 }
                 
                 state.view2markingIDs.get(view).add(markingID)
-                console.log("markings ",state.view2markingIDs.get(view))
             },
             addView(state, payload)
             {
@@ -198,16 +194,13 @@ function builder(new_data)
                 let view = payload.view;
                 let selection = payload.selection;
                 let operation = payload.operation;
-                console.log(state.view2markingIDs)
-                console.log(state.view2markingIDs.get(view))
-                operate(state.markingsDefault, selection, operation);  
-
-                /*
+               
                 state.view2markingIDs.get(view).forEach((markingID) => 
                 {        
+                    console.log("Updating ", state.markingsMap[markingID] )
                     operate(state.markingsMap[markingID], selection, operation);           
                 })
-                */
+                
             },
             /*update(state, view, selection)
             {

@@ -65,38 +65,72 @@ export default {
           yColumn:"NetSolar",
           colorColumn:"collection",
           width: 650,
-          height: 450
+          height: 450,
+          markingID: "_lqpkb07gn"
       };
     },
   computed: 
   {
+    /*
     ...mapState({
-      markingsMap: 'markingsDefault'
+      marking: 'markingsMap["_lqpkb07gn"]'
     }),
     updateView() 
     {
         console.log("Change detected")
            return true;
-    }
+    }*/
   },
   mounted() {
     vueThis = this;
-    console.log("vueThis ",vueThis)
     //this.width = 650;
     //this.height = 450;
     //this.colorColumn = "collection";
     //this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
     //this.columns = ["objective_value", "surface_area", "weight", "total_load"];
-    console.log(vueThis.viewID)
+    this.$store.commit('addMarking', {view: vueThis.viewID})
     this.chart = this.createChart();
     
-    vueThis.$store.commit('addMarking', {view: vueThis.viewID})
-        console.log("ahaa",vueThis.$store.getters.markingsMapGetter)
+    
+      this.$store.watch(
+        (state)=> {
+          //let markingID = "_lqpkb07gn";//this.$store.state.view2markingIDs.get(this.viewID)
+          console.log("markingID watching ",state, state.markingsMap[this.markingID]);
 
+          return state.markingsMap;
+        },
+       (newValue, oldVal) => {
+         console.log(" watched ", newValue)
+
+       //  let markingID = this.$store.state.view2markingIDs.get(this.viewID)
+       // let marking =  newValue.get(markingID);
+        let marking  =  newValue[this.markingID]
+        //let marking = newValue;
+        var result = [];
+        for(var alt in marking)
+        {
+            result.push(marking[alt])                   
+        }          
+
+        var atLeastOne = false;
+        for (var on of result) {
+          if (on) {
+            atLeastOne = true;
+            break;
+          }
+        }
+
+        if (atLeastOne) {
+          this.chart.highlight(result);
+        } else {
+          this.chart.unhighlightAll();
+        }
+      }, {deep:true, immediate: false}
+     )
   },
   watch: {
-     /*
-    markingsMap: {
+     
+    marking: {
       handler: function(newValue, oldVal) {
          
         //let markingID = vueThis.$store.state.view2markingIDs.get(vueThis.viewID)
@@ -130,7 +164,7 @@ export default {
 
       }, deep:true
     },
-    */
+    
     width: function(newValue, oldValue)
     {
       this.createChart();
@@ -150,39 +184,7 @@ export default {
     }
   },
   created() {
-    this.viewID = 'id'+this._uid
-    console.log()
-     this.$store.watch(
-        (state)=> {
-          return state.markingsDefault;
-        },
-       (newValue, oldVal) => {
-         
-        //let markingID = vueThis.$store.state.view2markingIDs.get(vueThis.viewID)
-        //let marking =  newValue.get(markingID);
-
-        let marking = newValue;
-        var result = [];
-        for(var alt in marking)
-        {
-            result.push(marking[alt])                   
-        }          
-
-        var atLeastOne = false;
-        for (var on of result) {
-          if (on) {
-            atLeastOne = true;
-            break;
-          }
-        }
-
-        if (atLeastOne) {
-          this.chart.highlight(result);
-        } else {
-          this.chart.unhighlightAll();
-        }
-      }, {deep:true}
-     )
+ this.viewID = 'id'+this._uid;
     /*
     this.$store.watch(
       (state, getters) => getters.markingsDefaultGetter,
@@ -230,7 +232,6 @@ export default {
         .colorColumn(this.colorColumn)
         .colorRange(["#00c65c", "#8400c6", "#e54100"]);
 
-      console.log("#"+this.viewID)
       d3.select("#"+this.viewID)
         .datum(this.chartData)
         .call(scatterPlot);
