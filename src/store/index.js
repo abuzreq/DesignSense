@@ -76,6 +76,7 @@ function flip(value)
 
 function operate(marking, selection, operation)
 {  
+    //TODO
     if(operation == operations.REPLACE)
     {
         for (var alt in marking) {
@@ -124,12 +125,47 @@ function createMarkingObject(data)
     }
     return marking;
 }
+/**
+ * Finds the marking that affects the passed view
+ * @param {*} markingID2views 
+ * @param {*} view 
+ */
+function findMarkingAffectingView(markingsMap, markingID2views, view)
+{
+    return markingsMap[findMarkingIDForView(markingID2views, view)]
+}
+
+/**
+ * Finds markingID of the marking that affects the passed view
+ * @param {*} markingID2views 
+ * @param {*} view 
+ */
+function findMarkingIDForView(markingID2views, view)
+{
+    let targetMarkingID = null;
+    markingID2views.forEach((viewsSet, markingID) => 
+    {        
+        if(viewsSet.has(view))
+        {
+            targetMarkingID = markingID;
+        }  
+    }) 
+    if(targetMarkingID == null)
+    {
+        console.error("No Marking affecting this view was found")
+        return null;
+    }
+    else
+    {
+        return targetMarkingID;
+    }   
+}
 
 function builder(new_data) 
 {
     return new Vuex.Store({
         state: {
-            defaultMarkingID: "_lqpkb07gn",//generateID(),
+            defaultMarkingID: generateID(), //"_lqpkb07gn"
             data: preprocess(new_data),
             view2markingIDs: new Map(),
             markingID2views: new Map(), 
@@ -167,8 +203,7 @@ function builder(new_data)
                     markingID = state.defaultMarkingID;
                 }
                 else
-                {
-                    
+                {           
                     markingID = payload.markingID;
                 }
                 if(!state.view2markingIDs.has(view))
@@ -193,14 +228,29 @@ function builder(new_data)
             {
                 let view = payload.view;
                 let selection = payload.selection;
+
                 let operation = payload.operation;
-               
+
+                
+                if(state.ctrlOn)
+                {
+                    operation = operations.TOGGLE;
+                }
+                else if(state.shiftOn)
+                {
+                    operation = operations.ADD;
+                }
+                else
+                {
+                    operation = operations.REPLACE;
+                }
+                console.log(operation, state.ctrlOn, state.shiftOn)
+                
                 state.view2markingIDs.get(view).forEach((markingID) => 
                 {        
                     console.log("Updating ", state.markingsMap[markingID] )
                     operate(state.markingsMap[markingID], selection, operation);           
-                })
-                
+                })            
             },
             /*update(state, view, selection)
             {
@@ -242,9 +292,17 @@ function builder(new_data)
             }
         },
         actions: {
+            createDefaultView(context, payload) // {commit}, payload
+            {
+                let view = payload.view;
+                let markingID = context.state.defaultMarkingID;
+                context.commit('addMarking', {"view": view, "markingID":markingID});
+                context.commit('addView', {"view": view, "markingID":markingID});
+            }
         },
         modules: {},
         getters: {
+            getMarking : state => view => {return findMarkingAffectingView(state.markingsMap,state.markingID2views, view)},
             data: state => {return state.data},   
             markingsDefaultGetter: state => {return state.markingsDefault},
             markingsMapGetter: (state) => (markingID) => { console.log(markingID, state.markingsMap[markingID]);return state.markingsMap[markingID]},

@@ -71,7 +71,7 @@ export default {
     },
   computed: 
   {
-    /*
+    
     ...mapState({
       marking: 'markingsMap["_lqpkb07gn"]'
     }),
@@ -79,7 +79,7 @@ export default {
     {
         console.log("Change detected")
            return true;
-    }*/
+    }
   },
   mounted() {
     vueThis = this;
@@ -88,10 +88,14 @@ export default {
     //this.colorColumn = "collection";
     //this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
     //this.columns = ["objective_value", "surface_area", "weight", "total_load"];
-    this.$store.commit('addMarking', {view: vueThis.viewID})
+    
+    this.$store.dispatch('createDefaultView',{view: vueThis.viewID})
+    //this.$store.commit('addMarking', {view: vueThis.viewID})
+    //this.$store.commit('addView', {view: vueThis.viewID})
+
     this.chart = this.createChart();
     
-    
+      /*
       this.$store.watch(
         (state)=> {
           //let markingID = "_lqpkb07gn";//this.$store.state.view2markingIDs.get(this.viewID)
@@ -126,7 +130,7 @@ export default {
           this.chart.unhighlightAll();
         }
       }, {deep:true, immediate: false}
-     )
+     )*/
   },
   watch: {
      
@@ -185,6 +189,38 @@ export default {
   },
   created() {
  this.viewID = 'id'+this._uid;
+
+     this.$store.subscribe((mutation, state) => {
+      if (mutation.type === 'update')
+      {
+        //TODO currently this is called every time a change happens to ANY marking. Should only listen to changes in this view's marking
+        let marking = this.$store.getters.getMarking(this.viewID)
+        var result = [];
+        for(var alt in marking)
+        {
+            result.push(marking[alt])                   
+        }      
+
+        var atLeastOne = false;
+        for (var on of result) {
+          if (on) {
+            atLeastOne = true;
+            break;
+          }
+        }
+
+
+        if (atLeastOne) {
+          this.chart.highlight(result);
+        } else {
+          this.chart.unhighlightAll();
+        }
+
+
+      }
+    });
+
+
     /*
     this.$store.watch(
       (state, getters) => getters.markingsDefaultGetter,
@@ -322,7 +358,7 @@ class ScatterPlot {
             return d[yColumn];
           })
         );
-
+        console.log('window', window)
         var brush = d3
           .brush()
           .extent([
@@ -331,7 +367,15 @@ class ScatterPlot {
           ])
           .on("start", brushstart)
           .on("brush", brushmove)
-          .on("end", brushend);
+          .on("end", brushend)
+          /*
+          .on("start.nokey", function() {
+            d3.select(window).on("keydown.brush keyup.brush", null);
+          });*/
+
+          brush.keyModifier(d3.brushFixSize, null)
+          brush.keyModifier(d3.brushFixCenter , null)
+
 
         svg.attr("width", outerWidth).attr("height", outerHeight);
 
@@ -434,6 +478,9 @@ class ScatterPlot {
      // If the brush is empty, select all circles.
         function brushend() {
           if (d3.event.selection !== null) {
+                // programmed clearing of brush after mouse-up
+     
+
             const e = d3.event.selection;
 
             let brushed = [];

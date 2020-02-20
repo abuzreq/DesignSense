@@ -60,6 +60,13 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
         render: h => h(App),
       });
 
+      document.addEventListener('keydown',  function(e)
+      {
+        console.log(e.keyCode === 16, e.shiftKey)
+        app.$store.ctrlOn = e.ctrlKey;
+        app.$store.shiftOn = e.keyCode === 16;
+      })
+
       document.addEventListener('click', 
       function(e)
       {
