@@ -67,7 +67,10 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
         app.$store.ctrlOn = e.ctrlKey;
         app.$store.shiftOn = e.shiftKey;
       });
-      
+      app.$store.commit('createMarkingEntry')
+
+
+
   })
 
 

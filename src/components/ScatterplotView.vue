@@ -2,7 +2,7 @@
 
 <template>
   <v-container fluid>
-    <div :id="id" ref="scatter" class="scatter" />
+    <div :id="viewID" ref="scatter" class="scatter" />
   </v-container>
 </template>
 
@@ -48,13 +48,18 @@ div >>> .extent {
 import * as d3 from "d3";
 //import ScatterPlot from "@/components/Scatterplot.js";
 import views from "@/components/constants.js";
+import operations from "@/components/operations.js";
+import { mapGetters,mapState  } from 'vuex'
+
 
 let vueThis;
 export default {
+
   name: "ScatterplotView",
   props: ["chartData"],
   data:   function() {
       return {
+          viewID: null,
           chart: null,
           xColumn:"TotalFlrArea",
           yColumn:"NetSolar",
@@ -65,20 +70,67 @@ export default {
     },
   computed: 
   {
-    id () {return 'id'+this._uid}
+    ...mapState({
+      markingsMap: 'markingsDefault'
+    }),
+    updateView() 
+    {
+        console.log("Change detected")
+           return true;
+    }
   },
   mounted() {
     vueThis = this;
-    
+    console.log("vueThis ",vueThis)
     //this.width = 650;
     //this.height = 450;
     //this.colorColumn = "collection";
     //this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
     //this.columns = ["objective_value", "surface_area", "weight", "total_load"];
-
+    console.log(vueThis.viewID)
     this.chart = this.createChart();
+    
+    vueThis.$store.commit('addMarking', {view: vueThis.viewID})
+        console.log("ahaa",vueThis.$store.getters.markingsMapGetter)
+
   },
-  watch: { 
+  watch: {
+     /*
+    markingsMap: {
+      handler: function(newValue, oldVal) {
+         
+        //let markingID = vueThis.$store.state.view2markingIDs.get(vueThis.viewID)
+        //let marking =  newValue.get(markingID);
+
+        let marking = newValue;
+        var result = [];
+        for(var alt in marking)
+        {
+            result.push(marking[alt])                   
+        }          
+        console.log(" watch ",vueThis, vueThis.viewID)
+
+        var atLeastOne = false;
+        for (var on of result) {
+          //console.log(on);
+          if (on) {
+            atLeastOne = true;
+            break;
+          }
+        }
+
+        if (atLeastOne) {
+          vueThis.chart.highlight(result);
+        } else {
+          vueThis.chart.unhighlightAll();
+        }
+
+
+
+
+      }, deep:true
+    },
+    */
     width: function(newValue, oldValue)
     {
       this.createChart();
@@ -98,12 +150,26 @@ export default {
     }
   },
   created() {
-    this.$store.watch(
-      (state, getters) => getters.highlightedMask,
-      (newValue, oldValue) => {
+    this.viewID = 'id'+this._uid
+    console.log()
+     this.$store.watch(
+        (state)=> {
+          return state.markingsDefault;
+        },
+       (newValue, oldVal) => {
+         
+        //let markingID = vueThis.$store.state.view2markingIDs.get(vueThis.viewID)
+        //let marking =  newValue.get(markingID);
+
+        let marking = newValue;
+        var result = [];
+        for(var alt in marking)
+        {
+            result.push(marking[alt])                   
+        }          
+
         var atLeastOne = false;
-        for (var on of newValue) {
-          //console.log(on);
+        for (var on of result) {
           if (on) {
             atLeastOne = true;
             break;
@@ -111,7 +177,31 @@ export default {
         }
 
         if (atLeastOne) {
-          vueThis.chart.highlight(newValue);
+          this.chart.highlight(result);
+        } else {
+          this.chart.unhighlightAll();
+        }
+      }, {deep:true}
+     )
+    /*
+    this.$store.watch(
+      (state, getters) => getters.markingsDefaultGetter,
+      (newValue, oldValue) => {
+        console.log("MARKING(s) CHANGED ",newValue)
+        //Currently listens to any change in the markings map, even if that marking had no relation to this view
+        
+        let markingID = state.view2markingIDs.get(vueThis.viewID)
+        let marking =  newValue.get(markingID);
+
+        var result = [];
+        for(var alt in marking)
+        {
+            result.push(marking[alt])                   
+        }          
+        
+
+        if (atLeastOne) {
+          vueThis.chart.highlight(result);
         } else {
           vueThis.chart.unhighlightAll();
         }
@@ -119,7 +209,7 @@ export default {
       {
         deep: true //add this if u need to watch object properties change etc.
       }
-    );
+    );*/
   },
   methods: {
     createChart: function() {
@@ -140,8 +230,8 @@ export default {
         .colorColumn(this.colorColumn)
         .colorRange(["#00c65c", "#8400c6", "#e54100"]);
 
-      console.log("#"+this.id)
-      d3.select("#"+this.id)
+      console.log("#"+this.viewID)
+      d3.select("#"+this.viewID)
         .datum(this.chartData)
         .call(scatterPlot);
       return scatterPlot;
@@ -305,7 +395,7 @@ class ScatterPlot {
         function brushmove(p) {}
 
         // If the brush is empty, select all circles.
-        function brushend() {
+        function brushendOLD() {
           if (d3.event.selection !== null) {
             const e = d3.event.selection;
 
@@ -337,6 +427,43 @@ class ScatterPlot {
             //console.log("brush", brushed);
             if (brushed.length > 0) {
               vueThis.$store.commit("highlight", [brushed, views.SCATTERPLOT]);
+            }
+          }
+        }
+     // If the brush is empty, select all circles.
+        function brushend() {
+          if (d3.event.selection !== null) {
+            const e = d3.event.selection;
+
+            let brushed = [];
+            let brushedMask = [];
+            let brushedIDs = [];
+            //let currentMask = vueThis.$store.getters.highlightedMask;
+
+            let circles = g.selectAll("circle");
+            circles.each((d, i) => {
+              var cx = xScale(d[xColumn]);
+              var cy = yScale(d[yColumn]);
+              // console.log(e, cx,cy)
+              var isOutside =
+                e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1];
+
+              if (isOutside) {
+                brushedMask.push(0);
+              } else if (!isOutside)// && currentMask[i])  //TODO this will work only in case of a details view
+              {
+                  brushedIDs.push(d._id);
+                  brushed.push(d);
+                  brushedMask.push(1);
+              }
+            });
+
+            //highlight(brushedMask);
+
+            //circle.classed("hidden", (d, i) => (brushedMask ? true : false));
+            //console.log("brush", brushed);
+            if (brushed.length > 0) {
+              vueThis.$store.commit("update", {view: vueThis.viewID, selection:brushedIDs, operation: operations.ADD});
             }
           }
         }

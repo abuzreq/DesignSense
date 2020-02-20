@@ -1,6 +1,8 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import views from "@/components/constants.js";
+import operations from "@/components/operations.js";
+import generateID from "@/components/utils.js";
 
 Vue.use(Vuex);
 
@@ -34,20 +36,184 @@ function reset_map(map)
     }
     return map
 }
+function getSelection(marking, selection)
+{
+    var selected = {};
+    for (var alt of selection) {
+        selected[alt] = marking[alt]
+    }
+}
+
+function allTheSame(selected)
+{
+    var atleastOneIsDifferent = false;
+    var tmp = -1;
+    var old = -1;
+    for (var alt in selected) 
+    {  
+       if(tmp == -1)
+       {
+          old = selected[alt];
+       }
+       else
+       {
+         old = tmp;
+       }
+       tmp = selected[alt]
+
+       if(old != tmp)
+       {
+         atleastOneIsDifferent = true;
+         break;
+       }
+    }
+    return atleastOneIsDifferent;
+}
+function flip(value)
+{
+    return value == 1?0:1
+}
+
+function operate(marking, selection, operation)
+{  
+    if(operation == operations.REPLACE)
+    {
+        for (var alt in marking) {
+            marking[alt] = 0;
+        }
+        for (var alt of selection) {
+            marking[alt] = 1;
+        }
+    }
+    else if(operation == operations.ADD)
+    {
+        for (var alt of selection) {
+            marking[alt] = 1;
+        }
+    }
+    else if(operation == operations.TOGGLE)
+    {
+        let selected = getSelection(marking, selection)
+        let areAllTheSame = allTheSame(selected)
+        if(areAllTheSame)
+        {
+            for (var alt of selection) {
+                marking[alt] = flip(marking[alt]);
+            }    
+        }
+        else
+        {
+            for (var alt of selection) {
+                marking[alt] = 1;
+            }
+        }
+    }
+    else
+    {
+       console.error('Unknown Selection Operation')
+        
+    }
+}
+function createMarkingObject(data)
+{
+    let marking = {}
+    for (var alt of data) 
+    {
+        //console.log(alt._id)
+        marking[alt._id] = 0;    
+    }
+    return marking;
+}
 
 function builder(new_data) 
 {
-
     return new Vuex.Store({
         state: {
+            defaultMarkingID: "_lqpkb07gn",//generateID(),
             data: preprocess(new_data),
-            highlighted_map: prepare_map(new_data), //TODO: [Fix] Assumes data will not change, need to update the map so it includes additional data when it arrives
-            highlighted_forms_map: prepare_map(new_data),
+            view2markingIDs: new Map(),
+            markingID2views: new Map(), 
+            markingsMap: {}, // markingID -> marking object. Marking object is {altID -> highlightState}
+            markingsDefault: {},
             ctrlOn: false,
             shiftOn: false
         },
-        mutations: {
-            
+        mutations: 
+        {
+            createMarkingEntry(state)
+            {
+                let ID = ""
+                if(Object.entries(state.markingsMap).length == 0)
+                {
+                    console.log("Default 123");
+                    ID = state.defaultMarkingID;
+                }
+                else
+                {
+                    ID = generateID(); 
+                }
+                
+                state.markingsMap[ID] = createMarkingObject(state.data);
+                state.markingsDefault = state.markingsMap[ID]
+                //TODO find a proper ID for the marking
+                //TODO create a marking object (which uses all the data available now)
+                //markingsMap[ID] = marking object
+            },
+            addMarking(state, payload)
+            {
+                let view = payload.view;
+                let markingID = "";
+                if(!(payload.hasOwnProperty("markingID")))
+                {
+                    console.log("default marking assigned")
+                    markingID = state.defaultMarkingID;
+                }
+                else
+                {
+                    
+                    markingID = payload.markingID;
+                }
+                console.log("markingID ",payload)
+                if(!state.view2markingIDs.has(view))
+                {
+                    state.view2markingIDs.set(view, new Set())
+                }
+                
+                state.view2markingIDs.get(view).add(markingID)
+                console.log("markings ",state.view2markingIDs.get(view))
+            },
+            addView(state, payload)
+            {
+                let view = payload.view;
+                let markingID = payload.markingID;
+
+                if(!state.markingID2views.has(markingID))
+                {
+                    state.markingID2views.set(markingID, new Set())
+                }
+                state.markingID2views.get(markingID).add(view)
+            },
+            update(state, payload)
+            {
+                let view = payload.view;
+                let selection = payload.selection;
+                let operation = payload.operation;
+                console.log(state.view2markingIDs)
+                console.log(state.view2markingIDs.get(view))
+                operate(state.markingsDefault, selection, operation);  
+
+                /*
+                state.view2markingIDs.get(view).forEach((markingID) => 
+                {        
+                    operate(state.markingsMap[markingID], selection, operation);           
+                })
+                */
+            },
+            /*update(state, view, selection)
+            {
+                let operation = 'OR'; //check cntrl and shift then decide operation
+                update(view, selection, operation)
+            },*/
             highlight(state, args) 
             {
                 let selection = args[0]
@@ -73,21 +239,6 @@ function builder(new_data)
                         state.highlighted_forms_map[element._id] =  1;             
                     })
                 }
-
-                //console.log("highlight2",state.highlighted_map)
-
-                /*
-                //console.log("highlight",selection)
-                let ids = selection.map(e => e._id)
-                state.data.forEach(element => 
-                {
-                    if(ids.includes(element._id))
-                    {
-                        element['highlighted'] = 1;                 
-                    } 
-                });*/
-
-
             },
             unhighlight(state, selection) 
             {
@@ -101,7 +252,9 @@ function builder(new_data)
         },
         modules: {},
         getters: {
-            data: state => {return state.data},     
+            data: state => {return state.data},   
+            markingsDefaultGetter: state => {return state.markingsDefault},
+            markingsMapGetter: (state) => (markingID) => { console.log(markingID, state.markingsMap[markingID]);return state.markingsMap[markingID]},
             highlighted: state => 
             {
                 var result = [];

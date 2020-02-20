@@ -17,8 +17,11 @@
         <v-layout row>
           <v-flex md8>
             <v-card height="500px">
+              <ScatterplotView 
+                  :chartData="this.$store.state.data">
+               </ScatterplotView>
               <!-- pcoords -->
-              <ParCoordsView :chartData="this.$store.state.data" />
+              <!--<ParCoordsView :chartData="this.$store.state.data" />-->
             </v-card>
           </v-flex>
           <v-flex md4>
@@ -48,13 +51,13 @@
           <v-flex md3>
             <v-card height="450px">
               <!-- Similarity-->
-              <DendrogramView />
+              <!--<DendrogramView />-->
             </v-card>
           </v-flex>
           <v-flex md9>
             <v-card height="450px">
               <!-- Grid -->
-              <AugmentedGridView />
+              <!--AugmentedGridView />-->
             </v-card>
           </v-flex>
         </v-layout>
