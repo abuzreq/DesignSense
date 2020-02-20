@@ -78,47 +78,13 @@ export default {
     //this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
     //this.columns = ["objective_value", "surface_area", "weight", "total_load"];
     
-    this.$store.dispatch('createDefaultView',{view: vueThis.viewID})
-
+    //TODO Blend  createDefaultView  and  createView
+    this.$store.dispatch('createDefaultView',{view: this.viewID})
     this.chart = this.createChart();
+    this.$store.commit('createView', {viewID: this.viewID, vueComponent: this});
+
   },
   watch: {
-     
-    marking: {
-      handler: function(newValue, oldVal) {
-         
-        //let markingID = vueThis.$store.state.view2markingIDs.get(vueThis.viewID)
-        //let marking =  newValue.get(markingID);
-
-        let marking = newValue;
-        var result = [];
-        for(var alt in marking)
-        {
-            result.push(marking[alt])                   
-        }          
-        console.log(" watch ",vueThis, vueThis.viewID)
-
-        var atLeastOne = false;
-        for (var on of result) {
-          //console.log(on);
-          if (on) {
-            atLeastOne = true;
-            break;
-          }
-        }
-
-        if (atLeastOne) {
-          vueThis.chart.highlight(result);
-        } else {
-          vueThis.chart.unhighlightAll();
-        }
-
-
-
-
-      }, deep:true
-    },
-    
     width: function(newValue, oldValue)
     {
       this.createChart();
@@ -186,7 +152,18 @@ export default {
         .yAxisLabelOffset(30)
         .yTicks(20)
         .colorColumn(this.colorColumn)
-        .colorRange(["#00c65c", "#8400c6", "#e54100"]);
+        .colorRange(["#00c65c", "#8400c6", "#e54100"])
+        .onBrushed((brushedIDs) => {               
+              this.$store.commit("update", 
+              {view: this.viewID,
+               selection: brushedIDs, 
+               "operation": getOperationFromEvent(d3.event.sourceEvent) 
+               });
+        })
+
+
+
+
 
       d3.select("#"+this.viewID)
         .datum(this.chartData)
@@ -229,6 +206,10 @@ class ScatterPlot {
       .tickFormat(d3.format("s"));
     var yTicks = 5;
     let thisG = null;
+
+    
+    var onBrushed;
+
     function chart(selection) {
       var innerWidth = outerWidth - margin.left - margin.right;
       var innerHeight = outerHeight - margin.top - margin.bottom;
@@ -358,42 +339,6 @@ class ScatterPlot {
         function brushmove(p) {}
 
         // If the brush is empty, select all circles.
-        function brushendOLD() {
-          if (d3.event.selection !== null) {
-            const e = d3.event.selection;
-
-            let brushed = [];
-            let brushedMask = [];
-            let currentMask = vueThis.$store.getters.highlightedMask;
-
-            let circles = g.selectAll("circle");
-            circles.each((d, i) => {
-              var cx = xScale(d[xColumn]);
-              var cy = yScale(d[yColumn]);
-              // console.log(e, cx,cy)
-              var isOutside =
-                e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1];
-
-              if (isOutside) {
-                brushedMask.push(0);
-              } else if (!isOutside && currentMask[i]) 
-              {
-                
-                  brushed.push(d);
-                  brushedMask.push(1);
-              }
-            });
-
-            //highlight(brushedMask);
-
-            //circle.classed("hidden", (d, i) => (brushedMask ? true : false));
-            //console.log("brush", brushed);
-            if (brushed.length > 0) {
-              vueThis.$store.commit("highlight", [brushed, views.SCATTERPLOT]);
-            }
-          }
-        }
-     // If the brush is empty, select all circles.
         function brushend() {
           if (d3.event.selection !== null) {
             
@@ -402,7 +347,6 @@ class ScatterPlot {
             let brushed = [];
             let brushedMask = [];
             let brushedIDs = [];
-            //let currentMask = vueThis.$store.getters.highlightedMask;
 
             let circles = g.selectAll("circle");
             circles.each((d, i) => {
@@ -421,14 +365,8 @@ class ScatterPlot {
             });
 
             if (brushed.length > 0) 
-            {     
-              
-              vueThis.$store.commit("update", 
-              {view: vueThis.viewID,
-               selection: brushedIDs, 
-               "operation": getOperationFromEvent(d3.event.sourceEvent) 
-               });
-               
+            {
+                onBrushed(brushedIDs)
             }
           }
         }
@@ -449,6 +387,12 @@ class ScatterPlot {
         thisG = g;
       });
     }
+
+   chart.onBrushed = function(_) {
+      if (!arguments.length) return onBrushed;
+      onBrushed = _;
+      return chart;
+    };
 
     chart.outerWidth = function(_) {
       if (!arguments.length) return outerWidth;

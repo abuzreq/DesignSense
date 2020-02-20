@@ -60,50 +60,46 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
         render: h => h(App),
       });
 
+      
       document.addEventListener('keydown',  function(e)
       {
         if(!app.$store.shiftOn && e.shiftKey)
         {
           app.$store.shiftOn = true;
-          console.log('down ',app.$store.shiftOn)
         }
-        
-        /*
-        app.$store.ctrlOn = e.ctrlKey;
-        app.$store.altOn = e.altKey;
-      */
-       
+        if(!app.$store.altOn && e.altKey)
+        {
+          app.$store.altOn = e.altKey;
+        }
+        if(e.ctrlKey)
+        {
+          let args = {}
+          //Creates the default marking
+          app.$store.commit('createMarkingEntry', args)
+          console.log(args)
+
+          let views = Object.keys(app.$store.state.viewsMap)
+          console.log("views ",views)
+          app.$store.dispatch('createDetailsView',{master_view: views[0], details_view: views[1]})
+
+        }
+
       })
       document.addEventListener('keyup',  function(e)
       {
         if(e.keyCode === 16)
         {
           app.$store.shiftOn = false;
-          console.log('up ',app.$store.shiftOn)
         }
-        //app.$store.shiftOn = e.shiftKey;
-        /*
-        app.$store.ctrlOn = e.ctrlKey;
-        app.$store.altOn = e.altKey;
-        */
-      
+           
+        if(e.keyCode === 18)
+        {
+          app.$store.altOn = false;
+        }
       })
 
-      /*
-      document.addEventListener('click', 
-      function(e)
-      {
-        console.log(e.shiftKey)
-        app.$store.ctrlOn = e.ctrlKey;
-        app.$store.shiftOn = e.shiftKey;
-      });
-      */
 
-
-      //Creates the default marking
-      app.$store.commit('createMarkingEntry')
-
-
+  
 
   })
 

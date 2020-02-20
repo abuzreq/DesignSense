@@ -113,7 +113,6 @@ function operate(marking, selection, operation)
     else
     {
        console.error('Unknown Selection Operation')
-        
     }
 }
 function createMarkingObject(data)
@@ -161,7 +160,23 @@ function findMarkingIDForView(markingID2views, view)
         return targetMarkingID;
     }   
 }
-
+/**
+ * 
+ * @param {*} view 
+ * @param {*} view2markingIDs 
+ * @param {*} markingID2views 
+ */
+function disconnectViewFromMarkings(view, view2markingIDs, markingID2views)
+{
+    view2markingIDs.delete(view);
+    markingID2views.forEach((viewsSet, markingID) => 
+    {        
+        if(viewsSet.has(view))
+        {
+           viewsSet.delete(view)
+        }  
+    }) 
+}
 function builder(new_data) 
 {
     return new Vuex.Store({
@@ -171,15 +186,23 @@ function builder(new_data)
             view2markingIDs: new Map(),
             markingID2views: new Map(), 
             markingsMap: {}, // markingID -> marking object. Marking object is {altID -> highlightState}
-            markingsDefault: {},
+            viewsMap: {},
             ctrlOn: false,
             shiftOn: false,
             altOn: false,
         },
         mutations: 
         {
-            createMarkingEntry(state)
+            createView(state, payload)
             {
+                let viewID = payload.viewID;
+                let vueComponent = payload.vueComponent;
+                state.viewsMap[viewID] = vueComponent;
+                console.log(state.viewsMap)
+            },
+            createMarkingEntry(state, args)
+            {
+
                 let ID = ""
                 if(Object.entries(state.markingsMap).length == 0)
                 {
@@ -189,12 +212,13 @@ function builder(new_data)
                 {
                     ID = generateID(); 
                 }
-                
+                //Uses all the currently available data
                 state.markingsMap[ID] = createMarkingObject(state.data);
-                //state.markingsDefault = state.markingsMap[ID]
-                //TODO find a proper ID for the marking
-                //TODO create a marking object (which uses all the data available now)
-                //markingsMap[ID] = marking object
+
+                if(args)
+                {
+                    args.markingID = ID;
+                }
             },
             addMarking(state, payload)
             {
@@ -230,29 +254,21 @@ function builder(new_data)
             {
                 let view = payload.view;
                 let selection = payload.selection;
-
                 let operation = payload.operation;
-
-                /*
-                if(state.altOn)
+                console.log(view,state)
+                if( state.view2markingIDs.has(view))
                 {
-                    operation = operations.TOGGLE;
-                }
-                else if(state.shiftOn)
-                {
-                    operation = operations.ADD;
+                    state.view2markingIDs.get(view).forEach((markingID) => 
+                    {        
+                        console.log("Updating ", state.markingsMap[markingID] )
+                        operate(state.markingsMap[markingID], selection, operation);           
+                    })     
                 }
                 else
                 {
-                    operation = operations.REPLACE;
-                }*/
-                console.log(operation, state.ctrlOn, state.shiftOn)
-
-                state.view2markingIDs.get(view).forEach((markingID) => 
-                {        
-                    console.log("Updating ", state.markingsMap[markingID] )
-                    operate(state.markingsMap[markingID], selection, operation);           
-                })            
+                    console.log("This view does not affect any marking")
+                }
+                     
             },
             /*update(state, view, selection)
             {
@@ -300,14 +316,30 @@ function builder(new_data)
                 let markingID = context.state.defaultMarkingID;
                 context.commit('addMarking', {"view": view, "markingID":markingID});
                 context.commit('addView', {"view": view, "markingID":markingID});
+            },
+            createDetailsView(context, payload) // {commit}, payload
+            {
+                console.log("createDetailsView", payload)
+                let master_view = payload.master_view;
+                let details_view = payload.details_view;
+                //Make sure the details view is not linked to anything else first
+                disconnectViewFromMarkings(details_view, context.state.view2markingIDs, context.state.markingID2views)
+                
+                //Create a new marking that will be affected by master and affecting slave
+                let args = {markingID:""};
+                context.commit('createMarkingEntry', args)
+                let newMarkingID = args.markingID;
+
+                context.commit('addMarking', {"view": master_view, "markingID":newMarkingID});
+                context.commit('addView', {"view": details_view, "markingID":newMarkingID});
             }
         },
         modules: {},
         getters: {
             getMarking : state => view => {return findMarkingAffectingView(state.markingsMap,state.markingID2views, view)},
             data: state => {return state.data},   
-            markingsDefaultGetter: state => {return state.markingsDefault},
-            markingsMapGetter: (state) => (markingID) => { console.log(markingID, state.markingsMap[markingID]);return state.markingsMap[markingID]},
+            markingsDefaultGetter: state => {return  state.markingsMap[state.defaultMarkingID]},
+            markingsMapGetter: (state) => (markingID) => {return state.markingsMap[markingID]},
             highlighted: state => 
             {
                 var result = [];
