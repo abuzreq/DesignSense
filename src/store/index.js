@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import views from "@/components/constants.js";
-import operations from "@/components/operations.js";
+import {operations} from "@/components/operations.js";
 import generateID from "@/components/utils.js";
 
 Vue.use(Vuex);
@@ -37,11 +37,12 @@ function reset_map(map)
     return map
 }
 function getSelection(marking, selection)
-{
+{   
     var selected = {};
     for (var alt of selection) {
         selected[alt] = marking[alt]
     }
+    return selected;
 }
 
 function allTheSame(selected)
@@ -67,7 +68,7 @@ function allTheSame(selected)
          break;
        }
     }
-    return atleastOneIsDifferent;
+    return !atleastOneIsDifferent;  
 }
 function flip(value)
 {
@@ -172,7 +173,8 @@ function builder(new_data)
             markingsMap: {}, // markingID -> marking object. Marking object is {altID -> highlightState}
             markingsDefault: {},
             ctrlOn: false,
-            shiftOn: false
+            shiftOn: false,
+            altOn: false,
         },
         mutations: 
         {
@@ -231,8 +233,8 @@ function builder(new_data)
 
                 let operation = payload.operation;
 
-                
-                if(state.ctrlOn)
+                /*
+                if(state.altOn)
                 {
                     operation = operations.TOGGLE;
                 }
@@ -243,9 +245,9 @@ function builder(new_data)
                 else
                 {
                     operation = operations.REPLACE;
-                }
+                }*/
                 console.log(operation, state.ctrlOn, state.shiftOn)
-                
+
                 state.view2markingIDs.get(view).forEach((markingID) => 
                 {        
                     console.log("Updating ", state.markingsMap[markingID] )

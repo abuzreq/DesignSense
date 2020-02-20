@@ -3,4 +3,24 @@ const operations = {
     ADD: "ADD",
     TOGGLE: "TOGGLE",
 };
-export default operations;
+
+function getOperationFromEvent(event)
+{
+    let operation = operations.REPLACE;
+    if(event.altKey)
+    {
+        operation = operations.TOGGLE;
+    }
+    else if(event.shiftKey)
+    {
+        operation = operations.ADD;
+    }
+    else
+    {
+        operation = operations.REPLACE;
+    }
+    return operation;
+}
+exports.operations = operations;
+exports.getOperationFromEvent = getOperationFromEvent;
+//export default {operations, getOperationFromEvent};

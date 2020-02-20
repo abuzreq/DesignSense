@@ -48,9 +48,7 @@ div >>> .extent {
 import * as d3 from "d3";
 //import ScatterPlot from "@/components/Scatterplot.js";
 import views from "@/components/constants.js";
-import operations from "@/components/operations.js";
-import { mapGetters,mapState  } from 'vuex'
-
+import {operations,getOperationFromEvent} from "@/components/operations.js";
 
 let vueThis;
 export default {
@@ -66,20 +64,11 @@ export default {
           colorColumn:"collection",
           width: 650,
           height: 450,
-          markingID: "_lqpkb07gn"
       };
     },
   computed: 
   {
-    
-    ...mapState({
-      marking: 'markingsMap["_lqpkb07gn"]'
-    }),
-    updateView() 
-    {
-        console.log("Change detected")
-           return true;
-    }
+
   },
   mounted() {
     vueThis = this;
@@ -90,47 +79,8 @@ export default {
     //this.columns = ["objective_value", "surface_area", "weight", "total_load"];
     
     this.$store.dispatch('createDefaultView',{view: vueThis.viewID})
-    //this.$store.commit('addMarking', {view: vueThis.viewID})
-    //this.$store.commit('addView', {view: vueThis.viewID})
 
     this.chart = this.createChart();
-    
-      /*
-      this.$store.watch(
-        (state)=> {
-          //let markingID = "_lqpkb07gn";//this.$store.state.view2markingIDs.get(this.viewID)
-          console.log("markingID watching ",state, state.markingsMap[this.markingID]);
-
-          return state.markingsMap;
-        },
-       (newValue, oldVal) => {
-         console.log(" watched ", newValue)
-
-       //  let markingID = this.$store.state.view2markingIDs.get(this.viewID)
-       // let marking =  newValue.get(markingID);
-        let marking  =  newValue[this.markingID]
-        //let marking = newValue;
-        var result = [];
-        for(var alt in marking)
-        {
-            result.push(marking[alt])                   
-        }          
-
-        var atLeastOne = false;
-        for (var on of result) {
-          if (on) {
-            atLeastOne = true;
-            break;
-          }
-        }
-
-        if (atLeastOne) {
-          this.chart.highlight(result);
-        } else {
-          this.chart.unhighlightAll();
-        }
-      }, {deep:true, immediate: false}
-     )*/
   },
   watch: {
      
@@ -208,8 +158,6 @@ export default {
             break;
           }
         }
-
-
         if (atLeastOne) {
           this.chart.highlight(result);
         } else {
@@ -220,34 +168,6 @@ export default {
       }
     });
 
-
-    /*
-    this.$store.watch(
-      (state, getters) => getters.markingsDefaultGetter,
-      (newValue, oldValue) => {
-        console.log("MARKING(s) CHANGED ",newValue)
-        //Currently listens to any change in the markings map, even if that marking had no relation to this view
-        
-        let markingID = state.view2markingIDs.get(vueThis.viewID)
-        let marking =  newValue.get(markingID);
-
-        var result = [];
-        for(var alt in marking)
-        {
-            result.push(marking[alt])                   
-        }          
-        
-
-        if (atLeastOne) {
-          vueThis.chart.highlight(result);
-        } else {
-          vueThis.chart.unhighlightAll();
-        }
-      },
-      {
-        deep: true //add this if u need to watch object properties change etc.
-      }
-    );*/
   },
   methods: {
     createChart: function() {
@@ -368,13 +288,11 @@ class ScatterPlot {
           .on("start", brushstart)
           .on("brush", brushmove)
           .on("end", brushend)
-          /*
-          .on("start.nokey", function() {
-            d3.select(window).on("keydown.brush keyup.brush", null);
-          });*/
 
-          brush.keyModifier(d3.brushFixSize, null)
-          brush.keyModifier(d3.brushFixCenter , null)
+          //ref: https://github.com/d3/d3-brush/issues/20
+          brush.keyModifiers(false);
+          //brush.keyModifiers(d3.brushFixSize, null)
+          //brush.keyModifiers(d3.brushFixCenter , null)
 
 
         svg.attr("width", outerWidth).attr("height", outerHeight);
@@ -478,9 +396,7 @@ class ScatterPlot {
      // If the brush is empty, select all circles.
         function brushend() {
           if (d3.event.selection !== null) {
-                // programmed clearing of brush after mouse-up
-     
-
+            
             const e = d3.event.selection;
 
             let brushed = [];
@@ -492,9 +408,7 @@ class ScatterPlot {
             circles.each((d, i) => {
               var cx = xScale(d[xColumn]);
               var cy = yScale(d[yColumn]);
-              // console.log(e, cx,cy)
-              var isOutside =
-                e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1];
+              var isOutside = e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1];
 
               if (isOutside) {
                 brushedMask.push(0);
@@ -506,12 +420,15 @@ class ScatterPlot {
               }
             });
 
-            //highlight(brushedMask);
-
-            //circle.classed("hidden", (d, i) => (brushedMask ? true : false));
-            //console.log("brush", brushed);
-            if (brushed.length > 0) {
-              vueThis.$store.commit("update", {view: vueThis.viewID, selection:brushedIDs, operation: operations.ADD});
+            if (brushed.length > 0) 
+            {     
+              
+              vueThis.$store.commit("update", 
+              {view: vueThis.viewID,
+               selection: brushedIDs, 
+               "operation": getOperationFromEvent(d3.event.sourceEvent) 
+               });
+               
             }
           }
         }

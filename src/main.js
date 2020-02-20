@@ -62,11 +62,34 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
 
       document.addEventListener('keydown',  function(e)
       {
-        console.log(e.keyCode === 16, e.shiftKey)
+        if(!app.$store.shiftOn && e.shiftKey)
+        {
+          app.$store.shiftOn = true;
+          console.log('down ',app.$store.shiftOn)
+        }
+        
+        /*
         app.$store.ctrlOn = e.ctrlKey;
-        app.$store.shiftOn = e.keyCode === 16;
+        app.$store.altOn = e.altKey;
+      */
+       
+      })
+      document.addEventListener('keyup',  function(e)
+      {
+        if(e.keyCode === 16)
+        {
+          app.$store.shiftOn = false;
+          console.log('up ',app.$store.shiftOn)
+        }
+        //app.$store.shiftOn = e.shiftKey;
+        /*
+        app.$store.ctrlOn = e.ctrlKey;
+        app.$store.altOn = e.altKey;
+        */
+      
       })
 
+      /*
       document.addEventListener('click', 
       function(e)
       {
@@ -74,6 +97,10 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
         app.$store.ctrlOn = e.ctrlKey;
         app.$store.shiftOn = e.shiftKey;
       });
+      */
+
+
+      //Creates the default marking
       app.$store.commit('createMarkingEntry')
 
 
