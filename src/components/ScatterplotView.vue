@@ -385,27 +385,18 @@ class ScatterPlot {
         }
 
         var highlight = function(selection) 
-        {
-          console.log("scatter selection",selection)
-          //thisG.selectAll("circle").classed("hidden", true);
-          
+        {          
           thisG.selectAll("circle").classed("hidden", (d, i) =>
           {
               if(d._id in selection)
               {
-                //console.log(d._id)
                 return false;
               }
               else
               {
                 return true;
-              }
-              
-              //(selection[i] ? false : true)
+              }   
           });
-          //thisG.selectAll("circle").classed("hidden", (d, i) => (selection[i] ? false : true));
-
-          
         };
         var unhighlightAll = function() {
           thisG.selectAll("circle").classed("hidden", false);

@@ -90,7 +90,8 @@
 <script>
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
 import { ModelGltf } from "vue-3d-model";
-
+import {operations, getOperationFromEvent} from "@/components/operations.js";
+import { mapState } from "vuex";
 import * as d3 from "d3";
 
 var vueThis;

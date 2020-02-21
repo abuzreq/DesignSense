@@ -22,14 +22,15 @@
           <v-flex md8>
             <v-card height="500px">
               <!-- pcoords -->
-              <ParCoordsView :chartData="this.$store.state.data" />
+              <ParCoordsView />
+              
             </v-card>
           </v-flex>
           <v-flex md4>
             <v-card height="500px">
               <!-- Scatterplot -->
               <!-- <SPLOMView /> -->
-              <ScatterplotView :chartData="this.$store.state.data"></ScatterplotView>
+              <ScatterplotView />
 
               <!--
                  <ScatterplotView 
@@ -56,7 +57,7 @@
           <v-flex md9>
             <v-card height="450px">
               <!-- Grid -->
-              <!--AugmentedGridView />-->
+              <AugmentedGridView/>
             </v-card>
           </v-flex>
         </v-layout>

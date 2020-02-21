@@ -184,16 +184,44 @@ function findMarkingIDForView(markingID2views, view)
  * @param {*} view2markingIDs 
  * @param {*} markingID2views 
  */
-function disconnectViewFromMarkings(view, view2markingIDs, markingID2views)
+function disconnectViewFromMarkings(view, view2markingIDs, markingID2views, markingsMap)
 {
     view2markingIDs.delete(view);
+  
     markingID2views.forEach((viewsSet, markingID) => 
     {        
         if(viewsSet.has(view))
         {
            viewsSet.delete(view)
-        }  
+        }
+
     }) 
+    trimEmptyMarkings(markingID2views, view2markingIDs, markingsMap)
+}
+
+function trimEmptyMarkings(markingID2views, view2markingIDs, markingsMap)
+{
+    let emptyMarkings = []
+    markingID2views.forEach((viewsSet, markingID) => 
+    {        
+        if(viewsSet.size == 0)
+        {
+            emptyMarkings.push(markingID)
+        }
+    }) 
+
+    emptyMarkings.forEach(markingID => 
+    {
+        delete markingsMap[markingID]
+        markingID2views.delete(markingID)
+        view2markingIDs.forEach((markingsSet, view) =>
+        {
+            if(markingsSet.has(markingID))
+            {
+                markingsSet.delete(markingID)
+            }
+        }) 
+    })
 }
 
 function map2Data(map)
@@ -336,7 +364,10 @@ function builder(new_data)
                 let master_view = payload.master_view;
                 let details_view = payload.details_view;
                 //Make sure the details view is not linked to anything else first
-                disconnectViewFromMarkings(details_view, context.state.view2markingIDs, context.state.markingID2views)
+                disconnectViewFromMarkings(details_view, 
+                    context.state.view2markingIDs, 
+                    context.state.markingID2views,
+                    context.state.markingsMap)
                 
                 //Create a new marking that will be affected by master and affecting slave
                 let args = {markingID:""};

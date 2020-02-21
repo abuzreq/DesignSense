@@ -22,11 +22,11 @@ export default {
   data() {
     return {
       chart: null,
+      viewID: null,
       width: 0,
       height: 0,
       excluded_dimensions: [],
       colorColumn: "",
-      viewID: null,
     };
   },
   computed: {
@@ -115,8 +115,7 @@ export default {
              }
         })
         .on("highlight", e => {
-          console.log("highlighting")
-        //  console.log(e);
+         // console.log("highlighting")
         });
 
       //1D-axes  2D-strums   angular
