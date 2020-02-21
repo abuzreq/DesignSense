@@ -47,7 +47,12 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
  //globalURL = "http://142.58.183.69:5050"
  
     //var collection = "feas";//"c-ZNTs0"
-  d3.json(globalURL + "/alternatives").then( (json_data, error) =>
+  d3.json(globalURL + "/alternatives",
+  function(d)
+  {
+      return d._id;
+  })
+  .then( (json_data, error) =>
   {
       console.log(json_data,error)
       json_data = json_data.alternatives
@@ -73,17 +78,11 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
         }
         if(e.ctrlKey)
         {
-          let args = {}
-          //Creates the default marking
-          app.$store.commit('createMarkingEntry', args)
-          console.log(args)
-
+          //console.log(app.$store.state)
           let views = Object.keys(app.$store.state.viewsMap)
-          console.log("views ",views)
+          //console.log("views ", views)
           app.$store.dispatch('createDetailsView',{master_view: views[0], details_view: views[1]})
-
         }
-
       })
       document.addEventListener('keyup',  function(e)
       {
@@ -97,7 +96,10 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
           app.$store.altOn = false;
         }
       })
-
+      let args = {}
+      //Creates the default marking
+      app.$store.commit('createMarkingEntry', args)
+      console.log(args)
 
   
 

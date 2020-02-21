@@ -7,14 +7,9 @@ import generateID from "@/components/utils.js";
 Vue.use(Vuex);
 
 
-//https://stackoverflow.com/questions/41572974/how-to-load-all-server-side-data-on-initial-vue-js-vue-router-load
 function preprocess(data)
 {
-    for(var el of data)
-    {
-        el['highlighted'] = 0;
-    }
-    return data
+    return data;
 }
 
 function prepare_map(data)
@@ -25,6 +20,16 @@ function prepare_map(data)
         map[element._id] = 0
     })
     //let mask = new Array(len).fill(0);
+    return map
+}
+
+function createDataMap(data)
+{
+    let map = {}
+    data.forEach(element => 
+    {
+        map[element._id] = element;
+    })
     return map
 }
 
@@ -41,6 +46,19 @@ function getSelection(marking, selection)
     var selected = {};
     for (var alt of selection) {
         selected[alt] = marking[alt]
+    }
+    return selected;
+}
+
+function getSelectedInMarking(marking, dataMap)
+{   
+    var selected = {};
+    for (var alt in marking) 
+    {
+        if(marking[alt] == 1)
+        {
+            selected[alt] = dataMap[alt];
+        }    
     }
     return selected;
 }
@@ -177,11 +195,32 @@ function disconnectViewFromMarkings(view, view2markingIDs, markingID2views)
         }  
     }) 
 }
+
+function map2Data(map)
+{
+    var result = []
+    for(var key in map)
+    {
+        result.push(map[key]);                
+    }  
+    return result;
+}
+function filterData(dataMap, toFilter)
+{  
+    var dataMapCopy = JSON.parse(JSON.stringify(dataMap)); 
+    for(var altID in toFilter)
+    {
+        delete dataMapCopy[altID];
+    }
+    return dataMapCopy;
+}
+
 function builder(new_data) 
 {
     return new Vuex.Store({
         state: {
             defaultMarkingID: generateID(), //"_lqpkb07gn"
+            rawData: new_data,
             data: preprocess(new_data),
             view2markingIDs: new Map(),
             markingID2views: new Map(), 
@@ -193,16 +232,26 @@ function builder(new_data)
         },
         mutations: 
         {
+            setData(state, payload)
+            {
+                state.data = payload.newData;               
+            },
+            resetMarking(state, payload)
+            {
+                let marking  = state.markingsMap[payload.markingID];
+                for (var alt in marking) 
+                {
+                    marking[alt] = 0; 
+                }             
+            },
             createView(state, payload)
             {
-                let viewID = payload.viewID;
+                let viewID = payload.view;
                 let vueComponent = payload.vueComponent;
                 state.viewsMap[viewID] = vueComponent;
-                console.log(state.viewsMap)
             },
             createMarkingEntry(state, args)
             {
-
                 let ID = ""
                 if(Object.entries(state.markingsMap).length == 0)
                 {
@@ -212,8 +261,9 @@ function builder(new_data)
                 {
                     ID = generateID(); 
                 }
-                //Uses all the currently available data
-                state.markingsMap[ID] = createMarkingObject(state.data);
+
+                //TODO Uses all the currently available data (i.e. raw data) 
+                state.markingsMap[ID] = createMarkingObject(state.rawData);
 
                 if(args)
                 {
@@ -255,67 +305,30 @@ function builder(new_data)
                 let view = payload.view;
                 let selection = payload.selection;
                 let operation = payload.operation;
-                console.log(view,state)
+                console.log("operation ", operation, view, state.viewsMap[view])
                 if( state.view2markingIDs.has(view))
                 {
                     state.view2markingIDs.get(view).forEach((markingID) => 
                     {        
-                        console.log("Updating ", state.markingsMap[markingID] )
                         operate(state.markingsMap[markingID], selection, operation);           
                     })     
                 }
                 else
                 {
                     console.log("This view does not affect any marking")
-                }
-                     
+                }              
             },
-            /*update(state, view, selection)
-            {
-                let operation = 'OR'; //check cntrl and shift then decide operation
-                update(view, selection, operation)
-            },*/
-            highlight(state, args) 
-            {
-                let selection = args[0]
-                let source =  args[1]
-                
-
-                if(source == views.SCATTERPLOT)
-                {
-                    state.highlighted_forms_map = reset_map(state.highlighted_forms_map);
-                    selection.forEach(element => 
-                    {
-                        // let x  = state.highlighted_map[element._id]                
-                        state.highlighted_forms_map[element._id] =  1; // &&  state.highlighted_map[element._id]               
-                    })
-                }
-                else if(source == views.PCOORDS)
-                {
-                    state.highlighted_map = reset_map(state.highlighted_map);
-                    selection.forEach(element => 
-                    {
-                        // let x  = state.highlighted_map[element._id]                
-                        state.highlighted_map[element._id] =  1; // &&  state.highlighted_map[element._id]  
-                        state.highlighted_forms_map[element._id] =  1;             
-                    })
-                }
-            },
-            unhighlight(state, selection) 
-            {
-                selection.forEach(element => 
-                {
-                    state.highlighted_map[element._id] = 0
-                })
-            }
         },
         actions: {
             createDefaultView(context, payload) // {commit}, payload
             {
                 let view = payload.view;
+                let vueComponent = payload.vueComponent;
                 let markingID = context.state.defaultMarkingID;
+                console.log("createDefaultView",payload)
                 context.commit('addMarking', {"view": view, "markingID":markingID});
                 context.commit('addView', {"view": view, "markingID":markingID});
+                context.commit('createView', {"view": view, "vueComponent": vueComponent});
             },
             createDetailsView(context, payload) // {commit}, payload
             {
@@ -332,51 +345,47 @@ function builder(new_data)
 
                 context.commit('addMarking', {"view": master_view, "markingID":newMarkingID});
                 context.commit('addView', {"view": details_view, "markingID":newMarkingID});
+            },
+            zoomToSelection(context)
+            {
+                let dataMapSubset = context.getters.selectedInMarking(context.state.defaultMarkingID);
+                let selection = map2Data(dataMapSubset)
+                context.commit('setData', {newData: selection});
+            },
+            excludeSelection(context)
+            {
+                let toFilter = context.getters.selectedInMarking(context.state.defaultMarkingID);            
+                let selection = map2Data(filterData(context.getters.dataMap, toFilter))
+                context.commit('setData', {newData: selection});
+            },
+            resetData(context)
+            {
+                context.commit('resetMarking', {newData: context.state.defaultMarkingID});
+                context.commit('setData', {newData: context.state.rawData});
             }
         },
         modules: {},
         getters: {
             getMarking : state => view => {return findMarkingAffectingView(state.markingsMap,state.markingID2views, view)},
             data: state => {return state.data},   
+            dataMap: state => {return createDataMap(state.data);},
+            selectedInMarking: (state, getters) => markingID => 
+            {
+                return getSelectedInMarking(state.markingsMap[markingID], getters.dataMap)
+            },
+            selectedInView: (state, getters) => view => 
+            {
+                let marking = findMarkingAffectingView(state.markingsMap, state.markingID2views, view);
+                return getSelectedInMarking(marking, getters.dataMap)
+            },
+            selectedDataInView: (state, getters) => view => 
+            {
+                var selectedInMarking =  getters.selectedInView(view);
+                var result = map2Data(selectedInMarking)
+                return result;             
+            },
             markingsDefaultGetter: state => {return  state.markingsMap[state.defaultMarkingID]},
             markingsMapGetter: (state) => (markingID) => {return state.markingsMap[markingID]},
-            highlighted: state => 
-            {
-                var result = [];
-                let it = 0;
-                for(var id in state.highlighted_map)
-                {
-                    if( state.highlighted_map[id] == 1)
-                    {
-                        result.push(state.data[it])
-                    }
-                    it+=1;
-                }          
-                return result;
-            },
-            highlighted_forms: state => 
-            {
-                var result = [];
-                let it = 0;
-                for(var id in state.highlighted_forms_map)
-                {
-                    if( state.highlighted_forms_map[id] == 1)
-                    {
-                        result.push(state.data[it])
-                    }
-                    it+=1;
-                }          
-                return result;
-            },
-            highlightedMask: state => 
-            {
-                var result = [];
-                for(var id in state.highlighted_map)
-                {
-                    result.push(state.highlighted_map[id] )                   
-                }          
-                return result;
-            }
         }
 
     });
@@ -385,5 +394,6 @@ function builder(new_data)
 
 }
 
+//ref: https://stackoverflow.com/questions/41572974/how-to-load-all-server-side-data-on-initial-vue-js-vue-router-load
 export default builder;
 

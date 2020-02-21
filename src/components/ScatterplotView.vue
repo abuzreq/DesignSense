@@ -48,74 +48,83 @@ div >>> .extent {
 import * as d3 from "d3";
 //import ScatterPlot from "@/components/Scatterplot.js";
 import views from "@/components/constants.js";
-import {operations,getOperationFromEvent} from "@/components/operations.js";
+import { operations, getOperationFromEvent } from "@/components/operations.js";
+import { mapState } from "vuex";
 
-let vueThis;
 export default {
-
   name: "ScatterplotView",
-  props: ["chartData"],
-  data:   function() {
-      return {
-          viewID: null,
-          chart: null,
-          xColumn:"TotalFlrArea",
-          yColumn:"NetSolar",
-          colorColumn:"collection",
-          width: 650,
-          height: 450,
-      };
-    },
-  computed: 
-  {
-
+  //props: ["chartData"],
+  data: function() {
+    return {
+      data: null,
+      viewID: null,
+      chart: null,
+      xColumn: "TotalFlrArea",
+      yColumn: "NetSolar",
+      colorColumn: "collection",
+      width: 650,
+      height: 450
+    };
+  },
+  computed: {
+    ...mapState({ chartData: state => state.data })
   },
   mounted() {
-    vueThis = this;
     //this.width = 650;
     //this.height = 450;
     //this.colorColumn = "collection";
     //this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
     //this.columns = ["objective_value", "surface_area", "weight", "total_load"];
-    
-    //TODO Blend  createDefaultView  and  createView
-    this.$store.dispatch('createDefaultView',{view: this.viewID})
-    this.chart = this.createChart();
-    this.$store.commit('createView', {viewID: this.viewID, vueComponent: this});
 
+    this.chart = this.createChart();
+    this.$store.dispatch("createDefaultView", {
+      view: this.viewID,
+      vueComponent: this
+    });
   },
   watch: {
-    width: function(newValue, oldValue)
-    {
+    width: function(newValue, oldValue) {
       this.createChart();
-     /* this.chart.outerWidth(newValue)
+      /* this.chart.outerWidth(newValue)
       d3.select("#"+this.id)
         .datum(this.chartData)
         .call(this.chart);*/
     },
-    height: function(newValue, oldValue)
-    {
+    height: function(newValue, oldValue) {
       this.createChart();
       /*
             this.chart.outerWidth(newValue)
       d3.select("#"+this.id)
         .datum(this.chartData)
         .call(this.chart);*/
+    },
+    chartData: {
+      handler: function(newValue, oldValue) {
+        /*
+        d3.select("#" + this.viewID)
+          .datum(this.chartData)
+          .call(this.chart);
+*/
+        this.chart = this.createChart();
+        /*d3.select("#" + this.viewID)
+          .datum(newValue)
+          .call(this.chart);*/
+      }
     }
   },
   created() {
- this.viewID = 'id'+this._uid;
+    this.viewID = "id" + this._uid;
 
-     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === 'update')
-      {
+    this.$store.subscribe((mutation, state) => {
+      if (mutation.type === "update") {
         //TODO currently this is called every time a change happens to ANY marking. Should only listen to changes in this view's marking
-        let marking = this.$store.getters.getMarking(this.viewID)
+        let marking = this.$store.getters.getMarking(this.viewID);
+        var result = this.$store.getters.selectedInView(this.viewID);
+      /*
         var result = [];
-        for(var alt in marking)
-        {
-            result.push(marking[alt])                   
-        }      
+        for (var alt in marking) {
+          result.push(marking[alt]);
+        }
 
         var atLeastOne = false;
         for (var on of result) {
@@ -124,19 +133,22 @@ export default {
             break;
           }
         }
+        */
+       this.chart.highlight(result);
+       /*
         if (atLeastOne) {
-          this.chart.highlight(result);
+           console.log("Updating!!",result)
+          
         } else {
           this.chart.unhighlightAll();
-        }
-
-
+        }*/
       }
     });
-
   },
   methods: {
     createChart: function() {
+      this.destroyChart()
+
       var scatterPlot = new ScatterPlot();
 
       scatterPlot
@@ -153,22 +165,25 @@ export default {
         .yTicks(20)
         .colorColumn(this.colorColumn)
         .colorRange(["#00c65c", "#8400c6", "#e54100"])
-        .onBrushed((brushedIDs) => {               
-              this.$store.commit("update", 
-              {view: this.viewID,
-               selection: brushedIDs, 
-               "operation": getOperationFromEvent(d3.event.sourceEvent) 
-               });
-        })
+        .onBrushed(brushedIDs => {
+          this.$store.commit("update", {
+            view: this.viewID,
+            selection: brushedIDs,
+            operation: getOperationFromEvent(d3.event.sourceEvent)
+          });
+        });
 
-
-
-
-
-      d3.select("#"+this.viewID)
+      d3.select("#" + this.viewID)
         .datum(this.chartData)
         .call(scatterPlot);
+
       return scatterPlot;
+    },
+    destroyChart: function() {
+      let node = d3.select("#"+this.viewID)._groups[0][0];//this.$refs["parcoords"];
+      while (node.firstChild) {
+        node.removeChild(node.firstChild);
+      }
     }
   }
 };
@@ -207,7 +222,6 @@ class ScatterPlot {
     var yTicks = 5;
     let thisG = null;
 
-    
     var onBrushed;
 
     function chart(selection) {
@@ -220,15 +234,15 @@ class ScatterPlot {
       let thisChart = this;
 
       selection.each(function(data) {
-        
-        var div = d3.select(this); 
-        var svg = div.select("svg").empty()?div.select("svg").append("svg"): div.select("svg").remove();
+        var div = d3.select(this);
+        var svg = div.select("svg").empty()
+          ? div.select("svg").append("svg")
+          : div.select("svg").remove();
 
-        if(!svg || svg.empty())
-        {
+        if (!svg || svg.empty()) {
           svg = div.append("svg");
         }
-        
+
         var g = svg.append("g");
 
         var circles = g
@@ -259,7 +273,6 @@ class ScatterPlot {
             return d[yColumn];
           })
         );
-        console.log('window', window)
         var brush = d3
           .brush()
           .extent([
@@ -268,13 +281,12 @@ class ScatterPlot {
           ])
           .on("start", brushstart)
           .on("brush", brushmove)
-          .on("end", brushend)
+          .on("end", brushend);
 
-          //ref: https://github.com/d3/d3-brush/issues/20
-          brush.keyModifiers(false);
-          //brush.keyModifiers(d3.brushFixSize, null)
-          //brush.keyModifiers(d3.brushFixCenter , null)
-
+        //ref: https://github.com/d3/d3-brush/issues/20
+        brush.keyModifiers(false);
+        //brush.keyModifiers(d3.brushFixSize, null)
+        //brush.keyModifiers(d3.brushFixCenter , null)
 
         svg.attr("width", outerWidth).attr("height", outerHeight);
 
@@ -291,7 +303,7 @@ class ScatterPlot {
           .attr("y", xAxisLabelOffset)
           .text(xAxisLabel);
 
-        console.log(g.select(".x.axis").select("text"));
+        //console.log(g.select(".x.axis").select("text"));
         g.select(".y.axis")
           .call(d3.axisLeft(yScale))
           .select("text")
@@ -341,7 +353,6 @@ class ScatterPlot {
         // If the brush is empty, select all circles.
         function brushend() {
           if (d3.event.selection !== null) {
-            
             const e = d3.event.selection;
 
             let brushed = [];
@@ -352,31 +363,51 @@ class ScatterPlot {
             circles.each((d, i) => {
               var cx = xScale(d[xColumn]);
               var cy = yScale(d[yColumn]);
-              var isOutside = e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1];
+              var isOutside =
+                e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1];
 
               if (isOutside) {
                 brushedMask.push(0);
-              } else if (!isOutside)// && currentMask[i])  //TODO this will work only in case of a details view
-              {
-                  brushedIDs.push(d._id);
-                  brushed.push(d);
-                  brushedMask.push(1);
+              } else if (!isOutside) {
+                // && currentMask[i])  //TODO this will work only in case of a details view
+                brushedIDs.push(d._id);
+                brushed.push(d);
+                brushedMask.push(1);
               }
             });
 
-            if (brushed.length > 0) 
-            {
-                onBrushed(brushedIDs)
+            if (brushed.length > 0) {
+              onBrushed(brushedIDs);
+            } else {
+              onBrushed([]);
             }
           }
         }
 
-        var highlight = function(selectionMask) {
-          thisG
-            .selectAll("circle")
-            .classed("hidden", (d, i) => (selectionMask[i] ? false : true));
+        var highlight = function(selection) 
+        {
+          console.log("scatter selection",selection)
+          //thisG.selectAll("circle").classed("hidden", true);
+          
+          thisG.selectAll("circle").classed("hidden", (d, i) =>
+          {
+              if(d._id in selection)
+              {
+                //console.log(d._id)
+                return false;
+              }
+              else
+              {
+                return true;
+              }
+              
+              //(selection[i] ? false : true)
+          });
+          //thisG.selectAll("circle").classed("hidden", (d, i) => (selection[i] ? false : true));
+
+          
         };
-        var unhighlightAll = function(selectionMask) {
+        var unhighlightAll = function() {
           thisG.selectAll("circle").classed("hidden", false);
         };
 
@@ -388,7 +419,7 @@ class ScatterPlot {
       });
     }
 
-   chart.onBrushed = function(_) {
+    chart.onBrushed = function(_) {
       if (!arguments.length) return onBrushed;
       onBrushed = _;
       return chart;

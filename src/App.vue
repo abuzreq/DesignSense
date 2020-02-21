@@ -1,38 +1,37 @@
 <template>
-  <v-app >
-      <!--
-    <v-app-bar app dark dense flat  color=" red--text text--lighten-1">
-       DesignSense
-      </v-app-bar>
-      -->
+  <v-app>
+    <v-app-bar app dark dense flat short color=" red--text text--lighten-1" height="30">
+      <v-toolbar-title>DesignSense</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn icon @click="$store.dispatch('zoomToSelection')">
+        <v-icon>mdi-magnify</v-icon>
+      </v-btn>
+
+      <v-btn icon @click="$store.dispatch('excludeSelection')">
+        <v-icon>mdi-filter-remove-outline</v-icon>
+      </v-btn>
+      <v-btn icon @click="$store.dispatch('resetData')">
+        <v-icon>mdi-cached</v-icon>
+      </v-btn>
+    </v-app-bar>
+
     <v-content>
-      <v-container 
-        fluid
-        grid-list-sm
-        align-start
-        justify-start
-        pt-0
-      >
+      <v-container fluid grid-list-sm align-start justify-start pt-0>
         <!-- TOP -->
         <v-layout row>
           <v-flex md8>
             <v-card height="500px">
-              <ScatterplotView 
-                  :chartData="this.$store.state.data">
-               </ScatterplotView>
               <!-- pcoords -->
-              <!--<ParCoordsView :chartData="this.$store.state.data" />-->
+              <ParCoordsView :chartData="this.$store.state.data" />
             </v-card>
           </v-flex>
           <v-flex md4>
             <v-card height="500px">
               <!-- Scatterplot -->
-               <!-- <SPLOMView /> -->
-               <ScatterplotView 
-                  :chartData="this.$store.state.data">
-               </ScatterplotView>
+              <!-- <SPLOMView /> -->
+              <ScatterplotView :chartData="this.$store.state.data"></ScatterplotView>
 
-               <!--
+              <!--
                  <ScatterplotView 
                 :chartData="this.$store.state.data"
                 :xColumn="TotalFlrArea"
@@ -63,7 +62,6 @@
         </v-layout>
       </v-container>
     </v-content>
-    
   </v-app>
 </template>
 
@@ -77,7 +75,6 @@ import DendrogramView from "@/components/DendrogramView.vue";
 
 import ScatterplotView from "@/components/ScatterplotView.vue";
 import TSNEView from "@/components/TSNEView.vue";
-
 
 export default {
   name: "App",
