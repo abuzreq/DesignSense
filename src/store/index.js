@@ -333,7 +333,7 @@ function builder(new_data)
                 let view = payload.view;
                 let selection = payload.selection;
                 let operation = payload.operation;
-                console.log("operation ", operation, view, state.viewsMap[view])
+                //console.log("operation ", operation, view, state.viewsMap[view])
                 if( state.view2markingIDs.has(view))
                 {
                     state.view2markingIDs.get(view).forEach((markingID) => 

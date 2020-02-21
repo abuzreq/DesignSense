@@ -118,7 +118,6 @@ export default {
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === "update") {
         //TODO currently this is called every time a change happens to ANY marking. Should only listen to changes in this view's marking
-        let marking = this.$store.getters.getMarking(this.viewID);
         var result = this.$store.getters.selectedInView(this.viewID);
       /*
         var result = [];
