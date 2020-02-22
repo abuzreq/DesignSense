@@ -6,6 +6,269 @@ import generateID from "@/components/utils.js";
 
 Vue.use(Vuex);
 
+function builder(new_data) 
+{
+    return new Vuex.Store({
+        state: {
+            defaultMarkingID: generateID(), //"_lqpkb07gn"
+            rawData: new_data,
+            data: preprocess(new_data),
+            dataStack: [],
+            view2markingIDs: new Map(),
+            markingID2views: new Map(), 
+            markingsMap: {}, // markingID -> marking object. Marking object is {altID -> highlightState}
+            viewsMap: {},
+            ctrlOn: false,
+            shiftOn: false,
+            altOn: false,
+
+            setsIDs: [],
+            setsMap: {},
+
+        },
+        mutations: 
+        {
+            setData(state, payload)
+            {
+                state.data = payload.newData;               
+            },
+            resetMarking(state, payload)
+            {
+                let marking  = state.markingsMap[payload.markingID];
+                for (var alt in marking) 
+                {
+                    marking[alt] = 0; 
+                }             
+            },
+            createView(state, payload)
+            {
+                let viewID = payload.view;
+                let vueComponent = payload.vueComponent;
+                state.viewsMap[viewID] = vueComponent;
+            },
+            createMarkingEntry(state, args)
+            {
+                let ID = ""
+                if(Object.entries(state.markingsMap).length == 0)
+                {
+                    ID = state.defaultMarkingID;
+                }
+                else
+                {
+                    ID = generateID(); 
+                }
+
+                //TODO Uses all the currently available data (i.e. raw data) 
+                state.markingsMap[ID] = createMarkingObject(state.rawData);
+
+                if(args)
+                {
+                    args.markingID = ID;
+                }
+            },
+            addMarking(state, payload)
+            {
+                let view = payload.view;
+                let markingID = "";
+                if(!(payload.hasOwnProperty("markingID")))
+                {
+                    markingID = state.defaultMarkingID;
+                }
+                else
+                {           
+                    markingID = payload.markingID;
+                }
+                if(!state.view2markingIDs.has(view))
+                {
+                    state.view2markingIDs.set(view, new Set())
+                }
+                
+                state.view2markingIDs.get(view).add(markingID)
+            },
+            addView(state, payload)
+            {
+                let view = payload.view;
+                let markingID = payload.markingID;
+
+                if(!state.markingID2views.has(markingID))
+                {
+                    state.markingID2views.set(markingID, new Set())
+                }
+                state.markingID2views.get(markingID).add(view)
+            },
+            update(state, payload)
+            {
+                let selection = payload.selection;
+                let operation = payload.operation;
+                if((payload.hasOwnProperty("markingID")))
+                {
+                    operate(state.markingsMap[payload.markingID], selection, operation);           
+                }
+                else
+                {
+                    let view = payload.view;
+               
+                    //console.log("operation ", operation, view, state.viewsMap[view])
+                    if(state.view2markingIDs.has(view))
+                    {
+                        state.view2markingIDs.get(view).forEach((markingID) => 
+                        {        
+                            operate(state.markingsMap[markingID], selection, operation);           
+                        })     
+                    }
+                    else
+                    {
+                        console.log("This view does not affect any marking")
+                    }      
+                }       
+            },
+
+            popDataStack(state, payload)
+            {
+                payload.data = state.dataStack.pop();
+            },
+            pushDataStack(state, payload)
+            {
+                //TODO put a limit on the depth of the stack
+                state.dataStack.push(payload.data);               
+            },
+            addSet(state, payload)
+            {
+                let ID = generateID();
+                state.setsIDs.push(ID)
+                state.setsMap[ID] = payload.members;
+                console.log(state.setsMap[ID])
+                
+                //state.markingsMap[payload.markingID]
+            },
+            removeSet(state, payload)
+            {
+                let ID = payload.setID;
+
+                for( var i = 0; i < state.setsIDs.length; i++){ 
+                    if ( state.setsIDs[i] === ID) {
+                        state.setsIDs.splice(i, 1); 
+                    }
+                }
+                delete state.setsMap[ID]
+            }
+        },
+        actions: {
+      
+            createDefaultView(context, payload) // {commit}, payload
+            {
+                let view = payload.view;
+                let vueComponent = payload.vueComponent;
+                let markingID = context.state.defaultMarkingID;
+                console.log("createDefaultView",payload)
+                context.commit('addMarking', {"view": view, "markingID":markingID});
+                context.commit('addView', {"view": view, "markingID":markingID});
+                context.commit('createView', {"view": view, "vueComponent": vueComponent});
+            },
+            createDetailsView(context, payload) // {commit}, payload
+            {
+                console.log("createDetailsView", payload)
+                let master_view = payload.master_view;
+                let details_view = payload.details_view;
+                //Make sure the details view is not linked to anything else first
+                disconnectViewFromMarkings(details_view, 
+                    context.state.view2markingIDs, 
+                    context.state.markingID2views,
+                    context.state.markingsMap)
+                
+                //Create a new marking that will be affected by master and affecting slave
+                let args = {markingID:""};
+                context.commit('createMarkingEntry', args)
+                let newMarkingID = args.markingID;
+
+                context.commit('addMarking', {"view": master_view, "markingID":newMarkingID});
+                context.commit('addView', {"view": details_view, "markingID":newMarkingID});
+            },
+            zoomToSelection(context)
+            {
+                let dataMapSubset = context.getters.selectedInMarking(context.state.defaultMarkingID);
+                let selection = map2Data(dataMapSubset)
+                
+                context.commit('pushDataStack', {data: context.state.data});
+                context.commit('setData', {newData: selection});
+            },
+            excludeSelection(context)
+            {
+                let toFilter = context.getters.selectedInMarking(context.state.defaultMarkingID);            
+                let selection = map2Data(filterData(context.getters.dataMap, toFilter))
+                context.commit('pushDataStack', {data: context.state.data});
+                context.commit('setData', {newData: selection});
+            },
+            resetData(context)
+            {
+                context.commit('resetMarking', {"markingID": context.state.defaultMarkingID});
+                context.commit('setData', {newData: context.state.rawData});
+            },    
+            resetAllMarkings(context)
+            {
+                for(var markingID in context.state.markingsMap)
+                {
+                    console.log("resetting ",markingID)
+                    context.commit('resetMarking', {"markingID": markingID});
+                }
+                
+            },
+            undoDataTransformation(context)
+            {
+                if(context.state.dataStack.length > 0)
+                {
+                    let args = {data:""};
+                    context.commit('popDataStack', args)
+                    context.commit('setData', {newData: args.data});
+                }
+            },
+            createSet(context)
+            {
+                let members = Object.keys(context.getters.selectedInMarking(context.state.defaultMarkingID))
+                context.commit('addSet', {members: members})
+            },
+            restoreSet(context, payload)
+            {
+                context.commit("update", 
+                {
+                    markingID: context.state.defaultMarkingID,
+                    selection: context.state.setsMap[payload.setID],
+                    operation: payload.operation
+                });
+            }
+
+
+        },
+        modules: {},
+        getters: {
+            getMarking : state => view => {return findMarkingAffectingView(state.markingsMap,state.markingID2views, view)},
+            data: state => {return state.data},   
+            dataMap: state => {return createDataMap(state.data);},
+            selectedInMarking: (state, getters) => markingID => 
+            {
+                return getSelectedInMarking(state.markingsMap[markingID], getters.dataMap)
+            },
+            selectedInView: (state, getters) => view => 
+            {
+                let marking = findMarkingAffectingView(state.markingsMap, state.markingID2views, view);
+                return getSelectedInMarking(marking, getters.dataMap)
+            },
+            selectedDataInView: (state, getters) => view => 
+            {
+                var selectedInMarking =  getters.selectedInView(view);
+                var result = map2Data(selectedInMarking)
+                return result;             
+            },
+            markingsDefaultGetter: state => {return  state.markingsMap[state.defaultMarkingID]},
+            markingsMapGetter: (state) => (markingID) => {return state.markingsMap[markingID]},
+        }
+
+    });
+
+
+
+}
+
 
 function preprocess(data)
 {
@@ -242,220 +505,6 @@ function filterData(dataMap, toFilter)
     }
     return dataMapCopy;
 }
-
-function builder(new_data) 
-{
-    return new Vuex.Store({
-        state: {
-            defaultMarkingID: generateID(), //"_lqpkb07gn"
-            rawData: new_data,
-            data: preprocess(new_data),
-            dataStack: [],
-            view2markingIDs: new Map(),
-            markingID2views: new Map(), 
-            markingsMap: {}, // markingID -> marking object. Marking object is {altID -> highlightState}
-            viewsMap: {},
-            ctrlOn: false,
-            shiftOn: false,
-            altOn: false,
-        },
-        mutations: 
-        {
-            setData(state, payload)
-            {
-                state.data = payload.newData;               
-            },
-            resetMarking(state, payload)
-            {
-                let marking  = state.markingsMap[payload.markingID];
-                for (var alt in marking) 
-                {
-                    marking[alt] = 0; 
-                }             
-            },
-            createView(state, payload)
-            {
-                let viewID = payload.view;
-                let vueComponent = payload.vueComponent;
-                state.viewsMap[viewID] = vueComponent;
-            },
-            createMarkingEntry(state, args)
-            {
-                let ID = ""
-                if(Object.entries(state.markingsMap).length == 0)
-                {
-                    ID = state.defaultMarkingID;
-                }
-                else
-                {
-                    ID = generateID(); 
-                }
-
-                //TODO Uses all the currently available data (i.e. raw data) 
-                state.markingsMap[ID] = createMarkingObject(state.rawData);
-
-                if(args)
-                {
-                    args.markingID = ID;
-                }
-            },
-            addMarking(state, payload)
-            {
-                let view = payload.view;
-                let markingID = "";
-                if(!(payload.hasOwnProperty("markingID")))
-                {
-                    markingID = state.defaultMarkingID;
-                }
-                else
-                {           
-                    markingID = payload.markingID;
-                }
-                if(!state.view2markingIDs.has(view))
-                {
-                    state.view2markingIDs.set(view, new Set())
-                }
-                
-                state.view2markingIDs.get(view).add(markingID)
-            },
-            addView(state, payload)
-            {
-                let view = payload.view;
-                let markingID = payload.markingID;
-
-                if(!state.markingID2views.has(markingID))
-                {
-                    state.markingID2views.set(markingID, new Set())
-                }
-                state.markingID2views.get(markingID).add(view)
-            },
-            update(state, payload)
-            {
-                let view = payload.view;
-                let selection = payload.selection;
-                let operation = payload.operation;
-                //console.log("operation ", operation, view, state.viewsMap[view])
-                if( state.view2markingIDs.has(view))
-                {
-                    state.view2markingIDs.get(view).forEach((markingID) => 
-                    {        
-                        operate(state.markingsMap[markingID], selection, operation);           
-                    })     
-                }
-                else
-                {
-                    console.log("This view does not affect any marking")
-                }              
-            },
-            popDataStack(state, payload)
-            {
-                payload.data = state.dataStack.pop();
-            },
-            pushDataStack(state, payload)
-            {
-                //TODO put a limit on the depth of the stack
-                state.dataStack.push(payload.data);               
-            }
-        },
-        actions: {
-            createDefaultView(context, payload) // {commit}, payload
-            {
-                let view = payload.view;
-                let vueComponent = payload.vueComponent;
-                let markingID = context.state.defaultMarkingID;
-                console.log("createDefaultView",payload)
-                context.commit('addMarking', {"view": view, "markingID":markingID});
-                context.commit('addView', {"view": view, "markingID":markingID});
-                context.commit('createView', {"view": view, "vueComponent": vueComponent});
-            },
-            createDetailsView(context, payload) // {commit}, payload
-            {
-                console.log("createDetailsView", payload)
-                let master_view = payload.master_view;
-                let details_view = payload.details_view;
-                //Make sure the details view is not linked to anything else first
-                disconnectViewFromMarkings(details_view, 
-                    context.state.view2markingIDs, 
-                    context.state.markingID2views,
-                    context.state.markingsMap)
-                
-                //Create a new marking that will be affected by master and affecting slave
-                let args = {markingID:""};
-                context.commit('createMarkingEntry', args)
-                let newMarkingID = args.markingID;
-
-                context.commit('addMarking', {"view": master_view, "markingID":newMarkingID});
-                context.commit('addView', {"view": details_view, "markingID":newMarkingID});
-            },
-            zoomToSelection(context)
-            {
-                let dataMapSubset = context.getters.selectedInMarking(context.state.defaultMarkingID);
-                let selection = map2Data(dataMapSubset)
-                
-                context.commit('pushDataStack', {data: context.state.data});
-                context.commit('setData', {newData: selection});
-            },
-            excludeSelection(context)
-            {
-                let toFilter = context.getters.selectedInMarking(context.state.defaultMarkingID);            
-                let selection = map2Data(filterData(context.getters.dataMap, toFilter))
-                context.commit('pushDataStack', {data: context.state.data});
-                context.commit('setData', {newData: selection});
-            },
-            resetData(context)
-            {
-                context.commit('resetMarking', {"markingID": context.state.defaultMarkingID});
-                context.commit('setData', {newData: context.state.rawData});
-            },    
-            resetAllMarkings(context)
-            {
-                for(var markingID in context.state.markingsMap)
-                {
-                    console.log("resetting ",markingID)
-                    context.commit('resetMarking', {"markingID": markingID});
-                }
-                
-            },
-            undoDataTransformation(context)
-            {
-                if(context.state.dataStack.length > 0)
-                {
-                    let args = {data:""};
-                    context.commit('popDataStack', args)
-                    context.commit('setData', {newData: args.data});
-                }
-            }
-        },
-        modules: {},
-        getters: {
-            getMarking : state => view => {return findMarkingAffectingView(state.markingsMap,state.markingID2views, view)},
-            data: state => {return state.data},   
-            dataMap: state => {return createDataMap(state.data);},
-            selectedInMarking: (state, getters) => markingID => 
-            {
-                return getSelectedInMarking(state.markingsMap[markingID], getters.dataMap)
-            },
-            selectedInView: (state, getters) => view => 
-            {
-                let marking = findMarkingAffectingView(state.markingsMap, state.markingID2views, view);
-                return getSelectedInMarking(marking, getters.dataMap)
-            },
-            selectedDataInView: (state, getters) => view => 
-            {
-                var selectedInMarking =  getters.selectedInView(view);
-                var result = map2Data(selectedInMarking)
-                return result;             
-            },
-            markingsDefaultGetter: state => {return  state.markingsMap[state.defaultMarkingID]},
-            markingsMapGetter: (state) => (markingID) => {return state.markingsMap[markingID]},
-        }
-
-    });
-
-
-
-}
-
 //ref: https://stackoverflow.com/questions/41572974/how-to-load-all-server-side-data-on-initial-vue-js-vue-router-load
 export default builder;
 

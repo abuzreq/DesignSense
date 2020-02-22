@@ -3,6 +3,10 @@
     <v-app-bar app dark dense flat short color=" red--text text--lighten-1" height="30">
       <v-toolbar-title>DesignSense</v-toolbar-title>
       <v-spacer></v-spacer>   
+
+      <v-btn icon @click="$store.dispatch('createSet')">
+        <v-icon>mdi-content-save</v-icon>
+      </v-btn> 
        <v-btn icon @click="$store.dispatch('resetAllMarkings')">
         <v-icon>mdi-select-off</v-icon>
       </v-btn> 
@@ -12,7 +16,6 @@
       <v-btn icon @click="$store.dispatch('zoomToSelection')">
         <v-icon>mdi-selection-search</v-icon>
       </v-btn>
-
       <v-btn icon @click="$store.dispatch('excludeSelection')">
         <v-icon>mdi-filter-remove-outline</v-icon>
       </v-btn>
@@ -37,7 +40,6 @@
               <!-- Scatterplot -->
               <!-- <SPLOMView /> -->
               <ScatterplotView />
-
               <!--
                  <ScatterplotView 
                 :chartData="this.$store.state.data"
@@ -46,25 +48,24 @@
                 :colorColumn="collection">
               </ScatterplotView>  
               -->
-
               <!-- <TSNEView /> -->
             </v-card>
           </v-flex>
         </v-layout>
-
         <!-- BOTTOM -->
         <v-layout row>
-          <v-flex md6>
+          <v-flex md2>
             <v-card height="450px">
               <!-- Similarity-->
-              <!--<DendrogramView />-->
+              <!--  <DendrogramView /> -->
              <!--   <AugmentedGridView v-bind:defaultEnableContext="true" />-->
+             <SetsView/>
             </v-card>
           </v-flex>
-          <v-flex md6>
+          <v-flex md10>
             <v-card height="450px">
               <!-- Grid -->
-              <AugmentedGridView v-bind:defaultEnableContext="false"/>
+              <AugmentedGridView v-bind:defaultEnableContext="true"/>
             </v-card>
           </v-flex>
         </v-layout>
@@ -84,6 +85,9 @@ import DendrogramView from "@/components/DendrogramView.vue";
 import ScatterplotView from "@/components/ScatterplotView.vue";
 import TSNEView from "@/components/TSNEView.vue";
 
+import SetsView from "@/components/SetsView.vue";
+
+
 export default {
   name: "App",
   components: {
@@ -93,7 +97,8 @@ export default {
     SPLOMView,
     DendrogramView,
     ScatterplotView,
-    TSNEView
+    TSNEView,
+    SetsView
   }
 };
 
