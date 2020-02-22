@@ -20,7 +20,9 @@
             label="Sort by"
           ></v-select>
           <v-spacer></v-spacer>
-            <v-checkbox  v-model="enableContext"  :off-icon="offIcon" :on-icon="onIcon"/>
+          {{numSelected}}
+          <v-spacer></v-spacer>
+            <v-checkbox dense align-center v-model="enableContext"  icon="large" :off-icon="offContextIcon" :on-icon="onContextIcon"/>
           <v-spacer></v-spacer>
           <v-slider min="0" max="5" step="1" :tick-labels="labels" v-model="colSpan"></v-slider>
           <v-spacer></v-spacer>
@@ -44,7 +46,7 @@
                 :cols="possibleColSpans[colSpan]"
               >
                 <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
-                <v-card :id="item._id">
+                <v-card :id='"card_"+item._id'>
                   <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" />
                   <!--:id='"card_"+item._id' -->
                   <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
@@ -67,29 +69,35 @@
 </template>
 
 <style scoped>
-.v-card.outlined {
+.col > .v-card.outlined {
   border: 2px solid red;
 }
-.v-card:not(.outlined) {
-  opacity: 0.3;
+.col > .v-card:not(.outlined) {
+  opacity: 0.4;
 }
+
+.col > .v-card.default {
+  opacity: 1;
+}
+
 </style>
 
 <script>
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
 import { ModelGltf } from "vue-3d-model";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
-import { mapState } from "vuex";
+import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 
 export default {
   name: "AugmentedGridCards",
   components: { ModelGltf },
+  props: ['defaultEnableContext'],
   data: function() {
     return {
-      //   chartData: [],
-      offIcon: 'mdi-eye-off',
-      onIcon: 'mdi-eye',
+      filteredChartData: [],
+      offContextIcon: 'mdi-eye-off',
+      onContextIcon: 'mdi-eye',
       viewID: null,
       keys: ["Height", "NetSolar", "collection"],
       colSpan: 0,
@@ -100,7 +108,8 @@ export default {
       selected: [],
       sortByVar: "height",
       isSortDesc: false,
-      enableContext: true
+      enableContext: this.defaultEnableContext,
+      numSelected: 0
     };
   },
   computed: {
@@ -113,7 +122,21 @@ export default {
     values() {
       return Object.values(this.chartData);
     },
-    ...mapState({ chartData: state => state.data })
+    ...mapState({ rawChartData: state => state.data}),
+    ...mapGetters(['selectedDataInView']),
+    chartData()
+    {
+      console.log("enableContext",this.enableContext)
+      if(this.enableContext)
+      {
+        return this.rawChartData;
+      }
+      else
+      {
+          return this.filteredChartData;  
+      }
+    }
+    
   },
   mounted() {
     this.$store.dispatch("createDefaultView", {
@@ -123,10 +146,19 @@ export default {
   },
   created() {
     this.viewID = "id" + this._uid;
-    this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "update") {
+    this.$store.subscribe((mutation, state) => 
+    {
+      if (mutation.type === "update" || mutation.type === "resetMarking")
+      {
+        if(this.enableContext)
+        {
+          
+        }
+        this.filteredChartData = this.$store.getters.selectedDataInView(this.viewID);
+        //if(this.enableContext){}
         var result = this.$store.getters.selectedInView(this.viewID);
         this.highlight(result);
+
       }
     });
   },
@@ -140,18 +172,25 @@ export default {
     },
 
     highlight(selection) {
+      let count = 0;
       d3.select("#" + this.viewID)
         .selectAll(".v-card")
-        .classed("outlined", function(d, i) {
-          if (this.id in selection) {
+        .classed("outlined", function(d, i)
+         {
+            //console.log(this.id,this.id.substring(5))
+          if (this.id.substring(5) in selection) 
+          {
+            //console.log("Inside ",this.id.substring(5))
             //TODO needed? addSelection?
             //this.addSelection(it);
+            count += 1;
             return true;
-          } else {
+          } 
+          else {
             return false;
           }
         });
-
+      this.numSelected = count;
       //var it = 0;
       //d3.select("#"+this.viewID).selectAll('.v-card').classed('outlined', function(){if(mask[it]) this.addSelection(it); return mask[it++]});//function() { return selection.includes(this.id.substring(5));})
       //class="{'outlined':selected.includes(index)}
@@ -193,7 +232,8 @@ export default {
   },
   watch: {
     chartData: {
-      handler: function(newValue, oldValue) {
+      handler: function(newValue, oldValue) 
+      {
         //this.chart = this.createChart();
       }
       //deep: true

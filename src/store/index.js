@@ -250,6 +250,7 @@ function builder(new_data)
             defaultMarkingID: generateID(), //"_lqpkb07gn"
             rawData: new_data,
             data: preprocess(new_data),
+            dataStack: [],
             view2markingIDs: new Map(),
             markingID2views: new Map(), 
             markingsMap: {}, // markingID -> marking object. Marking object is {altID -> highlightState}
@@ -346,6 +347,15 @@ function builder(new_data)
                     console.log("This view does not affect any marking")
                 }              
             },
+            popDataStack(state, payload)
+            {
+                payload.data = state.dataStack.pop();
+            },
+            pushDataStack(state, payload)
+            {
+                //TODO put a limit on the depth of the stack
+                state.dataStack.push(payload.data);               
+            }
         },
         actions: {
             createDefaultView(context, payload) // {commit}, payload
@@ -381,18 +391,39 @@ function builder(new_data)
             {
                 let dataMapSubset = context.getters.selectedInMarking(context.state.defaultMarkingID);
                 let selection = map2Data(dataMapSubset)
+                
+                context.commit('pushDataStack', {data: context.state.data});
                 context.commit('setData', {newData: selection});
             },
             excludeSelection(context)
             {
                 let toFilter = context.getters.selectedInMarking(context.state.defaultMarkingID);            
                 let selection = map2Data(filterData(context.getters.dataMap, toFilter))
+                context.commit('pushDataStack', {data: context.state.data});
                 context.commit('setData', {newData: selection});
             },
             resetData(context)
             {
-                context.commit('resetMarking', {newData: context.state.defaultMarkingID});
+                context.commit('resetMarking', {"markingID": context.state.defaultMarkingID});
                 context.commit('setData', {newData: context.state.rawData});
+            },    
+            resetAllMarkings(context)
+            {
+                for(var markingID in context.state.markingsMap)
+                {
+                    console.log("resetting ",markingID)
+                    context.commit('resetMarking', {"markingID": markingID});
+                }
+                
+            },
+            undoDataTransformation(context)
+            {
+                if(context.state.dataStack.length > 0)
+                {
+                    let args = {data:""};
+                    context.commit('popDataStack', args)
+                    context.commit('setData', {newData: args.data});
+                }
             }
         },
         modules: {},

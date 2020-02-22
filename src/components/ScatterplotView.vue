@@ -116,7 +116,7 @@ export default {
     this.viewID = "id" + this._uid;
 
     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "update") {
+      if (mutation.type === "update" || mutation.type === 'resetMarking') {
         //TODO currently this is called every time a change happens to ANY marking. Should only listen to changes in this view's marking
         var result = this.$store.getters.selectedInView(this.viewID);
       /*

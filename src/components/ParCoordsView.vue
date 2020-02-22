@@ -58,7 +58,7 @@ export default {
      this.viewID = 'id'+this._uid;
 
      this.$store.subscribe((mutation, state) => {
-      if (mutation.type === 'update')
+      if (mutation.type === 'update' || mutation.type === 'resetMarking') 
       {
         this.chart.unhighlight( this.$store.getters.data) ;  
         var result = this.$store.getters.selectedDataInView(this.viewID);

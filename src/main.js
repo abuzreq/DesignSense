@@ -80,6 +80,7 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
         {
           //console.log(app.$store.state)
           let views = Object.keys(app.$store.state.viewsMap)
+          console.log(views, app.$store.state.viewsMap)
           //console.log("views ", views)
           app.$store.dispatch('createDetailsView',{master_view: views[0], details_view: views[1]})
         }

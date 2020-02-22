@@ -2,9 +2,15 @@
   <v-app>
     <v-app-bar app dark dense flat short color=" red--text text--lighten-1" height="30">
       <v-toolbar-title>DesignSense</v-toolbar-title>
-      <v-spacer></v-spacer>
+      <v-spacer></v-spacer>   
+       <v-btn icon @click="$store.dispatch('resetAllMarkings')">
+        <v-icon>mdi-select-off</v-icon>
+      </v-btn> 
+       <v-btn icon @click="$store.dispatch('undoDataTransformation')">
+        <v-icon>mdi-undo</v-icon>
+      </v-btn>
       <v-btn icon @click="$store.dispatch('zoomToSelection')">
-        <v-icon>mdi-magnify</v-icon>
+        <v-icon>mdi-selection-search</v-icon>
       </v-btn>
 
       <v-btn icon @click="$store.dispatch('excludeSelection')">
@@ -48,16 +54,17 @@
 
         <!-- BOTTOM -->
         <v-layout row>
-          <v-flex md3>
+          <v-flex md6>
             <v-card height="450px">
               <!-- Similarity-->
               <!--<DendrogramView />-->
+             <!--   <AugmentedGridView v-bind:defaultEnableContext="true" />-->
             </v-card>
           </v-flex>
-          <v-flex md9>
+          <v-flex md6>
             <v-card height="450px">
               <!-- Grid -->
-              <AugmentedGridView/>
+              <AugmentedGridView v-bind:defaultEnableContext="false"/>
             </v-card>
           </v-flex>
         </v-layout>
