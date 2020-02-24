@@ -3,7 +3,6 @@
     <v-app-bar app dark dense flat short color=" red--text text--lighten-1" height="30">
       <v-toolbar-title>DesignSense</v-toolbar-title>
       <v-spacer></v-spacer>   
-
       <v-btn icon @click="$store.dispatch('createSet')">
         <v-icon>mdi-content-save</v-icon>
       </v-btn> 

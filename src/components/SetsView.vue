@@ -1,9 +1,14 @@
 <template>
   <v-container fluid>
+    <v-card-title  >
+    Design Sets
+    </v-card-title>
+    <v-divider>
+    </v-divider>
     <v-list two-line>
       <template v-for="(item, index) in setsIDs">
-        <v-card :key="index">
-          <v-list-item avatar>
+        <v-card outlined :key="index">
+          <v-list-item  avatar>
             <v-list-item-action>
               <v-btn icon ripple color="red" @click="remove(item)">
                 <v-icon>mdi-close</v-icon>
@@ -26,6 +31,14 @@
 </template>
 
 <style scoped>
+.v-list-item {
+height: 50px;
+
+}
+.v-btn {
+    height: 25px;
+    width: 25px;
+}
 </style>
 <script>
 //v-if="todo.done" @click="removeTodo(i)"

@@ -248,10 +248,19 @@ function builder(new_data)
             {
                 return getSelectedInMarking(state.markingsMap[markingID], getters.dataMap)
             },
+            unselectedInMarking: (state, getters) => markingID => 
+            {
+                return getunselectedInMarking(state.markingsMap[markingID], getters.dataMap)
+            },
             selectedInView: (state, getters) => view => 
             {
                 let marking = findMarkingAffectingView(state.markingsMap, state.markingID2views, view);
                 return getSelectedInMarking(marking, getters.dataMap)
+            },
+            unselectedInView: (state, getters) => view => 
+            {
+                let marking = findMarkingAffectingView(state.markingsMap, state.markingID2views, view);
+                return getUnselectedInMarking(marking, getters.dataMap)
             },
             selectedDataInView: (state, getters) => view => 
             {
@@ -325,7 +334,18 @@ function getSelectedInMarking(marking, dataMap)
     }
     return selected;
 }
-
+function getUnselectedInMarking(marking, dataMap)
+{   
+    var selected = {};
+    for (var alt in marking) 
+    {
+        if(marking[alt] == 0)
+        {
+            selected[alt] = dataMap[alt];
+        }    
+    }
+    return selected;
+}
 function allTheSame(selected)
 {
     var atleastOneIsDifferent = false;

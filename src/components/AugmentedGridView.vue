@@ -22,7 +22,14 @@
           <v-spacer></v-spacer>
           {{numSelected}}
           <v-spacer></v-spacer>
-            <v-checkbox dense align-center v-model="enableContext"  icon="large" :off-icon="offContextIcon" :on-icon="onContextIcon"/>
+          <v-checkbox
+            dense
+            align-center
+            v-model="enableContext"
+            icon="large"
+            :off-icon="offContextIcon"
+            :on-icon="onContextIcon"
+          />
           <v-spacer></v-spacer>
           <v-slider min="0" max="5" step="1" :tick-labels="labels" v-model="colSpan"></v-slider>
           <v-spacer></v-spacer>
@@ -36,17 +43,20 @@
           </v-btn-toggle>
         </v-toolbar>
       </template>
-      <template v-slot:default="props">
+      <template v-slot:default="items">
         <v-layout grid-list-sm column style="height: 75vh">
           <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
             <v-row dense>
               <v-col
-                v-for="(item, index) in props.items"
-                :key="index"
+                v-for="(item, index) in items.items"
+                :key="'card_'+item._id"
                 :cols="possibleColSpans[colSpan]"
               >
                 <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
-                <v-card :id='"card_"+item._id'>
+                <v-card
+                  v-bind:class="{ outlined: numSelected > 0 && selectionMap[item._id], transparent: numSelected > 0 &&  !selectionMap[item._id] }"
+                  :id="'card_'+item._id"
+                >
                   <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" />
                   <!--:id='"card_"+item._id' -->
                   <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
@@ -72,14 +82,14 @@
 .col > .v-card.outlined {
   border: 2px solid red;
 }
-.col > .v-card:not(.outlined) {
-  opacity: 0.4;
-}
 
-.col > .v-card.default {
+.col > .v-card:not(.transparent) {
   opacity: 1;
 }
 
+.col > .v-card.transparent {
+  opacity: 0.4;
+}
 </style>
 
 <script>
@@ -92,12 +102,14 @@ import * as d3 from "d3";
 export default {
   name: "AugmentedGridCards",
   components: { ModelGltf },
-  props: ['defaultEnableContext'],
+  props: ["defaultEnableContext"],
   data: function() {
     return {
       filteredChartData: [],
-      offContextIcon: 'mdi-eye-off',
-      onContextIcon: 'mdi-eye',
+      chartData: [],
+      selectionMap: {},
+      offContextIcon: "mdi-eye-off",
+      onContextIcon: "mdi-eye",
       viewID: null,
       keys: ["Height", "NetSolar", "collection"],
       colSpan: 0,
@@ -122,43 +134,23 @@ export default {
     values() {
       return Object.values(this.chartData);
     },
-    ...mapState({ rawChartData: state => state.data}),
-    ...mapGetters(['selectedDataInView']),
-    chartData()
-    {
-      console.log("enableContext",this.enableContext)
-      if(this.enableContext)
-      {
-        return this.rawChartData;
-      }
-      else
-      {
-          return this.filteredChartData;  
-      }
-    }
-    
+    ...mapState({ rawChartData: state => state.data })
   },
   mounted() {
     this.$store.dispatch("createDefaultView", {
       view: this.viewID,
       vueComponent: this
     });
+
+    this.chartData = this.rawChartData;
   },
   created() {
     this.viewID = "id" + this._uid;
-    this.$store.subscribe((mutation, state) => 
-    {
-      if (mutation.type === "update" || mutation.type === "resetMarking")
-      {
-        if(this.enableContext)
-        {
-          
-        }
-        this.filteredChartData = this.$store.getters.selectedDataInView(this.viewID);
-        //if(this.enableContext){}
-        var result = this.$store.getters.selectedInView(this.viewID);
-        this.highlight(result);
-
+    this.$store.subscribe((mutation, state) => {
+      if (mutation.type === "update" || mutation.type === "resetMarking") {
+        this.updateContext();
+        this.selectionMap = this.$store.getters.getMarking(this.viewID);
+        this.numSelected = this.countSelected(this.selectionMap);
       }
     });
   },
@@ -173,33 +165,38 @@ export default {
 
     highlight(selection) {
       let count = 0;
-      d3.select("#" + this.viewID)
-        .selectAll(".v-card")
-        .classed("outlined", function(d, i)
-         {
-            //console.log(this.id,this.id.substring(5))
-          if (this.id.substring(5) in selection) 
-          {
-            //console.log("Inside ",this.id.substring(5))
-            //TODO needed? addSelection?
-            //this.addSelection(it);
-            count += 1;
-            return true;
-          } 
-          else {
-            return false;
-          }
-        });
-      this.numSelected = count;
-      //var it = 0;
-      //d3.select("#"+this.viewID).selectAll('.v-card').classed('outlined', function(){if(mask[it]) this.addSelection(it); return mask[it++]});//function() { return selection.includes(this.id.substring(5));})
-      //class="{'outlined':selected.includes(index)}
+
+      console.log(selection);
+      for (var s in selection) {
+        console.log(s, d3.select("#card_" + s));
+        d3.select("#" + this.viewID)
+          .select("#card_" + s)
+          .classed("transparent", false)
+          .classed("outlined", true);
+      }
+    },
+    unhighlight(selection) {
+      for (var s in selection) {
+        d3.select("#card_" + s)
+          .classed("outlined", false)
+          .classed("transparent", true);
+      }
     },
     unhighlightAll() {
+      console.log(
+        "SIZE",
+        d3
+          .select("#" + this.viewID)
+          .selectAll(".v-card")
+          .size()
+      );
+
       d3.select("#" + this.viewID)
         .selectAll(".v-card")
-        .classed("outlined", false);
+        .classed("outlined", false)
+        .classed("transparent", true);
     },
+
     addSelection(id) {
       if (!this.selected.includes(id)) this.selected.push(id);
       else this.selected.splice(this.selected.indexOf(id), 1);
@@ -217,24 +214,41 @@ export default {
         node.removeChild(node.firstChild);
       }
     },
-    updateContext()
-    {
-        //TODO
-        if(this.enableContext)
-        {
-            this.chartDataProcessed =  this.chartData;
+    updateContext() {
+      console.log("Updating Context");
+      if (this.enableContext) {
+        this.chartData = this.rawChartData;
+      } else {
+        this.chartData = this.$store.getters.selectedDataInView(this.viewID);
+      }
+      /*
+      let selected = this.$store.getters.selectedInView(this.viewID);
+      this.unhighlight(this.$store.getters.unselectedInView(this.viewID));
+      this.unhighlight(selected);
+
+      this.highlight(selected);
+*/
+    },
+    countSelected(selectionMap) {
+      let count = 0;
+      for (var alt in selectionMap) {
+        if (selectionMap[alt] == 1) {
+          count += 1;
         }
-        else
-        {
-           this.chartDataProcessed = this.$store.getters.selectedDataInView(this.viewID);
-        }
+      }
+      return count;
     }
   },
   watch: {
-    chartData: {
-      handler: function(newValue, oldValue) 
-      {
-        //this.chart = this.createChart();
+    enableContext: {
+      handler: function(enableContextNewValue, oldValue) {
+        this.updateContext();
+      }
+      //deep: true
+    },
+    rawChartData: {
+      handler: function(newValue, oldValue) {
+        this.updateContext();
       }
       //deep: true
     }

@@ -60,9 +60,9 @@ export default {
       viewID: null,
       chart: null,
       xColumn: "TotalFlrArea",
-      yColumn: "NetSolar",
+      yColumn: "EnergyUse",
       colorColumn: "collection",
-      width: 650,
+      width: 600,
       height: 450
     };
   },
@@ -295,13 +295,13 @@ class ScatterPlot {
         );
 
         g.select(".x.axis")
-          .attr("transform", "translate(0," + innerHeight + ")")
+          .attr("transform", "translate(0," + innerHeight +  ")")
           .call(d3.axisBottom(xScale))
           .select("text")
           .attr("x", innerWidth / 2)
           .attr("y", xAxisLabelOffset)
-          .text(xAxisLabel);
-
+          .attr("fill","black")
+          .text(xAxisLabel)
         //console.log(g.select(".x.axis").select("text"));
         g.select(".y.axis")
           .call(d3.axisLeft(yScale))
@@ -314,7 +314,8 @@ class ScatterPlot {
               innerHeight / 2 +
               ") rotate(-90)"
           )
-          .text(yAxisLabel);
+          .text(yAxisLabel) 
+          .attr("fill","black");
 
         circles
           .attr("cx", function(d) {

@@ -104,7 +104,7 @@ export default {
              }
              else
              {
-               console.log("Brushing ",this.viewID, d3.event)
+               //console.log("Brushing ",this.viewID, d3.event)
                 this.chart.brushReset();
                 //this.chart.unhighlight( this.$store.getters.data) ;
                 this.$store.commit("update", 
