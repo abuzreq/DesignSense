@@ -48,7 +48,7 @@
           <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
             <v-row dense>
               <v-col
-                v-for="(item, index) in items.items"
+                v-for="(item) in items.items"
                 :key="'card_'+item._id"
                 :cols="possibleColSpans[colSpan]"
               >

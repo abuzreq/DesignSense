@@ -62,6 +62,9 @@ export default {
       xColumn: "TotalFlrArea",
       yColumn: "EnergyUse",
       colorColumn: "collection",
+    /*  xColumn: "overhang_area_fraction",
+      yColumn: "objective_value",*/
+
       width: 600,
       height: 450
     };

@@ -33,7 +33,7 @@ export default {
       ...mapState({chartData: state => state.data})
   },
   mounted() {
-    this.width = 1200;
+    this.width = 1400;
     this.height = 450;
     this.colorColumn = "collection";
     var excluded = [
@@ -45,7 +45,21 @@ export default {
       "collection",
       "UsableSpace",
       "index"
-    ]; //'GeometryHash' ,'highlighted'
+    ]; 
+      /*excluded = [
+      "center_of_mass_x",
+      "iterationmax_displacment",
+      "mu",
+      "ID",
+      "_id",
+      "collection",
+      "index",
+        "image",
+      "gltf",
+      "geometry","max_vonmises_stress"
+    ]; */
+    
+    //'GeometryHash' ,'highlighted'
     this.excluded_dimensions = [];
     for (var e of excluded) {
       this.excluded_dimensions.push(e);
