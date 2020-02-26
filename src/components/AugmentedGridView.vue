@@ -22,14 +22,23 @@
           <v-spacer></v-spacer>
           {{numSelected}}
           <v-spacer></v-spacer>
-          <v-checkbox
-            dense
-            align-center
-            v-model="enableContext"
-            icon="large"
-            :off-icon="offContextIcon"
-            :on-icon="onContextIcon"
-          />
+
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-checkbox
+                v-on="on"
+                dense
+                align-center
+                v-model="enableContext"
+                icon="large"
+                :off-icon="offContextIcon"
+                :on-icon="onContextIcon"
+              />
+            </template>
+            <span v-if="enableContext">Show only selection</span>
+            <span v-else>Show selection in context</span>
+          </v-tooltip>
+
           <v-spacer></v-spacer>
           <v-slider min="0" max="5" step="1" :tick-labels="labels" v-model="colSpan"></v-slider>
           <v-spacer></v-spacer>
@@ -54,7 +63,7 @@
               >
                 <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
                 <v-card
-                  v-bind:class="{ outlined: numSelected > 0 && selectionMap[item._id], transparent: numSelected > 0 &&  !selectionMap[item._id] }"
+                  v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
                   :id="'card_'+item._id"
                 >
                   <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" />
@@ -105,21 +114,19 @@ export default {
   props: ["defaultEnableContext"],
   data: function() {
     return {
-      filteredChartData: [],
       chartData: [],
       selectionMap: {},
       offContextIcon: "mdi-eye-off",
       onContextIcon: "mdi-eye",
       viewID: null,
-      keys: ["Height", "NetSolar", "collection"],
+      keys: ["Height", "NetSolar", "collection", "selected"],
       colSpan: 0,
       possibleColSpans: [1, 2, 3, 4, 6, 12],
       labels: ["12", "6", "4", "3", "2", "1"],
       maxPerPage: 10000,
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
-      selected: [],
       sortByVar: "height",
-      isSortDesc: false,
+      isSortDesc: true,
       enableContext: this.defaultEnableContext,
       numSelected: 0
     };
@@ -150,6 +157,10 @@ export default {
       if (mutation.type === "update" || mutation.type === "resetMarking") {
         this.updateContext();
         this.selectionMap = this.$store.getters.getMarking(this.viewID);
+        this.chartData.forEach(d => {
+          d.selected = this.selectionMap[d._id];
+        });
+        console.log("this.chartData ", this.chartData);
         this.numSelected = this.countSelected(this.selectionMap);
       }
     });

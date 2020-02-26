@@ -2,25 +2,65 @@
   <v-app>
     <v-app-bar app dark dense flat short color=" red--text text--lighten-1" height="30">
       <v-toolbar-title>DesignSense</v-toolbar-title>
-      <v-spacer></v-spacer>   
-      <v-btn icon @click="$store.dispatch('createSet')">
-        <v-icon>mdi-content-save</v-icon>
-      </v-btn> 
-       <v-btn icon @click="$store.dispatch('resetAllMarkings')">
-        <v-icon>mdi-select-off</v-icon>
-      </v-btn> 
-       <v-btn icon @click="$store.dispatch('undoDataTransformation')">
-        <v-icon>mdi-undo</v-icon>
-      </v-btn>
-      <v-btn icon @click="$store.dispatch('zoomToSelection')">
-        <v-icon>mdi-selection-search</v-icon>
-      </v-btn>
-      <v-btn icon @click="$store.dispatch('excludeSelection')">
-        <v-icon>mdi-filter-remove-outline</v-icon>
-      </v-btn>
-      <v-btn icon @click="$store.dispatch('resetData')">
-        <v-icon>mdi-cached</v-icon>
-      </v-btn>
+      <v-spacer></v-spacer>
+
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="$store.dispatch('createSet')">
+            <v-icon>mdi-contain</v-icon>
+            <!-- -->
+          </v-btn>
+        </template>
+        <span>Create Set</span>
+      </v-tooltip>
+
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="$store.dispatch('resetAllMarkings')">
+            <v-icon>mdi-select-off</v-icon>
+          </v-btn>
+        </template>
+        <span>Reset Selection</span>
+      </v-tooltip>
+
+    <v-divider vertical/>
+
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="$store.dispatch('undoDataTransformation')">
+            <v-icon>mdi-undo</v-icon>
+          </v-btn>
+        </template>
+        <span>Undo</span>
+      </v-tooltip>
+
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="$store.dispatch('zoomToSelection')">
+            <v-icon>mdi-selection-search</v-icon>
+          </v-btn>
+        </template>
+        <span>Zoom</span>
+      </v-tooltip>
+
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="$store.dispatch('excludeSelection')">
+            <v-icon>mdi-filter-remove-outline</v-icon>
+          </v-btn>
+        </template>
+        <span>Exclude</span>
+      </v-tooltip>
+
+     <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="$store.dispatch('resetData')">
+            <v-icon>mdi-cached</v-icon>
+          </v-btn>
+        </template>
+        <span>Reset Data</span>
+      </v-tooltip>
+
     </v-app-bar>
 
     <v-content>
@@ -31,7 +71,6 @@
             <v-card height="500px">
               <!-- pcoords -->
               <ParCoordsView />
-              
             </v-card>
           </v-flex>
           <v-flex md4>
@@ -57,14 +96,14 @@
             <v-card height="450px">
               <!-- Similarity-->
               <!--  <DendrogramView /> -->
-             <!--   <AugmentedGridView v-bind:defaultEnableContext="true" />-->
-             <SetsView/>
+              <!--   <AugmentedGridView v-bind:defaultEnableContext="true" />-->
+              <SetsView />
             </v-card>
           </v-flex>
           <v-flex md10>
             <v-card height="450px">
               <!-- Grid -->
-              <AugmentedGridView v-bind:defaultEnableContext="true"/>
+              <AugmentedGridView v-bind:defaultEnableContext="true" />
             </v-card>
           </v-flex>
         </v-layout>
@@ -85,7 +124,6 @@ import ScatterplotView from "@/components/ScatterplotView.vue";
 import TSNEView from "@/components/TSNEView.vue";
 
 import SetsView from "@/components/SetsView.vue";
-
 
 export default {
   name: "App",
