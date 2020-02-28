@@ -61,7 +61,15 @@
              <SetsView/>
             </v-card>
           </v-flex>
-          <v-flex md10>
+          <v-flex md2>
+            <v-card height="450px">
+              <!-- Similarity-->
+              <!--  <DendrogramView /> -->
+             <!--   <AugmentedGridView v-bind:defaultEnableContext="true" />-->
+             <ClusterView/>
+            </v-card>
+          </v-flex>
+          <v-flex md8>
             <v-card height="450px">
               <!-- Grid -->
               <AugmentedGridView v-bind:defaultEnableContext="true"/>
@@ -85,6 +93,8 @@ import ScatterplotView from "@/components/ScatterplotView.vue";
 import TSNEView from "@/components/TSNEView.vue";
 
 import SetsView from "@/components/SetsView.vue";
+import ClusterView from "@/components/ClusterView.vue";
+
 
 
 export default {
@@ -97,7 +107,8 @@ export default {
     DendrogramView,
     ScatterplotView,
     TSNEView,
-    SetsView
+    SetsView,
+    ClusterView
   }
 };
 
