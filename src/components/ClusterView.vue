@@ -1,139 +1,295 @@
-
-
 <template>
-  <v-container fluid>
-    <div :id="viewID" ref="cluster" class="cluster" />
+  <v-container :id="viewID" justify-start align-start>
+    <v-data-iterator
+      :items="chartData"
+      hide-default-footer
+      :items-per-page="maxPerPage"
+      :sort-by="sortByVar"
+      :sort-desc="isSortDesc"
+    >
+      <template v-slot:header>
+        <v-toolbar dense fixed dark color="blue darken-3" class="mb-1">
+          <v-select
+            dense
+            v-model="sortByVar"
+            flat
+            solo-inverted
+            hide-details
+            prepend-inner-icon="search"
+            :items="keys"
+            label="Sort by"
+          ></v-select>
+          <v-spacer></v-spacer>
+          {{numSelected}}
+          <v-spacer></v-spacer>
+
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-checkbox
+                v-on="on"
+                dense
+                align-center
+                v-model="enableContext"
+                icon="large"
+                :off-icon="offContextIcon"
+                :on-icon="onContextIcon"
+              />
+            </template>
+            <span v-if="enableContext">Show only selection</span>
+            <span v-else>Show selection in context</span>
+          </v-tooltip>
+
+          <v-spacer></v-spacer>
+          <v-slider min="0" max="5" step="1" :tick-labels="labels" v-model="colSpan"></v-slider>
+          <v-spacer></v-spacer>
+          <v-btn-toggle dense v-model="isSortDesc" mandatory>
+            <v-btn medium depressed color="blue" :value="false">
+              <v-icon>mdi-arrow-up</v-icon>
+            </v-btn>
+            <v-btn medium depressed color="blue" :value="true">
+              <v-icon>mdi-arrow-down</v-icon>
+            </v-btn>
+          </v-btn-toggle>
+        </v-toolbar>
+      </template>
+      <template v-slot:default="items">
+        <v-layout grid-list-sm column style="height: 75vh">
+          <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
+            <v-row dense>
+              <v-col
+                v-for="(item) in items.items"
+                :key="'card_'+item._id"
+                :cols="possibleColSpans[colSpan]"
+              >
+                <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
+                <v-card
+                  v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
+                  :id="'card_'+item._id"
+                >
+                  <v-img v-if="true" :src="item.image" v-on:click="toggle(item, $event)" />
+                  <!--:id='"card_"+item._id' -->
+                  <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
+
+                  <!--:id='"card_"+item._id'
+                  <model-gltf 
+                    v-else
+                    :src="item.gltf" 
+                  />
+                  -->
+                  <!--</router-link>-->
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-flex>
+        </v-layout>
+      </template>
+    </v-data-iterator>
   </v-container>
 </template>
 
 <style scoped>
-div >>> .axis,
-.frame {
-  shape-rendering: crispEdges;
+.col > .v-card.outlined {
+  border: 2px solid red;
 }
 
-div >>> .axis line {
-  stroke: #ddd;
+.col > .v-card:not(.transparent) {
+  opacity: 1;
 }
 
-div >>> .axis path {
-  display: none;
-}
-
-div >>> .cell text {
-  font-weight: bold;
-  text-transform: capitalize;
-}
-
-div >>> .frame {
-  fill: none;
-  stroke: #aaa;
-}
-
-div >>> circle {
-  fill-opacity: 0.7;
-}
-
-div >>> circle.hidden {
-  fill: #ccc !important;
-}
-
-div >>> .extent {
-  fill: #000;
-  fill-opacity: 0.125;
-  stroke: #fff;
+.col > .v-card.transparent {
+  opacity: 0.4;
 }
 </style>
+
 <script>
-import * as d3 from "d3";
-//import ScatterPlot from "@/components/Scatterplot.js";
-import views from "@/components/constants.js";
+//https://hujiulong.github.io/vue-3d-model/#/demo-gltf
+import { ModelGltf } from "vue-3d-model";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
-import { mapState } from "vuex";
+import { mapState, mapGetters } from "vuex";
+import * as d3 from "d3";
 
 export default {
-  name: "ClusterView",
-  //props: ["chartData"],
+  name: "AugmentedGridCards",
+  components: { ModelGltf },
+  props: ["defaultEnableContext"],
   data: function() {
     return {
-      data: null,
+      chartData: [],
+      selectionMap: {},
+      offContextIcon: "mdi-eye-off",
+      onContextIcon: "mdi-eye",
       viewID: null,
-      chart: null,
-      xColumn: "TotalFlrArea",
-      yColumn: "EnergyUse",
-      colorColumn: "collection",
-    /*  xColumn: "overhang_area_fraction",
-      yColumn: "objective_value",*/
-
-      width: 600,
-      height: 450
+      keys: ["Height", "NetSolar", "collection", "selected"],
+      colSpan: 3,
+      possibleColSpans: [1, 2, 3, 4, 6, 12],
+      labels: ["12", "6", "4", "3", "2", "1"],
+      maxPerPage: 10000,
+      // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
+      sortByVar: "height",
+      isSortDesc: true,
+      enableContext: this.defaultEnableContext,
+      numSelected: 0,
+      clustersMap: {}
+     
     };
   },
   computed: {
-    ...mapState({ chartData: state => state.data })
+    chartDataLength() {
+      return this.chartData.length;
+    },
+    headers() {
+      return Object.keys(this.chartData);
+    },
+    values() {
+      return Object.values(this.chartData);
+    },
+    ...mapState({ rawChartData: state => state.data })
   },
-  mounted()
-   {
-
-
-    //this.chart = this.createChart();
+  mounted() {
     this.$store.dispatch("createDefaultView", {
       view: this.viewID,
       vueComponent: this
     });
 
-    console.log(this.chartData)
-    console.log("ahaa ",this.chartData.filter(x => x.TotalFlrArea == undefined))
+    this.chartData = this.rawChartData;
     var clusters = kmeans(this.chartData,4, function(d) {return d['TotalFlrArea']})
     var centroids = clusters.map(c => d3.mean(c, d => d['TotalFlrArea']))
     var closest = clusters.map((c,i) => 
         {
             return indexOfSmallest(c.map( d =>  Math.abs(centroids[i] - d['TotalFlrArea'])))
-
         }
-    
     )
-    console.log(this.chartData[closest[0]])
-  },
-  watch: {
-    width: function(newValue, oldValue) {
-      this.createChart();
-    },
-    height: function(newValue, oldValue) {
-      this.createChart();
-    },
-    chartData: {
-      handler: function(newValue, oldValue) {
-        this.chart = this.createChart();
-
-      }
+    var clusterReps = [];
+    for(var i = 0; i < closest.length;i++)
+    {
+        clusterReps.push(this.chartData[closest[i]])
+        
+        this.clustersMap[this.chartData[closest[i]]._id] = clusters[i]
     }
+    this.chartData = clusterReps;
+ 
   },
   created() {
     this.viewID = "id" + this._uid;
-
     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "update" || mutation.type === 'resetMarking') {
-        var result = this.$store.getters.selectedInView(this.viewID);
-
-       this.chart.highlight(result);
-
+      if (mutation.type === "update" || mutation.type === "resetMarking") 
+      {
+        /*
+        this.updateContext();
+        this.selectionMap = this.$store.getters.getMarking(this.viewID);
+        this.chartData.forEach(d => {
+          d.selected = this.selectionMap[d._id];
+        });
+        console.log("this.chartData ", this.chartData);
+        this.numSelected = this.countSelected(this.selectionMap);
+        */
       }
     });
   },
   methods: {
-    createChart: function() {
-    
+    toggle(item , event) 
+    {
+      console.log("Toggle",this.clustersMap[item._id])
+      this.$store.commit("update", 
+      {
+        view: this.viewID,
+        selection: this.clustersMap[item._id].map(d => d._id),
+        operation: getOperationFromEvent(event)
+      });
+    },
 
+    highlight(selection) {
+      let count = 0;
+
+      console.log(selection);
+      for (var s in selection) {
+        console.log(s, d3.select("#card_" + s));
+        d3.select("#" + this.viewID)
+          .select("#card_" + s)
+          .classed("transparent", false)
+          .classed("outlined", true);
+      }
+    },
+    unhighlight(selection) {
+      for (var s in selection) {
+        d3.select("#card_" + s)
+          .classed("outlined", false)
+          .classed("transparent", true);
+      }
+    },
+    unhighlightAll() {
+      console.log(
+        "SIZE",
+        d3
+          .select("#" + this.viewID)
+          .selectAll(".v-card")
+          .size()
+      );
+
+      d3.select("#" + this.viewID)
+        .selectAll(".v-card")
+        .classed("outlined", false)
+        .classed("transparent", true);
+    },
+
+    addSelection(id) {
+      if (!this.selected.includes(id)) this.selected.push(id);
+      else this.selected.splice(this.selected.indexOf(id), 1);
+    },
+    getCompareData() {
+      let res = [];
+      this.selected.forEach(e => {
+        res.push(this.chartData[e]);
+      });
+      return res;
     },
     destroyChart: function() {
-      let node = d3.select("#"+this.viewID)._groups[0][0];//this.$refs["parcoords"];
+      let node = d3.select("#" + this.viewID)._groups[0][0]; //this.$refs["parcoords"];
       while (node.firstChild) {
         node.removeChild(node.firstChild);
       }
+    },
+    updateContext() {
+      console.log("Updating Context");
+      if (this.enableContext) {
+        this.chartData = this.rawChartData;
+      } else {
+        this.chartData = this.$store.getters.selectedDataInView(this.viewID);
+      }
+      /*
+      let selected = this.$store.getters.selectedInView(this.viewID);
+      this.unhighlight(this.$store.getters.unselectedInView(this.viewID));
+      this.unhighlight(selected);
+
+      this.highlight(selected);
+*/
+    },
+    countSelected(selectionMap) {
+      let count = 0;
+      for (var alt in selectionMap) {
+        if (selectionMap[alt] == 1) {
+          count += 1;
+        }
+      }
+      return count;
+    }
+  },
+  watch: {
+    enableContext: {
+      handler: function(enableContextNewValue, oldValue) {
+        this.updateContext();
+      }
+      //deep: true
+    },
+    rawChartData: {
+      handler: function(newValue, oldValue) {
+        this.updateContext();
+      }
+      //deep: true
     }
   }
 };
+
 
 function indexOfSmallest(a) {
 
@@ -266,4 +422,3 @@ if (typeof d3 !== "undefined") {
   d3.kmeans = kmeans;
 }
 </script>
-
