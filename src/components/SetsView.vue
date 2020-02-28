@@ -1,22 +1,29 @@
 <template>
   <v-container fluid>
-    <v-card-title  >
-    Design Sets
-    </v-card-title>
-    <v-divider>
-    </v-divider>
+    <v-card-title>Design Sets</v-card-title>
+    <v-divider></v-divider>
     <v-list two-line>
       <template v-for="(item, index) in setsIDs">
         <v-card outlined :key="index">
-          <v-list-item  avatar>
+          <v-list-item avatar>
             <v-list-item-action>
-              <v-btn icon ripple color="red" @click="remove(item)">
-                <v-icon>mdi-close</v-icon>
-              </v-btn>
+              <v-tooltip left>
+                <template v-slot:activator="{ on }">
+                  <v-btn v-on="on" icon ripple color="red" @click="remove(item)">
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                </template>
+                <span>Delete</span>
+              </v-tooltip>
 
-              <v-btn icon ripple color="red" @click="restoreSet(item, $event)">
-                <v-icon>mdi-backup-restore</v-icon>
-              </v-btn>
+              <v-tooltip left>
+                <template v-slot:activator="{ on }">
+                  <v-btn v-on="on" icon ripple color="red" @click="restoreSet(item, $event)">
+                    <v-icon>mdi-backup-restore</v-icon>
+                  </v-btn>
+                </template>
+                <span>Restore</span>
+              </v-tooltip>
             </v-list-item-action>
 
             <v-list-item-content>
@@ -32,12 +39,11 @@
 
 <style scoped>
 .v-list-item {
-height: 50px;
-
+  height: 50px;
 }
 .v-btn {
-    height: 25px;
-    width: 25px;
+  height: 25px;
+  width: 25px;
 }
 </style>
 <script>
