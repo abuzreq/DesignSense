@@ -54,13 +54,20 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
   })
   .then( (json_data, error) =>
   {
+      var dataTypesMap = {}
+      for(var column in json_data.valueBands)
+      {
+        dataTypesMap[column] = json_data.valueBands[column].type
+      }
+
+      console.log(dataTypesMap)
       console.log(json_data,error)
       json_data = json_data.alternatives
       const data = getParallelDataFromAlternatives(globalURL, json_data)
       var app = new Vue({
         vuetify,
         router,
-        store: store(data),
+        store: store(data, dataTypesMap),
         el: '#app',
         render: h => h(App),
       });
