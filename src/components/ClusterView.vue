@@ -1,89 +1,14 @@
 <template>
+
   <v-container :id="viewID" justify-start align-start>
-    <v-data-iterator
-      :items="chartData"
-      hide-default-footer
-      :items-per-page="maxPerPage"
-      :sort-by="sortByVar"
-      :sort-desc="isSortDesc"
-    >
-      <template v-slot:header>
-        <v-toolbar dense fixed dark color="blue darken-3" class="mb-1">
-          <v-select
-            dense
-            v-model="sortByVar"
-            flat
-            solo-inverted
-            hide-details
-            prepend-inner-icon="search"
-            :items="keys"
-            label="Sort by"
-          ></v-select>
-          <v-spacer></v-spacer>
-          {{numSelected}}
-          <v-spacer></v-spacer>
-
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <v-checkbox
-                v-on="on"
-                dense
-                align-center
-                v-model="enableContext"
-                icon="large"
-                :off-icon="offContextIcon"
-                :on-icon="onContextIcon"
-              />
-            </template>
-            <span v-if="enableContext">Show only selection</span>
-            <span v-else>Show selection in context</span>
-          </v-tooltip>
-
-          <v-spacer></v-spacer>
-          <v-slider min="0" max="5" step="1" :tick-labels="labels" v-model="colSpan"></v-slider>
-          <v-spacer></v-spacer>
-          <v-btn-toggle dense v-model="isSortDesc" mandatory>
-            <v-btn medium depressed color="blue" :value="false">
-              <v-icon>mdi-arrow-up</v-icon>
-            </v-btn>
-            <v-btn medium depressed color="blue" :value="true">
-              <v-icon>mdi-arrow-down</v-icon>
-            </v-btn>
-          </v-btn-toggle>
-        </v-toolbar>
-      </template>
-      <template v-slot:default="items">
-        <v-layout grid-list-sm column style="height: 75vh">
-          <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
-            <v-row dense>
-              <v-col
-                v-for="(item) in items.items"
-                v-bind:key="cardSelector+item._id"
-                :cols="possibleColSpans[colSpan]"
-              >
-                <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
-                <v-card
-                  v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
-                  v-bind:id="cardSelector+item._id"
-                >
-                  <v-img v-if="true" :src="item.image" v-on:click="toggle(item, $event)" />
-                  <!--:id='"card_"+item._id' -->
-                  <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
-
-                  <!--:id='"card_"+item._id'
-                  <model-gltf 
-                    v-else
-                    :src="item.gltf" 
-                  />
-                  -->
-                  <!--</router-link>-->
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-flex>
-        </v-layout>
-      </template>
-    </v-data-iterator>
+ <div>
+  <label class="typo__label">Simple select / dropdown</label>
+  <multiselect v-model="selectedKey" :options="keys" :multiple="true" :close-on-select="false" :clear-on-select="false" :preserve-search="true" placeholder="Pick some" label="name" track-by="name" :preselect-first="true">
+    <template slot="selection" slot-scope="{ values, search, isOpen }"><span class="multiselect__single" v-if="values.length &amp;&amp; !isOpen">{{ values.length }} options selected</span></template>
+  </multiselect>
+  <pre class="language-json"><code>{{ selectedKey  }}</code></pre>
+</div>
+  
   </v-container>
 </template>
 
@@ -101,6 +26,9 @@
 }
 </style>
 
+<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
+
+
 <script>
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
 import { ModelGltf } from "vue-3d-model";
@@ -109,10 +37,11 @@ import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import * as  kmeans  from "node-kmeans"
 import * as nj from 'numjs'
+ import Multiselect from 'vue-multiselect'
 
 export default {
-  name: "AugmentedGridCards",
-  components: { ModelGltf },
+  name: "ClusterView",
+  components: { ModelGltf, Multiselect},
   props: ["defaultEnableContext"],
   data: function() {
     return {
@@ -131,8 +60,10 @@ export default {
       isSortDesc: true,
       enableContext: this.defaultEnableContext,
       numSelected: 0,
-      clustersMap: {}
-     
+      clustersMap: {},
+      selectedKey: null,
+    options: ['Select option', 'options', 'selected', 'mulitple', 'label', 'searchable', 'clearOnSelect', 'hideSelected', 'maxHeight', 'allowEmpty', 'showLabels', 'onChange', 'touched']
+
     };
   },
   computed: {

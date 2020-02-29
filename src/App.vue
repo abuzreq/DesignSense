@@ -100,7 +100,7 @@
               <SetsView />
             </v-card>
           </v-flex>
-          <v-flex md4>
+          <v-flex md10>
             <v-card height="450px">
               <!-- Similarity-->
               <!--  <DendrogramView /> -->
@@ -111,7 +111,7 @@
           <v-flex md6>
             <v-card height="450px">
               <!-- Grid -->
-              <AugmentedGridView v-bind:defaultEnableContext="true" />
+              <!--<AugmentedGridView v-bind:defaultEnableContext="true" />-->
             </v-card>
           </v-flex>
         </v-layout>
