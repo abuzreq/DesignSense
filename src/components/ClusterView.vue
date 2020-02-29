@@ -3,7 +3,8 @@
   <v-container :id="viewID" justify-start align-start>
  <div>
   <label class="typo__label">Simple select / dropdown</label>
-  <multiselect v-model="selectedKey" :options="keys" :multiple="true" :close-on-select="false" :clear-on-select="false" :preserve-search="true" placeholder="Pick some" label="name" track-by="name" :preselect-first="true">
+   <v-select v-bind:items="keys" v-model="selectedKey" :max=2 label="Countries" autocomplete multiple chips></v-select>
+      <multiselect v-model="selectedKey" :options="keys" :close-on-select="false" :clear-on-select="false" :preserve-search="true" placeholder="Pick some" label="name" track-by="name" :preselect-first="true">
     <template slot="selection" slot-scope="{ values, search, isOpen }"><span class="multiselect__single" v-if="values.length &amp;&amp; !isOpen">{{ values.length }} options selected</span></template>
   </multiselect>
   <pre class="language-json"><code>{{ selectedKey  }}</code></pre>
