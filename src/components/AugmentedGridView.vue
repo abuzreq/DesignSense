@@ -73,13 +73,14 @@
               <v-row dense>
                 <v-col
                   v-for="(item) in items.items"
-                  :key="'card_'+item._id"
+                  v-bind:key="cardSelector+item._id"
                   :cols="possibleColSpans[colSpan]"
                 >
+                
                   <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
                   <v-card
                     v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
-                    :id="'card_'+item._id"
+                    v-bind:id="cardSelector+item._id"
                   >
                     <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" />
                     <!--:id='"card_"+item._id' -->
@@ -158,7 +159,11 @@ export default {
     values() {
       return Object.values(this.chartData);
     },
-    ...mapState({ rawChartData: state => state.data })
+    ...mapState({ rawChartData: state => state.data, keys: state => state.numericDimensions.concat(["selected"])}),
+    cardSelector()
+    {
+      return "card_" + this.viewID +"_";
+    }
   },
   mounted() {
     this.$store.dispatch("createDefaultView", {
@@ -196,16 +201,16 @@ export default {
 
       console.log(selection);
       for (var s in selection) {
-        console.log(s, d3.select("#card_" + s));
+        console.log(s, d3.select("#"+this.cardSelector + s));
         d3.select("#" + this.viewID)
-          .select("#card_" + s)
+          .select("#" + this.cardSelector + s)
           .classed("transparent", false)
           .classed("outlined", true);
       }
     },
     unhighlight(selection) {
       for (var s in selection) {
-        d3.select("#card_" + s)
+        d3.select("#"+this.cardSelector + s)
           .classed("outlined", false)
           .classed("transparent", true);
       }
