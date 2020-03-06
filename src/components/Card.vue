@@ -1,17 +1,18 @@
 <template>
-  <vdr 
+  <vdr
     class="v-card v-card--outlined v-sheet theme--light"
     :minWidth="200"
     :minHeight="200"
     :w="this.width"
     :h="this.height"
     @dragging="onDrag"
-    @resizing="onResize"  
+    @resizing="onResize"
     :parent="true"
     :is-conflict-check="true"
     :snap="true"
     :snap-tolerance="this.gridSize"
-    :handles="this.computedHandles"
+    v-bind:handles = "this.currentEditingMode ? ['br', 'tr', 'tl', 'bl'] : []"
+
     :grid="[this.gridSize, this.gridSize]"
     :x="this.x"
     :y="this.y"
@@ -65,12 +66,16 @@ export default {
       x: 0,
       y: 0,
       gridSize: 50,
-      currentEditingMode: false
+    //  currentEditingMode: false
     };
   },
   computed: {
-    computedHandles() { return this.currentEditingMode?['br','tr','tl','bl']:[]}
-    //   ...mapGetters({currentEditingMode: 'getEditingMode'})
+    /*computedHandles() {
+      let val = this.currentEditingMode ? ["br", "tr", "tl", "bl"] : [];
+      console.log(val)
+      return val;
+    }*/
+       ...mapState({currentEditingMode: state => state.editingMode})
   },
   created() {
     this.x = this.initX * this.gridSize;
@@ -78,38 +83,38 @@ export default {
     this.width = this.initW * this.gridSize;
     this.height = this.initH * this.gridSize;
 
-     document.addEventListener('keyup',  function(e)
-      {
-        if(e.keyCode === 192)
-        {         
-          this.currentEditingMode = !this.currentEditingMode;
-          console.log("Ahaa",this.currentEditingMode, e)
-        }
-      })
-
- 
+    document.addEventListener("keyup", function(e) {
+     /* if (e.keyCode === 192) {
+        this.currentEditingMode = !this.currentEditingMode;
+        console.log("Ahaa", this.currentEditingMode, e);
+      }*/
+    });
   },
   methods: {
     onResize: function(x, y, width, height) {
-      this.x = x;
-      this.y = y;
-      this.width = width;
-      this.height = height;
+      if (this.currentEditingMode) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+      }
     },
     onDrag: function(x, y) {
-      this.x = x;
-      this.y = y;
+      if (this.currentEditingMode) {
+        this.x = x;
+        this.y = y;
+      }
     }
   },
   watch: {
-    /*
+    
     currentEditingMode: {
       handler: function(newValue) {
         console.log(newValue)
-         this.currentEditingMode = newValue;
+         //this.currentEditingMode = newValue;
       }
       //deep: true
-    }*/
+    }
   }
 };
 </script>

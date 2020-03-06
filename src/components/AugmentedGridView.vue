@@ -136,7 +136,7 @@ export default {
       offContextIcon: "mdi-eye-off",
       onContextIcon: "mdi-eye",
       viewID: null,
-      keys: ["Height", "NetSolar", "collection", "selected"],
+      //keys: ["Height", "NetSolar", "collection", "selected"],
       colSpan: 1,
       possibleColSpans: [1, 2, 3, 4],
       labels: ["XL", "L", "M", "S"],
