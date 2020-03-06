@@ -6,10 +6,12 @@ import generateID from "@/components/utils.js";
 
 Vue.use(Vuex);
 
-function builder(new_data) 
+function builder(new_data, new_layouts) 
 {
     return new Vuex.Store({
         state: {
+            editingMode: false,
+            layouts: new_layouts,
             defaultMarkingID: generateID(), //"_lqpkb07gn"
             rawData: new_data,
             data: preprocess(new_data),
@@ -241,6 +243,7 @@ function builder(new_data)
         },
         modules: {},
         getters: {
+            getEditingMode: state => state.editingMode,
             getMarking : state => view => {return findMarkingAffectingView(state.markingsMap,state.markingID2views, view)},
             data: state => {return state.data},   
             dataMap: state => {return createDataMap(state.data);},

@@ -4,6 +4,8 @@ import router from "./router";
 import store from "./store";
 import vuetify from "./plugins/vuetify";
 import * as d3 from "d3";
+import vdr from "./plugins/vdr";
+import layouts from './layout.js'
 
 
 Vue.config.productionTip = false;
@@ -59,8 +61,9 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
       const data = getParallelDataFromAlternatives(globalURL, json_data)
       var app = new Vue({
         vuetify,
+        vdr,
         router,
-        store: store(data),
+        store: store(data, layouts),
         el: '#app',
         render: h => h(App),
       });
@@ -78,11 +81,15 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
         }
         if(e.ctrlKey)
         {
-          //console.log(app.$store.state)
-          let views = Object.keys(app.$store.state.viewsMap)
-          console.log(views, app.$store.state.viewsMap)
-          //console.log("views ", views)
-          app.$store.dispatch('createDetailsView',{master_view: views[0], details_view: views[1]})
+        
+          console.log("edit= ",app.$store.editingMode)
+          /*
+            //console.log(app.$store.state)
+            let views = Object.keys(app.$store.state.viewsMap)
+            console.log(views, app.$store.state.viewsMap)
+            //console.log("views ", views)
+            app.$store.dispatch('createDetailsView',{master_view: views[0], details_view: views[1]})
+          */
         }
       })
       document.addEventListener('keyup',  function(e)

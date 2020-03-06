@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar app dark dense flat short color=" red--text text--lighten-1" height="30">
+    <v-app-bar app dark dense flat short color=" red--text text--lighten-1" height="50">
       <v-toolbar-title>DesignSense</v-toolbar-title>
       <v-spacer></v-spacer>
 
@@ -23,7 +23,7 @@
         <span>Reset Selection</span>
       </v-tooltip>
 
-    <v-divider vertical/>
+      <v-divider vertical />
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
@@ -52,7 +52,7 @@
         <span>Exclude</span>
       </v-tooltip>
 
-     <v-tooltip bottom>
+      <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="$store.dispatch('resetData')">
             <v-icon>mdi-cached</v-icon>
@@ -60,60 +60,22 @@
         </template>
         <span>Reset Data</span>
       </v-tooltip>
-
     </v-app-bar>
 
     <v-content>
       <v-container fluid grid-list-sm align-start justify-start pt-0>
         <!-- TOP -->
         <v-layout row>
-          <v-flex md8>
-            <v-card height="500px">
-              <!-- pcoords -->
-              <ParCoordsView />
-            </v-card>
-          </v-flex>
-          <v-flex md4>
-            <v-card height="500px">
-              <!-- Scatterplot -->
-              <!-- <SPLOMView /> -->
-              <ScatterplotView />
-              <!--
-                 <ScatterplotView 
-                :chartData="this.$store.state.data"
-                :xColumn="TotalFlrArea"
-                :yColumn="NetSolar"
-                :colorColumn="collection">
-              </ScatterplotView>  
-              -->
-              <!-- <TSNEView /> -->
-            </v-card>
-          </v-flex>
-        </v-layout>
-        <!-- BOTTOM -->
-        <v-layout row>
-          <v-flex md2>
-            <v-card height="450px">
-              <!-- Similarity-->
-              <!--  <DendrogramView /> -->
-              <!--   <AugmentedGridView v-bind:defaultEnableContext="true" />-->
-              <SetsView />
-            </v-card>
-          </v-flex>
-          <v-flex md4>
-            <v-card height="450px">
-              <!-- Similarity-->
-              <!--  <DendrogramView /> -->
-             <!--   <AugmentedGridView v-bind:defaultEnableContext="true" />-->
-             <ClusterView/>
-            </v-card>
-          </v-flex>
-          <v-flex md6>
-            <v-card height="450px">
-              <!-- Grid -->
-              <AugmentedGridView v-bind:defaultEnableContext="true" />
-            </v-card>
-          </v-flex>
+          <template v-for="(item,index) in layouts">
+            <Card
+              :key="index"
+              :initX="item.x"
+              :initY="item.y"
+              :initW="item.w"
+              :initH="item.h"
+              :type="item.type"
+            />
+          </template>
         </v-layout>
       </v-container>
     </v-content>
@@ -134,6 +96,9 @@ import TSNEView from "@/components/TSNEView.vue";
 import SetsView from "@/components/SetsView.vue";
 import ClusterView from "@/components/ClusterView.vue";
 
+import Card from "@/components/Card.vue";
+
+import { mapState, mapGetters } from "vuex";
 
 export default {
   name: "App",
@@ -146,7 +111,11 @@ export default {
     ScatterplotView,
     TSNEView,
     SetsView,
-    ClusterView
+    ClusterView,
+    Card
+  },
+  computed: {
+    ...mapState({ layouts: state => state.layouts })
   }
 };
 

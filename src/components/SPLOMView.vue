@@ -1,80 +1,71 @@
 
 
+
 <template>
   <v-container fluid>
-    <div 
-      id="splom" 
-      ref="splom" 
-      class="splom" 
-    />
+    <div :id="viewID" ref="splom" class="splom" />
   </v-container>
 </template>
 
 
 <script>
 import * as d3 from "d3";
+import TemplateView from "@/components/TemplateView.vue";
+import { operations, getOperationFromEvent } from "@/components/operations.js";
+
 
 export default {
+  mixins: [TemplateView],
   name: "SPLOMView",
-  props: [
-    "chart",
-    "cells",
-    "chartData",
-    "padding",
-    "width",
-    "columns",
-    "colorColumn"
-  ],
   computed: {},
+  data() {
+    return {
+      padding: 10,
+      colorColumn: "collection",
+      columns: ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"]
+    };
+  },
   mounted() {
-    this.width = 475;
-    this.padding = 10;
-    this.colorColumn = "collection";
-    this.columns = ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"];
     //this.columns = ["objective_value", "surface_area", "weight", "total_load"];
-
-    this.chartData = this.$store.state.data;
-    [this.chart, this.cells] = this.createChart();
     //console.log("SPLOM")
     //console.log(this.chart._groups)
     //console.log(this.cells._groups)
   },
-  created() {
-    this.$store.watch(
-      (state, getters) => getters.highlightedMask,
-      (newValue, oldValue) => {
-        var atLeastOne = false;
-        for (var on of newValue) {
-          //console.log(on);
-          if (on) {
-            atLeastOne = true;
-            break;
-          }
-        }
-
-        if (atLeastOne) {
-          this.highlight(newValue);
-        } else {
-          this.unhighlightAll();
-        }
-      },
-      {
-        deep: true //add this if u need to watch object properties change etc.
-      }
-    );
-  },
+  created() {},
   methods: {
-    createChart: function() {
+    markingChangeHandler: function() {
+      //this.chart.unhighlight(this.$store.getters.data);
+      var result = this.$store.getters.selectedDataInView(this.viewID);
+      this.chart.highlight(result);
+    },
+    onBrushed: function(brushedIDs)
+    {
+        //TODO expose as a passable function (See onBrushed in ScaterplotView)
+        if (brushedIDs.length > 0) {
+          this.$store.commit("update", {
+            view: this.viewID,
+            selection: brushedIDs,
+            operation: getOperationFromEvent(d3.event.sourceEvent)
+          });
+        }
+    },
+    Chart: function() {
       let colorColumn = this.colorColumn;
-
       let columns = this.columns;
-
       let padding = this.padding;
       let width = this.width;
+      let height = this.height;
 
-      let size =
+      let sizeX =
         (width - (columns.length + 1) * padding) / columns.length + padding;
-      let totalSize = size * columns.length;
+      let size = sizeX;
+
+      let sizeY =
+        (height - (columns.length + 1) * padding) / columns.length + padding;
+
+      let totalSizeX = sizeX * columns.length;
+      let totalSizeY = sizeY * columns.length;
+
       var margin = { top: 0, right: 10, bottom: 10, left: 50 };
       let markSize = size / 50;
       let columnTitleSize = size / 15;
@@ -166,19 +157,6 @@ export default {
       };
 
       let brush = (cells, circle) => {
-        let vueThis = this;
-        const brushObj = d3
-          .brush()
-          .extent([
-            [padding / 2, padding / 2],
-            [size - padding / 2, size - padding / 2]
-          ])
-          .on("start", brushstarted)
-          .on("brush", brushed)
-          .on("end", brushended);
-
-        cells.call(brushObj);
-
         let brushCell;
 
         // Clear the previously-active brush, if any.
@@ -190,13 +168,13 @@ export default {
         }
 
         // Highlight the selected circles.
-        function brushed([j, i]) {
+        var brushed = ([j, i]) => {
           if (d3.event.selection === null) return;
           const [[x0, y0], [x1, y1]] = d3.event.selection;
 
-          let brushed = [];
+          let brushedIDs = [];
           let brushedMask = [];
-          circle.classed("hidden", d => {
+          circle.each((d) => {
             if (
               x0 > x[columns[i]](d[columns[i]]) ||
               x1 < x[columns[i]](d[columns[i]]) ||
@@ -204,36 +182,42 @@ export default {
               y1 < y[columns[j]](d[columns[j]])
             ) {
               brushedMask.push(0);
-              return true;
             } else {
-              brushed.push(d);
+              brushedIDs.push(d._id);
               brushedMask.push(1);
-              return false;
             }
           });
-
-          circle.classed("hidden", (d, i) => (brushedMask ? true : false));
-
-          if (brushed.length > 0) {
-            vueThis.$store.commit("highlight", brushed);
-            // this.$store.commit("unhighlight", chart.data())
-          }
-        }
+          this.onBrushed(brushedIDs);
+        };
 
         // If the brush is empty, select all circles.
-        function brushended() {
+        let brushended = () => {
           if (d3.event.selection !== null) return;
+          this.onBrushed([])
+          //circle.classed("hidden", false);
+          //this.$store.commit("unhighlight", this.chartData);
+        };
 
-          circle.classed("hidden", false);
-          vueThis.$store.commit("unhighlight", vueThis.chartData);
-        }
+        const brushObj = d3
+          .brush()
+          .extent([
+            [padding / 2, padding / 2],
+            [size - padding / 2, size - padding / 2]
+          ])
+          .on("start", brushstarted)
+          .on("brush", brushed)
+          .on("end", brushended);
+
+        //ref: https://github.com/d3/d3-brush/issues/20
+        brushObj.keyModifiers(false);
+
+        cells.call(brushObj);
       };
-
       const svg = d3
-        .select("#splom")
+        .select("#" + this.viewID)
         .append("svg")
-        .attr("width", totalSize + margin.left + margin.right)
-        .attr("height", totalSize + margin.top + margin.bottom)
+        .attr("width", totalSizeX + margin.left + margin.right)
+        .attr("height", totalSizeY + margin.top + margin.bottom)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -245,7 +229,7 @@ export default {
         .append("style")
         .text(
           "circle.hidden { fill: #000; fill-opacity: 1; r: " +
-            markSize / 3 +
+            markSize / 2 +
             "px; }"
         );
 
@@ -303,24 +287,34 @@ export default {
         .attr("dy", ".71em")
         .text(d => d);
 
-      return [svg, cells];
-    },
-    highlight: function(highlightMask) {
-      this.cells.each(([i, j]) => {
-        let circles = d3
-          .select(this.cells._groups[0][i + this.columns.length * j])
-          .selectAll("circle");
+      return {
+        highlight: (selection) => {
+          selection = selection.map(d => d._id);
+          cells.each(([i, j]) => {
+            let circles = d3
+              .select(cells._groups[0][i + this.columns.length * j])
+              .selectAll("circle");
 
-        circles.classed("hidden", (d, i) => (highlightMask[i] ? false : true));
-      });
-    },
-    unhighlightAll: function() {
-      this.cells.each(([i, j]) => {
-        let circles = d3
-          .select(this.cells._groups[0][i + this.columns.length * j])
-          .selectAll("circle");
-        circles.classed("hidden", false);
-      });
+            circles.classed("hidden", (d, i) => {
+              //console.log(d, i);
+              return selection.includes(d._id) ? false : true;
+            });
+          });
+        },
+        unhighlight: (selection) => {
+          selection = selection.map(d => d._id);
+          cells.each(([i, j]) => {
+            let circles = d3
+              .select(cells._groups[0][i + this.columns.length * j])
+              .selectAll("circle");
+
+            circles.classed("hidden", (d, i) => {
+              //console.log(d, i);
+              return selection.includes(d._id) ? true : false;
+            });
+          });
+      }
+      }
     }
   }
   /*

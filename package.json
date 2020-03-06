@@ -18,6 +18,7 @@
     "d3": "^5.15.0",
     "lodash": "^4.17.15",
     "material-design-icons-iconfont": "^5.0.1",
+    "vue-draggable-resizable-gorkys": "^2.3.6",
     "parcoord-es": "^2.2.10",
     "vue": "^2.6.11",
     "vue-3d-model": "^1.2.2",

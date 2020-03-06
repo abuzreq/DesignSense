@@ -1,89 +1,105 @@
 <template>
   <v-container :id="viewID" justify-start align-start>
-    <v-data-iterator
-      :items="chartData"
-      hide-default-footer
-      :items-per-page="maxPerPage"
-      :sort-by="sortByVar"
-      :sort-desc="isSortDesc"
-    >
-      <template v-slot:header>
-        <v-toolbar dense fixed dark color="blue darken-3" class="mb-1">
-          <v-select
-            dense
-            v-model="sortByVar"
-            flat
-            solo-inverted
-            hide-details
-            prepend-inner-icon="search"
-            :items="keys"
-            label="Sort by"
-          ></v-select>
-          <v-spacer></v-spacer>
-          {{numSelected}}
-          <v-spacer></v-spacer>
+    <v-container class="pa-0 ma-0">
+      <v-data-iterator
+        :items="chartData"
+        hide-default-footer
+        :items-per-page="maxPerPage"
+        :sort-by="sortByVar"
+        :sort-desc="isSortDesc"
+      >
+        <template v-slot:header>
+          <v-toolbar dense fixed dark color="blue darken-3" class="mb-1">
+            <v-select
+              dense
+              v-model="sortByVar"
+              flat
+              solo-inverted
+              hide-details
+              prepend-inner-icon="search"
+              :items="keys"
+              label="Sort by"
+            ></v-select>
+            <v-spacer></v-spacer>
+            {{numSelected}}
+            <v-spacer></v-spacer>
 
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <v-checkbox
-                v-on="on"
-                dense
-                align-center
-                v-model="enableContext"
-                icon="large"
-                :off-icon="offContextIcon"
-                :on-icon="onContextIcon"
-              />
-            </template>
-            <span v-if="enableContext">Show only selection</span>
-            <span v-else>Show selection in context</span>
-          </v-tooltip>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-checkbox
+                  v-on="on"
+                  dense
+                  align-center
+                  v-model="enableContext"
+                  icon="large"
+                  :off-icon="offContextIcon"
+                  :on-icon="onContextIcon"
+                />
+              </template>
+              <span v-if="enableContext">Show only selection</span>
+              <span v-else>Show selection in context</span>
+            </v-tooltip>
 
-          <v-spacer></v-spacer>
-          <v-slider min="0" max="5" step="1" :tick-labels="labels" v-model="colSpan"></v-slider>
-          <v-spacer></v-spacer>
-          <v-btn-toggle dense v-model="isSortDesc" mandatory>
-            <v-btn medium depressed color="blue" :value="false">
-              <v-icon>mdi-arrow-up</v-icon>
-            </v-btn>
-            <v-btn medium depressed color="blue" :value="true">
-              <v-icon>mdi-arrow-down</v-icon>
-            </v-btn>
-          </v-btn-toggle>
-        </v-toolbar>
-      </template>
-      <template v-slot:default="items">
-        <v-layout grid-list-sm column style="height: 75vh">
-          <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
-            <v-row dense>
-              <v-col
-                v-for="(item) in items.items"
-                :key="'card_'+item._id"
-                :cols="possibleColSpans[colSpan]"
-              >
-                <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
-                <v-card
-                  v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
-                  :id="'card_'+item._id"
+            <v-spacer></v-spacer>
+
+            <v-slider
+              min="0"
+              max="3"
+              step="1"
+              :tick-labels="labels"
+              ticks="always"
+              tick-size="4"
+              v-model="colSpan"
+            ></v-slider>
+
+            <v-spacer></v-spacer>
+            <v-btn-toggle dense v-model="isSortDesc" mandatory>
+              <v-btn medium depressed color="blue" :value="false">
+                <v-icon>mdi-arrow-up</v-icon>
+              </v-btn>
+              <v-btn medium depressed color="blue" :value="true">
+                <v-icon>mdi-arrow-down</v-icon>
+              </v-btn>
+            </v-btn-toggle>
+          </v-toolbar>
+        </template>
+        <template v-slot:default="items">
+         <v-layout grid-list-sm column :style="{'height': `${height}px`}">
+            <v-flex
+              md6
+              style="overflow-y: auto; overflow-x: hidden"
+              :style="{'min-height': `calc(${height}px - 100px)`}"
+            >
+              <v-row dense>
+                <v-col
+                  v-for="(item) in items.items"
+                  :key="'card_'+item._id"
+                  :cols="possibleColSpans[colSpan]"
                 >
-                  <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" />
-                  <!--:id='"card_"+item._id' -->
-                  <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
+                  <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
+                  <v-card
+                    v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
+                    :id="'card_'+item._id"
+                  >
+                    <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" />
+                    <!--:id='"card_"+item._id' -->
+                    <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
 
-                  <!--:id='"card_"+item._id'
+                    <!--:id='"card_"+item._id'
                   <model-gltf 
                     v-else
                     :src="item.gltf" 
                   />
-                  -->
-                  <!--</router-link>-->
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-flex>
-        </v-layout>
-      </template>
-    </v-data-iterator>
+                    -->
+                    <!--</router-link>-->
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-flex>
+          </v-layout>
+        </template>
+      </v-data-iterator>
+    </v-container>
   </v-container>
 </template>
 
@@ -111,7 +127,7 @@ import * as d3 from "d3";
 export default {
   name: "AugmentedGridCards",
   components: { ModelGltf },
-  props: ["defaultEnableContext"],
+  props: ["defaultEnableContext", "width", "height"],
   data: function() {
     return {
       chartData: [],
@@ -120,9 +136,10 @@ export default {
       onContextIcon: "mdi-eye",
       viewID: null,
       keys: ["Height", "NetSolar", "collection", "selected"],
-      colSpan: 0,
-      possibleColSpans: [1, 2, 3, 4, 6, 12],
-      labels: ["12", "6", "4", "3", "2", "1"],
+      colSpan: 1,
+      possibleColSpans: [1, 2, 3, 4],
+      labels: ["XL", "L", "M", "S"],
+      icons: ["mdi-snowflake", "mdi-leaf", "mdi-fire", "mdi-water"],
       maxPerPage: 10000,
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
       sortByVar: "height",
