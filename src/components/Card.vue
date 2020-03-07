@@ -7,13 +7,15 @@
     :h="this.height"
     @dragging="onDrag"
     @resizing="onResize"
+
     :parent="true"
     :is-conflict-check="true"
     :snap="true"
-    :snap-tolerance="this.gridSize"
     v-bind:handles = "this.currentEditingMode ? ['br', 'tr', 'tl', 'bl'] : []"
+    :draggable="this.currentEditingMode"
+:resizable="this.currentEditingMode"
 
-    :grid="[this.gridSize, this.gridSize]"
+    v-bind:grid="[this.gridSize, this.gridSize]"
     :x="this.x"
     :y="this.y"
   >
@@ -66,7 +68,6 @@ export default {
       x: 0,
       y: 0,
       gridSize: 50,
-    //  currentEditingMode: false
     };
   },
   computed: {
@@ -78,12 +79,14 @@ export default {
        ...mapState({currentEditingMode: state => state.editingMode})
   },
   created() {
+    console.log("editingMode", this.currentEditingMode)
     this.x = this.initX * this.gridSize;
     this.y = this.initY * this.gridSize;
     this.width = this.initW * this.gridSize;
     this.height = this.initH * this.gridSize;
 
-    document.addEventListener("keyup", function(e) {
+    document.addEventListener("keyup", function(e) 
+    {
      /* if (e.keyCode === 192) {
         this.currentEditingMode = !this.currentEditingMode;
         console.log("Ahaa", this.currentEditingMode, e);
@@ -104,16 +107,6 @@ export default {
         this.x = x;
         this.y = y;
       }
-    }
-  },
-  watch: {
-    
-    currentEditingMode: {
-      handler: function(newValue) {
-        console.log(newValue)
-         //this.currentEditingMode = newValue;
-      }
-      //deep: true
     }
   }
 };

@@ -11,6 +11,7 @@ function builder(new_data, dataTypesMap, new_layouts)
     return new Vuex.Store({
         state: {
             editingMode: false,
+            
             layouts: new_layouts,
             defaultMarkingID: generateID(), //"_lqpkb07gn"
             rawData: new_data,
@@ -30,6 +31,10 @@ function builder(new_data, dataTypesMap, new_layouts)
         },
         mutations: 
         {
+           toggleEditingMode(state, payload)
+           {
+                state.editingMode = !state.editingMode;           
+           },
             setData(state, payload)
             {
                 state.data = payload.newData;               

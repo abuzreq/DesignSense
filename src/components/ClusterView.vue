@@ -58,13 +58,13 @@
             <v-row dense>
               <v-col
                 v-for="(item) in items.items"
-                :key="'card_'+item._id"
+                v-bind:key="cardSelector+item._id"
                 :cols="possibleColSpans[colSpan]"
               >
                 <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
                 <v-card
                   v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
-                  :id="'card_'+item._id"
+                  v-bind:id="cardSelector+item._id"
                 >
                   <v-img v-if="true" :src="item.image" v-on:click="toggle(item, $event)" />
                   <!--:id='"card_"+item._id' -->
@@ -91,11 +91,9 @@
 .col > .v-card.outlined {
   border: 2px solid red;
 }
-
 .col > .v-card:not(.transparent) {
   opacity: 1;
 }
-
 .col > .v-card.transparent {
   opacity: 0.4;
 }
@@ -107,7 +105,8 @@ import { ModelGltf } from "vue-3d-model";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
-
+import * as  kmeans  from "node-kmeans"
+import * as nj from 'numjs'
 export default {
   name: "AugmentedGridCards",
   components: { ModelGltf },
@@ -119,7 +118,7 @@ export default {
       offContextIcon: "mdi-eye-off",
       onContextIcon: "mdi-eye",
       viewID: null,
-      keys: ["Height", "NetSolar", "collection", "selected"],
+     // keys: this.$store.numericDimensions.concat(["selected"]),
       colSpan: 3,
       possibleColSpans: [1, 2, 3, 4, 6, 12],
       labels: ["12", "6", "4", "3", "2", "1"],
@@ -143,20 +142,45 @@ export default {
     values() {
       return Object.values(this.chartData);
     },
-    ...mapState({ rawChartData: state => state.data })
+    ...mapState({ rawChartData: state => state.data, keys: state => state.numericDimensions.concat(["selected"]) }),
+    cardSelector()
+    {
+      return "card_" + this.viewID +"_";
+    }
   },
   mounted() {
     this.$store.dispatch("createDefaultView", {
       view: this.viewID,
       vueComponent: this
     });
-
     this.chartData = this.rawChartData;
-    var clusters = kmeans(this.chartData,4, function(d) {return d['TotalFlrArea']})
-    var centroids = clusters.map(c => d3.mean(c, d => d['TotalFlrArea']))
+    var matrix = to2DMatrix(this.chartData, this.$store.state.numericDimensions, true ); //['TotalFlrArea']
+  
+    kmeans.clusterize(matrix, {k: 9}, (err,res) => 
+    {
+        if (err) console.error(err);
+        else 
+        {
+            var centroids = res.map(c => c.centroid);
+            var closest = res.map((c,i) => 
+            {
+                return indexOfSmallest(c.cluster.map(d => distance(centroids[i], d)))
+            })
+            var clusterReps = [];
+            for(var i = 0; i < closest.length;i++)
+            {
+                clusterReps.push(this.chartData[closest[i]])     
+                this.clustersMap[this.chartData[closest[i]]._id] = res[i].clusterInd.map(idx => this.chartData[idx])
+            }
+            this.chartData = clusterReps;
+        }
+    });
+        /*
+    var clusters = kmeans(this.chartData, 4, function(d) {return d.TotalFlrArea})
+    var centroids = clusters.map(c => d3.mean(c, d => values(d, ['TotalFlrArea'])))
     var closest = clusters.map((c,i) => 
         {
-            return indexOfSmallest(c.map( d =>  Math.abs(centroids[i] - d['TotalFlrArea'])))
+            return indexOfSmallest(c.map( d =>  Math.abs(centroids[i] - values(d, ['TotalFlrArea']))))
         }
     )
     var clusterReps = [];
@@ -167,7 +191,7 @@ export default {
         this.clustersMap[this.chartData[closest[i]]._id] = clusters[i]
     }
     this.chartData = clusterReps;
- 
+    */
   },
   created() {
     this.viewID = "id" + this._uid;
@@ -197,22 +221,20 @@ export default {
         operation: getOperationFromEvent(event)
       });
     },
-
     highlight(selection) {
       let count = 0;
-
       console.log(selection);
       for (var s in selection) {
-        console.log(s, d3.select("#card_" + s));
+        console.log(s, d3.select("#"+ this.cardSelector + s));
         d3.select("#" + this.viewID)
-          .select("#card_" + s)
+          .select("#"+ this.cardSelector + s)
           .classed("transparent", false)
           .classed("outlined", true);
       }
     },
     unhighlight(selection) {
       for (var s in selection) {
-        d3.select("#card_" + s)
+        d3.select("#"+ this.cardSelector + s)
           .classed("outlined", false)
           .classed("transparent", true);
       }
@@ -225,13 +247,11 @@ export default {
           .selectAll(".v-card")
           .size()
       );
-
       d3.select("#" + this.viewID)
         .selectAll(".v-card")
         .classed("outlined", false)
         .classed("transparent", true);
     },
-
     addSelection(id) {
       if (!this.selected.includes(id)) this.selected.push(id);
       else this.selected.splice(this.selected.indexOf(id), 1);
@@ -260,7 +280,6 @@ export default {
       let selected = this.$store.getters.selectedInView(this.viewID);
       this.unhighlight(this.$store.getters.unselectedInView(this.viewID));
       this.unhighlight(selected);
-
       this.highlight(selected);
 */
     },
@@ -289,10 +308,46 @@ export default {
     }
   }
 };
-
-
+function get(obj, keys)
+{
+    var newObj = {};
+    for(var key of keys)
+    {
+        newObj[key] = obj[key]
+    }
+    return newObj;
+}
+function values(obj, keys)
+{  
+    let v = Object.values(get(obj,keys));
+    return v
+}
+function to2DMatrix(data, keys, normalize)
+{  
+    if(normalize)
+    {
+        var scales = {}
+        keys.forEach(key => {
+            scales[key] =  d3.scaleLinear().domain(
+            d3.extent(data, function(d) {
+            return d[key];
+            })).range([0, 1]);
+        })
+    }
+  
+    var matrix = []
+    for(var obj of data)
+    {
+        var newObj = {};
+        for(var key of keys)
+        {
+            newObj[key] = normalize?scales[key](obj[key]):obj[key];
+        } 
+        matrix.push(Object.values(newObj));
+    }
+    return matrix;
+}
 function indexOfSmallest(a) {
-
  var lowest = 0;
  for (var i = 1; i < a.length; i++) {
       
@@ -300,34 +355,43 @@ function indexOfSmallest(a) {
  }
  return lowest;
 }
+function distance(arr1, arr2)
+{
+    if(arr1.length !== arr2.length) console.error("The two arrays must have the same length")
+    var sum = 0;
+    for(var i in arr1)
+    {
+        sum += Math.pow(arr1[i] - arr2[i], 2)
+    }
+    return Math.sqrt(sum);
+}
+/*
+'use strict';
 function kmeans(arrayToProcess, numberOfClusters, accessor) {
   var groups = new Array();
   var centroids = new Array();
   var oldCentroids = new Array();
   var changed = false;
-  /*
-   * 1. no accessor provided
-   * 2. accessor returns a single value (1-dimensional)
-   * 3. accessor returns an array (multi-dimentioanl)
-   */
+  
+    // 1. no accessor provided
+   // 2. accessor returns a single value (1-dimensional)
+   // 3. accessor returns an array (multi-dimentioanl)
   if (!accessor) {
     accessor = function (d) { return [d]; };
   }
-
+  console.log(accessor)
   var dist = function (a, b) {
     a = (typeof a === Array) ? a : [a];
     b = (typeof b === Array) ? b : [b];
     if (a.length !== b.length) {
       throw "Number of dimensions not aligned between data points."
     }
-
     var ds = 0;
     for (var i = 0; i < a.length; i++) {
       ds += Math.pow(a[i] - b[i], 2);
     }
     return Math.sqrt(ds);
   };
-
   var calCentroid = function (group) {
     var centroid = [];
     var dim = group[0].length;
@@ -340,31 +404,23 @@ function kmeans(arrayToProcess, numberOfClusters, accessor) {
     }
     return centroid;
   };
-
   var moveCentroids = function (groups) {
     return groups.map(calCentroid);
   };
-
   var identicalCoordinate = function(a, b) {
-     
-    for (var d = 0; d <= a.length; d++) 
-    {
-        
+    for (var d = 0; d < a.length; d++) {
       if (a[d] !== b[d]) return false;
     }
     return true;
   };
-
-  var existsIn = function(basket, p) 
-  {
-    for(var j = 0; j <= basket.length; j++) {
+  var existsIn = function(basket, p) {
+    for(var j = 0; j < basket.length; j++) {
       if (identicalCoordinate(basket[j], p)) {
         return true;
       }
     }
     return false;
   };
-
   var centroidsChanged = function (oldSet, currSet) {
     // every old centroid should be found in new set, otherwise consider centroids changed
     for (var i = 0;i < oldSet.length; i++) {
@@ -372,28 +428,22 @@ function kmeans(arrayToProcess, numberOfClusters, accessor) {
     }
     return false;
   };
-
   // initialise group arrays
   for (var initGroups = 0; initGroups < numberOfClusters; initGroups++) {
     groups[initGroups] = new Array();
   }
-
   // hop for systemical sampling
   var hop = Math.round(arrayToProcess.length / (numberOfClusters + 1));
   var i, j, idx;
-
   for (i = 0; i < numberOfClusters; i++) {
     idx = hop * (i + 1);
     centroids[i] = accessor(arrayToProcess[idx]);
   }
-
   do {
     for (j = 0; j < numberOfClusters; j++) {
       groups[j] = [];
     }
-
     changed = false;
-
     for (i = 0; i < arrayToProcess.length; i++) {
       var distance = -1;
       var oldDistance = -1
@@ -410,15 +460,14 @@ function kmeans(arrayToProcess, numberOfClusters, accessor) {
       }
       groups[newGroup].push(arrayToProcess[i]);
     }
-
     oldCentroids = centroids;
     centroids = moveCentroids(groups);
     changed = centroidsChanged(oldCentroids, centroids);
   } while (changed == true);
-
   return groups;
 }
 if (typeof d3 !== "undefined") {
   d3.kmeans = kmeans;
 }
+*/
 </script>

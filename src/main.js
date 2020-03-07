@@ -87,9 +87,7 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
           app.$store.altOn = e.altKey;
         }
         if(e.ctrlKey)
-        {
-          app.$store.editingMode = !app.$store.editingMode ;
-          console.log("edit= ",app.$store.editingMode)
+        { 
           /*
             //console.log(app.$store.state)
             let views = Object.keys(app.$store.state.viewsMap)
@@ -109,6 +107,10 @@ let globalURL = "http://sr-02645.iat.sfu.ca:5052"
         if(e.keyCode === 18)
         {
           app.$store.altOn = false;
+        }
+        if(e.keyCode === 192)
+        {
+          app.$store.commit('toggleEditingMode');
         }
       })
       let args = {}

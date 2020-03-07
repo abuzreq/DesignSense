@@ -63,21 +63,18 @@
     </v-app-bar>
 
     <v-content>
-      <v-container fluid grid-list-sm align-start justify-start pt-0>
-        <!-- TOP -->
-        <v-layout row>
-          <template v-for="(item,index) in layouts">
-            <Card
-              :key="index"
-              :initX="item.x"
-              :initY="item.y"
-              :initW="item.w"
-              :initH="item.h"
-              :type="item.type"
-            />
-          </template>
-        </v-layout>
-      </v-container>
+          <div style="height: 100%; width: 100%; border: 1px solid red; position: relative;">
+            <template v-for="(item,index) in layouts">
+              <Card
+                :key="index"
+                :initX="item.x"
+                :initY="item.y"
+                :initW="item.w"
+                :initH="item.h"
+                :type="item.type"
+              />
+            </template>
+          </div>
     </v-content>
   </v-app>
 </template>
