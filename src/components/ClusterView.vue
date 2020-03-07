@@ -9,6 +9,11 @@
     >
       <template v-slot:header>
         <v-toolbar dense fixed dark color="blue darken-3" class="mb-1">
+          <MultiDimensionSelect
+            :initialValue="numericDimensions"
+            v-on:update="onDimensionChange($event)"
+          />
+          <v-spacer></v-spacer>
           <v-select
             dense
             v-model="sortByVar"
@@ -16,7 +21,7 @@
             solo-inverted
             hide-details
             prepend-inner-icon="search"
-            :items="keys"
+            :items="numericDimensions"
             label="Sort by"
           ></v-select>
           <v-spacer></v-spacer>
@@ -97,6 +102,18 @@
 .col > .v-card.transparent {
   opacity: 0.4;
 }
+
+/deep/ .multiselect__tag {
+  width: 50px;
+  display: none;
+}
+
+/deep/ .multiselect {
+  width: 200px;
+}
+</style>
+
+
 </style>
 
 <script>
@@ -105,11 +122,13 @@ import { ModelGltf } from "vue-3d-model";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
-import * as  kmeans  from "node-kmeans"
-import * as nj from 'numjs'
+import * as kmeans from "node-kmeans";
+import * as nj from "numjs";
+import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
+
 export default {
   name: "AugmentedGridCards",
-  components: { ModelGltf },
+  components: { ModelGltf, MultiDimensionSelect },
   props: ["defaultEnableContext"],
   data: function() {
     return {
@@ -118,7 +137,7 @@ export default {
       offContextIcon: "mdi-eye-off",
       onContextIcon: "mdi-eye",
       viewID: null,
-     // keys: this.$store.numericDimensions.concat(["selected"]),
+      // keys: this.$store.numericDimensions.concat(["selected"]),
       colSpan: 3,
       possibleColSpans: [1, 2, 3, 4, 6, 12],
       labels: ["12", "6", "4", "3", "2", "1"],
@@ -128,8 +147,8 @@ export default {
       isSortDesc: true,
       enableContext: this.defaultEnableContext,
       numSelected: 0,
-      clustersMap: {}
-     
+      clustersMap: {},
+      dimensions:[]
     };
   },
   computed: {
@@ -142,10 +161,12 @@ export default {
     values() {
       return Object.values(this.chartData);
     },
-    ...mapState({ rawChartData: state => state.data, keys: state => state.numericDimensions.concat(["selected"]) }),
-    cardSelector()
-    {
-      return "card_" + this.viewID +"_";
+    ...mapState({
+      rawChartData: state => state.data,
+      numericDimensions: state => state.numericDimensions
+    }),
+    cardSelector() {
+      return "card_" + this.viewID + "_";
     }
   },
   mounted() {
@@ -154,28 +175,8 @@ export default {
       vueComponent: this
     });
     this.chartData = this.rawChartData;
-    var matrix = to2DMatrix(this.chartData, this.$store.state.numericDimensions, true ); //['TotalFlrArea']
-  
-    kmeans.clusterize(matrix, {k: 9}, (err,res) => 
-    {
-        if (err) console.error(err);
-        else 
-        {
-            var centroids = res.map(c => c.centroid);
-            var closest = res.map((c,i) => 
-            {
-                return indexOfSmallest(c.cluster.map(d => distance(centroids[i], d)))
-            })
-            var clusterReps = [];
-            for(var i = 0; i < closest.length;i++)
-            {
-                clusterReps.push(this.chartData[closest[i]])     
-                this.clustersMap[this.chartData[closest[i]]._id] = res[i].clusterInd.map(idx => this.chartData[idx])
-            }
-            this.chartData = clusterReps;
-        }
-    });
-        /*
+    this.compute();
+    /*
     var clusters = kmeans(this.chartData, 4, function(d) {return d.TotalFlrArea})
     var centroids = clusters.map(c => d3.mean(c, d => values(d, ['TotalFlrArea'])))
     var closest = clusters.map((c,i) => 
@@ -194,10 +195,10 @@ export default {
     */
   },
   created() {
+    this.dimensions =this.numericDimensions
     this.viewID = "id" + this._uid;
     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "update" || mutation.type === "resetMarking") 
-      {
+      if (mutation.type === "update" || mutation.type === "resetMarking") {
         /*
         this.updateContext();
         this.selectionMap = this.$store.getters.getMarking(this.viewID);
@@ -211,11 +212,41 @@ export default {
     });
   },
   methods: {
-    toggle(item , event) 
-    {
-      console.log("Toggle",this.clustersMap[item._id])
-      this.$store.commit("update", 
-      {
+    compute() {
+      var matrix = to2DMatrix(this.chartData, this.dimensions, true); //['TotalFlrArea']
+      
+      kmeans.clusterize(matrix, { k: 4 }, (err, res) => {
+        if (err) console.error(err);
+        else {
+
+          var centroids = res.map(c => c.centroid);
+          var closest = res.map((c, i) => {
+            return indexOfSmallest(
+              c.cluster.map(d => distance(centroids[i], d))
+            );
+          });
+
+          var clusterReps = [];
+          for (var i = 0; i < closest.length; i++) {
+            clusterReps.push(this.chartData[closest[i]]);
+            this.clustersMap[this.chartData[closest[i]]._id] = res[
+              i
+            ].clusterInd.map(idx => this.chartData[idx]);
+          }
+          this.chartData = clusterReps;
+        }
+      });
+    },
+    onDimensionChange(newDimensions) {
+      this.dimensions = newDimensions;
+      /*Object.keys(this.chartData[0]).filter(
+        d => !newDimensions.includes(d)
+      );*/
+      this.compute();
+    },
+    toggle(item, event) {
+      console.log("Toggle", this.clustersMap[item._id]);
+      this.$store.commit("update", {
         view: this.viewID,
         selection: this.clustersMap[item._id].map(d => d._id),
         operation: getOperationFromEvent(event)
@@ -225,16 +256,16 @@ export default {
       let count = 0;
       console.log(selection);
       for (var s in selection) {
-        console.log(s, d3.select("#"+ this.cardSelector + s));
+        console.log(s, d3.select("#" + this.cardSelector + s));
         d3.select("#" + this.viewID)
-          .select("#"+ this.cardSelector + s)
+          .select("#" + this.cardSelector + s)
           .classed("transparent", false)
           .classed("outlined", true);
       }
     },
     unhighlight(selection) {
       for (var s in selection) {
-        d3.select("#"+ this.cardSelector + s)
+        d3.select("#" + this.cardSelector + s)
           .classed("outlined", false)
           .classed("transparent", true);
       }
@@ -308,62 +339,57 @@ export default {
     }
   }
 };
-function get(obj, keys)
-{
-    var newObj = {};
-    for(var key of keys)
-    {
-        newObj[key] = obj[key]
-    }
-    return newObj;
+function get(obj, keys) {
+  var newObj = {};
+  for (var key of keys) {
+    newObj[key] = obj[key];
+  }
+  return newObj;
 }
-function values(obj, keys)
-{  
-    let v = Object.values(get(obj,keys));
-    return v
+function values(obj, keys) {
+  let v = Object.values(get(obj, keys));
+  return v;
 }
-function to2DMatrix(data, keys, normalize)
-{  
-    if(normalize)
-    {
-        var scales = {}
-        keys.forEach(key => {
-            scales[key] =  d3.scaleLinear().domain(
-            d3.extent(data, function(d) {
+function to2DMatrix(data, keys, normalize) {
+  if (normalize) {
+    var scales = {};
+    keys.forEach(key => {
+      scales[key] = d3
+        .scaleLinear()
+        .domain(
+          d3.extent(data, function(d) {
             return d[key];
-            })).range([0, 1]);
-        })
+          })
+        )
+        .range([0, 1]);
+    });
+  }
+
+  var matrix = [];
+  for (var obj of data) {
+    var newObj = {};
+    for (var key of keys) {
+      newObj[key] = normalize ? scales[key](obj[key]) : obj[key];
     }
-  
-    var matrix = []
-    for(var obj of data)
-    {
-        var newObj = {};
-        for(var key of keys)
-        {
-            newObj[key] = normalize?scales[key](obj[key]):obj[key];
-        } 
-        matrix.push(Object.values(newObj));
-    }
-    return matrix;
+    matrix.push(Object.values(newObj));
+  }
+  return matrix;
 }
 function indexOfSmallest(a) {
- var lowest = 0;
- for (var i = 1; i < a.length; i++) {
-      
-  if (a[i] < a[lowest]) lowest = i;
- }
- return lowest;
+  var lowest = 0;
+  for (var i = 1; i < a.length; i++) {
+    if (a[i] < a[lowest]) lowest = i;
+  }
+  return lowest;
 }
-function distance(arr1, arr2)
-{
-    if(arr1.length !== arr2.length) console.error("The two arrays must have the same length")
-    var sum = 0;
-    for(var i in arr1)
-    {
-        sum += Math.pow(arr1[i] - arr2[i], 2)
-    }
-    return Math.sqrt(sum);
+function distance(arr1, arr2) {
+  if (arr1.length !== arr2.length)
+    console.error("The two arrays must have the same length");
+  var sum = 0;
+  for (var i in arr1) {
+    sum += Math.pow(arr1[i] - arr2[i], 2);
+  }
+  return Math.sqrt(sum);
 }
 /*
 'use strict';

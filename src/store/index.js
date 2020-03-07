@@ -3,6 +3,7 @@ import Vuex from "vuex";
 import views from "@/components/constants.js";
 import {operations} from "@/components/operations.js";
 import generateID from "@/components/utils.js";
+import * as d3 from "d3";
 
 Vue.use(Vuex);
 
@@ -11,7 +12,7 @@ function builder(new_data, dataTypesMap, new_layouts)
     return new Vuex.Store({
         state: {
             editingMode: false,
-            
+            colorScale: d3.scaleOrdinal(d3.schemeCategory10),
             layouts: new_layouts,
             defaultMarkingID: generateID(), //"_lqpkb07gn"
             rawData: new_data,
@@ -27,7 +28,9 @@ function builder(new_data, dataTypesMap, new_layouts)
 
             setsIDs: [],
             setsMap: {},
-            numericDimensions: getNumeric(dataTypesMap)
+            numericDimensions: getNumeric(dataTypesMap),
+            allDimensions: Object.keys(dataTypesMap)
+
         },
         mutations: 
         {
@@ -540,7 +543,7 @@ function getNumeric(typesMap)
     var numeric = []
     for(var dim in typesMap)
     {
-        if(typesMap[dim] == "Float" || typesMap[dim] == "Number")
+        if(typesMap[dim] == "Float" ) //|| typesMap[dim] == "Number"
         {
             numeric.push(dim);
         }
@@ -548,6 +551,7 @@ function getNumeric(typesMap)
     console.log(typesMap, numeric)
     return numeric;
 }
+
 //ref: https://stackoverflow.com/questions/41572974/how-to-load-all-server-side-data-on-initial-vue-js-vue-router-load
 export default builder;
 

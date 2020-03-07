@@ -9,21 +9,33 @@
         :sort-desc="isSortDesc"
       >
         <template v-slot:header>
-          <v-toolbar dense fixed dark color="blue darken-3" class="mb-1">
+          <v-toolbar dense  dark color="blue darken-3" class="mb-1">
             <v-select
               dense
               v-model="sortByVar"
-              flat
               solo-inverted
               hide-details
               prepend-inner-icon="search"
-              :items="keys"
+              :items="numericDimensions"
               label="Sort by"
             ></v-select>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-checkbox
+                  v-on="on"
+                  dense
+                  v-model="isSortDesc"
+                  icon="large"
+                  :off-icon="arrowUpIcon"
+                  :on-icon="arrowDownIcon"
+                />
+              </template>
+              <span v-if="isSortDesc">change to ascending order</span>
+              <span v-else>change to descending order</span>
+            </v-tooltip>
             <v-spacer></v-spacer>
-            {{numSelected}}
+            # Selected {{numSelected}}
             <v-spacer></v-spacer>
-
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-checkbox
@@ -39,9 +51,8 @@
               <span v-if="enableContext">Show only selection</span>
               <span v-else>Show selection in context</span>
             </v-tooltip>
-
             <v-spacer></v-spacer>
-
+            
             <v-slider
               min="0"
               max="3"
@@ -52,19 +63,20 @@
               v-model="colSpan"
             ></v-slider>
 
-            <v-spacer></v-spacer>
-            <v-btn-toggle dense v-model="isSortDesc" mandatory>
-              <v-btn medium depressed color="blue" :value="false">
+            <!--
+            <v-btn-toggle x-small dense v-model="isSortDesc" mandatory>
+              <v-btn x-small depressed color="blue" :value="false">
                 <v-icon>mdi-arrow-up</v-icon>
               </v-btn>
-              <v-btn medium depressed color="blue" :value="true">
+              <v-btn x-small depressed  :value="true">
                 <v-icon>mdi-arrow-down</v-icon>
               </v-btn>
             </v-btn-toggle>
+            -->
           </v-toolbar>
         </template>
         <template v-slot:default="items">
-         <v-layout grid-list-sm column :style="{'height': `${height}px`}">
+          <v-layout grid-list-sm column :style="{'height': `${height}px`}">
             <v-flex
               md6
               style="overflow-y: auto; overflow-x: hidden"
@@ -76,7 +88,6 @@
                   v-bind:key="cardSelector+item._id"
                   :cols="possibleColSpans[colSpan]"
                 >
-                
                   <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
                   <v-card
                     v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
@@ -135,6 +146,8 @@ export default {
       selectionMap: {},
       offContextIcon: "mdi-eye-off",
       onContextIcon: "mdi-eye",
+      arrowUpIcon: "mdi-arrow-up",
+      arrowDownIcon: "mdi-arrow-down",
       viewID: null,
       //keys: ["Height", "NetSolar", "collection", "selected"],
       colSpan: 1,
@@ -159,10 +172,12 @@ export default {
     values() {
       return Object.values(this.chartData);
     },
-    ...mapState({ rawChartData: state => state.data, keys: state => state.numericDimensions.concat(["selected"])}),
-    cardSelector()
-    {
-      return "card_" + this.viewID +"_";
+    ...mapState({
+      rawChartData: state => state.data,
+    //  keys: state => state.numericDimensions.concat(["selected"])
+    }),
+    cardSelector() {
+      return "card_" + this.viewID + "_";
     }
   },
   mounted() {
@@ -201,7 +216,7 @@ export default {
 
       console.log(selection);
       for (var s in selection) {
-        console.log(s, d3.select("#"+this.cardSelector + s));
+        console.log(s, d3.select("#" + this.cardSelector + s));
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + s)
           .classed("transparent", false)
@@ -210,7 +225,7 @@ export default {
     },
     unhighlight(selection) {
       for (var s in selection) {
-        d3.select("#"+this.cardSelector + s)
+        d3.select("#" + this.cardSelector + s)
           .classed("outlined", false)
           .classed("transparent", true);
       }

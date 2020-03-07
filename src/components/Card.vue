@@ -1,7 +1,7 @@
 <template>
   <vdr
     class="v-card v-card--outlined v-sheet theme--light"
-    :minWidth="200"
+    :minWidth="300"
     :minHeight="200"
     :w="this.width"
     :h="this.height"

@@ -20,7 +20,9 @@ export default {
     };
   },
   computed: {
-    ...mapState({ chartData: state => state.data })
+    ...mapState({ chartData: state => state.data ,
+          numericDimensions: state => state.numericDimensions.concat(["selected"]),
+          allDimensions: state => state.allDimensions.concat(["selected"])})
   },
   mounted() {
     this.chart = this.createChart();
@@ -52,24 +54,24 @@ export default {
     },
     highlight(selection) {
       this.chart.highlight(selection);
+    },
+    refresh: function()
+    {
+        this.chart = this.createChart();
+        var selection = this.$store.getters.selectedDataInView(this.viewID);
+        this.highlight(selection);
     }
   },
   watch: {
     width: function(newValue, oldValue) {
-      this.chart = this.createChart();
-      var selection = this.$store.getters.selectedDataInView(this.viewID);
-      this.highlight(selection);
+          this.refresh();
     },
     height: function(newValue, oldValue) {
-      this.chart = this.createChart();
-      var selection = this.$store.getters.selectedDataInView(this.viewID);
-      this.highlight(selection);
+       this.refresh();
     },
     chartData: {
       handler: function(newValue, oldValue) {
-        this.chart = this.createChart();
-        var selection = this.$store.getters.selectedDataInView(this.viewID);
-        this.highlight(selection);
+          this.refresh();
       }
     }
   }

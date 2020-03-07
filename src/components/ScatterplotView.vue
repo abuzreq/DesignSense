@@ -2,6 +2,13 @@
 
 <template>
   <v-container fluid>
+    <v-toolbar dense dark color="blue darken-3" class="mb-1">
+      X:
+      <SingleDimensionSelect :initialValue="this.xColumn" v-on:update="onXChange($event)" />
+      
+      Y:
+      <SingleDimensionSelect :initialValue="this.yColumn" v-on:update="onYChange($event)" />
+    </v-toolbar>
     <div :id="viewID" ref="scatter" class="scatter" />
   </v-container>
 </template>
@@ -50,10 +57,12 @@ import * as d3 from "d3";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapState } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
+import SingleDimensionSelect from "@/components/SingleDimensionSelect.vue";
 
 export default {
   mixins: [TemplateView],
   name: "ScatterplotView",
+  components: { SingleDimensionSelect },
   data: function() {
     return {
       xColumn: "TotalFlrArea",
@@ -66,6 +75,16 @@ export default {
   mounted() {},
   created() {},
   methods: {
+    onXChange: function(newXColumn)
+    {
+      this.xColumn = newXColumn;
+       this.refresh();
+    },
+    onYChange: function(newYColumn)
+    {
+        this.yColumn = newYColumn;
+        this.refresh();
+    },
     markingChangeHandler: function() {
       //this.chart.unhighlight(this.$store.getters.data);
       var result = this.$store.getters.selectedDataInView(this.viewID);
@@ -76,7 +95,7 @@ export default {
       scatterPlot
         .outerWidth(this.width)
         .outerHeight(this.height)
-        .margin({ left: 50, top: 10, right: 10, bottom: 30 })
+        .margin({ left: 50, top: 10, right: 30, bottom: 100 })
         .xColumn(this.xColumn)
         .xAxisLabel(this.xColumn)
         .xAxisLabelOffset(30)
@@ -86,7 +105,7 @@ export default {
         .yAxisLabelOffset(30)
         .yTicks(20)
         .colorColumn(this.colorColumn)
-        .colorRange(["#00c65c", "#8400c6", "#e54100"])
+        .colorScale(this.$store.state.colorScale)
         .onBrushed(brushedIDs => {
           this.$store.commit("update", {
             view: this.viewID,
@@ -114,7 +133,7 @@ class ScatterPlot {
     var xColumn = "No X column configured";
     var yColumn = "No Y column configured";
     var colorColumn = "No color column configured";
-    var colorRange = d3.scaleOrdinal(d3.schemeCategory10).range();
+    //var colorRange = d3.scaleOrdinal(this.$store.state.colorScale).range();
 
     var xAxisLabel = "No X axis label configured";
     var xAxisLabelOffset = 40;
@@ -146,7 +165,7 @@ class ScatterPlot {
       var innerWidth = outerWidth - margin.left - margin.right;
       var innerHeight = outerHeight - margin.top - margin.bottom;
 
-      colorScale.range(colorRange);
+      colorScale.range();
       xScale.range([0, innerWidth]);
       yScale.range([innerHeight, 0]);
       let thisChart = this;
@@ -360,9 +379,9 @@ class ScatterPlot {
       return chart;
     };
 
-    chart.colorRange = function(_) {
-      if (!arguments.length) return colorRange;
-      colorRange = _;
+    chart.colorScale = function(_) {
+      if (!arguments.length) return colorScale;
+      colorScale = _;
       return chart;
     };
 

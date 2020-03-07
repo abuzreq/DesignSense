@@ -31,6 +31,8 @@
               <v-list-item-subtitle>Note: {{setNote}}</v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
+
+          
         </v-card>
       </template>
     </v-list>
