@@ -1,9 +1,24 @@
 <template>
   <v-app>
-    <v-app-bar app dark dense flat short color=" red--text text--lighten-1" height="50">
+    <v-app-bar app dark dense flat short color=" white--text text--lighten-1" height="50">
       <v-toolbar-title>DesignSense</v-toolbar-title>
+       <v-spacer></v-spacer>
+      <v-divider vertical />
       <v-spacer></v-spacer>
+      <!--
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-file-input label="File input" outlined dense @change="loadFromCSV($event)"></v-file-input>
+        </template>
+        <span>Load</span>
+      </v-tooltip>
+      -->
+      <v-select v-model="url" :items="urls"  item-text="name"
+            item-value="url" @change="onUrlChange">
+        <v-icon>mdi-select-off</v-icon>
+      </v-select>
 
+      <v-spacer></v-spacer>
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="$store.dispatch('createSet')">
@@ -63,18 +78,18 @@
     </v-app-bar>
 
     <v-content>
-          <div style="height: 100%; width: 100%; border: 1px solid red; position: relative;">
-            <template v-for="(item,index) in layouts">
-              <Card
-                :key="index"
-                :initX="item.x"
-                :initY="item.y"
-                :initW="item.w"
-                :initH="item.h"
-                :type="item.type"
-              />
-            </template>
-          </div>
+      <div style="height: 100%; width: 100%; border: 1px solid red; position: relative;">
+        <template v-for="(item,index) in layouts">
+          <Card
+            :key="index"
+            :initX="item.x"
+            :initY="item.y"
+            :initW="item.w"
+            :initH="item.h"
+            :type="item.type"
+          />
+        </template>
+      </div>
     </v-content>
   </v-app>
 </template>
@@ -97,6 +112,10 @@ import Card from "@/components/Card.vue";
 
 import { mapState, mapGetters } from "vuex";
 
+import  loadDataFromURL from "./main.js";
+
+import * as d3 from "d3";
+
 export default {
   name: "App",
   components: {
@@ -111,8 +130,36 @@ export default {
     ClusterView,
     Card
   },
+  data: function() {
+    return {
+      urls: [{name:"SmartGeometry", url:"http://142.58.183.69:5051"}, {name:"DreamLens", url:"http://142.58.183.69:5050"}],
+      url: ""
+    }
+  },
   computed: {
     ...mapState({ layouts: state => state.layouts })
+  },
+  methods: {
+    onUrlChange(value)
+    {
+         console.log(value);
+        loadDataFromURL(value, "/alternatives")
+    },
+    loadFromCSV(file) {
+      console.log(file);
+      var reader = new FileReader();
+
+      reader.onload = function(e) {
+        var inputString = e.target.result;
+
+        // I need to add some defense here
+        // separateInputOutputs(e);
+
+        var data = d3.csvParse(inputString);
+        loadData(data);
+      };
+      reader.readAsText(file);
+    }
   }
 };
 

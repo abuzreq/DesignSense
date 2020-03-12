@@ -16,7 +16,7 @@
               solo-inverted
               hide-details
               prepend-inner-icon="search"
-              :items="numericDimensions"
+              :items="keys"
               label="Sort by"
             ></v-select>
             <v-tooltip bottom>
@@ -54,6 +54,7 @@
             <v-spacer></v-spacer>
             
             <v-slider
+              
               min="0"
               max="3"
               step="1"
@@ -127,6 +128,11 @@
 .col > .v-card.transparent {
   opacity: 0.4;
 }
+
+/deep/ .v-slider--horizontal
+{
+  min-width: 5vw;
+}
 </style>
 
 <script>
@@ -152,7 +158,7 @@ export default {
       //keys: ["Height", "NetSolar", "collection", "selected"],
       colSpan: 1,
       possibleColSpans: [1, 2, 3, 4],
-      labels: ["XL", "L", "M", "S"],
+      labels: ["S", "M","L", "XL"],
       icons: ["mdi-snowflake", "mdi-leaf", "mdi-fire", "mdi-water"],
       maxPerPage: 10000,
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
@@ -174,7 +180,7 @@ export default {
     },
     ...mapState({
       rawChartData: state => state.data,
-    //  keys: state => state.numericDimensions.concat(["selected"])
+      keys: state => state.numericDimensions.concat(["selected"])
     }),
     cardSelector() {
       return "card_" + this.viewID + "_";

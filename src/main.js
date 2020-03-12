@@ -9,6 +9,113 @@ import layouts from './layout.js'
 
 
 Vue.config.productionTip = false;
+function loadDataFromURL (url, request) {
+  //var collection = "feas";//"c-ZNTs0"
+  d3.json(url + request,
+    function (d) {
+      return d._id;
+    })
+    .then((json_data, error) => {
+      var dataTypesMap = {}
+      for (var column in json_data.valueBands) {
+        dataTypesMap[column] = json_data.valueBands[column].type
+      }
+
+      console.log(json_data, error)
+      json_data = json_data.alternatives
+      const data = getParallelDataFromAlternatives(url, json_data)
+      app = new Vue({
+        vuetify,
+        vdr,
+        router,
+        store: store(data, dataTypesMap, layouts),
+        el: '#app',
+        render: h => h(App),
+      });
+
+
+      let args = {}
+      //Creates the default marking
+      app.$store.commit('createMarkingEntry', args)
+      console.log(args)
+
+    })
+
+}
+var app = new Vue({
+  vuetify,
+  vdr,
+  router,
+  store: store([{ '_id': 1 }, { '_id': 2 }, { '_id': 3 }, { '_id': 4 }], { '_id': 'String' }, layouts),
+  el: '#app',
+  render: h => h(App),
+});
+
+
+document.addEventListener('keydown', function (e) {
+  if (!app.$store.shiftOn && e.shiftKey) {
+    app.$store.shiftOn = true;
+  }
+  if (!app.$store.altOn && e.altKey) {
+    app.$store.altOn = e.altKey;
+  }
+  if (e.ctrlKey) {
+    /*
+      //console.log(app.$store.state)
+      let views = Object.keys(app.$store.state.viewsMap)
+      console.log(views, app.$store.state.viewsMap)
+      //console.log("views ", views)
+      app.$store.dispatch('createDetailsView',{master_view: views[0], details_view: views[1]})
+    */
+  }
+})
+document.addEventListener('keyup', function (e) {
+  if (e.keyCode === 16) {
+    app.$store.shiftOn = false;
+  }
+
+  if (e.keyCode === 18) {
+    app.$store.altOn = false;
+  }
+  if (e.keyCode === 192) {
+    app.$store.commit('toggleEditingMode');
+  }
+})
+
+
+let globalURL = "http://sr-02645.iat.sfu.ca:5052"
+globalURL = "http://142.58.183.69:5051"
+//globalURL = "http://142.58.183.69:5050"
+loadDataFromURL(globalURL, "/alternatives")
+
+
+function loadData(data) {
+
+  var dataTypesMap = {}
+  for (var column of Object.keys(data[0])) {
+    console.log(column)
+
+    dataTypesMap[column] = typeof data[0][column]//json_data.valueBands[column].type
+  }
+  console.log(dataTypesMap)
+  console.log(data)
+
+  app = new Vue({
+    vuetify,
+    vdr,
+    router,
+    store: store(data, dataTypesMap, layouts),
+    el: '#app',
+    render: h => h(App),
+  });
+
+  console.log("After", app.$store)
+  let args = {}
+  //Creates the default marking
+  app.$store.commit('createMarkingEntry', args)
+  console.log(args)
+}
+
 
 
 function getParallelDataFromAlternatives(url, altsInCollection) {
@@ -22,8 +129,8 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
     //var url = window.URL.createObjectURL(blob)
     var imgURL = url + "/" + alt.image
     var gltfURL = url + "/" + alt.gltf
-    var geometryURL = url +"/" + alt.geometry;
-    temp.push({ '_id': alt._id,'ID': alt.tags[0] ,'image': imgURL,'gltf': gltfURL,'geometry': geometryURL, 'collection': alt.collectionName, ...alt.attributes });
+    var geometryURL = url + "/" + alt.geometry;
+    temp.push({ '_id': alt._id, 'ID': alt.tags[0], 'image': imgURL, 'gltf': gltfURL, 'geometry': geometryURL, 'collection': alt.collectionName, ...alt.attributes });
   });
 
   temp.map((obj) => {
@@ -32,7 +139,7 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
 
         const eachPoint = { [o.key]: o.value };
 
-        mergedObject = Object.assign(mergedObject, { '_id': obj._id },{ 'ID': obj.ID }, { 'image': obj.image },{ 'gltf': obj.gltf },{ 'geometry': obj.geometry }, { 'collection': obj.collection }, eachPoint);
+        mergedObject = Object.assign(mergedObject, { '_id': obj._id }, { 'ID': obj.ID }, { 'image': obj.image }, { 'gltf': obj.gltf }, { 'geometry': obj.geometry }, { 'collection': obj.collection }, eachPoint);
       }
     });
     parallelData.push(mergedObject);
@@ -43,84 +150,8 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
 
   return parallelData;
 }
-
-let globalURL = "http://sr-02645.iat.sfu.ca:5052"
- globalURL = "http://142.58.183.69:5051"
- //globalURL = "http://142.58.183.69:5050"
- 
-    //var collection = "feas";//"c-ZNTs0"
-  d3.json(globalURL + "/alternatives",
-  function(d)
-  {
-      return d._id;
-  })
-  .then( (json_data, error) =>
-  {
-      var dataTypesMap = {}
-      for(var column in json_data.valueBands)
-      {
-        dataTypesMap[column] = json_data.valueBands[column].type
-      }
-
-      console.log(dataTypesMap)
-      console.log(json_data,error)
-      json_data = json_data.alternatives
-      const data = getParallelDataFromAlternatives(globalURL, json_data)
-      var app = new Vue({
-        vuetify,
-        vdr,
-        router,
-        store: store(data, dataTypesMap, layouts),
-        el: '#app',
-        render: h => h(App),
-      });
-
-      
-      document.addEventListener('keydown',  function(e)
-      {
-        if(!app.$store.shiftOn && e.shiftKey)
-        {
-          app.$store.shiftOn = true;
-        }
-        if(!app.$store.altOn && e.altKey)
-        {
-          app.$store.altOn = e.altKey;
-        }
-        if(e.ctrlKey)
-        { 
-          /*
-            //console.log(app.$store.state)
-            let views = Object.keys(app.$store.state.viewsMap)
-            console.log(views, app.$store.state.viewsMap)
-            //console.log("views ", views)
-            app.$store.dispatch('createDetailsView',{master_view: views[0], details_view: views[1]})
-          */
-        }
-      })
-      document.addEventListener('keyup',  function(e)
-      {
-        if(e.keyCode === 16)
-        {
-          app.$store.shiftOn = false;
-        }
-           
-        if(e.keyCode === 18)
-        {
-          app.$store.altOn = false;
-        }
-        if(e.keyCode === 192)
-        {
-          app.$store.commit('toggleEditingMode');
-        }
-      })
-      let args = {}
-      //Creates the default marking
-      app.$store.commit('createMarkingEntry', args)
-      console.log(args)
-
-  
-
-  })
-
+//exports.loadData = loadData;
+//exports.loadDataFromURL = loadDataFromURL;
+export default loadDataFromURL
 
 

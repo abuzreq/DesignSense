@@ -2,11 +2,12 @@
 
 <template>
   <v-container>
+    <!--
     <MultiDimensionSelect
       :initialValue="this.numericDimensions"
       v-on:update="onDimensionChange($event)"
     />
-
+    -->
     <div :id="viewID" ref="parcoords" class="parcoords" />
   </v-container>
 </template>

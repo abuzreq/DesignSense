@@ -9,11 +9,14 @@
     >
       <template v-slot:header>
         <v-toolbar dense fixed dark color="blue darken-3" class="mb-1">
-          <MultiDimensionSelect
+          
+          <!--<MultiDimensionSelect
             :initialValue="numericDimensions"
             v-on:update="onDimensionChange($event)"
           />
           <v-spacer></v-spacer>
+          -->
+          <!--
           <v-select
             dense
             v-model="sortByVar"
@@ -25,9 +28,10 @@
             label="Sort by"
           ></v-select>
           <v-spacer></v-spacer>
+        
           {{numSelected}}
           <v-spacer></v-spacer>
-
+ 
           <v-tooltip bottom>
             <template v-slot:activator="{ on }">
               <v-checkbox
@@ -45,8 +49,20 @@
           </v-tooltip>
 
           <v-spacer></v-spacer>
-          <v-slider min="0" max="5" step="1" :tick-labels="labels" v-model="colSpan"></v-slider>
-          <v-spacer></v-spacer>
+            -->
+                     <v-slider
+              
+              min="0"
+              max="3"
+              step="1"
+              :tick-labels="labels"
+              ticks="always"
+              tick-size="4"
+              v-model="colSpan"
+            ></v-slider>
+
+         
+          <!--
           <v-btn-toggle dense v-model="isSortDesc" mandatory>
             <v-btn medium depressed color="blue" :value="false">
               <v-icon>mdi-arrow-up</v-icon>
@@ -55,6 +71,7 @@
               <v-icon>mdi-arrow-down</v-icon>
             </v-btn>
           </v-btn-toggle>
+          -->
         </v-toolbar>
       </template>
       <template v-slot:default="items">
@@ -111,6 +128,12 @@
 /deep/ .multiselect {
   width: 200px;
 }
+
+
+/deep/ .v-slider--horizontal
+{
+  min-width: 5vw;
+}
 </style>
 
 
@@ -138,9 +161,9 @@ export default {
       onContextIcon: "mdi-eye",
       viewID: null,
       // keys: this.$store.numericDimensions.concat(["selected"]),
-      colSpan: 3,
-      possibleColSpans: [1, 2, 3, 4, 6, 12],
-      labels: ["12", "6", "4", "3", "2", "1"],
+      colSpan: 4,
+      possibleColSpans: [1, 2, 3, 4],
+      labels: ["S", "M","L", "XL"],
       maxPerPage: 10000,
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
       sortByVar: "height",
