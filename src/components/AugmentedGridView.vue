@@ -9,7 +9,7 @@
         :sort-desc="isSortDesc"
       >
         <template v-slot:header>
-          <v-toolbar dense  dark color="blue darken-3" class="mb-1">
+          <v-toolbar dense dark color="blue darken-3" class="mb-1">
             <v-select
               dense
               v-model="sortByVar"
@@ -52,9 +52,8 @@
               <span v-else>Show selection in context</span>
             </v-tooltip>
             <v-spacer></v-spacer>
-            
+
             <v-slider
-              
               min="0"
               max="3"
               step="1"
@@ -83,31 +82,37 @@
               style="overflow-y: auto; overflow-x: hidden"
               :style="{'min-height': `calc(${height}px - 100px)`}"
             >
-              <v-row dense>
-                <v-col
-                  v-for="(item) in items.items"
-                  v-bind:key="cardSelector+item._id"
-                  :cols="possibleColSpans[colSpan]"
-                >
-                  <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
-                  <v-card
-                    v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
-                    v-bind:id="cardSelector+item._id"
-                  >
-                    <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" />
-                    <!--:id='"card_"+item._id' -->
-                    <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
+              <drag-select-container selectorClass="v-card" @change="onChange($event)">
+                <template slot-scope="{ selectedItems }">
+                  <v-row  dense>
+                    <v-col
+                      v-for="(item) in items.items"
+                      v-bind:key="cardSelector+item._id"
+                      :cols="possibleColSpans[colSpan]"
+                    >
+                      <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
+                      <v-card
+                      
+                         v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
+                        v-bind:id="cardSelector+item._id"
+                      >
+                        <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" />
+                        <!--:id='"card_"+item._id' -->
+                        <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
 
-                    <!--:id='"card_"+item._id'
+                        <!--:id='"card_"+item._id'
                   <model-gltf 
                     v-else
                     :src="item.gltf" 
                   />
-                    -->
-                    <!--</router-link>-->
-                  </v-card>
-                </v-col>
-              </v-row>
+                        -->
+                        <!--</router-link>-->
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                  <!-- Your items here -->
+                </template>
+              </drag-select-container>
             </v-flex>
           </v-layout>
         </template>
@@ -121,6 +126,10 @@
   border: 2px solid red;
 }
 
+.col > .v-card.selected {
+  border: 2px solid green;
+}
+
 .col > .v-card:not(.transparent) {
   opacity: 1;
 }
@@ -129,26 +138,32 @@
   opacity: 0.4;
 }
 
-/deep/ .v-slider--horizontal
-{
+/deep/ .v-slider--horizontal {
   min-width: 5vw;
 }
+
+
 </style>
 
 <script>
+//    "vue-drag-select": "git+https://github.com/JochenLutz/vue-drag-select.git",
+
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
 import { ModelGltf } from "vue-3d-model";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
+import DragSelect from "vue-drag-select/src/DragSelect.vue";
 
 export default {
   name: "AugmentedGridCards",
-  components: { ModelGltf },
+  components: { ModelGltf, "drag-select-container": DragSelect },
   props: ["defaultEnableContext", "width", "height"],
   data: function() {
     return {
+      theSelected: [],
       chartData: [],
+      potato : [],
       selectionMap: {},
       offContextIcon: "mdi-eye-off",
       onContextIcon: "mdi-eye",
@@ -158,7 +173,7 @@ export default {
       //keys: ["Height", "NetSolar", "collection", "selected"],
       colSpan: 1,
       possibleColSpans: [1, 2, 3, 4],
-      labels: ["S", "M","L", "XL"],
+      labels: ["S", "M", "L", "XL"],
       icons: ["mdi-snowflake", "mdi-leaf", "mdi-fire", "mdi-water"],
       maxPerPage: 10000,
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
@@ -209,6 +224,47 @@ export default {
     });
   },
   methods: {
+    onChange(selectedItems)
+    {    
+        selectedItems.map(s => {
+        let start = s.$attrs.id.lastIndexOf("_");
+        return s.$attrs.id.substring(start + 1)}).forEach(s => this.toggle({_id: s}))
+    },
+    getClasses(item, selectedItems) {
+     /* const isActive = !!selectedItems.find(selectedItem => {
+        return parseInt(selectedItem.dataset.item, 10) === item;
+      });*/
+
+         const isActive = selectedItems.map(s => {
+        let start = s.$attrs.id.lastIndexOf("_");
+        return s.$attrs.id.substring(start + 1)}).includes(item._id)
+
+      return {
+        "item": true,
+        outlined: isActive
+      };
+    },
+
+    assignCardClasses(selectedItems, enableContext, numSelected, selectionMap, item)
+    {
+      /*
+         let arr = selectedItems.map(s => {
+        let start = s.$attrs.id.lastIndexOf("_");
+        return s.$attrs.id.substring(start + 1)})
+*/
+        //this.theSelected = arr;
+          //isSelected: arr.includes(item._id),
+         return  { outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }
+    },
+    test(selectedItems) {
+      console.log(selectedItems.map(s => {
+        let start = s.$attrs.id.lastIndexOf("_");
+        return s.$attrs.id.substring(start + 1);
+      }));
+
+      return;
+
+    },
     toggle(item) {
       this.$store.commit("update", {
         view: this.viewID,
@@ -222,7 +278,7 @@ export default {
 
       console.log(selection);
       for (var s in selection) {
-        console.log(s, d3.select("#" + this.cardSelector + s));
+        //console.log(s, d3.select("#" + this.cardSelector + s));
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + s)
           .classed("transparent", false)
@@ -305,6 +361,13 @@ export default {
         this.updateContext();
       }
       //deep: true
+    },
+    theSelected: {
+      handler: function(newValue, oldValue) {
+        //console.log("selected",newValue);
+      //  newValue.forEach(s => this.toggle({_id: s}))
+      },
+      deep: true
     }
   }
 };
