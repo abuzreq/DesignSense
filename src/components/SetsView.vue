@@ -28,7 +28,8 @@
 
             <v-list-item-content>
               <v-list-item-title class="title">{{item}}</v-list-item-title>
-              <v-list-item-subtitle>Note: {{setNote}}</v-list-item-subtitle>
+               <v-textarea height = "7vh" style="margin-bottom:-15px" multiple solo full-width dense v-model="setNote" label="add notes here" ></v-textarea>
+         
             </v-list-item-content>
           </v-list-item>
 
@@ -41,12 +42,13 @@
 
 <style scoped>
 .v-list-item {
-  height: 50px;
+  height: 100px;
 }
 .v-btn {
   height: 25px;
   width: 25px;
 }
+
 </style>
 <script>
 //v-if="todo.done" @click="removeTodo(i)"
@@ -64,7 +66,7 @@ export default {
     };
   },
   computed: {
-    ...mapState({ setsIDs: state => state.setsIDs })
+    ...mapState({ setsIDs: state => state.setsIDs })//TODO add names and notes to the sets data in the store
   },
   mounted() {},
   watch: {
