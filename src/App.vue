@@ -38,6 +38,15 @@
         <span>Reset Selection</span>
       </v-tooltip>
 
+        <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="$store.dispatch('invertSelection')">
+            <v-icon>mdi-select-compare</v-icon>
+          </v-btn>
+        </template>
+        <span>Invert Selection</span>
+      </v-tooltip>
+
       <v-divider vertical />
 
       <v-tooltip bottom>
@@ -55,7 +64,7 @@
             <v-icon>mdi-selection-search</v-icon>
           </v-btn>
         </template>
-        <span>Zoom</span>
+        <span>Zoom on the Selected</span>
       </v-tooltip>
 
       <v-tooltip bottom>
@@ -64,7 +73,7 @@
             <v-icon>mdi-filter-remove-outline</v-icon>
           </v-btn>
         </template>
-        <span>Exclude</span>
+        <span>Exclude the Selected</span>
       </v-tooltip>
 
       <v-tooltip bottom>
