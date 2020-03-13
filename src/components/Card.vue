@@ -25,9 +25,9 @@
       :width="this.width"
       :height="this.height"
     />
-    <AugmentedGridView v-if="type == 'Grid'" :width="this.width" :height="this.height" :defaultEnableContext="false" />
+    <AugmentedGridView v-if="type == 'Grid'" :width="this.width" :height="this.height" :defaultEnableContext="true" />
     <SetsView v-if="type == 'Sets'" :width="this.width" :height="this.height" />
-    <ClusterView v-if="type == 'Clusters'" :width="this.width" :height="this.height" />
+    <ClusterView v-if="type == 'Clusters'" :width="this.width" :height="this.height" :defaultEnableContext="true"/>
   </vdr>
 </template>
 
