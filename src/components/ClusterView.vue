@@ -85,7 +85,7 @@
               >
                 <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
                 <v-card
-                  v-bind:class="{ clusterRep: true, outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
+                  v-bind:class="{ clusterRep: true, outlined: numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
                   v-bind:id="cardSelector+item._id"
                 >
                   <v-img v-if="true" :src="item.image" v-on:click="toggle(item, $event)" />

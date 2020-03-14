@@ -21,6 +21,36 @@ function loadDataFromURL (url, request) {
         dataTypesMap[column] = json_data.valueBands[column].type
       }
 
+      let similarity_map = {};
+      d3.csv("https://gist.githubusercontent.com/abuzreq/6c606acee28f218621b6ca79996cd2a1/raw/6a95738c47cd76e683236b6b383354619f9e5fb4/smart_hausdorff.csv")
+      .then((similarity) => {
+        
+        similarity.forEach( row => {
+          let key1 = "";
+          for(var y in row)
+          {
+            if(y == "")
+            {
+              key1 = row[y]
+              
+            }
+            else
+            {
+              let key2 = y;
+              let tmp = {}
+              tmp[key2] = row[y];
+              similarity_map[key1] = tmp;
+            }
+             
+          }
+
+
+        })
+        console.log(similarity_map)
+       
+
+      })
+      //console.log("similarity ",similarity)
       console.log(json_data, error)
       json_data = json_data.alternatives
       const data = getParallelDataFromAlternatives(url, json_data)
