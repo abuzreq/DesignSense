@@ -16,7 +16,8 @@ export default {
     selectableItems: {
       type: [Array, Function],
       required: false
-    }
+    },
+    scrollAccessor: null
   },
   data() {
     return {
@@ -24,7 +25,8 @@ export default {
       changedItems: false,
       startPoint: null,
       endPoint: null,
-      selectedItems: []
+      selectedItems: [],
+      scrollContainer: null
     };
   },
   computed: {
@@ -96,10 +98,12 @@ export default {
       }
       return {
         x:
+        
           this.$el.scrollLeft ||
           document.body.scrollLeft ||
           document.documentElement.scrollLeft,
         y:
+         
           this.$el.scrollTop ||
           document.body.scrollTop ||
           document.documentElement.scrollTop
@@ -147,19 +151,28 @@ export default {
     },
     isItemSelected(el) {
       const boxA = this.selectionBox;
+    
+      if(boxA.width < el.clientWidth && boxA.height < el.clientHeight) 
+      {
+         return false;
+      }
+     
       const boxB = {
-        top: el.offsetTop,
-        left: el.offsetLeft,
+        top: el.offsetTop - this.scrollContainer.scrollTop,
+        left: el.offsetLeft - this.scrollContainer.scrollLeft,
         width: el.clientWidth,
         height: el.clientHeight
       };
+  
 
-      return !!(
+      let inside =  !!(
         boxA.left <= boxB.left + boxB.width &&
         boxA.left + boxA.width >= boxB.left &&
         boxA.top <= boxB.top + boxB.height &&
         boxA.top + boxA.height >= boxB.top
       );
+  
+      return inside;
     }
   },
   mounted() {
@@ -177,6 +190,8 @@ export default {
         }
       });
     });
+     this.scrollContainer =  this.scrollAccessor(this.$el);
+     console.log("scrollContainer", this.scrollContainer)
   },
   beforeDestroy() {
     // Remove event listeners

@@ -277,9 +277,6 @@ export default {
             return c.clusterInd[smallestInClusterIndex];
           });
 
-            console.log(closest)
-          console.log(this.clusterReps.map(x => x._id))
-          
           this.clusterReps.splice(0, this.clusterReps.length)
          
           for (var i = 0; i < closest.length; i++) 
@@ -287,8 +284,7 @@ export default {
             this.clusterReps.push(this.chartData[closest[i]])
             this.clustersMap[this.chartData[closest[i]]._id] = res[i].clusterInd.map(idx => this.chartData[idx]);
           }
-          
-         // this.chartData = clusterReps;
+
         }
       });
     },

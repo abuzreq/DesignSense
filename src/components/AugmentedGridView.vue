@@ -76,7 +76,7 @@
           </v-toolbar>
         </template>
         <template v-slot:default="items">
-          <drag-select-container :selectableItems="cards" @select="onMouseUp($event)">
+          <drag-select-container :selectableItems="getAllCards" :scrollAccessor="(el) => el.firstChild.firstChild" @select="onMouseUp($event)">
             <v-layout grid-list-sm column :style="{'height': `${height}px`}">
               <v-flex
                 md6
@@ -169,7 +169,7 @@ export default {
       sortByVar: "height",
       isSortDesc: true,
       enableContext: this.defaultEnableContext,
-      numSelected: 0
+      numSelected: 0,
     };
   },
   computed: {
