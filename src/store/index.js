@@ -7,7 +7,7 @@ import * as d3 from "d3";
 
 Vue.use(Vuex);
 
-function builder(new_data, dataTypesMap, new_layouts) {
+function builder(new_data, dataTypesMap, new_similarity_map, new_layouts) {
     return new Vuex.Store({
         state: {
             editingMode: false,
@@ -28,11 +28,17 @@ function builder(new_data, dataTypesMap, new_layouts) {
             setsIDs: [],
             setsMap: {},
             numericDimensions: getNumeric(dataTypesMap),
-            allDimensions: Object.keys(dataTypesMap)
+            allDimensions: Object.keys(dataTypesMap),
+
+            similarity_map: new_similarity_map
 
         },
         mutations:
         {
+           /* setSimilarityMap(state, payload)
+            {   
+                state.similarity_map = payload.similarity_map;
+            },  */
             toggleEditingMode(state, payload) {
                 state.editingMode = !state.editingMode;
             },

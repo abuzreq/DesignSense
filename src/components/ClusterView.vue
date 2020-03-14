@@ -50,8 +50,16 @@
 
           <v-spacer></v-spacer>
             -->
-                     <v-slider
-              
+            <v-slider           
+              min="4"
+              max="16"
+              step="4"
+              :tick-labels="numClustersLabels"
+              ticks="always"
+              tick-size="4"
+              v-model="numClusters"
+          ></v-slider>
+          <v-slider           
               min="0"
               max="3"
               step="1"
@@ -169,6 +177,7 @@ export default {
       colSpan: 4,
       possibleColSpans: [1, 2, 3, 4],
       labels: ["S", "M","L", "XL"],
+      numClustersLabels: ["4", "8","12", "16"],
       maxPerPage: 10000,
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
       sortByVar: "height",
@@ -177,7 +186,8 @@ export default {
       numSelected: 0,
       clustersMap: {},
       clusterReps: [],
-      dimensions:[]
+      dimensions: [],
+      numClusters: 3
     };
   },
   computed: {
@@ -192,7 +202,7 @@ export default {
     },
     ...mapState({
       rawChartData: state => state.data,
-      numericDimensions: state => state.numericDimensions
+      numericDimensions: state => state.numericDimensions,
     }),
     cardSelector() {
       return "card_" + this.viewID + "_";
@@ -255,25 +265,29 @@ export default {
     compute() {
       var matrix = to2DMatrix(this.chartData, this.dimensions, true); //['TotalFlrArea']
       
-      kmeans.clusterize(matrix, { k: 4 }, (err, res) => {
+      kmeans.clusterize(matrix, { k: this.numClusters }, (err, res) => {
         if (err) console.error(err);
         else {
-
           var centroids = res.map(c => c.centroid);
           var closest = res.map((c, i) => {
-            return indexOfSmallest(
+            
+            let smallestInClusterIndex =  indexOfSmallest(
               c.cluster.map(d => distance(centroids[i], d))
             );
+            return c.clusterInd[smallestInClusterIndex];
           });
 
-
+            console.log(closest)
+          console.log(this.clusterReps.map(x => x._id))
+          
           this.clusterReps.splice(0, this.clusterReps.length)
          
-          for (var i = 0; i < closest.length; i++) {
+          for (var i = 0; i < closest.length; i++) 
+          {
             this.clusterReps.push(this.chartData[closest[i]])
-
             this.clustersMap[this.chartData[closest[i]]._id] = res[i].clusterInd.map(idx => this.chartData[idx]);
           }
+          
          // this.chartData = clusterReps;
         }
       });
@@ -379,6 +393,11 @@ export default {
         this.compute()
       }
       //deep: true
+    },
+    numClusters: {
+       handler: function(newValue, oldValue) {
+        this.compute()
+      }
     }
   }
 };

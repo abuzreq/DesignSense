@@ -6,10 +6,10 @@ import vuetify from "./plugins/vuetify";
 import * as d3 from "d3";
 import vdr from "./plugins/vdr";
 import layouts from './layout.js'
-
+import Papa from 'papaparse'
 
 Vue.config.productionTip = false;
-function loadDataFromURL (url, request) {
+function loadDataFromURL(url, request) {
   //var collection = "feas";//"c-ZNTs0"
   d3.json(url + request,
     function (d) {
@@ -21,53 +21,99 @@ function loadDataFromURL (url, request) {
         dataTypesMap[column] = json_data.valueBands[column].type
       }
 
-      let similarity_map = {};
-      d3.csv("https://gist.githubusercontent.com/abuzreq/6c606acee28f218621b6ca79996cd2a1/raw/6a95738c47cd76e683236b6b383354619f9e5fb4/smart_hausdorff.csv")
-      .then((similarity) => {
-        
-        similarity.forEach( row => {
-          let key1 = "";
-          for(var y in row)
-          {
-            if(y == "")
-            {
-              key1 = row[y]
-              
-            }
-            else
-            {
-              let key2 = y;
-              let tmp = {}
-              tmp[key2] = row[y];
-              similarity_map[key1] = tmp;
-            }
-             
-          }
 
 
-        })
-        console.log(similarity_map)
-       
-
-      })
       //console.log("similarity ",similarity)
       console.log(json_data, error)
       json_data = json_data.alternatives
       const data = getParallelDataFromAlternatives(url, json_data)
-      app = new Vue({
-        vuetify,
-        vdr,
-        router,
-        store: store(data, dataTypesMap, layouts),
-        el: '#app',
-        render: h => h(App),
-      });
+           
+      Papa.parse("https://gist.githubusercontent.com/abuzreq/41784c98a70e36619d046877e0df8c02/raw/cb52f39c7f0f1c526d5c1bf0dea61993d368fe68/smart_hausdorff_ids.csv", {
+        download: true,
+        complete: function(results) 
+        {
+          let similarity_map = {}
+          let similarity = results.data;
+          let headers = similarity[0];
+          similarity.forEach((row,i) => {
+            if(i > 0)
+            {
+              let entry = {}
+              row.forEach((x,j) => {
+                if(j > 0)
+                {
+                  entry[j] = x; //headers[j]
+                }
+                
+              })
+              similarity_map[i] = entry; //row[0]
+            }
+          })
+          app = new Vue({
+            vuetify,
+            vdr,
+            router,
+            store: store(data, dataTypesMap, similarity_map, layouts),
+            el: '#app',
+            render: h => h(App),
+          });
+    
+    
+          let args = {}
+          //Creates the default marking
+          app.$store.commit('createMarkingEntry', args)
+          console.log(args)
+          console.log(data)
+          //app.$store.commit('setSimilarityMap', {'similarity_map': similarity_map});
+        }
+      })
 
+  
 
-      let args = {}
-      //Creates the default marking
-      app.$store.commit('createMarkingEntry', args)
-      console.log(args)
+/*
+      let sim = Papa.parse("https://gist.githubusercontent.com/abuzreq/6c606acee28f218621b6ca79996cd2a1/raw/6a95738c47cd76e683236b6b383354619f9e5fb4/smart_hausdorff.csv", {
+        download: true,
+        complete: function(results) 
+        {
+          let new_similarity = []
+          let similarity = results.data;
+          similarity.forEach(row => {
+            let new_row = []
+            row.forEach(x => {
+              if (x == "")
+              {
+                new_row.push(x)
+              }
+              else if(isNaN(x))
+              {
+                let item = data.find(d => d.ID === x)
+                if(item != undefined)
+                {
+                  new_row.push(item._id)
+                }
+                else
+                {
+                  new_row.push(x)
+                }
+               
+              }
+              else
+              {
+                new_row.push(x)
+              }
+            })
+            new_similarity.push(new_row)
+          })
+          console.log(new_similarity)
+          var csv = Papa.unparse(new_similarity);
+
+          let csvContent = "data:text/csv;charset=utf-8," + csv;
+          var encodedUri = encodeURI(csvContent);
+            window.open(encodedUri);
+        }
+      })
+    */
+
 
     })
 

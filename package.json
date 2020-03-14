@@ -21,6 +21,7 @@
     "mathjs": "^6.6.1",
     "node-kmeans": "^1.1.9",
     "numjs": "^0.16.0",
+    "papaparse": "^5.1.1",
     "parcoord-es": "^2.2.10",
     "vue": "^2.6.11",
     "vue-3d-model": "^1.2.2",
