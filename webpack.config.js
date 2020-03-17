@@ -5,13 +5,15 @@ const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const HtmlWebpackPlugin = require('vue-html-webpack-plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 
+const ASSET_PATH = process.env.ASSET_PATH || '/';
+
+
 const config = {
   entry: './src/main.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
-    publicPath: '/public/',
-
+    publicPath: ASSET_PATH,
   },
   module: {
     rules: [
