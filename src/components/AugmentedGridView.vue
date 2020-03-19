@@ -97,6 +97,12 @@
                       <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" />
                       <!--:id='"card_"+item._id' -->
                       <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
+                      <!--
+                      <model-three
+                        v-else
+                        :src="item.json" 
+
+                      />-->
 
                       <!--:id='"card_"+item._id'
                   <model-gltf 
@@ -139,7 +145,7 @@
 //    "vue-drag-select": "git+https://github.com/JochenLutz/vue-drag-select.git",
 
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
-import { ModelGltf } from "vue-3d-model";
+import { ModelThree  } from "vue-3d-model";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
@@ -147,7 +153,7 @@ import DragSelect from "@/plugins/DragSelect.vue";
 
 export default {
   name: "AugmentedGridCards",
-  components: { ModelGltf, "drag-select-container": DragSelect },
+  components: { ModelThree , "drag-select-container": DragSelect },
   props: ["defaultEnableContext", "width", "height"],
   data: function() {
     return {
@@ -207,6 +213,9 @@ export default {
   },
   created() {
     this.viewID = "id" + this._uid;
+    this.sortByVar =this.keys[0];
+
+
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === "update" || mutation.type === "resetMarking") {
         this.updateContext();
@@ -251,9 +260,14 @@ export default {
       });
     },
     update(item, event) {
+      console.log("A", event)
+      //if(!event.altKey)
+      //  event.shiftKey = true;
+      //console.log("B", event)
       this.$store.commit("update", {
         view: this.viewID,
         selection: [item._id],
+     
         operation: getOperationFromEvent(event)
       });
     },

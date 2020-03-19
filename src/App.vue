@@ -4,6 +4,15 @@
       <v-toolbar-title>DesignSense</v-toolbar-title>
        <v-spacer></v-spacer>
       <v-divider vertical />
+       <v-spacer></v-spacer>
+      <v-text-field
+          v-model="cloudURL"
+          label="URL"
+        ></v-text-field>
+      <v-btn icon @click="onCloudUrlChange">
+            <v-icon>mdi-cloud-upload-outline</v-icon>
+            <!-- -->
+      </v-btn>
       <v-spacer></v-spacer>
       <!--
       <v-tooltip bottom>
@@ -17,6 +26,7 @@
             item-value="url" @change="onUrlChange">
         <v-icon>mdi-select-off</v-icon>
       </v-select>
+
 
       <v-spacer></v-spacer>
       <v-tooltip bottom>
@@ -121,8 +131,8 @@ import Card from "@/components/Card.vue";
 
 import { mapState, mapGetters } from "vuex";
 
-import  loadDataFromURL from "./main.js";
 
+import { loadDataFromURL, loadDataFromCloudURL } from "./main.js";
 import * as d3 from "d3";
 
 export default {
@@ -142,7 +152,8 @@ export default {
   data: function() {
     return {
       urls: [{name:"SmartGeometry", url:"http://142.58.183.69:5051"}, {name:"DreamLens", url:"http://142.58.183.69:5050"}],
-      url: ""
+      url: "",
+      cloudURL: ""
     }
   },
   computed: {
@@ -153,6 +164,11 @@ export default {
     {
          console.log(value);
         loadDataFromURL(value, "/alternatives")
+    },
+    onCloudUrlChange()
+    {
+      console.log(this.cloudURL)
+      loadDataFromCloudURL(this.cloudURL)
     },
     loadFromCSV(file) {
       console.log(file);

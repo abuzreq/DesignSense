@@ -7,7 +7,7 @@ import * as d3 from "d3";
 
 Vue.use(Vuex);
 
-function builder(new_data, dataTypesMap, new_similarity_map, new_layouts) {
+function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
     return new Vuex.Store({
         state: {
             editingMode: false,

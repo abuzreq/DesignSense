@@ -73,7 +73,10 @@ export default {
     };
   },
   mounted() {},
-  created() {},
+  created() {
+    this.xColumn =this.numericDimensions[0];
+    this.yColumn =this.numericDimensions[1];
+  },
   methods: {
     onXChange: function(newXColumn)
     {
