@@ -129,7 +129,6 @@ var app = new Vue({
   render: h => h(App),
 });
 
-
 document.addEventListener('keydown', function (e) {
   if (!app.$store.shiftOn && e.shiftKey) {
     app.$store.shiftOn = true;
@@ -164,7 +163,7 @@ document.addEventListener('keyup', function (e) {
 let globalURL = "http://sr-02645.iat.sfu.ca:5052"
 globalURL = "http://142.58.183.69:5051"
 //globalURL = "http://142.58.183.69:5050"
-loadDataFromURL(globalURL, "/alternatives")
+//loadDataFromURL(globalURL, "/alternatives")
 
 
 function loadData(data) {
@@ -179,7 +178,6 @@ function loadData(data) {
     {
       dataTypesMap[column] = 'Float'
     }
-    console.log(column,dataTypesMap[column])
 
    // dataTypesMap[column] = typeof data[0][column]//json_data.valueBands[column].type
   }

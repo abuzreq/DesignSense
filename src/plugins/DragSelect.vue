@@ -191,7 +191,6 @@ export default {
       });
     });
      this.scrollContainer =  this.scrollAccessor(this.$el);
-     console.log("scrollContainer", this.scrollContainer)
   },
   beforeDestroy() {
     // Remove event listeners

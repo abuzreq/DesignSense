@@ -4,15 +4,19 @@
       <v-toolbar-title>DesignSense</v-toolbar-title>
        <v-spacer></v-spacer>
       <v-divider vertical />
-       <v-spacer></v-spacer>
+      <!--
+     
+     <v-spacer></v-spacer>
+      
       <v-text-field
           v-model="cloudURL"
           label="URL"
         ></v-text-field>
       <v-btn icon @click="onCloudUrlChange">
             <v-icon>mdi-cloud-upload-outline</v-icon>
-            <!-- -->
+            
       </v-btn>
+      -->
       <v-spacer></v-spacer>
       <!--
       <v-tooltip bottom>
@@ -22,8 +26,8 @@
         <span>Load</span>
       </v-tooltip>
       -->
-      <v-select v-model="url" :items="urls"  item-text="name"
-            item-value="url" @change="onUrlChange">
+      <v-select v-model="url" :items="URLs"  item-text="name" return-object
+            @change="onUrlChange">
         <v-icon>mdi-select-off</v-icon>
       </v-select>
 
@@ -151,10 +155,17 @@ export default {
   },
   data: function() {
     return {
-      urls: [{name:"SmartGeometry", url:"http://142.58.183.69:5051"}, {name:"DreamLens", url:"http://142.58.183.69:5050"}],
+      URLs: [{name:"P+W Solar", url:"https://1drv.ms/u/s!AsGWrbL1DmbagakFTScT6VocK9ELbw", type:"cloud"}, {name:"Malaeeb", url:"https://1drv.ms/f/s!AsGWrbL1DmbagaggJpgic85d0z3Sgw", type:"cloud"},{name:"SmartGeometry", url:"http://142.58.183.69:5051", type:"server"}, {name:"DreamLens", url:"http://142.58.183.69:5050", type:"server"}],
       url: "",
       cloudURL: ""
     }
+  },
+  created() {
+     // this.url =  this.URLs[0];
+    //  this.onUrlChange(this.url);
+  },
+  mounted(){
+ //   this.onUrlChange(this.URLs[0]);
   },
   computed: {
     ...mapState({ layouts: state => state.layouts })
@@ -162,12 +173,17 @@ export default {
   methods: {
     onUrlChange(value)
     {
-         console.log(value);
-        loadDataFromURL(value, "/alternatives")
+      if(value.type === 'server')
+      {
+          loadDataFromURL(value.url, "/alternatives")
+      }
+      else if(value.type === 'cloud')
+      {
+          loadDataFromCloudURL(value.url)
+      }   
     },
     onCloudUrlChange()
     {
-      console.log(this.cloudURL)
       loadDataFromCloudURL(this.cloudURL)
     },
     loadFromCSV(file) {
