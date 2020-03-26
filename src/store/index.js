@@ -144,7 +144,10 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             }
         },
         actions: {
-
+            toggleEditingMode(context, payload)
+            {
+                context.commit('toggleEditingMode');
+            },
             createDefaultView(context, payload) // {commit}, payload
             {
                 let view = payload.view;

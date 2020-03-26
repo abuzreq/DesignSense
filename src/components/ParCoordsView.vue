@@ -83,6 +83,20 @@ export default {
       });
       return result;
     },
+    prepareDimensions(data, dimensions, chart) {
+      let range = this.height ;//- chart.margin().top - chart.margin().bottom;
+      var result = {};
+      dimensions.forEach(dim => 
+      {
+        let extents = d3.extent(data,d => d[dim])
+        let scale = d3.scaleLinear().domain(extents).range([range, 1]);
+        result[dim] = {yscale: scale,  title: dim, tickPadding: 0,
+                innerTickSize: 8, type:'number', orient:'right', ticks:10};
+      });
+        console.log(result)
+
+      return result;
+    },
     onDimensionChange(newDimensions) {
       this.excludedDimensions = Object.keys(this.chartData[0]).filter(
         d => !newDimensions.includes(d)
@@ -95,14 +109,13 @@ export default {
       this.chart.highlight(result);
     },
     Chart: function() {
-      const chart = ParCoords({ nullValueSeparator: "bottom" })(
+      const chart = ParCoords({ nullValueSeparator: "bottom" }) //
+      (
         "#" + this.viewID
       )
         .data(this.chartData)
         .width(this.width)
         .height(this.height)
-
-        //.dimensions(this.dimensions)
         .hideAxis(this.excludedDimensions)
         .alpha(1.0)
         .createAxes()
@@ -112,12 +125,12 @@ export default {
         .reorderable()
         .mode("queue")
         .render()
-        .on("brush", (brushed, args) => {})
         .on("brushend", (brushed, args) => {
           if (d3.event.selection === null) return;
 
           //To clear the brush/strum once done
           //d3.select("#"+this.viewID).selectAll('.selection').style("display", "none");
+
           if (chart.brushed().length == chart.data().length) {
             /*
                 console.log("Clearing ",this.viewID)
@@ -137,6 +150,9 @@ export default {
             });
           }
         })
+       /* .on("brushend", (brushed, args) => {
+
+        })*/
         .on("highlight", e => {
           // console.log("highlighting")
         });
@@ -144,6 +160,23 @@ export default {
       var colorScale = this.$store.state.colorScale; //d3.scale.ordinal().range(colorRange);
       chart.color(d => colorScale(d[this.colorColumn])).render();
       //chart.brushPredicate("OR");
+      
+      //To place the zero values at center vertically  https://github.com/BigFatDog/parcoords-es/issues/16
+      /* 
+      this.numericDimensions.forEach(dim => 
+      {
+        let extents = d3.extent(this.chartData, d => d[dim])
+        
+        let x = Math.abs(extents[0])
+        let y = Math.abs(extents[1])
+        let largest = x > y? x: y;
+        console.log(dim, [-largest,largest])
+        if(!isNaN(largest))
+            chart.scale(dim, [-largest,largest])
+      });
+      */
+      //chart.dimensions(this.prepareDimensions(this.chartData, this.numericDimensions, this.chart))
+
 
       return chart;
     }

@@ -4,6 +4,17 @@
       <v-toolbar-title>DesignSense</v-toolbar-title>
        <v-spacer></v-spacer>
       <v-divider vertical />
+        <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="$store.dispatch('toggleEditingMode')">
+            <v-icon>mdi-table-edit</v-icon>
+            <!-- -->
+          </v-btn>
+        </template>
+        <span>Toggle Editing Mode (to resize and move the panels)</span>
+      </v-tooltip>
+
+       <v-divider vertical />
       <!--
      
      <v-spacer></v-spacer>
@@ -26,13 +37,15 @@
         <span>Load</span>
       </v-tooltip>
       -->
+      <span>Pick a Dataset:&emsp;  </span>
       <v-select v-model="url" :items="URLs"  item-text="name" return-object
             @change="onUrlChange">
         <v-icon>mdi-select-off</v-icon>
       </v-select>
 
-
+      
       <v-spacer></v-spacer>
+       <v-divider vertical />
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="$store.dispatch('createSet')">

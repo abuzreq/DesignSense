@@ -238,10 +238,20 @@ export default {
     },
     onMouseUp(selectedItems) {
       let selectedIDs = selectedItems.map(s => {
-        let start = s.id.lastIndexOf("_");
-        return s.id.substring(start + 1);
+        let start = s.id.indexOf("_");
+        let secondPart = s.id.substring(start + 1)
+        let secondStart = secondPart.indexOf("_") //finding the 2nd occurance of _ , accounting for ids that start with _
+        return secondPart.substring(secondStart + 1);
       });
-      selectedIDs.forEach(s => this.update({ _id: s }, event));
+      //console.log(selectedIDs)
+      //selectedIDs.forEach(s => this.update({ _id: s }, event));
+
+      this.$store.commit("update", {
+        view: this.viewID,
+        selection: selectedIDs,  
+        operation: getOperationFromEvent(event)
+      });
+
     },
     onChange(selectedItems) {
       /*
