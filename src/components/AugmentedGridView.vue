@@ -91,10 +91,14 @@
                   >
                     <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
                     <v-card
-                      v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
                       v-bind:id="cardSelector+item._id"
                     >
-                      <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" v-on:mouseover="hover(item)" v-on:mouseleave="unhover(item)" />
+                      <v-img  
+                         v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], 
+                                      transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id],
+                                      }"
+                               v-if="true" :src="item.image"
+                                v-on:click="toggle(item)" v-on:mouseover="hover(item)" v-on:mouseleave="unhover(item)" />
                       <!--  -->
                       <!--:id='"card_"+item._id' -->
                       <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
@@ -125,20 +129,36 @@
 </template>
 
 <style scoped>
-.col > .v-card.outlined {
+
+
+
+.col > .v-card:not(.hovered) .v-image.outlined {
   border: 2px solid red;
 }
 
-.col > .v-card:not(.transparent) {
+.col > .v-card.hovered .v-image.outlined {
+  border: 0px solid red;
+}
+
+.col >  .v-card .v-image:not(.transparent) {
   opacity: 1;
 }
 
-.col > .v-card.transparent {
+.col > .v-card:not(.hovered) .v-image.transparent {
   opacity: 0.4;
 }
 
 /deep/ .v-slider--horizontal {
   min-width: 5vw;
+}
+/*
+.col >  .v-card.hovered {
+
+  border: 4px solid #82b1ff;
+}
+*/
+.col > .v-card.hovered {
+  border: 4px solid #82b1ff;
 }
 </style>
 
@@ -177,6 +197,7 @@ export default {
       isSortDesc: true,
       enableContext: this.defaultEnableContext,
       numSelected: 0,
+   //   hoveredItem: null
     };
   },
   computed: {
@@ -192,7 +213,9 @@ export default {
     },
     ...mapState({
       rawChartData: state => state.data,
-      keys: state => state.numericDimensions.concat(["selected"])
+      keys: state => state.numericDimensions.concat(["selected"]),
+      hovered: state => state.hovered,
+      isCtrlKey: state => state.isCtrlKey
     }),
     cardSelector() {
       return "card_" + this.viewID + "_";
@@ -226,6 +249,12 @@ export default {
         });
         this.numSelected = this.countSelected(this.selectionMap);
       }
+     /* else if (mutation.type === "hover")
+      {
+          this.hoveredItem  = this.$store.state.hovered;
+            //this.hoverHandler();
+      }*/
+
     });
     
   },
@@ -256,7 +285,10 @@ export default {
     },
     hover(item) 
     {
+      if(this.$store.state.isCtrlKey)
+      {
         this.$store.commit("hover", {hovered: item})
+      }
     },
     unhover(item)
     {
@@ -356,6 +388,17 @@ export default {
         this.updateContext();
       }
       //deep: true
+    }, 
+    hovered: function(newValue, oldValue)
+    {
+        if (oldValue)
+        {
+          d3.select('#'+this.viewID).select("#"+this.cardSelector+oldValue._id).classed("hovered", false);
+        }
+        if(newValue)
+        { 
+              d3.select('#'+this.viewID).select("#"+this.cardSelector+newValue._id).classed("hovered", true);
+        }
     }
   }
 };

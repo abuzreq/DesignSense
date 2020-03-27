@@ -110,26 +110,24 @@ export default {
     },
     hoverHandler: function()
     {
-       console.log("hovering")
-        //this.chart.unhighlight([this.$store.getters.getHovered]);
-       // var result = this.$store.getters.selectedDataInView(this.viewID);
-       // this.chart.highlight([this.$store.getters.getHovered]);
         this.chart.unmark();
         let hovered = this.$store.getters.getHovered;
         if(hovered)
         {
           this.chart.mark([hovered]);
         }
-        //console.log(d3.select("#" + this.viewID), d3.select("#" + this.viewID).selectAll('canvas'))
-        
-        d3.select("#" + this.viewID).selectAll('canvas').nodes().forEach((d,i) => 
+        this.updateStyleGivenHovered(hovered)      
+    },
+    updateStyleGivenHovered(hovered)
+    {
+      d3.select("#" + this.viewID).selectAll('canvas').nodes().forEach((d,i) => 
         {
           let canvas = d3.select(d);
           if(canvas.attr('class').includes('foreground'))
           {
             if(hovered)
             {
-                canvas.style('opacity', 0)
+                canvas.style('opacity', 0.1)
             }        
             else
             {
@@ -141,7 +139,7 @@ export default {
           {
             if(hovered)
             {
-                canvas.style('opacity', 0.25)
+                canvas.style('opacity', 0.4)
             }        
             else
             {
@@ -151,13 +149,8 @@ export default {
           else if (canvas.attr('class').includes('marked'))
           {
             
-          }
-         
-          // .parcoords canvas.dimmed
+          }      
         }) 
-      
-       
-     
     },
     Chart: function() {
       const chart = ParCoords({ nullValueSeparator: "bottom", markedLineWidth: 5, highlightedLineWidth:3, lineWidth:1}) //

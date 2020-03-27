@@ -289,7 +289,7 @@ class ScatterPlot {
         }
 
         // Highlight the selected circles.
-        function brushmove(p) {
+        function brushend(p) {
           if (d3.event.selection !== null) {
             const e = d3.event.selection;
 
@@ -325,7 +325,7 @@ class ScatterPlot {
         }
 
         // If the brush is empty, select all circles.
-        function brushend() 
+        function brushmove() 
         {
         
         }

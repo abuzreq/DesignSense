@@ -32,8 +32,8 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
 
             similarity_map: new_similarity_map,
 
-            hovered: null
-
+            hovered: null,
+            isCtrlKey: false,
         },
         mutations:
         {
@@ -145,12 +145,20 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                     }
                 }
                 delete state.setsMap[ID]
+            },
+            setCtrlKey(state, payload)
+            {
+                state.isCtrlKey = payload.value;
             }
         },
         actions: {
             toggleEditingMode(context, payload)
             {
                 context.commit('toggleEditingMode');
+            },
+            updateCtrlKey(context, payload)
+            {
+                context.commit('setCtrlKey', payload);
             },
             createDefaultView(context, payload) // {commit}, payload
             {

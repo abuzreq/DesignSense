@@ -15,10 +15,16 @@ function getOperationFromEvent(event)
     {
         operation = operations.ADD;
     }
+    else if(event.ctrlKey)
+    {
+        //console.log("control")
+        //operation = operations.ADD;
+    }
     else
     {
         operation = operations.REPLACE;
     }
+
     return operation;
 }
 exports.operations = operations;
