@@ -146,6 +146,7 @@ document.addEventListener('keydown', function (e) {
 document.addEventListener('keyup', function (e) {
   if (e.key === 'Control') {
     app.$store.dispatch('updateCtrlKey', { value: false })
+    app.$store.commit("hover", { hovered: null });
   }
 
   if (e.keyCode === 192) {

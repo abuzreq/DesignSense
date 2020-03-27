@@ -249,11 +249,7 @@ export default {
         });
         this.numSelected = this.countSelected(this.selectionMap);
       }
-     /* else if (mutation.type === "hover")
-      {
-          this.hoveredItem  = this.$store.state.hovered;
-            //this.hoverHandler();
-      }*/
+
 
     });
     
@@ -295,9 +291,7 @@ export default {
           this.$store.commit("hover", {hovered: null})
     },
     toggle(item) 
-    {
-      //this.$store.commit("hover", {hovered: item})
-      
+    {      
       this.$store.commit("update", {
         view: this.viewID,
         selection: [item._id],

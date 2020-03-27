@@ -23,7 +23,8 @@ export default {
     ...mapState({ chartData: state => state.data ,
           numericDimensions: state => state.numericDimensions.concat(["selected"]),
           allDimensions: state => state.allDimensions.concat(["selected"]),
-          hovered: state => state.hovered})
+          hovered: state => state.hovered}),
+          isCtrlKey: state => state.isCtrlKey
   },
   mounted() {
     this.chart = this.createChart();
@@ -68,8 +69,13 @@ export default {
   watch: {
     hovered: function(newValue, oldValue)
     {
-        if(this.hasOwnProperty("hoverHandler"))
+      if(this.hasOwnProperty("hoverHandler"))
           this.hoverHandler();     
+    },
+    isCtrlKey: function()
+    {
+       
+
     },
     width: function(newValue, oldValue) {
           this.refresh();

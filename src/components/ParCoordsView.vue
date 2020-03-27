@@ -84,16 +84,25 @@ export default {
       return result;
     },
     prepareDimensions(data, dimensions, chart) {
-      let range = this.height ;//- chart.margin().top - chart.margin().bottom;
+      let range = this.height; //- chart.margin().top - chart.margin().bottom;
       var result = {};
-      dimensions.forEach(dim => 
-      {
-        let extents = d3.extent(data,d => d[dim])
-        let scale = d3.scaleLinear().domain(extents).range([range, 1]);
-        result[dim] = {yscale: scale,  title: dim, tickPadding: 0,
-                innerTickSize: 8, type:'number', orient:'right', ticks:10};
+      dimensions.forEach(dim => {
+        let extents = d3.extent(data, d => d[dim]);
+        let scale = d3
+          .scaleLinear()
+          .domain(extents)
+          .range([range, 1]);
+        result[dim] = {
+          yscale: scale,
+          title: dim,
+          tickPadding: 0,
+          innerTickSize: 8,
+          type: "number",
+          orient: "right",
+          ticks: 10
+        };
       });
-        console.log(result)
+      console.log(result);
 
       return result;
     },
@@ -104,57 +113,177 @@ export default {
       this.refresh();
     },
     markingChangeHandler: function() {
-     this.chart.unhighlight(this.$store.getters.data);
+      this.chart.unhighlight(this.$store.getters.data);
       var result = this.$store.getters.selectedDataInView(this.viewID);
       this.chart.highlight(result);
     },
-    hoverHandler: function()
-    {
-        this.chart.unmark();
-        let hovered = this.$store.getters.getHovered;
-        if(hovered)
-        {
-          this.chart.mark([hovered]);
-        }
-        this.updateStyleGivenHovered(hovered)      
+    hoverHandler: function() {
+      this.chart.unmark();
+      let hovered = this.$store.getters.getHovered;
+      if (hovered) {
+        this.chart.mark([hovered]);
+      }
+      else
+      {
+
+      }
+      this.updateStyleGivenHovered(hovered);
     },
-    updateStyleGivenHovered(hovered)
-    {
-      d3.select("#" + this.viewID).selectAll('canvas').nodes().forEach((d,i) => 
-        {
+    updateStyleGivenHovered(hovered) {
+      d3.select("#" + this.viewID)
+        .selectAll("canvas")
+        .nodes()
+        .forEach((d, i) => {
           let canvas = d3.select(d);
-          if(canvas.attr('class').includes('foreground'))
-          {
-            if(hovered)
-            {
-                canvas.style('opacity', 0.1)
-            }        
-            else
-            {
-                canvas.style('opacity', 0.25)
+          if (canvas.attr("class").includes("foreground")) {
+            if (hovered) {
+              canvas.style("opacity", 0.1);
+            } else {
+              canvas.style("opacity", 0.25);
             }
-         
-         }
-          else if (canvas.attr('class').includes('highlight'))
-          {
-            if(hovered)
-            {
-                canvas.style('opacity', 0.4)
-            }        
-            else
-            {
-                canvas.style('opacity', 1)
+          } else if (canvas.attr("class").includes("highlight")) {
+            if (hovered) {
+              canvas.style("opacity", 0.4);
+            } else {
+              canvas.style("opacity", 1);
             }
+          } else if (canvas.attr("class").includes("marked")) {
           }
-          else if (canvas.attr('class').includes('marked'))
-          {
-            
-          }      
-        }) 
+        });
+    },
+    markLineOnHover(mousePosition, drawTooltip) {
+      var hovered = [];
+      var hoveredCenPts = [];
+
+      let hoveredData = this.getHoveredLines(mousePosition);
+
+      if (hoveredData && hoveredData[0].length != 0) {
+        hovered = hoveredData[0];
+        hoveredCenPts = hoveredData[1];
+        console.log(hovered);
+        this.$store.commit("hover", { hovered: hovered[0] });
+
+        /* TODO Ahmed
+        if (drawTooltip) {
+          // clean if anything is there
+          cleanTooltip();
+          // add tooltip
+          addTooltip(clicked, clickedCenPts);
+        }
+        */
+      }
+    },
+    getHoveredLines(mouseClick) {
+      var hovered = [];
+      var hoveredCenPts = [];
+
+      // find which data is activated right now
+      var activeData = this.getActiveData();
+
+      // find centriod points
+      var graphCentPts = this.getCentroids(activeData);
+
+      if (graphCentPts.length == 0) return false;
+
+      // find between which axes the point is
+      var axeNum = this.findAxes(mouseClick, graphCentPts[0]);
+      if (!axeNum) return false;
+
+      graphCentPts.forEach((d, i) => {
+        if (this.isOnLine(d[axeNum - 1], d[axeNum], mouseClick, 2)) {
+          hovered.push(activeData[i]);
+          hoveredCenPts.push(graphCentPts[i]); // for tooltip
+        }
+      });
+
+      return [hovered, hoveredCenPts];
+    },
+    isOnLine(startPt, endPt, testPt, tol) {
+      // check if test point is close enough to a line
+      // between startPt and endPt. close enough means smaller than tolerance
+      var x0 = testPt[0];
+      var y0 = testPt[1];
+      var x1 = startPt[0];
+      var y1 = startPt[1];
+      var x2 = endPt[0];
+      var y2 = endPt[1];
+      var Dx = x2 - x1;
+      var Dy = y2 - y1;
+      var delta =
+        Math.abs(Dy * x0 - Dx * y0 - x1 * y2 + x2 * y1) /
+        Math.sqrt(Math.pow(Dx, 2) + Math.pow(Dy, 2));
+      //console.log(delta);
+      if (delta <= tol) return true;
+      return false;
+    },
+    // Add highlight for every line on hovered
+    getCentroids(data) {
+      // this function returns centroid points for data. I had to change the source
+      // for parallelcoordinates and make compute_centroids public.
+      // I assume this should be already somewhere in graph and I don't need to recalculate it
+      // but I couldn't find it so I just wrote this for now
+      console.log(this);
+      var margins = this.chart.margin();
+      var graphCentPts = [];
+
+      data.forEach(d => {
+        var initCenPts = this.chart
+          .compute_real_centroids(d)
+          .filter(function(d, i) {
+            return i % 2 == 0;
+          });
+
+        // move points based on margins
+        var cenPts = initCenPts.map(function(d) {
+          return [d[0] + margins["left"], d[1] + margins["top"]];
+        });
+
+        graphCentPts.push(cenPts);
+      });
+
+      return graphCentPts;
+    },
+    findAxes(testPt, cenPts) {
+      // finds between which two axis the mouse is
+      var x = testPt[0];
+      var y = testPt[1];
+
+      // make sure it is inside the range of x
+      if (cenPts[0][0] > x) return false;
+      if (cenPts[cenPts.length - 1][0] < x) return false;
+
+      // find between which segment the point is
+      for (var i = 0; i < cenPts.length; i++) {
+        if (cenPts[i][0] > x) return i;
+      }
+    },
+    findAxes(testPt, cenPts) {
+      // finds between which two axis the mouse is
+      var x = testPt[0];
+      var y = testPt[1];
+
+      // make sure it is inside the range of x
+      if (cenPts[0][0] > x) return false;
+      if (cenPts[cenPts.length - 1][0] < x) return false;
+
+      // find between which segment the point is
+      for (var i = 0; i < cenPts.length; i++) {
+        if (cenPts[i][0] > x) return i;
+      }
+    },
+    getActiveData() {
+      // I'm pretty sure this data is already somewhere in graph
+      if (this.chart.brushed() != false) return this.chart.brushed();
+      return this.chart.data();
     },
     Chart: function() {
-      const chart = ParCoords({ nullValueSeparator: "bottom", markedLineWidth: 5, highlightedLineWidth:3, lineWidth:1}) //
-      (
+      const chart = ParCoords({
+        nullValueSeparator: "bottom",
+        markedLineWidth: 5,
+        highlightedLineWidth: 3,
+        lineWidth: 1
+      })(
+        //
         "#" + this.viewID
       )
         .data(this.chartData)
@@ -165,7 +294,7 @@ export default {
         .createAxes()
         //.margin({ top: 40, left: 20, bottom: 20, right: 20 })
         .brushMode("1D-axes") //1D-axes-multi 2D-strums angular 1D-axes
-      //  .alphaOnBrushed(0.1)
+        //  .alphaOnBrushed(0.1)
         .reorderable()
         .mode("queue")
         .render()
@@ -194,7 +323,7 @@ export default {
             });
           }
         })
-       /* .on("brushend", (brushed, args) => {
+        /* .on("brushend", (brushed, args) => {
 
         })*/
         .on("highlight", e => {
@@ -203,8 +332,32 @@ export default {
 
       var colorScale = this.$store.state.colorScale; //d3.scale.ordinal().range(colorRange);
       chart.color(d => colorScale(d[this.colorColumn])).render();
+
+      //Source for the hover on mouse over is adopted from: http://bl.ocks.org/mostaphaRoudsari/b4e090bb50146d88aec4
+      //This includes all the auxilary functions called downstream from markLineOnHover() which was called highlightLineOnClick() in the orignal source
+      var vueThis = this;
+      d3.select("#" + this.viewID)
+        .select("svg")
+        .on("mousemove", function() 
+        {
+          if (vueThis.$store.state.isCtrlKey)
+           {
+            var mousePosition = d3.mouse(this);
+            //console.log(mousePosition);
+            vueThis.markLineOnHover(mousePosition, true); //true will also add tooltip
+          }
+        })
+        .on("mouseout", function() {
+          // cleanTooltip();
+          // graph.unhighlight();
+          //})
+          //.on("click", function() {
+          //    var mousePosition = d3.mouse(this);
+          //    highlightLineOnClick(mousePosition, true); //true will also add tooltip
+        });
+      console.log(chart, chart.compute_real_centroids);
       //chart.brushPredicate("OR");
-      
+
       //To place the zero values at center vertically  https://github.com/BigFatDog/parcoords-es/issues/16
       /* 
       this.numericDimensions.forEach(dim => 
@@ -220,7 +373,6 @@ export default {
       });
       */
       //chart.dimensions(this.prepareDimensions(this.chartData, this.numericDimensions, this.chart))
-
 
       return chart;
     }
@@ -238,8 +390,7 @@ export default {
   width: 200px;
 }
 
-/deep/ .parcoords canvas.brushed   {
-    border: red;
+/deep/ .parcoords canvas.brushed {
+  border: red;
 }
-
 </style>
