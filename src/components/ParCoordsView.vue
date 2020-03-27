@@ -222,7 +222,6 @@ export default {
       // for parallelcoordinates and make compute_centroids public.
       // I assume this should be already somewhere in graph and I don't need to recalculate it
       // but I couldn't find it so I just wrote this for now
-      console.log(this);
       var margins = this.chart.margin();
       var graphCentPts = [];
 

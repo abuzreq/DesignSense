@@ -45,6 +45,9 @@ div >>> circle.hidden {
   fill: #ccc !important;
 }
 
+
+
+
 div >>> .extent {
   fill: #000;
   fill-opacity: 0.125;
@@ -93,6 +96,13 @@ export default {
       var result = this.$store.getters.selectedDataInView(this.viewID);
       this.chart.highlight(result);
     },
+    hoverHandler : function()
+    {
+
+       let hovered = this.$store.getters.getHovered;
+        this.chart.mark(hovered)
+      
+    },
     Chart: function() {
       var scatterPlot = new ScatterPlot();
       scatterPlot
@@ -115,6 +125,12 @@ export default {
             selection: brushedIDs,
             operation: getOperationFromEvent(d3.event.sourceEvent)
           });
+        })
+        .onHovered( hovered => {
+          if(this.$store.state.isCtrlKey)
+          {
+              this.$store.commit("hover", { hovered: hovered});
+          } 
         })
         .keyFunc(d => d._id); //TODO make global
 
@@ -162,6 +178,7 @@ class ScatterPlot {
     let thisG = null;
 
     var onBrushed;
+    var onHovered;
 
     var keyFunc;
     function chart(selection) {
@@ -270,7 +287,10 @@ class ScatterPlot {
           })
           .attr("fill", function(d) {
             return colorScale(d[colorColumn]);
-          });
+          })
+        //  
+
+        
 
         circles.exit().remove();
 
@@ -321,6 +341,9 @@ class ScatterPlot {
               onBrushed([]);
             }
           }
+          else
+          {
+          }
 
         }
 
@@ -340,21 +363,68 @@ class ScatterPlot {
             }
           });
         };
+
         var unhighlightAll = function() {
           thisG.selectAll("circle").classed("hidden", false);
         };
 
+        var mark  = function(item)
+        {
+          
+          thisG.selectAll("circle").attr("r", (d, i) => 
+          {
+            if (item && keyFunc(item) == keyFunc(d)) {
+              return 5;
+            } 
+            else 
+            {
+              return 3;
+            }
+          });
+        }
+
+
         chart.highlight = highlight;
         chart.unhighlightAll = unhighlightAll;
+        chart.mark = mark;
 
         g.call(brush);
+
+
+//********************************************** */
+
+         const voronoiDiagram = d3.voronoi()
+            .x(d => {return xScale(d[xColumn])})
+            .y(d => yScale(d[yColumn]))
+            .size([innerWidth, innerHeight])(data); 
+        const voronoiRadius = innerWidth / 10;
+
+       /* let hoverG = g.append('rect').attr("width", innerWidth)
+        .attr("height", innerHeight)
+        .classed('hover',true)*/
+
+        g.on("mousemove", function() 
+        {   
+            const [mx, my] = d3.mouse(this);
+            const site = voronoiDiagram.find(mx, my, voronoiRadius);
+            onHovered(site && site.data)
+        })
+
+
+
         thisG = g;
       });
     }
 
+
     chart.onBrushed = function(_) {
       if (!arguments.length) return onBrushed;
       onBrushed = _;
+      return chart;
+    };
+      chart.onHovered = function(_) {
+      if (!arguments.length) return onHovered;
+      onHovered = _;
       return chart;
     };
 

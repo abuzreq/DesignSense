@@ -24,7 +24,6 @@ export default {
           numericDimensions: state => state.numericDimensions.concat(["selected"]),
           allDimensions: state => state.allDimensions.concat(["selected"]),
           hovered: state => state.hovered}),
-          isCtrlKey: state => state.isCtrlKey
   },
   mounted() {
     this.chart = this.createChart();
@@ -39,8 +38,8 @@ export default {
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === "update" || mutation.type === "resetMarking") 
       {
-          //if(this.hasOwnProperty("markingChangeHandler"))
-          this.markingChangeHandler();
+          if(this.hasOwnProperty("markingChangeHandler"))
+              this.markingChangeHandler();
       }
     });
   },
@@ -72,11 +71,7 @@ export default {
       if(this.hasOwnProperty("hoverHandler"))
           this.hoverHandler();     
     },
-    isCtrlKey: function()
-    {
-       
 
-    },
     width: function(newValue, oldValue) {
           this.refresh();
     },
