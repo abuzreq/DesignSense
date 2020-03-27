@@ -74,6 +74,7 @@ export default {
     this.excludedDimensions = Object.keys(this.chartData[0]).filter(
       d => !this.numericDimensions.includes(d)
     );
+    this.excludedDimensions.push("selected")
   },
   methods: {
     formatDimensions(dimensions) {
@@ -228,9 +229,7 @@ export default {
       data.forEach(d => {
         var initCenPts = this.chart
           .compute_real_centroids(d)
-          .filter(function(d, i) {
-            return i % 2 == 0;
-          });
+         
 
         // move points based on margins
         var cenPts = initCenPts.map(function(d) {
@@ -354,7 +353,6 @@ export default {
           //    var mousePosition = d3.mouse(this);
           //    highlightLineOnClick(mousePosition, true); //true will also add tooltip
         });
-      console.log(chart, chart.compute_real_centroids);
       //chart.brushPredicate("OR");
 
       //To place the zero values at center vertically  https://github.com/BigFatDog/parcoords-es/issues/16
@@ -392,4 +390,10 @@ export default {
 /deep/ .parcoords canvas.brushed {
   border: red;
 }
+
+.parcoords /deep/  .label {
+  transform: rotate(10deg) translate(0px, -10px);
+}
+
+
 </style>
