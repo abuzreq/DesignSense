@@ -144,7 +144,7 @@ export default {
             }
           } else if (canvas.attr("class").includes("highlight")) {
             if (hovered) {
-              canvas.style("opacity", 0.4);
+              canvas.style("opacity", 0.25);
             } else {
               canvas.style("opacity", 1);
             }

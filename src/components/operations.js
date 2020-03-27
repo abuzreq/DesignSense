@@ -2,12 +2,17 @@ const operations = {
     REPLACE: "REPLACE",
     ADD: "ADD",
     TOGGLE: "TOGGLE",
+    INTERSECTION: "INTERSECTION",
 };
 
 function getOperationFromEvent(event)
 {
     let operation = operations.REPLACE;
-    if(event.altKey)
+    if(event.altKey && event.shiftKey)
+    {
+        operation = operations.INTERSECTION;
+    }
+    else if(event.altKey)
     {
         operation = operations.TOGGLE;
     }

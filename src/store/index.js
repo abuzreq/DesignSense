@@ -395,6 +395,25 @@ function operate(marking, selection, operation) {
             }
         }
     }
+    else if (operation == operations.INTERSECTION)
+    {
+        let selected = getSelection(marking, selection)
+        console.log(selected, selection, marking)
+        for (var alt in marking) 
+        {
+            
+            if(marking[alt] == 1 && selected[alt] == 1)
+            {
+                marking[alt] = 1;
+                console.log(alt)
+            }
+            else
+            {
+                marking[alt] = 0;
+            }
+                    
+        }
+    }
     else {
         console.error('Unknown Selection Operation')
     }
