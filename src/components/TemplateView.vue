@@ -35,8 +35,15 @@ export default {
     this.viewID = "id" + this._uid;
 
     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "update" || mutation.type === "resetMarking") {
-        this.markingChangeHandler();
+      if (mutation.type === "update" || mutation.type === "resetMarking") 
+      {
+        if(this.hasOwnProperty("markingChangeHandler"))
+            this.markingChangeHandler();
+      }
+      else if (mutation.type === "hover")
+      {
+          if(this.hasOwnProperty("hoverHandler"))
+            this.hoverHandler();
       }
     });
   },

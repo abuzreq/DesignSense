@@ -30,7 +30,9 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             numericDimensions: getNumeric(dataTypesMap),
             allDimensions: Object.keys(dataTypesMap),
 
-            similarity_map: new_similarity_map
+            similarity_map: new_similarity_map,
+
+            hovered: null
 
         },
         mutations:
@@ -116,7 +118,9 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                     }
                 }
             },
-
+            hover(state, payload) {
+                state.hovered = payload.hovered
+            },
             popDataStack(state, payload) {
                 payload.data = state.dataStack.pop();
             },
@@ -259,6 +263,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             },
             markingsDefaultGetter: state => { return state.markingsMap[state.defaultMarkingID] },
             markingsMapGetter: (state) => (markingID) => { return state.markingsMap[markingID] },
+            getHovered: (state) => {return state.hovered;}
         }
 
     });

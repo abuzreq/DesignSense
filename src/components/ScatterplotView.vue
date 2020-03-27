@@ -315,7 +315,7 @@ class ScatterPlot {
             });
 
             if (brushed.length > 0) {
-              console.log("Brush move")
+              //console.log("Brush move")
               onBrushed(brushedIDs);
             } else {
               onBrushed([]);

@@ -104,12 +104,63 @@ export default {
       this.refresh();
     },
     markingChangeHandler: function() {
-      this.chart.unhighlight(this.$store.getters.data);
+     this.chart.unhighlight(this.$store.getters.data);
       var result = this.$store.getters.selectedDataInView(this.viewID);
       this.chart.highlight(result);
     },
+    hoverHandler: function()
+    {
+       console.log("hovering")
+        //this.chart.unhighlight([this.$store.getters.getHovered]);
+       // var result = this.$store.getters.selectedDataInView(this.viewID);
+       // this.chart.highlight([this.$store.getters.getHovered]);
+        this.chart.unmark();
+        let hovered = this.$store.getters.getHovered;
+        if(hovered)
+        {
+          this.chart.mark([hovered]);
+        }
+        //console.log(d3.select("#" + this.viewID), d3.select("#" + this.viewID).selectAll('canvas'))
+        
+        d3.select("#" + this.viewID).selectAll('canvas').nodes().forEach((d,i) => 
+        {
+          let canvas = d3.select(d);
+          if(canvas.attr('class').includes('foreground'))
+          {
+            if(hovered)
+            {
+                canvas.style('opacity', 0)
+            }        
+            else
+            {
+                canvas.style('opacity', 0.25)
+            }
+         
+         }
+          else if (canvas.attr('class').includes('highlight'))
+          {
+            if(hovered)
+            {
+                canvas.style('opacity', 0.25)
+            }        
+            else
+            {
+                canvas.style('opacity', 1)
+            }
+          }
+          else if (canvas.attr('class').includes('marked'))
+          {
+            
+          }
+         
+          // .parcoords canvas.dimmed
+        }) 
+      
+       
+     
+    },
     Chart: function() {
-      const chart = ParCoords({ nullValueSeparator: "bottom" }) //
+      const chart = ParCoords({ nullValueSeparator: "bottom", markedLineWidth: 5, highlightedLineWidth:3, lineWidth:1}) //
       (
         "#" + this.viewID
       )
@@ -117,11 +168,11 @@ export default {
         .width(this.width)
         .height(this.height)
         .hideAxis(this.excludedDimensions)
-        .alpha(1.0)
+        //.alpha(0.7)
         .createAxes()
         //.margin({ top: 40, left: 20, bottom: 20, right: 20 })
         .brushMode("1D-axes") //1D-axes-multi 2D-strums angular 1D-axes
-        .alphaOnBrushed(0.1)
+      //  .alphaOnBrushed(0.1)
         .reorderable()
         .mode("queue")
         .render()
@@ -193,4 +244,9 @@ export default {
 /deep/ .multiselect {
   width: 200px;
 }
+
+/deep/ .parcoords canvas.brushed   {
+    border: red;
+}
+
 </style>

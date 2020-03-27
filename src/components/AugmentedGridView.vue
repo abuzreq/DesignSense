@@ -94,7 +94,8 @@
                       v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
                       v-bind:id="cardSelector+item._id"
                     >
-                      <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" />
+                      <v-img v-if="true" :src="item.image" v-on:click="toggle(item)" v-on:mouseover="hover(item)" v-on:mouseleave="unhover(item)" />
+                      <!--  -->
                       <!--:id='"card_"+item._id' -->
                       <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
                       <!--
@@ -253,16 +254,18 @@ export default {
       });
 
     },
-    onChange(selectedItems) {
-      /*
-        let selectedIDs = selectedItems.map(s => {
-        let start = s.$attrs.id.lastIndexOf("_");
-        return s.$attrs.id.substring(start + 1)})
-
-        selectedIDs.forEach(s => this.update({_id: s},event))
-        */
+    hover(item) 
+    {
+        this.$store.commit("hover", {hovered: item})
     },
-    toggle(item) {
+    unhover(item)
+    {
+          this.$store.commit("hover", {hovered: null})
+    },
+    toggle(item) 
+    {
+      //this.$store.commit("hover", {hovered: item})
+      
       this.$store.commit("update", {
         view: this.viewID,
         selection: [item._id],
