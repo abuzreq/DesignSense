@@ -76,19 +76,19 @@
         </template>
 
         <template v-slot:default="items">
-                            <v-card v-if="inspectedItem" cols="12" style="width:100%">
-                    <v-tooltip bottom>
-                      <template v-slot:activator="{ on }">
-                        <v-btn x-small icon v-on="on" @click="() => inspectedItem = null">
-                          <v-icon>mdi-close</v-icon>
-                        </v-btn>
-                      </template>
-                      <span>Close inspection</span>
-                    </v-tooltip>
+          <v-card v-if="inspectedItem" cols="12" style="width:100%">
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-btn x-small icon v-on="on" @click="() => inspectedItem = null">
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+              </template>
+              <span>Close inspection</span>
+            </v-tooltip>
 
-                    <v-tooltip bottom>
-                      <template v-slot:activator="{ on }">
-                        <!--
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <!--
                           <v-checkbox
                           v-on="on"
                           dense
@@ -98,25 +98,32 @@
                           :off-icon="inspected3DIcon"
                           :on-icon="inspected2DIcon"
                         />
-                        -->
-                        <v-btn icon v-on="on" @click="() => inspecting3DView = !inspecting3DView">
-                          <v-icon v-if="inspecting3DView">mdi-file-image-outline</v-icon>
-                          <v-icon v-else>mdi-video-3d</v-icon>
-                        </v-btn>
-                      </template>
-                      <span>
-                        <span v-if="inspecting3DView">Show 2D image instead</span>
-                        <span v-else>Show 3D model instead</span>
-                      </span>
-                    </v-tooltip>
-                    <v-img
-                      v-if="!inspecting3DView"
-                      :src="inspectedItem.image"
-                      v-on:mouseover="hover(inspectedItem, true)"
-                      v-on:mouseleave="unhover(inspectedItem)"
-                    />
-                    <model-gltf v-else @on-load="on3DJsonLoad(this)" :src="inspectedItem.gltf" />
-                  </v-card>
+                -->
+                <v-btn icon v-on="on" @click="() => inspecting3DView = !inspecting3DView">
+                  <v-icon v-if="inspecting3DView">mdi-file-image-outline</v-icon>
+                  <v-icon v-else>mdi-video-3d</v-icon>
+                </v-btn>
+              </template>
+              <span>
+                <span v-if="inspecting3DView">Show 2D image instead</span>
+                <span v-else>Show 3D model instead</span>
+              </span>
+            </v-tooltip>
+            
+            <v-img width ="100%" height ="400px" 
+              v-if="!inspecting3DView"
+              :src="inspectedItem.image"
+              v-on:mouseover="hover(inspectedItem, true)"
+              v-on:mouseleave="unhover(inspectedItem)"
+            />
+            
+            <v-card width ="100%" height ="400px"  id="inspector" name="inspector"></v-card>
+            <!--
+                    <model-gltf v-else :lights=modelLights  
+          :backgroundAlpha="0" @on-load="on3DJsonLoad(this)" :src="inspectedItem.gltf" />
+                 
+            -->
+          </v-card>
           <drag-select-container
             :selectableItems="getAllCards"
             :scrollAccessor="(el) => el.firstChild.firstChild"
@@ -215,6 +222,8 @@ import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import DragSelect from "@/plugins/DragSelect.vue";
+import SPECTACLES from "@/plugins/SPECTACLES.js";
+import $ from "jquery";
 
 export default {
   name: "AugmentedGridCards",
@@ -222,7 +231,16 @@ export default {
   props: ["defaultEnableContext", "width", "height"],
   data: function() {
     return {
-      crossOrigin: 'anonymous',
+      va3cViewer: null,
+      modelLights: [
+        {
+          type: "AmbientLight",
+          color: 0xaaaaaa
+        }
+      ],
+      modelURL:
+        "https://raw.githubusercontent.com/abuzreq/DesignSense/4f9cdd01ee81c7b2bb724015f3003c3914d90ae8/Layer1%20(3).gltf?token=ABOQCFUIOABC2L5T5MHUQG26RAXJQ", //"https://gist.githubusercontent.com/abuzreq/3fb2ad6f964e10ea95332f0822ce899b/raw/a8a6ad6860f9ab6a6171dbee5987b4bcbf0a117a/Layer2.gltf",
+      crossOrigin: "anonymous",
       chartData: [],
       cards: [],
       selectionMap: {},
@@ -274,6 +292,8 @@ export default {
       vueComponent: this
     });
     this.updateContext();
+    this.inspectedItem = this.rawChartData[0];
+
     //this.chartData = this.rawChartData;
   },
   updated() {
@@ -283,7 +303,6 @@ export default {
   created() {
     this.viewID = "id" + this._uid;
     this.sortByVar = this.keys[0];
-
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === "update" || mutation.type === "resetMarking") {
         this.updateContext();
@@ -296,9 +315,8 @@ export default {
     });
   },
   methods: {
-    on3DJsonLoad(d)
-    {
-        console.log(d)
+    on3DJsonLoad(d) {
+      console.log(d);
     },
     getAllCards() {
       let cards = Array.prototype.slice.call(
@@ -331,8 +349,18 @@ export default {
       this.$store.commit("hover", { hovered: null });
     },
     toggle(item) {
-      console.log(item);
-      this.inspectedItem = item;
+
+        if (this.va3cViewer == null) {
+
+          this.va3cViewer = new SPECTACLES($("#inspector")); //, jsonModel, function(app) {//call the UI / functionality modules app.setBackgroundColor(0xffffff);}
+        }
+  
+      d3.json(item.json).then(jsonModel => 
+      {
+        this.va3cViewer.loadNewModel(jsonModel);
+      });
+    console.log(item);
+        this.inspectedItem = item;
       /*
       this.$store.commit("update", {
         view: this.viewID,
