@@ -62,7 +62,6 @@
               tick-size="4"
               v-model="colSpan"
             ></v-slider>
-
             <!--
             <v-btn-toggle x-small dense v-model="isSortDesc" mandatory>
               <v-btn x-small depressed color="blue" :value="false">
@@ -75,8 +74,54 @@
             -->
           </v-toolbar>
         </template>
+
         <template v-slot:default="items">
-          <drag-select-container :selectableItems="getAllCards" :scrollAccessor="(el) => el.firstChild.firstChild" @select="onMouseUp($event)">
+                            <v-card v-if="inspectedItem" cols="12" style="width:100%">
+                    <v-tooltip bottom>
+                      <template v-slot:activator="{ on }">
+                        <v-btn x-small icon v-on="on" @click="() => inspectedItem = null">
+                          <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>Close inspection</span>
+                    </v-tooltip>
+
+                    <v-tooltip bottom>
+                      <template v-slot:activator="{ on }">
+                        <!--
+                          <v-checkbox
+                          v-on="on"
+                          dense
+                          align-center
+                          v-model="inspecting3DView"
+                          icon="large"
+                          :off-icon="inspected3DIcon"
+                          :on-icon="inspected2DIcon"
+                        />
+                        -->
+                        <v-btn icon v-on="on" @click="() => inspecting3DView = !inspecting3DView">
+                          <v-icon v-if="inspecting3DView">mdi-file-image-outline</v-icon>
+                          <v-icon v-else>mdi-video-3d</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>
+                        <span v-if="inspecting3DView">Show 2D image instead</span>
+                        <span v-else>Show 3D model instead</span>
+                      </span>
+                    </v-tooltip>
+                    <v-img
+                      v-if="!inspecting3DView"
+                      :src="inspectedItem.image"
+                      v-on:mouseover="hover(inspectedItem, true)"
+                      v-on:mouseleave="unhover(inspectedItem)"
+                    />
+                    <model-gltf v-else @on-load="on3DJsonLoad(this)" :src="inspectedItem.gltf" />
+                  </v-card>
+          <drag-select-container
+            :selectableItems="getAllCards"
+            :scrollAccessor="(el) => el.firstChild.firstChild"
+            @select="onMouseUp($event)"
+          >
             <v-layout grid-list-sm column :style="{'height': `${height}px`}">
               <v-flex
                 md6
@@ -90,15 +135,17 @@
                     :cols="possibleColSpans[colSpan]"
                   >
                     <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
-                    <v-card
-                      v-bind:id="cardSelector+item._id"
-                    >
-                      <v-img  
-                         v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], 
+                    <v-card v-bind:id="cardSelector+item._id">
+                      <v-img
+                        v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], 
                                       transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id],
                                       }"
-                               v-if="true" :src="item.image"
-                                v-on:click="toggle(item)" v-on:mouseover="hover(item)" v-on:mouseleave="unhover(item)" />
+                        v-if="true"
+                        :src="item.image"
+                        v-on:click="toggle(item)"
+                        v-on:mouseover="hover(item)"
+                        v-on:mouseleave="unhover(item)"
+                      />
                       <!--  -->
                       <!--:id='"card_"+item._id' -->
                       <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
@@ -129,9 +176,6 @@
 </template>
 
 <style scoped>
-
-
-
 .col > .v-card:not(.hovered) .v-image.outlined {
   border: 2px solid red;
 }
@@ -140,7 +184,7 @@
   border: 0px solid red;
 }
 
-.col >  .v-card .v-image:not(.transparent) {
+.col > .v-card .v-image:not(.transparent) {
   opacity: 1;
 }
 
@@ -166,7 +210,7 @@
 //    "vue-drag-select": "git+https://github.com/JochenLutz/vue-drag-select.git",
 
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
-import { ModelThree  } from "vue-3d-model";
+import { ModelGltf, ModelThree } from "vue-3d-model";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
@@ -174,10 +218,11 @@ import DragSelect from "@/plugins/DragSelect.vue";
 
 export default {
   name: "AugmentedGridCards",
-  components: { ModelThree , "drag-select-container": DragSelect },
+  components: { ModelGltf, ModelThree, "drag-select-container": DragSelect },
   props: ["defaultEnableContext", "width", "height"],
   data: function() {
     return {
+      crossOrigin: 'anonymous',
       chartData: [],
       cards: [],
       selectionMap: {},
@@ -197,11 +242,13 @@ export default {
       isSortDesc: true,
       enableContext: this.defaultEnableContext,
       numSelected: 0,
-   //   hoveredItem: null
+      inspectedItem: null,
+      inspecting3DView: false,
+      inspected3DIcon: "mdi-video-3d",
+      inspected2DIcon: "mdi-file-image-outline"
     };
   },
   computed: {
- 
     chartDataLength() {
       return this.chartData.length;
     },
@@ -219,8 +266,7 @@ export default {
     }),
     cardSelector() {
       return "card_" + this.viewID + "_";
-    },
-
+    }
   },
   mounted() {
     this.$store.dispatch("createDefaultView", {
@@ -230,15 +276,13 @@ export default {
     this.updateContext();
     //this.chartData = this.rawChartData;
   },
-  updated()
-  {       
-      this.cards.splice(0, this.cards.length)
-      this.cards.push(...this.getAllCards())      
+  updated() {
+    this.cards.splice(0, this.cards.length);
+    this.cards.push(...this.getAllCards());
   },
   created() {
     this.viewID = "id" + this._uid;
-    this.sortByVar =this.keys[0];
-
+    this.sortByVar = this.keys[0];
 
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === "update" || mutation.type === "resetMarking") {
@@ -249,24 +293,24 @@ export default {
         });
         this.numSelected = this.countSelected(this.selectionMap);
       }
-
-
     });
-    
   },
   methods: {
-   getAllCards() 
+    on3DJsonLoad(d)
     {
-        let cards = Array.prototype.slice.call(
-            d3.select("#" + this.viewID).selectAll(".v-card")._groups[0]
-          );
-      return cards
+        console.log(d)
+    },
+    getAllCards() {
+      let cards = Array.prototype.slice.call(
+        d3.select("#" + this.viewID).selectAll(".v-card")._groups[0]
+      );
+      return cards;
     },
     onMouseUp(selectedItems) {
       let selectedIDs = selectedItems.map(s => {
         let start = s.id.indexOf("_");
-        let secondPart = s.id.substring(start + 1)
-        let secondStart = secondPart.indexOf("_") //finding the 2nd occurance of _ , accounting for ids that start with _
+        let secondPart = s.id.substring(start + 1);
+        let secondStart = secondPart.indexOf("_"); //finding the 2nd occurance of _ , accounting for ids that start with _
         return secondPart.substring(secondStart + 1);
       });
       //console.log(selectedIDs)
@@ -274,39 +318,38 @@ export default {
 
       this.$store.commit("update", {
         view: this.viewID,
-        selection: selectedIDs,  
+        selection: selectedIDs,
         operation: getOperationFromEvent(event)
       });
-
     },
-    hover(item) 
-    {
-      if(this.$store.state.isCtrlKey)
-      {
-        this.$store.commit("hover", {hovered: item})
+    hover(item, forced) {
+      if (forced || this.$store.state.isCtrlKey) {
+        this.$store.commit("hover", { hovered: item });
       }
     },
-    unhover(item)
-    {
-          this.$store.commit("hover", {hovered: null})
+    unhover(item) {
+      this.$store.commit("hover", { hovered: null });
     },
-    toggle(item) 
-    {      
+    toggle(item) {
+      console.log(item);
+      this.inspectedItem = item;
+      /*
       this.$store.commit("update", {
         view: this.viewID,
         selection: [item._id],
         operation: operations.TOGGLE
       });
+      */
     },
     update(item, event) {
-      console.log("A", event)
+      console.log("A", event);
       //if(!event.altKey)
       //  event.shiftKey = true;
       //console.log("B", event)
       this.$store.commit("update", {
         view: this.viewID,
         selection: [item._id],
-     
+
         operation: getOperationFromEvent(event)
       });
     },
@@ -354,11 +397,9 @@ export default {
       //console.log("Updating Context");
       if (this.enableContext) {
         this.chartData = this.rawChartData;
-        
       } else {
         this.chartData = this.$store.getters.selectedDataInView(this.viewID);
       }
-
     },
     countSelected(selectionMap) {
       let count = 0;
@@ -382,17 +423,18 @@ export default {
         this.updateContext();
       }
       //deep: true
-    }, 
-    hovered: function(newValue, oldValue)
-    {
-        if (oldValue)
-        {
-          d3.select('#'+this.viewID).select("#"+this.cardSelector+oldValue._id).classed("hovered", false);
-        }
-        if(newValue)
-        { 
-              d3.select('#'+this.viewID).select("#"+this.cardSelector+newValue._id).classed("hovered", true);
-        }
+    },
+    hovered: function(newValue, oldValue) {
+      if (oldValue) {
+        d3.select("#" + this.viewID)
+          .select("#" + this.cardSelector + oldValue._id)
+          .classed("hovered", false);
+      }
+      if (newValue) {
+        d3.select("#" + this.viewID)
+          .select("#" + this.cardSelector + newValue._id)
+          .classed("hovered", true);
+      }
     }
   }
 };
