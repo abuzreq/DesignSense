@@ -61,7 +61,7 @@
           ></v-slider>
           <v-slider           
               min="0"
-              max="3"
+              max="2"
               step="1"
               :tick-labels="labels"
               ticks="always"
@@ -174,9 +174,9 @@ export default {
       onContextIcon: "mdi-eye",
       viewID: null,
       // keys: this.$store.numericDimensions.concat(["selected"]),
-      colSpan: 4,
-      possibleColSpans: [1, 2, 3, 4],
-      labels: ["S", "M","L", "XL"],
+      colSpan: 1,
+      possibleColSpans: [6, 8, 12],
+      labels: ["S", "M", "XL"],
       numClustersLabels: ["4", "8","12", "16"],
       maxPerPage: 10000,
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",

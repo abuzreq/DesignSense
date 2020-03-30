@@ -27,8 +27,15 @@
             </v-list-item-action>
 
             <v-list-item-content>
-              <v-list-item-title class="title">{{item}}</v-list-item-title>
-               <v-textarea height = "7vh" style="margin-bottom:-15px" multiple solo full-width dense v-model="setNote" label="add notes here" ></v-textarea>
+              <v-list-item-title class="title">{{setsMetadataMap[item].name}}</v-list-item-title>
+               <v-textarea height = "7vh" style="margin-bottom:-15px" multiple solo full-width dense 
+               :value="setsMetadataMap[item].comment" label="add notes here" 
+               :append-outer-icon="setsMetadataMap[item].comment?'mdi-send':''"
+               @input="changeComment($event, item)"
+              
+               />
+
+
          
             </v-list-item-content>
           </v-list-item>
@@ -51,7 +58,6 @@
 
 </style>
 <script>
-//v-if="todo.done" @click="removeTodo(i)"
 
 //Source: https://codepen.io/sharon-the-encoder/pen/NzOLGy
 import * as d3 from "d3";
@@ -66,24 +72,16 @@ export default {
     };
   },
   computed: {
-    ...mapState({ setsIDs: state => state.setsIDs })//TODO add names and notes to the sets data in the store
+    ...mapState({ setsIDs: state => state.setsIDs, setsMetadataMap: state => state.setsMetadataMap }),
+
   },
   mounted() {},
   watch: {
     width: function(newValue, oldValue) {
-      // this.createChart();
-      /* this.chart.outerWidth(newValue)
-      d3.select("#"+this.id)
-        .datum(this.chartData)
-        .call(this.chart);*/
+
     },
     height: function(newValue, oldValue) {
-      //  this.createChart();
-      /*
-            this.chart.outerWidth(newValue)
-      d3.select("#"+this.id)
-        .datum(this.chartData)
-        .call(this.chart);*/
+
     },
     chartData: {
       handler: function(newValue, oldValue) {}
@@ -94,23 +92,17 @@ export default {
     remove(ID) {
       this.$store.commit("removeSet", { setID: ID });
     },
+    changeComment(comment, itemID)
+    {
+        this.$store.commit('setSetMetadata',{setID: itemID, comment:comment})
+        console.log(this.setsMetadataMap)
+
+    },
     restoreSet(ID, event) {
-      /*
-    if (event) {
-        event.preventDefault()
-    }*/
-      console.log("restoing", ID, event);
       this.$store.dispatch("restoreSet", {
         setID: ID,
         operation: getOperationFromEvent(event)
       });
-
-      /*
-           this.$store.commit("update", {
-            view: this.viewID,
-            selection: brushedIDs,
-            operation: getOperationFromEvent(d3.event.sourceEvent)
-          });*/
     }
   }
 };

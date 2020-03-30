@@ -29,7 +29,7 @@ function loadDataFromURL(url, request) {
       json_data = json_data.alternatives
       let data = getParallelDataFromAlternatives(url, json_data)
 
-      //data = data.slice(0,100)    
+      //data = data.slice(0,50)    
 
       Papa.parse("https://gist.githubusercontent.com/abuzreq/41784c98a70e36619d046877e0df8c02/raw/cb52f39c7f0f1c526d5c1bf0dea61993d368fe68/smart_hausdorff_ids.csv", {
         download: true,

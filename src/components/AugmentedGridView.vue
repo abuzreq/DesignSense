@@ -110,15 +110,18 @@
               </span>
             </v-tooltip>
 
-            <v-progress-circular v-show="isLoading"
-                indeterminate
-                :width="3"
-                color="primary"
-              ></v-progress-circular>
+            <v-progress-circular
+              v-show="isLoading"
+              indeterminate
+              :width="3"
+              :size="25"
+              color="primary"
+            ></v-progress-circular>
 
-
-            <v-img width ="100%" height ="400px" 
-              v-show="!inspecting3DView"
+            <v-img
+              width="100%"
+              height="400px"
+              v-if="!inspecting3DView"
               :src="inspectedItem.image"
               v-on:mouseover="hover(inspectedItem, true)"
               v-on:mouseleave="unhover(inspectedItem)"
@@ -126,13 +129,14 @@
             
             <v-card v-show="inspecting3DView" width ="100%" height ="400px"  id="inspector" name="inspector">           
             </v-card>
-             
-             
-              <!--
-                    <model-gltf v-show="inspecting3DView"  :lights="modelLights"  
-          :backgroundAlpha="0" @on-load="on3DJsonLoad(this)" :src="inspectedItem.gltf" />
-                 -->
-           
+            
+            <!--
+            <model-gltf
+              v-else
+              :backgroundAlpha="0"
+              :src="inspectedItem.gltf"
+              :on-load="isLoading = false"
+            />-->
           </v-card>
           <drag-select-container
             :selectableItems="getAllCards"
@@ -140,10 +144,7 @@
             @select="onMouseUp($event)"
           >
             <v-layout grid-list-sm column :style="{'max-height': `calc(${height}px - 500px)`}">
-              <v-flex
-                md6
-                style="overflow-y: auto; overflow-x: hidden"
-              >
+              <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
                 <v-row dense>
                   <v-col
                     v-for="(item) in items.items"
@@ -193,11 +194,11 @@
 
 <style scoped>
 .col > .v-card:not(.hovered) .v-image.outlined {
-  border: 2px solid rgb(33,119,180);
+  border: 2px solid rgb(33, 119, 180);
 }
 
 .col > .v-card.hovered .v-image.outlined {
-  border: 0px solid rgb(33,119,180);
+  border: 0px solid rgb(33, 119, 180);
 }
 
 .col > .v-card .v-image:not(.transparent) {
@@ -218,9 +219,8 @@
 }
 */
 .col > .v-card.hovered {
-  border: 4px solid rgb(33,119,180); /*#82b1ff;*/
+  border: 4px solid rgb(33, 119, 180); /*#82b1ff;*/
 }
-
 </style>
 
 <script>
@@ -304,7 +304,7 @@ export default {
     });
     this.updateContext();
     //Inspection setup
-    this.inspectedItem = this.rawChartData[0];  
+    this.inspectedItem = this.rawChartData[0];
   },
   updated() {
     this.cards.splice(0, this.cards.length);
@@ -325,8 +325,11 @@ export default {
     });
   },
   methods: {
-    on3DJsonLoad(d) {
-      console.log(d);
+    onProgressLoading3DModel(d) {
+      this.isLoading = true;
+    },
+    onDoneLoading3DModel(d) {
+      this.isLoading = false;
     },
     getAllCards() {
       let cards = Array.prototype.slice.call(
@@ -359,7 +362,6 @@ export default {
       this.$store.commit("hover", { hovered: null });
     },
     toggle(item) {
-
       this.inspectedItem = item;
       /*
       this.$store.commit("update", {
@@ -437,19 +439,17 @@ export default {
         }
       }
       return count;
-    }, 
-    load3D(item)
-    {
-      if(!this.va3cViewer)
-      {
-            this.va3cViewer = new SPECTACLES($("#inspector"))
+    },
+    load3DJSON(item) {
+      if (item.json) {
+        if (!this.va3cViewer) {
+          this.va3cViewer = new SPECTACLES($("#inspector"));
+        }
+        d3.json(item.json).then(jsonModel => {
+          this.isLoading = false;
+          this.va3cViewer.loadNewModel(jsonModel);
+        });
       }
-      this.isLoading = true
-      d3.json(item.json).then(jsonModel => 
-      {
-        this.isLoading = false;
-        this.va3cViewer.loadNewModel(jsonModel);
-      });
     }
   },
   watch: {
@@ -465,35 +465,32 @@ export default {
       }
       //deep: true
     },
-    hovered: function(newValue, oldValue) 
-    {
+    hovered: function(newValue, oldValue) {
       if (oldValue) {
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + oldValue._id)
           .classed("hovered", false);
       }
-      if (newValue) 
-      {
+      if (newValue) {
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + newValue._id)
           .classed("hovered", true);
 
-        if(!this.inspecting3DView) //Change inpsection only if showing 2D. Quickly changing 3D models would be too slow.
-            this.inspectedItem = newValue;
+        if (!this.inspecting3DView)
+          //Change inpsection only if showing 2D. Quickly changing 3D models would be too slow.
+          this.inspectedItem = newValue;
       }
     },
-    inspecting3DView: function(newValue)
-    {
-        if(this.inspectedItem && newValue == true)
-        {
-          this.load3D(this.inspectedItem)
-        }
+    inspecting3DView: function(newValue) {
+      if (this.inspectedItem && newValue == true) {
+        this.isLoading = true;
+        this.load3DJSON(this.inspectedItem);
+      }
     },
-    inspectedItem: function(newItem)
-    {
-      if(newItem && this.inspecting3DView)
-      {
-          this.load3D(newItem)
+    inspectedItem: function(newItem) {
+      if (newItem && this.inspecting3DView) {
+        this.isLoading = true;
+        this.load3DJSON(newItem);
       }
     }
   }

@@ -26,6 +26,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             altOn: false,
 
             setsIDs: [],
+            setsMetadataMap: {},
             setsMap: {},
             numericDimensions: getNumeric(dataTypesMap),
             allDimensions: Object.keys(dataTypesMap),
@@ -128,13 +129,30 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 //TODO put a limit on the depth of the stack
                 state.dataStack.push(payload.data);
             },
+
+            setSetMetadata(state, payload) 
+            {
+                let ID = payload.setID;
+                let metadata = state.setsMetadataMap[ID]
+
+                let comment = metadata.comment;
+                let name = metadata.name;
+                if ((payload.hasOwnProperty("comment"))) 
+                {
+                    comment = payload.comment;
+                }
+                if ((payload.hasOwnProperty("name"))) 
+                {
+                    name = payload.name;
+                }
+                state.setsMetadataMap[ID] = {name:name, comment:comment};
+            },
             addSet(state, payload) {
                 let ID = generateID();
                 state.setsIDs.push(ID)
                 state.setsMap[ID] = payload.members;
-                console.log(state.setsMap[ID])
 
-                //state.markingsMap[payload.markingID]
+                state.setsMetadataMap[ID] = {name: ID, comment:"Comment Here"};        
             },
             removeSet(state, payload) {
                 let ID = payload.setID;
@@ -143,8 +161,9 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                     if (state.setsIDs[i] === ID) {
                         state.setsIDs.splice(i, 1);
                     }
-                }
+                }             
                 delete state.setsMap[ID]
+                delete state.setsMetadataMap[ID]
             },
             setCtrlKey(state, payload)
             {
