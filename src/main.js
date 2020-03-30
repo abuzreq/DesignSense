@@ -7,7 +7,8 @@ import * as d3 from "d3";
 import vdr from "./plugins/vdr";
 import layouts from './layout.js'
 import Papa from 'papaparse'
-import generateID from "@/components/utils.js";
+import {generateID} from "@/components/utils.js";
+
 
 Vue.config.productionTip = false;
 

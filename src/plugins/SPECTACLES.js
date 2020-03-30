@@ -84,7 +84,9 @@ export default function SPECTACLES(divToBind, jsonFileData, callback) {
 
 
         //append the loading div and let it respond to the parent div resizing
-        //SPECT.viewerDiv.append("<div class='Spectacles_loading'><h1>Loading Spectacles .json file...</h1></div>");
+        //SPECT.viewerDiv.append("<div class='Spectacles_loading'><h3>Loading Spectacles .json file...</h3></div>")
+        
+
         //function to position the loading div
         var setLoading = function () {
 
@@ -99,6 +101,10 @@ export default function SPECTACLES(divToBind, jsonFileData, callback) {
             //set the position and size
             targetDiv.css('left', x.toString() + "px");
             targetDiv.css('top', y.toString() + "px");
+
+            targetDiv.css('margin-top',  "-30px");
+            targetDiv.css('margin-left',  "25px");
+
         };
         //call this the first time through
         setLoading();

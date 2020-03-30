@@ -109,31 +109,40 @@
                 <span v-else>Show 3D model instead</span>
               </span>
             </v-tooltip>
-            
+
+            <v-progress-circular v-show="isLoading"
+                indeterminate
+                :width="3"
+                color="primary"
+              ></v-progress-circular>
+
+
             <v-img width ="100%" height ="400px" 
-              v-if="!inspecting3DView"
+              v-show="!inspecting3DView"
               :src="inspectedItem.image"
               v-on:mouseover="hover(inspectedItem, true)"
               v-on:mouseleave="unhover(inspectedItem)"
             />
             
-            <v-card width ="100%" height ="400px"  id="inspector" name="inspector"></v-card>
-            <!--
-                    <model-gltf v-else :lights=modelLights  
+            <v-card v-show="inspecting3DView" width ="100%" height ="400px"  id="inspector" name="inspector">           
+            </v-card>
+             
+             
+              <!--
+                    <model-gltf v-show="inspecting3DView"  :lights="modelLights"  
           :backgroundAlpha="0" @on-load="on3DJsonLoad(this)" :src="inspectedItem.gltf" />
-                 
-            -->
+                 -->
+           
           </v-card>
           <drag-select-container
             :selectableItems="getAllCards"
             :scrollAccessor="(el) => el.firstChild.firstChild"
             @select="onMouseUp($event)"
           >
-            <v-layout grid-list-sm column :style="{'height': `${height}px`}">
+            <v-layout grid-list-sm column :style="{'max-height': `calc(${height}px - 500px)`}">
               <v-flex
                 md6
                 style="overflow-y: auto; overflow-x: hidden"
-                :style="{'min-height': `calc(${height}px - 100px)`}"
               >
                 <v-row dense>
                   <v-col
@@ -184,11 +193,11 @@
 
 <style scoped>
 .col > .v-card:not(.hovered) .v-image.outlined {
-  border: 2px solid red;
+  border: 2px solid rgb(33,119,180);
 }
 
 .col > .v-card.hovered .v-image.outlined {
-  border: 0px solid red;
+  border: 0px solid rgb(33,119,180);
 }
 
 .col > .v-card .v-image:not(.transparent) {
@@ -209,8 +218,9 @@
 }
 */
 .col > .v-card.hovered {
-  border: 4px solid #82b1ff;
+  border: 4px solid rgb(33,119,180); /*#82b1ff;*/
 }
+
 </style>
 
 <script>
@@ -231,6 +241,7 @@ export default {
   props: ["defaultEnableContext", "width", "height"],
   data: function() {
     return {
+      isLoading: false,
       va3cViewer: null,
       modelLights: [
         {
@@ -292,9 +303,8 @@ export default {
       vueComponent: this
     });
     this.updateContext();
-    this.inspectedItem = this.rawChartData[0];
-
-    //this.chartData = this.rawChartData;
+    //Inspection setup
+    this.inspectedItem = this.rawChartData[0];  
   },
   updated() {
     this.cards.splice(0, this.cards.length);
@@ -350,17 +360,7 @@ export default {
     },
     toggle(item) {
 
-        if (this.va3cViewer == null) {
-
-          this.va3cViewer = new SPECTACLES($("#inspector")); //, jsonModel, function(app) {//call the UI / functionality modules app.setBackgroundColor(0xffffff);}
-        }
-  
-      d3.json(item.json).then(jsonModel => 
-      {
-        this.va3cViewer.loadNewModel(jsonModel);
-      });
-    console.log(item);
-        this.inspectedItem = item;
+      this.inspectedItem = item;
       /*
       this.$store.commit("update", {
         view: this.viewID,
@@ -437,6 +437,19 @@ export default {
         }
       }
       return count;
+    }, 
+    load3D(item)
+    {
+      if(!this.va3cViewer)
+      {
+            this.va3cViewer = new SPECTACLES($("#inspector"))
+      }
+      this.isLoading = true
+      d3.json(item.json).then(jsonModel => 
+      {
+        this.isLoading = false;
+        this.va3cViewer.loadNewModel(jsonModel);
+      });
     }
   },
   watch: {
@@ -452,16 +465,35 @@ export default {
       }
       //deep: true
     },
-    hovered: function(newValue, oldValue) {
+    hovered: function(newValue, oldValue) 
+    {
       if (oldValue) {
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + oldValue._id)
           .classed("hovered", false);
       }
-      if (newValue) {
+      if (newValue) 
+      {
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + newValue._id)
           .classed("hovered", true);
+
+        if(!this.inspecting3DView) //Change inpsection only if showing 2D. Quickly changing 3D models would be too slow.
+            this.inspectedItem = newValue;
+      }
+    },
+    inspecting3DView: function(newValue)
+    {
+        if(this.inspectedItem && newValue == true)
+        {
+          this.load3D(this.inspectedItem)
+        }
+    },
+    inspectedItem: function(newItem)
+    {
+      if(newItem && this.inspecting3DView)
+      {
+          this.load3D(newItem)
       }
     }
   }

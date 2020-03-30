@@ -2,7 +2,7 @@ import Vue from "vue";
 import Vuex from "vuex";
 import views from "@/components/constants.js";
 import { operations } from "@/components/operations.js";
-import generateID from "@/components/utils.js";
+import {generateID} from "@/components/utils.js";
 import * as d3 from "d3";
 
 Vue.use(Vuex);

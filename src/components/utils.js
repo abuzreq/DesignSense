@@ -16,7 +16,7 @@
 //     var privateName = ID();
 //     var o = { 'public': 'foo' };
 //     o[privateName] = 'bar';
-var generateID = function () {
+function generateID () {
     // Math.random should be unique because of its seeding algorithm.
     // Convert it to base 36 (numbers + letters), and grab the first 9 characters
     // after the decimal.
@@ -24,7 +24,11 @@ var generateID = function () {
   };
 
 
+//https://stackoverflow.com/questions/11832914/round-to-at-most-2-decimal-places-only-if-necessary
+function round (number, places) {
+    return +(Math.round(number + "e+" + places)  + "e-" + places);
+  }
 
 
-  
-export default generateID;
+exports.generateID = generateID;
+exports.round = round;

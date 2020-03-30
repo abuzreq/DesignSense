@@ -25,6 +25,7 @@ import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapState } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
+import {round} from "@/components/utils.js";
 
 export default {
   mixins: [TemplateView],
@@ -34,13 +35,12 @@ export default {
     return {
       excludedDimensions: [],
       colorColumn: "",
-      dimensions: []
+      dimensions: [],
     };
   },
   mounted() {},
   created() {
     this.dimensions = this.formatDimensions(this.numericDimensions);
-    console.log("created", this.dimensions);
     this.colorColumn = "collection";
     var excluded = [
       "image",
@@ -74,7 +74,7 @@ export default {
     this.excludedDimensions = Object.keys(this.chartData[0]).filter(
       d => !this.numericDimensions.includes(d)
     );
-    this.excludedDimensions.push("selected")
+    this.excludedDimensions.push("selected");
   },
   methods: {
     formatDimensions(dimensions) {
@@ -103,7 +103,7 @@ export default {
           ticks: 10
         };
       });
-      console.log(result);
+      console.log("dimensions", result);
 
       return result;
     },
@@ -119,15 +119,15 @@ export default {
       this.chart.highlight(result);
     },
     hoverHandler: function() {
+      this.cleanTooltip();
       this.chart.unmark();
+
       let hovered = this.$store.getters.getHovered;
       if (hovered) {
         this.chart.mark([hovered]);
+        this.addTooltip([hovered]);
       }
-      else
-      {
 
-      }
       this.updateStyleGivenHovered(hovered);
     },
     updateStyleGivenHovered(hovered) {
@@ -152,7 +152,8 @@ export default {
           }
         });
     },
-    markLineOnHover(mousePosition, drawTooltip) {
+    markLineOnHover(mousePosition) 
+    {
       var hovered = [];
       var hoveredCenPts = [];
 
@@ -161,18 +162,83 @@ export default {
       if (hoveredData && hoveredData[0].length != 0) {
         hovered = hoveredData[0];
         hoveredCenPts = hoveredData[1];
-        console.log(hovered);
         this.$store.commit("hover", { hovered: hovered[0] });
-
-        /* TODO Ahmed
-        if (drawTooltip) {
-          // clean if anything is there
-          cleanTooltip();
-          // add tooltip
-          addTooltip(clicked, clickedCenPts);
-        }
-        */
+        this.hoveredCenPts = hoveredCenPts;
       }
+    },
+    cleanTooltip() {
+      // removes any object under #tooltip is
+      this.chart.svg.selectAll("#tooltip").remove();
+    },
+    addTooltip(clicked) {
+      // add tooltip to multiple clicked lines
+      var clickedDataSet = [];
+      var margins = this.chart.margin();
+      let dimensions = this.chart.dimensions();
+      let xscale = this.chart.xscale;
+
+      for (var i = 0; i < clicked.length; i++) {
+        let datum = clicked[i];
+        for (let dimName in dimensions) {
+          let dim = dimensions[dimName];
+          let yscale = dim.yscale;
+
+          let y = yscale(datum[dimName]);
+          let x = xscale(dimName);
+
+          var text = datum[dimName];
+          clickedDataSet.push([x, y, text]);
+        }
+      }
+      this.createTooltip(clickedDataSet);
+    },
+    //array of tuples where each is [x,y,text]  for the tooltip
+    createTooltip(specs) {
+      // add rectangles
+      var fontSize = 14;
+      var padding = 2;
+      var rectHeight = fontSize + 2 * padding; //based on font size
+      
+      this.chart.svg
+        .selectAll("rect[id='tooltip']")
+        .data(specs)
+        .enter()
+        .append("rect")
+        .attr("x", function(d) {
+          return d[0] - d[2].length * 5;
+        })
+        .attr("y", function(d) {
+          return d[1] - rectHeight + 2 * padding;
+        })
+        .attr("rx", "2")
+        .attr("ry", "2")
+        .attr("id", "tooltip")
+        .attr("fill", "grey")
+        .attr("opacity", 0.9)
+        .attr("width", function(d) {
+          return d[2].length * 10;
+        })
+        .attr("height", rectHeight);
+
+      // add text on top of rectangle
+      this.chart.svg
+        .selectAll("text[id='tooltip']")
+        .data(specs)
+        .enter()
+        .append("text")
+        .attr("x", function(d) {
+          return d[0];
+        })
+        .attr("y", function(d) {
+          return d[1];
+        })
+        .attr("id", "tooltip")
+        .attr("fill", "white")
+        .attr("text-anchor", "middle")
+        .attr("font-size", fontSize)
+        .text(function(d) {
+          return d[2]
+        });
     },
     getHoveredLines(mouseClick) {
       var hovered = [];
@@ -213,7 +279,6 @@ export default {
       var delta =
         Math.abs(Dy * x0 - Dx * y0 - x1 * y2 + x2 * y1) /
         Math.sqrt(Math.pow(Dx, 2) + Math.pow(Dy, 2));
-      //console.log(delta);
       if (delta <= tol) return true;
       return false;
     },
@@ -227,9 +292,7 @@ export default {
       var graphCentPts = [];
 
       data.forEach(d => {
-        var initCenPts = this.chart
-          .compute_real_centroids(d)
-         
+        var initCenPts = this.chart.compute_real_centroids(d);
 
         // move points based on margins
         var cenPts = initCenPts.map(function(d) {
@@ -281,7 +344,6 @@ export default {
         highlightedLineWidth: 3,
         lineWidth: 1
       })(
-        //
         "#" + this.viewID
       )
         .data(this.chartData)
@@ -303,13 +365,13 @@ export default {
           //d3.select("#"+this.viewID).selectAll('.selection').style("display", "none");
 
           if (chart.brushed().length == chart.data().length) {
-            /*
+            
                 console.log("Clearing ",this.viewID)
                     this.$store.commit("update", 
                 {view: this.viewID,
                   selection: [], 
                   "operation": operations.REPLACE 
-                  })*/
+                  })
           } else {
             //console.log("Brushing ",this.viewID, d3.event)
             this.chart.brushReset();
@@ -321,9 +383,24 @@ export default {
             });
           }
         })
-        /* .on("brushend", (brushed, args) => {
+        .on("brush", (brushed, args) => {
+          this.cleanTooltip()
 
-        })*/
+          if (args && d3.event.type === "brush") {
+            let sel = args.selection;
+            if (sel.raw.length > 0) {
+              let x = d3.event.sourceEvent.x;
+              let rawY = sel.raw;
+              let scaledY = sel.scaled;            
+              this.createTooltip([
+                [x, rawY[0], round(scaledY[0] , 4) + ''],
+                [x, rawY[1], round(scaledY[1] , 4) + '']
+              ]);
+            }
+            
+          }
+
+        })
         .on("highlight", e => {
           // console.log("highlighting")
         });
@@ -336,17 +413,15 @@ export default {
       var vueThis = this;
       d3.select("#" + this.viewID)
         .select("svg")
-        .on("mousemove", function() 
-        {
-          if (vueThis.$store.state.isCtrlKey)
-           {
+        .on("mousemove", function() {
+          if (vueThis.$store.state.isCtrlKey) {
             var mousePosition = d3.mouse(this);
             //console.log(mousePosition);
-            vueThis.markLineOnHover(mousePosition, true); //true will also add tooltip
+            vueThis.markLineOnHover(mousePosition); //true will also add tooltip
           }
         })
-        .on("mouseout", function() {
-          // cleanTooltip();
+        .on("mouseout", () => {
+          //this.cleanTooltip();
           // graph.unhighlight();
           //})
           //.on("click", function() {
@@ -378,6 +453,18 @@ export default {
 </script>
 
 <style scoped>
+/*
+.brushTootlip {
+  position: absolute;
+}
+*/
+#tooltip {
+  font-family: sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  color: black;
+}
+
 /deep/ .multiselect__tag {
   width: 50px;
   display: none;
@@ -391,9 +478,7 @@ export default {
   border: red;
 }
 
-.parcoords /deep/  .label {
+.parcoords /deep/ .label {
   transform: rotate(10deg) translate(0px, -10px);
 }
-
-
 </style>
