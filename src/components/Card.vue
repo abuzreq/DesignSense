@@ -76,7 +76,7 @@ export default {
       console.log(val)
       return val;
     }*/
-       ...mapState({currentEditingMode: state => state.editingMode})
+       ...mapGetters({currentEditingMode: 'getEditingMode'})
   },
   created() {
     console.log("editingMode", this.currentEditingMode)

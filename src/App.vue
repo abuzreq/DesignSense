@@ -7,26 +7,27 @@
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            @click="actions['help'].clickAction"
-          >
+          <v-btn v-on="on" icon @click="actions['help'].clickAction">
             <v-icon>{{actions['help'].icon}}</v-icon>
           </v-btn>
         </template>
         <span>{{actions['help'].tooltip()}}</span>
       </v-tooltip>
-      
+
       <v-divider vertical />
+
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="$store.dispatch('toggleEditingMode')">
-            <v-icon>mdi-table-edit</v-icon>
-            <!-- -->
+          <v-btn
+            v-on="on"
+            :color="actionType2Color(actions['toggleEditingMode'].type)"
+            icon
+            @click="actions['toggleEditingMode'].clickAction"
+          >
+            <v-icon>{{actions['toggleEditingMode'].icon}}</v-icon>
           </v-btn>
         </template>
-        <span>Toggle Editing Mode (to resize and move the panels)</span>
+        <span>{{actions['toggleEditingMode'].tooltip()}}</span>
       </v-tooltip>
 
       <v-divider vertical />
@@ -76,14 +77,9 @@
 
       <v-divider vertical />
 
-
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            @click="actions['createSet'].clickAction"
-          >
+          <v-btn v-on="on" icon @click="actions['createSet'].clickAction">
             <v-icon>{{actions['createSet'].icon}}</v-icon>
           </v-btn>
         </template>
@@ -92,41 +88,27 @@
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            @click="actions['resetAllMarkings'].clickAction"
-          >
+          <v-btn v-on="on" icon @click="actions['resetAllMarkings'].clickAction">
             <v-icon>{{actions['resetAllMarkings'].icon}}</v-icon>
           </v-btn>
         </template>
         <span>{{actions['resetAllMarkings'].tooltip()}}</span>
       </v-tooltip>
 
-
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            @click="actions['invertSelection'].clickAction"
-          >
+          <v-btn v-on="on" icon @click="actions['invertSelection'].clickAction">
             <v-icon>{{actions['invertSelection'].icon}}</v-icon>
           </v-btn>
         </template>
         <span>{{actions['invertSelection'].tooltip()}}</span>
       </v-tooltip>
 
-
       <v-divider vertical />
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            @click="actions['undoDataTransformation'].clickAction"
-          >
+          <v-btn v-on="on" icon @click="actions['undoDataTransformation'].clickAction">
             <v-icon>{{actions['undoDataTransformation'].icon}}</v-icon>
           </v-btn>
         </template>
@@ -135,11 +117,7 @@
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            @click="actions['zoomToSelection'].clickAction"
-          >
+          <v-btn v-on="on" icon @click="actions['zoomToSelection'].clickAction">
             <v-icon>{{actions['zoomToSelection'].icon}}</v-icon>
           </v-btn>
         </template>
@@ -148,11 +126,7 @@
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            @click="actions['excludeSelection'].clickAction"
-          >
+          <v-btn v-on="on" icon @click="actions['excludeSelection'].clickAction">
             <v-icon>{{actions['excludeSelection'].icon}}</v-icon>
           </v-btn>
         </template>
@@ -161,17 +135,12 @@
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            @click="actions['resetData'].clickAction"
-          >
+          <v-btn v-on="on" icon @click="actions['resetData'].clickAction">
             <v-icon>{{actions['resetData'].icon}}</v-icon>
           </v-btn>
         </template>
         <span>{{actions['resetData'].tooltip()}}</span>
       </v-tooltip>
-
     </v-app-bar>
 
     <v-content style="padding: 50px 0px 0px;">
@@ -334,19 +303,27 @@ export default {
           clickAction: () => this.$store.dispatch("toggleInspectionMode"),
           icon: "mdi-selection-ellipse-arrow-inside",
           tooltip: () =>
-            this.$store.state.isInspectionMode
+            this.isInspectionMode
               ? "Disable inspection on hovering"
               : "Enable inspection on hovering",
-          type: "misc"
+          type: "inspecting"
         },
         help: {
           clickAction: () => console.log("TODO"),
           icon: "mdi-help-circle-outline",
           tooltip: () => "Help.. to come.",
           type: "misc"
+        },
+        toggleEditingMode: {
+          clickAction: () => this.$store.dispatch("toggleEditingMode"),
+          icon: "mdi-table-edit",
+          tooltip: () =>
+            this.isEditingMode
+              ? "Disable Editing Mode."
+              : "Enable Editing Mode. (to resize and move the panels)",
+          type: "editing"
         }
       },
-
       contextMenuItems: [
         "toggleInspectionMode",
         "resetAllMarkings",
@@ -382,6 +359,7 @@ export default {
   computed: {
     ...mapState({
       layouts: state => state.layouts,
+      isEditingMode: state => state.isEditingMode,
       isInspectionMode: state => state.isInspectionMode
     })
   },
@@ -390,7 +368,9 @@ export default {
       return {
         data: "red",
         selection: "blue",
-        misc: this.isInspectionMode ? "green accent-4" : "grey"
+        misc: "black",
+        inspecting: this.isInspectionMode ? "green accent-4" : "grey",
+        editing: this.isEditingMode ? "green accent-4" : "grey"
       }[type];
     },
     showContextMenuHandler(e) {
