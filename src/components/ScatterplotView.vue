@@ -58,7 +58,7 @@ div >>> .extent {
 import * as d3 from "d3";
 //import ScatterPlot from "@/components/Scatterplot.js";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
-import { mapState } from "vuex";
+import { mapGetters } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import SingleDimensionSelect from "@/components/SingleDimensionSelect.vue";
 
@@ -74,6 +74,9 @@ export default {
       /*  xColumn: "overhang_area_fraction",
       yColumn: "objective_value",*/
     };
+  },
+  computed: {
+    ...mapGetters(['isHoveringEnabled']),
   },
   mounted() {},
   created() {
@@ -127,7 +130,7 @@ export default {
           });
         })
         .onHovered( hovered => {
-          if(this.$store.state.isCtrlKey)
+          if(this.isHoveringEnabled)
           {
               this.$store.commit("hover", { hovered: hovered});
           } 

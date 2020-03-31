@@ -291,8 +291,8 @@ export default {
       rawChartData: state => state.data,
       keys: state => state.numericDimensions.concat(["selected"]),
       hovered: state => state.hovered,
-      isCtrlKey: state => state.isCtrlKey
     }),
+    ...mapGetters(['isHoveringEnabled']),
     cardSelector() {
       return "card_" + this.viewID + "_";
     }
@@ -354,7 +354,7 @@ export default {
       });
     },
     hover(item, forced) {
-      if (forced || this.$store.state.isCtrlKey) {
+      if (forced || this.isHoveringEnabled) {
         this.$store.commit("hover", { hovered: item });
       }
     },

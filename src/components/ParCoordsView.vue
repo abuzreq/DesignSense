@@ -22,7 +22,7 @@ import "parcoord-es/dist/parcoords.css";
 import ParCoords from "parcoord-es";
 import * as d3 from "d3";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
-import { mapState } from "vuex";
+import { mapGetters } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
 import {round} from "@/components/utils.js";
@@ -37,6 +37,9 @@ export default {
       colorColumn: "",
       dimensions: [],
     };
+  },
+  computed: {
+    ...mapGetters(['isHoveringEnabled']),
   },
   mounted() {},
   created() {
@@ -414,7 +417,7 @@ export default {
       d3.select("#" + this.viewID)
         .select("svg")
         .on("mousemove", function() {
-          if (vueThis.$store.state.isCtrlKey) {
+          if (vueThis.isHoveringEnabled) {
             var mousePosition = d3.mouse(this);
             //console.log(mousePosition);
             vueThis.markLineOnHover(mousePosition); //true will also add tooltip

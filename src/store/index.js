@@ -10,7 +10,6 @@ Vue.use(Vuex);
 function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
     return new Vuex.Store({
         state: {
-            editingMode: false,
             colorScale: d3.scaleOrdinal(d3.schemeCategory10),
             layouts: new_layouts,
             defaultMarkingID: generateID(), //"_lqpkb07gn"
@@ -33,8 +32,12 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
 
             similarity_map: new_similarity_map,
 
+            isEditingMode: false,
+
             hovered: null,
+
             isCtrlKey: false,
+            isInspectionMode: false,
         },
         mutations:
         {
@@ -43,8 +46,13 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 state.similarity_map = payload.similarity_map;
             },  */
             toggleEditingMode(state, payload) {
-                state.editingMode = !state.editingMode;
+                state.isEditingMode = !state.isEditingMode;
             },
+            toggleInspectionMode(state, payload) {
+                state.isInspectionMode = !state.isInspectionMode;
+            },
+
+            
             setData(state, payload) {
                 state.data = payload.newData;
             },
@@ -171,6 +179,10 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             }
         },
         actions: {
+            toggleInspectionMode(context, payload)
+            {
+                context.commit('toggleInspectionMode');
+            },
             toggleEditingMode(context, payload)
             {
                 context.commit('toggleEditingMode');
@@ -259,13 +271,13 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                         selection: context.state.setsMap[payload.setID],
                         operation: payload.operation
                     });
-            }
+            },
 
 
         },
         modules: {},
         getters: {
-            getEditingMode: state => state.editingMode,
+            getEditingMode: state => state.isEditingMode,
             getMarking: state => view => { return findMarkingAffectingView(state.markingsMap, state.markingID2views, view) },
             data: state => { return state.data },
             dataMap: state => { return createDataMap(state.data); },
@@ -290,7 +302,8 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             },
             markingsDefaultGetter: state => { return state.markingsMap[state.defaultMarkingID] },
             markingsMapGetter: (state) => (markingID) => { return state.markingsMap[markingID] },
-            getHovered: (state) => {return state.hovered;}
+            getHovered: (state) => {return state.hovered;},
+            isHoveringEnabled: (state) => state.isCtrlKey || state.isInspectionMode
         }
 
     });

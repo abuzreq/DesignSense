@@ -6,7 +6,7 @@
       <template v-for="(item, index) in setsIDs">
         <v-card outlined :key="index">
           <v-list-item avatar>
-            <v-list-item-action>
+            <v-list-item-action style="margin-right:10px;">
               <v-tooltip left>
                 <template v-slot:activator="{ on }">
                   <v-btn v-on="on" icon ripple color="red" @click="remove(item)">
@@ -28,19 +28,21 @@
 
             <v-list-item-content>
               <v-list-item-title class="title">{{setsMetadataMap[item].name}}</v-list-item-title>
-               <v-textarea height = "7vh" style="margin-bottom:-15px" multiple solo full-width dense 
-               :value="setsMetadataMap[item].comment" label="add notes here" 
-               :append-outer-icon="setsMetadataMap[item].comment?'mdi-send':''"
-               @input="changeComment($event, item)"
-              
-               />
-
-
-         
+              <v-textarea
+                class="comment-text-area"
+                height="7vh"
+                style="margin-bottom:-15px;"
+                multiple
+                solo
+                full-width
+                outlined
+                dense
+                :value="setsMetadataMap[item].comment"
+                label="add notes here"
+                @input="changeComment($event, item)"
+              />
             </v-list-item-content>
           </v-list-item>
-
-          
         </v-card>
       </template>
     </v-list>
@@ -48,6 +50,11 @@
 </template>
 
 <style scoped>
+
+
+.comment-text-area {
+    font-size: 0.8em;
+  }
 .v-list-item {
   height: 100px;
 }
@@ -55,10 +62,8 @@
   height: 25px;
   width: 25px;
 }
-
 </style>
 <script>
-
 //Source: https://codepen.io/sharon-the-encoder/pen/NzOLGy
 import * as d3 from "d3";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
@@ -72,17 +77,15 @@ export default {
     };
   },
   computed: {
-    ...mapState({ setsIDs: state => state.setsIDs, setsMetadataMap: state => state.setsMetadataMap }),
-
+    ...mapState({
+      setsIDs: state => state.setsIDs,
+      setsMetadataMap: state => state.setsMetadataMap
+    })
   },
   mounted() {},
   watch: {
-    width: function(newValue, oldValue) {
-
-    },
-    height: function(newValue, oldValue) {
-
-    },
+    width: function(newValue, oldValue) {},
+    height: function(newValue, oldValue) {},
     chartData: {
       handler: function(newValue, oldValue) {}
     }
@@ -92,11 +95,9 @@ export default {
     remove(ID) {
       this.$store.commit("removeSet", { setID: ID });
     },
-    changeComment(comment, itemID)
-    {
-        this.$store.commit('setSetMetadata',{setID: itemID, comment:comment})
-        console.log(this.setsMetadataMap)
-
+    changeComment(comment, itemID) {
+      this.$store.commit("setSetMetadata", { setID: itemID, comment: comment });
+      console.log(this.setsMetadataMap);
     },
     restoreSet(ID, event) {
       this.$store.dispatch("restoreSet", {
