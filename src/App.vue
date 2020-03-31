@@ -31,6 +31,10 @@
       </v-tooltip>
 
       <v-divider vertical />
+        <div style="font-size: 0.8em; width: 180px;">
+             &nbsp;Selection Operation: &nbsp;{{selectionOperation()}}&nbsp;
+        </div>
+      <v-divider vertical />
       <!--
      
      <v-spacer></v-spacer>
@@ -217,6 +221,8 @@ import * as d3 from "d3";
 
 import { RadialMenu, RadialMenuItem } from "vue-radial-menu";
 
+import {getOperation } from "@/components/operations.js";
+
 export default {
   name: "App",
   components: {
@@ -335,10 +341,13 @@ export default {
       ],
 
       showContextMenu: false,
-      rightClickPos: { x: 0, y: 0 }
+      rightClickPos: { x: 0, y: 0 },
+      selectionOperation: ()=> getOperation({altKey: this.$store.state.isAltKey, shiftKey: this.$store.state.isShiftKey, ctrlKey: this.$store.state.isCtrlKey})
     };
   },
-  computed: {},
+  computed: {
+   
+  },
   destroyed() {},
   created() {
     //To close the context menu when a click happens anywhere

@@ -20,10 +20,8 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             markingID2views: new Map(),
             markingsMap: {}, // markingID -> marking object. Marking object is {altID -> highlightState}
             viewsMap: {},
-            ctrlOn: false,
-            shiftOn: false,
-            altOn: false,
 
+       
             setsIDs: [],
             setsMetadataMap: {},
             setsMap: {},
@@ -37,6 +35,8 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             hovered: null,
 
             isCtrlKey: false,
+            isShiftKey: false,
+            isAltKey: false,
             isInspectionMode: false,
         },
         mutations:
@@ -173,10 +173,18 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 delete state.setsMap[ID]
                 delete state.setsMetadataMap[ID]
             },
-            setCtrlKey(state, payload)
+            updateCtrlKey(state, payload)
             {
                 state.isCtrlKey = payload.value;
-            }
+            },
+            updateShiftKey(state, payload)
+            {
+                state.isShiftKey = payload.value;
+            },
+            updateAltKey(state, payload)
+            {
+                state.isAltKey = payload.value;
+            },
         },
         actions: {
             toggleInspectionMode(context, payload)
@@ -189,7 +197,15 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             },
             updateCtrlKey(context, payload)
             {
-                context.commit('setCtrlKey', payload);
+                context.commit('updateCtrlKey', payload);
+            },
+            updateShiftKey(context, payload)
+            {
+                context.commit('updateShiftKey', payload);
+            },
+            updateAltKey(context, payload)
+            {
+                context.commit('updateAltKey', payload);
             },
             createDefaultView(context, payload) // {commit}, payload
             {

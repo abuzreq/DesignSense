@@ -201,7 +201,14 @@ export default {
       var fontSize = 14;
       var padding = 2;
       var rectHeight = fontSize + 2 * padding; //based on font size
-      
+      specs.forEach(d =>{
+          if(isNaN(d[2]))
+          {
+            console.log(d)
+          }
+
+      } )
+
       this.chart.svg
         .selectAll("rect[id='tooltip']")
         .data(specs)

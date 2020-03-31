@@ -128,8 +128,9 @@ var app = new Vue({
 });
 
 document.addEventListener('keydown', function (e) {
- 
-  if (e.key === 'Control') 
+  console.log(e)
+
+  if (e.ctrlKey) 
   {
     if (!app.$store.state.isCtrlKey) 
     {
@@ -142,24 +143,39 @@ document.addEventListener('keydown', function (e) {
         app.$store.dispatch('createDetailsView',{master_view: views[0], details_view: views[1]})
       */
     }
+  } 
+  if (e.shiftKey) 
+  {
+    if (!app.$store.state.isShiftKey) 
+    {
+      app.$store.dispatch('updateShiftKey', { value: true })
+    }
   }
+  if (e.altKey) 
+  {
+    if (!app.$store.state.isAltKey) 
+    {
+      app.$store.dispatch('updateAltKey', { value: true })
+    }
+  }
+
 })
 document.addEventListener('keyup', function (e) {
   if (e.key === 'Control') {
     app.$store.dispatch('updateCtrlKey', { value: false })
     app.$store.commit("hover", { hovered: null });
   }
+  if (e.key === 'Shift') {
+    app.$store.dispatch('updateShiftKey', { value: false })
+  }
+  if (e.key === 'Alt') {
+    app.$store.dispatch('updateAltKey', { value: false })
+  }
 
   if (e.keyCode === 192) {
     app.$store.commit('toggleEditingMode');
   }
 })
-
-
-let globalURL = "http://sr-02645.iat.sfu.ca:5052"
-globalURL = "http://142.58.183.69:5051"
-//globalURL = "http://142.58.183.69:5050"
-//loadDataFromURL(globalURL, "/alternatives")
 
 
 function loadData(data) {

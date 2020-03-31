@@ -1,26 +1,25 @@
 const operations = {
-    REPLACE: "REPLACE",
-    ADD: "ADD",
-    TOGGLE: "TOGGLE",
-    INTERSECTION: "INTERSECTION",
+    REPLACE: "Replace",
+    ADD: "Add",
+    TOGGLE: "Toggle",
+    INTERSECTION: "Intersect",
 };
-
-function getOperationFromEvent(event)
+function getOperation(args)
 {
     let operation = operations.REPLACE;
-    if(event.altKey && event.shiftKey)
+    if(args.altKey && args.shiftKey)
     {
         operation = operations.INTERSECTION;
     }
-    else if(event.altKey)
+    else if(args.altKey)
     {
         operation = operations.TOGGLE;
     }
-    else if(event.shiftKey)
+    else if(args.shiftKey)
     {
         operation = operations.ADD;
     }
-    else if(event.ctrlKey)
+    else if(args.ctrlKey)
     {
         //console.log("control")
         //operation = operations.ADD;
@@ -32,6 +31,12 @@ function getOperationFromEvent(event)
 
     return operation;
 }
+function getOperationFromEvent(event)
+{
+    return getOperation({altKey:event.altKey, shiftKey:event.shiftKey, ctrlKey:event.ctrlKey})
+}
 exports.operations = operations;
 exports.getOperationFromEvent = getOperationFromEvent;
+exports.getOperation = getOperation;
+
 //export default {operations, getOperationFromEvent};

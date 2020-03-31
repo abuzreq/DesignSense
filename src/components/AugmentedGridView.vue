@@ -73,9 +73,7 @@
             </v-btn-toggle>
             -->
           </v-toolbar>
-        </template>
 
-        <template v-slot:default="items">
           <v-card v-if="inspectedItem" cols="12" style="width:100%">
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
@@ -127,7 +125,7 @@
               v-on:mouseleave="unhover(inspectedItem)"
             />
             
-            <v-card v-show="inspecting3DView" width ="100%" height ="400px"  id="inspector" name="inspector">           
+            <v-card v-else width ="100%" height ="400px"  id="inspector" name="inspector">           
             </v-card>
             
             <!--
@@ -138,12 +136,15 @@
               :on-load="isLoading = false"
             />-->
           </v-card>
+        </template>
+
+          <template v-slot:default="items">
           <drag-select-container
             :selectableItems="getAllCards"
             :scrollAccessor="(el) => el.firstChild.firstChild"
             @select="onMouseUp($event)"
           >
-            <v-layout grid-list-sm column :style="{'max-height': `calc(${height}px - 500px)`}">
+            <v-layout grid-list-sm column :style="{'max-height': `calc(${height}px - ${inspectedItem?400:0}px -  100px)`}">
               <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
                 <v-row dense>
                   <v-col
@@ -187,6 +188,7 @@
             </v-layout>
           </drag-select-container>
         </template>
+        
       </v-data-iterator>
     </v-container>
   </v-container>
@@ -304,7 +306,7 @@ export default {
     });
     this.updateContext();
     //Inspection setup
-    this.inspectedItem = this.rawChartData[0];
+    this.inspectedItem = this.chartData[0];
   },
   updated() {
     this.cards.splice(0, this.cards.length);
@@ -441,17 +443,25 @@ export default {
       return count;
     },
     load3DJSON(item) {
+      console.log('loading')
       if (item.json) {
-        if (!this.va3cViewer) {
-          this.va3cViewer = new SPECTACLES($("#inspector"));
-        }
-        d3.json(item.json).then(jsonModel => {
+        d3.json(item.json).then(jsonModel => 
+        {
           this.isLoading = false;
+                  if (!this.va3cViewer) {
+           console.log('setting up')
+            this.va3cViewer = new SPECTACLES($("#inspector"));
+        }
           this.va3cViewer.loadNewModel(jsonModel);
         });
       }
     }
   },
+  beforeDestroy()
+  {
+    console.log("before destroy")
+  },
+
   watch: {
     enableContext: {
       handler: function(enableContextNewValue, oldValue) {
@@ -485,6 +495,10 @@ export default {
       if (this.inspectedItem && newValue == true) {
         this.isLoading = true;
         this.load3DJSON(this.inspectedItem);
+      }
+      else
+      {
+        this.va3cViewer = null;
       }
     },
     inspectedItem: function(newItem) {
