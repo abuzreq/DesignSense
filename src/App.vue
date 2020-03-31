@@ -4,6 +4,21 @@
       <v-toolbar-title>DesignSense</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-divider vertical />
+
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            v-on="on"
+            icon
+            @click="actions['help'].clickAction"
+          >
+            <v-icon>{{actions['help'].icon}}</v-icon>
+          </v-btn>
+        </template>
+        <span>{{actions['help'].tooltip()}}</span>
+      </v-tooltip>
+      
+      <v-divider vertical />
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="$store.dispatch('toggleEditingMode')">
@@ -54,78 +69,109 @@
             @click="actions['toggleInspectionMode'].clickAction"
           >
             <v-icon>{{actions['toggleInspectionMode'].icon}}</v-icon>
-            <!-- -->
           </v-btn>
         </template>
         <span>{{actions['toggleInspectionMode'].tooltip()}}</span>
       </v-tooltip>
 
       <v-divider vertical />
+
+
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="$store.dispatch('createSet')">
-            <v-icon>mdi-contain</v-icon>
-            <!-- -->
+          <v-btn
+            v-on="on"
+            icon
+            @click="actions['createSet'].clickAction"
+          >
+            <v-icon>{{actions['createSet'].icon}}</v-icon>
           </v-btn>
         </template>
-        <span>Create Set</span>
+        <span>{{actions['createSet'].tooltip()}}</span>
       </v-tooltip>
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="$store.dispatch('resetAllMarkings')">
-            <v-icon>mdi-select-off</v-icon>
+          <v-btn
+            v-on="on"
+            icon
+            @click="actions['resetAllMarkings'].clickAction"
+          >
+            <v-icon>{{actions['resetAllMarkings'].icon}}</v-icon>
           </v-btn>
         </template>
-        <span>Reset Selection</span>
+        <span>{{actions['resetAllMarkings'].tooltip()}}</span>
       </v-tooltip>
+
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="$store.dispatch('invertSelection')">
-            <v-icon>mdi-select-compare</v-icon>
+          <v-btn
+            v-on="on"
+            icon
+            @click="actions['invertSelection'].clickAction"
+          >
+            <v-icon>{{actions['invertSelection'].icon}}</v-icon>
           </v-btn>
         </template>
-        <span>Invert Selection</span>
+        <span>{{actions['invertSelection'].tooltip()}}</span>
       </v-tooltip>
+
 
       <v-divider vertical />
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="$store.dispatch('undoDataTransformation')">
-            <v-icon>mdi-undo</v-icon>
+          <v-btn
+            v-on="on"
+            icon
+            @click="actions['undoDataTransformation'].clickAction"
+          >
+            <v-icon>{{actions['undoDataTransformation'].icon}}</v-icon>
           </v-btn>
         </template>
-        <span>Undo</span>
+        <span>{{actions['undoDataTransformation'].tooltip()}}</span>
       </v-tooltip>
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="$store.dispatch('zoomToSelection')">
-            <v-icon>mdi-selection-search</v-icon>
+          <v-btn
+            v-on="on"
+            icon
+            @click="actions['zoomToSelection'].clickAction"
+          >
+            <v-icon>{{actions['zoomToSelection'].icon}}</v-icon>
           </v-btn>
         </template>
-        <span>Zoom on the Selected</span>
+        <span>{{actions['zoomToSelection'].tooltip()}}</span>
       </v-tooltip>
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="$store.dispatch('excludeSelection')">
-            <v-icon>mdi-filter-remove-outline</v-icon>
+          <v-btn
+            v-on="on"
+            icon
+            @click="actions['excludeSelection'].clickAction"
+          >
+            <v-icon>{{actions['excludeSelection'].icon}}</v-icon>
           </v-btn>
         </template>
-        <span>Exclude the Selected</span>
+        <span>{{actions['excludeSelection'].tooltip()}}</span>
       </v-tooltip>
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="$store.dispatch('resetData')">
-            <v-icon>mdi-cached</v-icon>
+          <v-btn
+            v-on="on"
+            icon
+            @click="actions['resetData'].clickAction"
+          >
+            <v-icon>{{actions['resetData'].icon}}</v-icon>
           </v-btn>
         </template>
-        <span>Reset Data</span>
+        <span>{{actions['resetData'].tooltip()}}</span>
       </v-tooltip>
+
     </v-app-bar>
 
     <v-content style="padding: 50px 0px 0px;">
@@ -292,6 +338,12 @@ export default {
               ? "Disable inspection on hovering"
               : "Enable inspection on hovering",
           type: "misc"
+        },
+        help: {
+          clickAction: () => console.log("TODO"),
+          icon: "mdi-help-circle-outline",
+          tooltip: () => "Help.. to come.",
+          type: "misc"
         }
       },
 
@@ -341,12 +393,11 @@ export default {
         misc: this.isInspectionMode ? "green accent-4" : "grey"
       }[type];
     },
-    showContextMenuHandler(e)
-     {
+    showContextMenuHandler(e) {
       e.preventDefault();
       this.rightClickPos = { x: e.clientX, y: e.pageY };
       this.showContextMenu = true;
-      this.$refs.contextMenu.isOpen  = true;
+      this.$refs.contextMenu.isOpen = true;
     },
     handleContextMenuClick(item) {
       console.log(item);
