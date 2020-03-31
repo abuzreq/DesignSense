@@ -2,13 +2,21 @@
 
 <template>
   <v-container>
-    <!--
-    <MultiDimensionSelect
-      :initialValue="this.numericDimensions"
-      v-on:update="onDimensionChange($event)"
-    />
-    -->
-    <div :id="viewID" ref="parcoords" class="parcoords" />
+      <v-btn x-small icon v-on="on" @click="() => isCustomizingDimensions = !isCustomizingDimensions">
+                  <v-icon>mdi-wrench-outline</v-icon>
+        </v-btn>
+    <v-row>
+      <v-col v-if="isCustomizingDimensions" cols="2" :style="{'height': `${height}px`}">
+        <MultiDimensionSelect
+          :initialValue="this.numericDimensions"
+          :width="width"
+          v-on:update="onDimensionChange($event)"
+        />
+      </v-col>
+      <v-col :cols="isCustomizingDimensions?10:12">
+        <div :id="viewID" ref="parcoords" class="parcoords" />
+      </v-col>
+    </v-row>
   </v-container>
 </template>
  <!--
@@ -25,7 +33,7 @@ import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapGetters } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
-import {round} from "@/components/utils.js";
+import { round } from "@/components/utils.js";
 
 export default {
   mixins: [TemplateView],
@@ -36,10 +44,11 @@ export default {
       excludedDimensions: [],
       colorColumn: "",
       dimensions: [],
+      isCustomizingDimensions: false
     };
   },
   computed: {
-    ...mapGetters(['isHoveringEnabled']),
+    ...mapGetters(["isHoveringEnabled"])
   },
   mounted() {},
   created() {
@@ -79,7 +88,76 @@ export default {
     );
     this.excludedDimensions.push("selected");
   },
+  watch: {
+    isCustomizingDimensions: {
+      handler: function(newValue) {
+        this.refresh();
+      }
+      //deep: true
+    }
+  },
   methods: {
+    drawLegend(chart) {
+      // add text
+      //d3.select("#legend-heading").text("LEGEND");
+
+      // get width and height for legend area
+      var legendWidth = (2.0 * this.width) / 12.0; //d3.select("#legend").style("width").replace("px", "");
+      var legendHeight = this.height; //d3.select("#sidebar-wrapper").style("height").replace("px", "") / 3;
+
+      // legend boxes are diminsions of the graph
+      //console.log(Object.keys(graph.dimensions()));
+
+      //console.log(chart, chart.dimensions);
+      //let dimensions = Object.keys()
+      let keys = d3.keys(chart.dimensions());
+      let dimensions = keys.map(function(d) {
+        return {
+          name: d,
+          enabled: true
+        };
+      });
+      console.log(dimensions);
+      // find size of the square based on the height
+      var keyCounts = keys.length;
+      //var legendSquareSize = 16;
+      var legendSquareSize = Math.max(legendHeight / (keyCounts + 4), 12);
+
+      var legend = d3.select("#legend").style("height", legendHeight + "px");
+
+      // create one group for each rect and text
+      var legend = d3
+        .select("#legend")
+        .append("svg")
+        .attr("width", legendWidth)
+        .attr("height", legendSquareSize * (keyCounts + 10))
+        .selectAll("g")
+        .data(dimensions)
+        .enter()
+        .append("g")
+        .attr("transform", function(d, i) {
+          return "translate(10," + (legendSquareSize + 3) * i + ")";
+        });
+
+      legend
+        .append("rect")
+        .attr("width", legendSquareSize)
+        .attr("height", legendSquareSize)
+        .attr("class", "legend")
+        .style("fill", "grey")
+        .style("stroke", "black")
+        .style("stroke-width", 1)
+        .style("cursor", "pointer");
+
+      legend
+        .append("text")
+        .attr("x", legendSquareSize + 6)
+        .attr("y", legendSquareSize / 2)
+        .attr("dy", ".35em")
+        .text(function(d) {
+          return d.name;
+        });
+    },
     formatDimensions(dimensions) {
       var result = {};
       dimensions.forEach(dim => {
@@ -155,8 +233,7 @@ export default {
           }
         });
     },
-    markLineOnHover(mousePosition) 
-    {
+    markLineOnHover(mousePosition) {
       var hovered = [];
       var hoveredCenPts = [];
 
@@ -193,7 +270,7 @@ export default {
           clickedDataSet.push([x, y, text]);
         }
       }
-      this.createTooltip(clickedDataSet);
+      // this.createTooltip(clickedDataSet);
     },
     //array of tuples where each is [x,y,text]  for the tooltip
     createTooltip(specs) {
@@ -201,13 +278,11 @@ export default {
       var fontSize = 14;
       var padding = 2;
       var rectHeight = fontSize + 2 * padding; //based on font size
-      specs.forEach(d =>{
-          if(isNaN(d[2]))
-          {
-            console.log(d)
-          }
-
-      } )
+      specs.forEach(d => {
+        if (isNaN(d[2])) {
+          console.log(d);
+        }
+      });
 
       this.chart.svg
         .selectAll("rect[id='tooltip']")
@@ -247,7 +322,7 @@ export default {
         .attr("text-anchor", "middle")
         .attr("font-size", fontSize)
         .text(function(d) {
-          return d[2]
+          return d[2];
         });
     },
     getHoveredLines(mouseClick) {
@@ -353,9 +428,7 @@ export default {
         markedLineWidth: 5,
         highlightedLineWidth: 3,
         lineWidth: 1
-      })(
-        "#" + this.viewID
-      )
+      })("#" + this.viewID)
         .data(this.chartData)
         .width(this.width)
         .height(this.height)
@@ -375,13 +448,12 @@ export default {
           //d3.select("#"+this.viewID).selectAll('.selection').style("display", "none");
 
           if (chart.brushed().length == chart.data().length) {
-            
-                console.log("Clearing ",this.viewID)
-                    this.$store.commit("update", 
-                {view: this.viewID,
-                  selection: [], 
-                  "operation": operations.REPLACE 
-                  })
+            console.log("Clearing ", this.viewID);
+            this.$store.commit("update", {
+              view: this.viewID,
+              selection: [],
+              operation: operations.REPLACE
+            });
           } else {
             //console.log("Brushing ",this.viewID, d3.event)
             this.chart.brushReset();
@@ -394,22 +466,20 @@ export default {
           }
         })
         .on("brush", (brushed, args) => {
-          this.cleanTooltip()
+          this.cleanTooltip();
 
           if (args && d3.event.type === "brush") {
             let sel = args.selection;
             if (sel.raw.length > 0) {
               let x = d3.event.sourceEvent.x;
               let rawY = sel.raw;
-              let scaledY = sel.scaled;            
+              let scaledY = sel.scaled;
               this.createTooltip([
-                [x, rawY[0], round(scaledY[0] , 4) + ''],
-                [x, rawY[1], round(scaledY[1] , 4) + '']
+                [x, rawY[0], round(scaledY[0], 4) + ""],
+                [x, rawY[1], round(scaledY[1], 4) + ""]
               ]);
             }
-            
           }
-
         })
         .on("highlight", e => {
           // console.log("highlighting")
@@ -454,7 +524,15 @@ export default {
             chart.scale(dim, [-largest,largest])
       });
       */
-      //chart.dimensions(this.prepareDimensions(this.chartData, this.numericDimensions, this.chart))
+
+      chart.dimensions(
+        this.prepareDimensions(
+          this.chartData,
+          this.numericDimensions,
+          this.chart
+        )
+      );
+      this.drawLegend(chart);
 
       return chart;
     }

@@ -2,7 +2,10 @@
 <template>
   <div>
     <multiselect
-      style="height:30px;"
+      
+     
+
+      :style="{'height':'30px;','width': `${(1/6.0)*width}px`}"
       collapse
       @input="onChange"
       dense
@@ -13,6 +16,7 @@
       :clear-on-select="false"
       :preserve-search="true"
       :showLabels="false"
+      searchable
       
    
     ></multiselect>
@@ -29,7 +33,7 @@ import { mapState, mapGetters } from "vuex";
 export default {
   // OR register locally
   components: { Multiselect },
-  props: ["initialValue"],
+  props: ["initialValue", "width"],
   data() {
     return {
       value: this.initialValue
