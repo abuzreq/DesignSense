@@ -23,6 +23,7 @@
       <v-col v-if="isCustomizingDimensions" cols="2">
         <MultiDimensionSelect
           :initialValue="this.numericDimensions"
+          :keys="this.allKeys"
           :width="(1/6.0) * width"
           v-on:update="onDimensionChange($event)"
         />
@@ -58,7 +59,9 @@ export default {
       excludedDimensions: [],
       colorColumn: "",
       dimensions: [],
-      isCustomizingDimensions: false
+      isCustomizingDimensions: false,
+      allKeys: [],
+      keysBlackList: [],
     };
   },
   computed: {
@@ -66,7 +69,6 @@ export default {
   },
   mounted() {},
   created() {
-    this.dimensions = this.formatDimensions(this.numericDimensions);
     this.colorColumn = "collection";
     var excluded = [
       "image",
@@ -97,10 +99,17 @@ export default {
       this.excludedDimensions.push(e);
     }
     */
+    this.keysBlackList = ['gltf','image','ID','id','_id','geometry','json','img','threeD','collection']
+    /*
     this.excludedDimensions = Object.keys(this.chartData[0]).filter(
       d => !this.numericDimensions.includes(d)
     );
+    */
+   
+    this.allKeys = Object.keys(this.chartData[0])
+
     this.excludedDimensions.push("selected");
+    this.excludedDimensions.push(...this.keysBlackList)
   },
   watch: {
     isCustomizingDimensions: {
@@ -142,10 +151,15 @@ export default {
 
       return result;
     },
-    onDimensionChange(newDimensions) {
+    onDimensionChange(newDimensions) 
+    {
       this.excludedDimensions = Object.keys(this.chartData[0]).filter(
         d => !newDimensions.includes(d)
       );
+      /*
+      this.excludedDimensions.push("selected");
+      this.excludedDimensions.push(...this.keysBlackList)
+      */
       this.refresh();
     },
     markingChangeHandler: function() {

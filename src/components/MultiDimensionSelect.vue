@@ -33,16 +33,15 @@ import { mapState, mapGetters } from "vuex";
 export default {
   // OR register locally
   components: { Multiselect },
-  props: ["initialValue", "width"],
+  props: ["initialValue","keys", "width"],
   data() {
     return {
-      value: this.initialValue
+      value: this.initialValue,
+     // keys: this.initialValue,
     };
   },
   computed: {
-    ...mapState({
-      keys: state => state.numericDimensions.concat(["selected"])
-    })
+
   },
   methods: {
     onChange: function(value, id) {
