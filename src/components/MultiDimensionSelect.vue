@@ -2,14 +2,11 @@
 <template>
   <div>
     <multiselect
-      
-     
-
       :style="{'height':'30px;','width': `${width}px`}"
       collapse
       @input="onChange"
       dense
-      v-model="value"
+      v-model="initialValue"
       :options="keys"
       :multiple="true"
       :close-on-select="false"
@@ -17,7 +14,7 @@
       :preserve-search="true"
       :showLabels="false"
       searchable
-      
+      :openDirection="initialOpenDirection?initialOpenDirection:'down'"
    
     ></multiselect>
   </div>
@@ -33,15 +30,17 @@ import { mapState, mapGetters } from "vuex";
 export default {
   // OR register locally
   components: { Multiselect },
-  props: ["initialValue","keys", "width"],
+  props: ["initialValue","keys", "width", "initialOpenDirection"],
   data() {
     return {
-      value: this.initialValue,
+     
+
      // keys: this.initialValue,
     };
   },
-  computed: {
-
+  mounted()
+  {
+    console.log("dims", this.value, this.initialValue)
   },
   methods: {
     onChange: function(value, id) {

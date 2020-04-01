@@ -198,6 +198,12 @@
   </v-app>
 </template>
 
+
+<style>
+  .v-toolbar {
+    margin-top: -5px;
+  }
+</style>
 <script>
 import ParCoordsView from "@/components/ParCoordsView.vue";
 import GridView from "@/components/GridView.vue";

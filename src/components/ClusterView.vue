@@ -1,6 +1,7 @@
 <template>
-  <v-container :id="viewID" justify-start align-start>
+  <v-container :id="viewID" justify-start align-start  :style="{'height': `${height}px`}">
     <v-data-iterator
+      style="height:100%;"
       :items="clusterReps"
       hide-default-footer
       :items-per-page="maxPerPage"
@@ -8,15 +9,13 @@
       :sort-desc="isSortDesc"
     >
       <template v-slot:header>
-        <v-toolbar dense fixed dark color="blue darken-3" class="mb-1">
-          
-          <!--<MultiDimensionSelect
+        <!--<MultiDimensionSelect
             :initialValue="numericDimensions"
             v-on:update="onDimensionChange($event)"
           />
           <v-spacer></v-spacer>
-          -->
-          <!--
+        -->
+        <!--
           <v-select
             dense
             v-model="sortByVar"
@@ -49,28 +48,30 @@
           </v-tooltip>
 
           <v-spacer></v-spacer>
-            -->
-            <v-slider           
-              min="4"
-              max="16"
-              step="4"
-              :tick-labels="numClustersLabels"
-              ticks="always"
-              tick-size="4"
-              v-model="numClusters"
+        -->
+        <v-toolbar dense fixed dark color="blue darken-3" class="mb-1">
+          <v-slider
+            min="4"
+            max="16"
+            step="4"
+            :tick-labels="numClustersLabels"
+            ticks="always"
+            tick-size="4"
+            v-model="numClusters"
           ></v-slider>
-          <v-slider           
-              min="0"
-              max="2"
-              step="1"
-              :tick-labels="labels"
-              ticks="always"
-              tick-size="4"
-              v-model="colSpan"
-            ></v-slider>
+          <v-slider
+            min="0"
+            max="2"
+            step="1"
+            :tick-labels="labels"
+            ticks="always"
+            tick-size="4"
+            v-model="colSpan"
+          ></v-slider>
+        </v-toolbar>
 
-         
-          <!--
+   
+        <!--
           <v-btn-toggle dense v-model="isSortDesc" mandatory>
             <v-btn medium depressed color="blue" :value="false">
               <v-icon>mdi-arrow-up</v-icon>
@@ -79,10 +80,9 @@
               <v-icon>mdi-arrow-down</v-icon>
             </v-btn>
           </v-btn-toggle>
-          -->
-        </v-toolbar>
+        -->
       </template>
-      <template v-slot:default="items">
+      <template v-slot:default="items"   >
         <v-layout grid-list-sm column style="height: 75vh">
           <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
             <v-row dense>
@@ -114,13 +114,23 @@
         </v-layout>
       </template>
     </v-data-iterator>
+         <v-toolbar dense fixed dark color="blue darken-3" class="mb-1" style="margin-top:-35px">
+          <MultiDimensionSelect
+            :initialValue="dimensions"
+            :keys="numericDimensions"
+            :width="(3/4)*width"
+            v-on:update="onDimensionChange($event)"
+            initialOpenDirection="above" 
+          />
+          <v-btn x-small icon @click="() => dimensions = []">
+              <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
   </v-container>
 </template>
 
 <style scoped>
-
-.col > .v-card.clusterRep
-{
+.col > .v-card.clusterRep {
   filter: sepia() saturate(4) hue-rotate(295deg);
 }
 .col > .v-card.outlined {
@@ -142,12 +152,10 @@
   width: 200px;
 }
 
-
-/deep/ .v-slider--horizontal
-{
+/deep/ .v-slider--horizontal {
   min-width: 5vw;
 }
-</style>
+
 
 
 </style>
@@ -165,7 +173,8 @@ import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
 export default {
   name: "AugmentedGridCards",
   components: { ModelGltf, MultiDimensionSelect },
-  props: ["defaultEnableContext"],
+  props: ["defaultEnableContext", "width", "height"],
+
   data: function() {
     return {
       chartData: [],
@@ -177,7 +186,7 @@ export default {
       colSpan: 1,
       possibleColSpans: [6, 8, 12],
       labels: ["S", "M", "XL"],
-      numClustersLabels: ["4", "8","12", "16"],
+      numClustersLabels: ["4", "8", "12", "16"],
       maxPerPage: 10000,
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
       sortByVar: "height",
@@ -202,12 +211,12 @@ export default {
     },
     ...mapState({
       rawChartData: state => state.data,
-      numericDimensions: state => state.numericDimensions,
+      numericDimensions: state => state.numericDimensions
     }),
     cardSelector() {
       return "card_" + this.viewID + "_";
-    },
-  /*  clustersReps()
+    }
+    /*  clustersReps()
     {
       console.log("clusters ", this.clustersMap)
       console.log(this.clustersMap[0])
@@ -225,6 +234,7 @@ export default {
       vueComponent: this
     });
     this.chartData = this.rawChartData;
+
     this.compute();
     /*
     var clusters = kmeans(this.chartData, 4, function(d) {return d.TotalFlrArea})
@@ -245,7 +255,7 @@ export default {
     */
   },
   created() {
-    this.dimensions =this.numericDimensions
+    this.dimensions = this.numericDimensions;
     this.viewID = "id" + this._uid;
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === "update" || mutation.type === "resetMarking") {
@@ -264,27 +274,26 @@ export default {
   methods: {
     compute() {
       var matrix = to2DMatrix(this.chartData, this.dimensions, true); //['TotalFlrArea']
-      
+
       kmeans.clusterize(matrix, { k: this.numClusters }, (err, res) => {
         if (err) console.error(err);
         else {
           var centroids = res.map(c => c.centroid);
           var closest = res.map((c, i) => {
-            
-            let smallestInClusterIndex =  indexOfSmallest(
+            let smallestInClusterIndex = indexOfSmallest(
               c.cluster.map(d => distance(centroids[i], d))
             );
             return c.clusterInd[smallestInClusterIndex];
           });
 
-          this.clusterReps.splice(0, this.clusterReps.length)
-         
-          for (var i = 0; i < closest.length; i++) 
-          {
-            this.clusterReps.push(this.chartData[closest[i]])
-            this.clustersMap[this.chartData[closest[i]]._id] = res[i].clusterInd.map(idx => this.chartData[idx]);
-          }
+          this.clusterReps.splice(0, this.clusterReps.length);
 
+          for (var i = 0; i < closest.length; i++) {
+            this.clusterReps.push(this.chartData[closest[i]]);
+            this.clustersMap[this.chartData[closest[i]]._id] = res[
+              i
+            ].clusterInd.map(idx => this.chartData[idx]);
+          }
         }
       });
     },
@@ -379,20 +388,20 @@ export default {
     enableContext: {
       handler: function(enableContextNewValue, oldValue) {
         this.updateContext();
-        this.compute()
+        this.compute();
       }
       //deep: true
     },
     rawChartData: {
       handler: function(newValue, oldValue) {
         this.updateContext();
-        this.compute()
+        this.compute();
       }
       //deep: true
     },
     numClusters: {
-       handler: function(newValue, oldValue) {
-        this.compute()
+      handler: function(newValue, oldValue) {
+        this.compute();
       }
     }
   }
@@ -449,5 +458,4 @@ function distance(arr1, arr2) {
   }
   return Math.sqrt(sum);
 }
-
 </script>

@@ -22,8 +22,8 @@
     <v-row style="position:relative;top:-25px;">
       <v-col v-if="isCustomizingDimensions" cols="2">
         <MultiDimensionSelect
-          :initialValue="this.numericDimensions"
-          :keys="this.allKeys"
+          :initialValue="numericDimensions"
+          :keys="allKeys"
           :width="(1/6.0) * width"
           v-on:update="onDimensionChange($event)"
         />
