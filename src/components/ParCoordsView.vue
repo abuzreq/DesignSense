@@ -2,19 +2,33 @@
 
 <template>
   <v-container>
-      <v-btn x-small icon v-on="on" @click="() => isCustomizingDimensions = !isCustomizingDimensions">
-                  <v-icon>mdi-wrench-outline</v-icon>
-        </v-btn>
-    <v-row>
-      <v-col v-if="isCustomizingDimensions" cols="2" :style="{'height': `${height}px`}">
+    <span style="position:relative;left:-10px;top:-12px;">
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            color="red"
+            x-small
+            icon
+            v-on="on"
+            @click="() => isCustomizingDimensions = !isCustomizingDimensions"
+          >
+            <v-icon>mdi-wrench-outline</v-icon>
+          </v-btn>
+        </template>
+        <span>Customize the Chart</span>
+      </v-tooltip>
+    </span>
+
+    <v-row style="position:relative;top:-25px;">
+      <v-col v-if="isCustomizingDimensions" cols="2">
         <MultiDimensionSelect
           :initialValue="this.numericDimensions"
-          :width="width"
+          :width="(1/6.0) * width"
           v-on:update="onDimensionChange($event)"
         />
       </v-col>
-      <v-col :cols="isCustomizingDimensions?10:12">
-        <div :id="viewID" ref="parcoords" class="parcoords" />
+      <v-col :cols="isCustomizingDimensions?10:12" >
+        <div :id="viewID" ref="parcoords" class="parcoords"></div>
       </v-col>
     </v-row>
   </v-container>
@@ -90,74 +104,14 @@ export default {
   },
   watch: {
     isCustomizingDimensions: {
-      handler: function(newValue) {
+      handler: function(newValue) 
+      {
         this.refresh();
       }
       //deep: true
     }
   },
   methods: {
-    drawLegend(chart) {
-      // add text
-      //d3.select("#legend-heading").text("LEGEND");
-
-      // get width and height for legend area
-      var legendWidth = (2.0 * this.width) / 12.0; //d3.select("#legend").style("width").replace("px", "");
-      var legendHeight = this.height; //d3.select("#sidebar-wrapper").style("height").replace("px", "") / 3;
-
-      // legend boxes are diminsions of the graph
-      //console.log(Object.keys(graph.dimensions()));
-
-      //console.log(chart, chart.dimensions);
-      //let dimensions = Object.keys()
-      let keys = d3.keys(chart.dimensions());
-      let dimensions = keys.map(function(d) {
-        return {
-          name: d,
-          enabled: true
-        };
-      });
-      console.log(dimensions);
-      // find size of the square based on the height
-      var keyCounts = keys.length;
-      //var legendSquareSize = 16;
-      var legendSquareSize = Math.max(legendHeight / (keyCounts + 4), 12);
-
-      var legend = d3.select("#legend").style("height", legendHeight + "px");
-
-      // create one group for each rect and text
-      var legend = d3
-        .select("#legend")
-        .append("svg")
-        .attr("width", legendWidth)
-        .attr("height", legendSquareSize * (keyCounts + 10))
-        .selectAll("g")
-        .data(dimensions)
-        .enter()
-        .append("g")
-        .attr("transform", function(d, i) {
-          return "translate(10," + (legendSquareSize + 3) * i + ")";
-        });
-
-      legend
-        .append("rect")
-        .attr("width", legendSquareSize)
-        .attr("height", legendSquareSize)
-        .attr("class", "legend")
-        .style("fill", "grey")
-        .style("stroke", "black")
-        .style("stroke-width", 1)
-        .style("cursor", "pointer");
-
-      legend
-        .append("text")
-        .attr("x", legendSquareSize + 6)
-        .attr("y", legendSquareSize / 2)
-        .attr("dy", ".35em")
-        .text(function(d) {
-          return d.name;
-        });
-    },
     formatDimensions(dimensions) {
       var result = {};
       dimensions.forEach(dim => {
@@ -423,23 +377,25 @@ export default {
       return this.chart.data();
     },
     Chart: function() {
+      //   nullValueSeparator: "bottom",
       const chart = ParCoords({
-        nullValueSeparator: "bottom",
         markedLineWidth: 5,
         highlightedLineWidth: 3,
         lineWidth: 1
       })("#" + this.viewID)
         .data(this.chartData)
-        .width(this.width)
-        .height(this.height)
+        .width((this.isCustomizingDimensions? (5/6.0)*this.width : this.width) -20 )
+        .height(this.height-25)
         .hideAxis(this.excludedDimensions)
-        //.alpha(0.7)
         .createAxes()
-        //.margin({ top: 40, left: 20, bottom: 20, right: 20 })
+        //.alpha(0.7)
+      //  .margin({ top: 25, left:30, bottom: 10, right: 30 })
+
         .brushMode("1D-axes") //1D-axes-multi 2D-strums angular 1D-axes
         //  .alphaOnBrushed(0.1)
         .reorderable()
         .mode("queue")
+
         .render()
         .on("brushend", (brushed, args) => {
           if (d3.event.selection === null) return;
@@ -524,15 +480,15 @@ export default {
             chart.scale(dim, [-largest,largest])
       });
       */
-
+      /* //https://github.com/syntagmatic/parallel-coordinates/issues/41
       chart.dimensions(
         this.prepareDimensions(
           this.chartData,
           this.numericDimensions,
           this.chart
-        )
+        ).createAxes().render()
       );
-      this.drawLegend(chart);
+*/
 
       return chart;
     }
@@ -560,10 +516,7 @@ export default {
 
 /deep/ .multiselect {
   width: 200px;
-}
-
-/deep/ .parcoords canvas.brushed {
-  border: red;
+    margin-top: 10px;
 }
 
 .parcoords /deep/ .label {

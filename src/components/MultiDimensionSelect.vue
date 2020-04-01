@@ -5,7 +5,7 @@
       
      
 
-      :style="{'height':'30px;','width': `${(1/6.0)*width}px`}"
+      :style="{'height':'30px;','width': `${width}px`}"
       collapse
       @input="onChange"
       dense
