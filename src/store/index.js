@@ -27,6 +27,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             setsMap: {},
             numericDimensions: getNumeric(dataTypesMap),
             allDimensions: Object.keys(dataTypesMap),
+            setsCounter: 0,
 
             similarity_map: new_similarity_map,
 
@@ -38,6 +39,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             isShiftKey: false,
             isAltKey: false,
             isInspectionMode: false,
+            
         },
         mutations:
         {
@@ -156,7 +158,9 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 state.setsMetadataMap[ID] = {name:name, comment:comment};
             },
             addSet(state, payload) {
-                let ID = generateID();
+                state.setsCounter += 1
+                let ID = 'Set #'+state.setsCounter;//generateID();
+
                 state.setsIDs.push(ID)
                 state.setsMap[ID] = payload.members;
 

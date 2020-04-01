@@ -4,10 +4,10 @@
   <v-container fluid>
     <v-toolbar dense dark color="blue darken-3" class="mb-1">
       X:
-      <SingleDimensionSelect :initialValue="this.xColumn" v-on:update="onXChange($event)" />
-      
+      <SingleDimensionSelect :initialValue="this.xColumn" v-on:update="onXChange($event)"  :width="170"/>
+      &nbsp;&nbsp;
       Y:
-      <SingleDimensionSelect :initialValue="this.yColumn" v-on:update="onYChange($event)" />
+      <SingleDimensionSelect :initialValue="this.yColumn" v-on:update="onYChange($event)" :width="170" />
     </v-toolbar>
     <div :id="viewID" ref="scatter" class="scatter" />
   </v-container>

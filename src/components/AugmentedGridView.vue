@@ -38,7 +38,7 @@
             <v-spacer></v-spacer>
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
-                <v-chip  v-on="on" ripple="false" class="ma-2" color="blue darken-2" text-color="white">
+                <v-chip  v-on="on" :ripple="false" class="ma-2" color="blue darken-2" text-color="white">
                   <v-avatar left class="blue darken-3">{{numSelected}}</v-avatar>Selected
                 </v-chip>
               </template>

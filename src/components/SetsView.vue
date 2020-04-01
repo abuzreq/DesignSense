@@ -97,7 +97,9 @@ export default {
     },
     changeComment(comment, itemID) {
       this.$store.commit("setSetMetadata", { setID: itemID, comment: comment });
-      console.log(this.setsMetadataMap);
+    },
+    changeName(name, itemID) {
+      this.$store.commit("setSetMetadata", { setID: itemID, name: name });
     },
     restoreSet(ID, event) {
       this.$store.dispatch("restoreSet", {

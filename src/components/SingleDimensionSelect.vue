@@ -1,7 +1,15 @@
 <!-- Vue component -->
 <template>
   <div>
-    <multiselect @input="onChange" dense v-model="value" :options="keys"></multiselect>
+    <multiselect
+      :style="{'height':'30px;','width': `${width}px`}"
+      @input="onChange"
+      dense
+        searchable
+        :showLabels="false"
+      v-model="value"
+      :options="keys"
+    ></multiselect>
   </div>
 </template>
 
@@ -14,8 +22,8 @@ import { mapState, mapGetters } from "vuex";
 
 export default {
   // OR register locally
-  components: { Multiselect },
-  props: ["initialValue"],
+  components: { Multiselect },  
+  props: ["initialValue","width"],
   data() {
     return {
       value: this.initialValue

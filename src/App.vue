@@ -30,16 +30,10 @@
         <span>{{actions['toggleEditingMode'].tooltip()}}</span>
       </v-tooltip>
 
-      <v-divider vertical />
-      <!--
-        <div style="font-size: 0.8em; width: 180px;">
-             &nbsp;Selection Operation: &nbsp;{{selectionOperation()}}&nbsp;
-        </div>
-      -->
-      
+      <v-divider vertical />    
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-chip  v-on="on" ripple="false" label class="ma-2" color="grey darken-2" text-color="white">
+          <v-chip  outlined v-on="on" :ripple="false" label class="ma-2" color="grey darken-2" text-color="white">
             {{selectionOperation()}}
             <v-avatar right class="grey lighten-2">
               <v-icon small color="black">mdi-vector-selection</v-icon>
@@ -409,7 +403,7 @@ export default {
     showContextMenuHandler(e) {
       //TODO: change this.
       //A cheap trick to make sure the context menu does not appear on the 3D viewer DOM.
-      if (e.target.id.includes("inspector")) {
+      if (!e.target.id.includes("inspector")) {
         e.preventDefault();
         this.rightClickPos = { x: e.clientX, y: e.pageY };
         this.showContextMenu = true;
