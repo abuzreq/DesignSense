@@ -173,7 +173,7 @@ import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
 export default {
   name: "AugmentedGridCards",
   components: { ModelGltf, MultiDimensionSelect },
-  props: ["defaultEnableContext", "width", "height"],
+  props: ["defaultEnableContext","width" ,"height" ,"x", "y"],
 
   data: function() {
     return {

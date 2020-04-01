@@ -12,7 +12,7 @@ import * as d3 from "d3";
 import { mapState } from "vuex";
 
 export default {
-  props: ["width", "height"],
+  props: ["width", "height", "x", "y"],
   data() {
     return {
       chart: null,

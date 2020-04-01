@@ -31,9 +31,24 @@
       </v-tooltip>
 
       <v-divider vertical />
+      <!--
         <div style="font-size: 0.8em; width: 180px;">
              &nbsp;Selection Operation: &nbsp;{{selectionOperation()}}&nbsp;
         </div>
+      -->
+      
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-chip  v-on="on" ripple="false" label class="ma-2" color="grey darken-2" text-color="white">
+            {{selectionOperation()}}
+            <v-avatar right class="grey lighten-2">
+              <v-icon small color="black">mdi-vector-selection</v-icon>
+            </v-avatar>
+          </v-chip>
+        </template>
+        <span>Shows how new selections will impact the existing selection.</span>
+      </v-tooltip>
+
       <v-divider vertical />
       <!--
      
@@ -200,9 +215,9 @@
 
 
 <style>
-  .v-toolbar {
-    margin-top: -5px;
-  }
+.v-toolbar {
+  margin-top: -5px;
+}
 </style>
 <script>
 import ParCoordsView from "@/components/ParCoordsView.vue";
@@ -227,7 +242,7 @@ import * as d3 from "d3";
 
 import { RadialMenu, RadialMenuItem } from "vue-radial-menu";
 
-import {getOperation } from "@/components/operations.js";
+import { getOperation } from "@/components/operations.js";
 
 export default {
   name: "App",
@@ -348,12 +363,15 @@ export default {
 
       showContextMenu: false,
       rightClickPos: { x: 0, y: 0 },
-      selectionOperation: ()=> getOperation({altKey: this.$store.state.isAltKey, shiftKey: this.$store.state.isShiftKey, ctrlKey: this.$store.state.isCtrlKey})
+      selectionOperation: () =>
+        getOperation({
+          altKey: this.$store.state.isAltKey,
+          shiftKey: this.$store.state.isShiftKey,
+          ctrlKey: this.$store.state.isCtrlKey
+        })
     };
   },
-  computed: {
-   
-  },
+  computed: {},
   destroyed() {},
   created() {
     //To close the context menu when a click happens anywhere
@@ -389,10 +407,14 @@ export default {
       }[type];
     },
     showContextMenuHandler(e) {
-      e.preventDefault();
-      this.rightClickPos = { x: e.clientX, y: e.pageY };
-      this.showContextMenu = true;
-      this.$refs.contextMenu.isOpen = true;
+      //TODO: change this.
+      //A cheap trick to make sure the context menu does not appear on the 3D viewer DOM.
+      if (e.target.id.includes("inspector")) {
+        e.preventDefault();
+        this.rightClickPos = { x: e.clientX, y: e.pageY };
+        this.showContextMenu = true;
+        this.$refs.contextMenu.isOpen = true;
+      }
     },
     handleContextMenuClick(item) {
       console.log(item);

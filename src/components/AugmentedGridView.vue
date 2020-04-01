@@ -11,6 +11,7 @@
         <template v-slot:header>
           <v-toolbar dense dark color="blue darken-3" class="mb-1">
             <v-select
+              style="width:150px"
               dense
               v-model="sortByVar"
               solo-inverted
@@ -22,6 +23,7 @@
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-checkbox
+                  style="margin-bottom:-20px;"
                   v-on="on"
                   dense
                   v-model="isSortDesc"
@@ -34,16 +36,23 @@
               <span v-else>change to descending order</span>
             </v-tooltip>
             <v-spacer></v-spacer>
-            # Selected {{numSelected}}
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-chip  v-on="on" ripple="false" class="ma-2" color="blue darken-2" text-color="white">
+                  <v-avatar left class="blue darken-3">{{numSelected}}</v-avatar>Selected
+                </v-chip>
+              </template>
+              <span>Number of selected items</span>
+            </v-tooltip>
+
             <v-spacer></v-spacer>
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-checkbox
+                  style="margin-bottom:-20px;"
                   v-on="on"
-                  dense
                   align-center
                   v-model="enableContext"
-                  icon="large"
                   :off-icon="offContextIcon"
                   :on-icon="onContextIcon"
                 />
@@ -216,14 +225,16 @@
 /deep/ .v-slider--horizontal {
   min-width: 5vw;
 }
-/*
-.col >  .v-card.hovered {
 
-  border: 4px solid #82b1ff;
-}
-*/
 .col > .v-card.hovered {
   border: 4px solid rgb(33, 119, 180); /*#82b1ff;*/
+}
+
+#enableContextBtn {
+  margin-bottom: -10px;
+}
+#sortOrderBtn {
+  margin-bottom: -10px;
 }
 </style>
 
@@ -242,7 +253,7 @@ import $ from "jquery";
 export default {
   name: "AugmentedGridCards",
   components: { ModelGltf, ModelThree, "drag-select-container": DragSelect },
-  props: ["defaultEnableContext", "width", "height"],
+  props: ["defaultEnableContext", "width", "height", "x", "y"],
   data: function() {
     return {
       isLoading: false,
@@ -450,7 +461,7 @@ export default {
         d3.json(item.json).then(jsonModel => {
           this.isLoading = false;
 
-          if (!this.va3cViewer) {          
+          if (!this.va3cViewer) {
             let inspector = d3.select("#" + this.viewID).select("#inspector");
             if (inspector) {
               this.va3cViewer = new SPECTACLES(inspector._groups[0][0]);

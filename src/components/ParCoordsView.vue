@@ -147,7 +147,7 @@ export default {
           ticks: 10
         };
       });
-      console.log("dimensions", result);
+      //console.log("dimensions", result);
 
       return result;
     },
@@ -235,10 +235,10 @@ export default {
           let x = xscale(dimName);
 
           var text = datum[dimName];
-          clickedDataSet.push([x, y, text]);
+          clickedDataSet.push([x, y, ''+text]);
         }
       }
-      // this.createTooltip(clickedDataSet);
+      this.createTooltip(clickedDataSet);
     },
     //array of tuples where each is [x,y,text]  for the tooltip
     createTooltip(specs) {
@@ -246,11 +246,7 @@ export default {
       var fontSize = 14;
       var padding = 2;
       var rectHeight = fontSize + 2 * padding; //based on font size
-      specs.forEach(d => {
-        if (isNaN(d[2])) {
-          console.log(d);
-        }
-      });
+
 
       this.chart.svg
         .selectAll("rect[id='tooltip']")
@@ -269,7 +265,7 @@ export default {
         .attr("fill", "grey")
         .attr("opacity", 0.9)
         .attr("width", function(d) {
-          return d[2].length * 10;
+          return d[2].length * 10; 
         })
         .attr("height", rectHeight);
 
@@ -398,7 +394,7 @@ export default {
         lineWidth: 1
       })("#" + this.viewID)
         .data(this.chartData)
-        .width((this.isCustomizingDimensions? (5/6.0)*this.width : this.width) -20 )
+        .width((this.isCustomizingDimensions? (5/6.0)*this.width : this.width) - 20 )
         .height(this.height-25)
         .hideAxis(this.excludedDimensions)
         .createAxes()
@@ -441,12 +437,13 @@ export default {
           if (args && d3.event.type === "brush") {
             let sel = args.selection;
             if (sel.raw.length > 0) {
-              let x = d3.event.sourceEvent.x;
+              console.log(this.x, d3.event.sourceEvent)
+              let x =  d3.event.sourceEvent.clientX - this.x;
               let rawY = sel.raw;
               let scaledY = sel.scaled;
               this.createTooltip([
-                [x, rawY[0], round(scaledY[0], 4) + ""],
-                [x, rawY[1], round(scaledY[1], 4) + ""]
+                [x, rawY[0], round(scaledY[0], 4) + ''],
+                [x, rawY[1], round(scaledY[1], 4) + '']
               ]);
             }
           }
