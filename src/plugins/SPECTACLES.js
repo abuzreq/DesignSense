@@ -55,8 +55,10 @@ export default function SPECTACLES(divToBind, jsonFileData, callback) {
 
     //function that sets up the initial THREE.js scene, renderer, camera, orbit controls, etc.
     //also creates loading and blackout divs which are shown/hidden as json files are loaded
-    SPECT.initViewer = function (viewerDiv) {
-        console.log(viewerDiv)
+    SPECT.initViewer = function (viewerDivNode) 
+    {
+        let viewerDiv = $(viewerDivNode)
+        SPECT.viewerDiv = viewerDiv
         //append the blackout div and let it respond to the parent div resizing
         SPECT.viewerDiv.append("<div class='Spectacles_blackout'></div>");
         //function to position and size the blackout div

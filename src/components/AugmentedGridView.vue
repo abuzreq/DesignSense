@@ -124,10 +124,9 @@
               v-on:mouseover="hover(inspectedItem, true)"
               v-on:mouseleave="unhover(inspectedItem)"
             />
-            
-            <v-card v-else width ="100%" height ="400px"  id="inspector" name="inspector">           
-            </v-card>
-            
+
+            <v-card v-else width="100%" height="400px" id="inspector" name="inspector"></v-card>
+
             <!--
             <model-gltf
               v-else
@@ -138,13 +137,17 @@
           </v-card>
         </template>
 
-          <template v-slot:default="items">
+        <template v-slot:default="items">
           <drag-select-container
             :selectableItems="getAllCards"
             :scrollAccessor="(el) => el.firstChild.firstChild"
             @select="onMouseUp($event)"
           >
-            <v-layout grid-list-sm column :style="{'max-height': `calc(${height}px - ${inspectedItem?400:0}px -  100px)`}">
+            <v-layout
+              grid-list-sm
+              column
+              :style="{'max-height': `calc(${height}px - ${inspectedItem?400:0}px -  100px)`}"
+            >
               <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
                 <v-row dense>
                   <v-col
@@ -188,7 +191,6 @@
             </v-layout>
           </drag-select-container>
         </template>
-        
       </v-data-iterator>
     </v-container>
   </v-container>
@@ -292,9 +294,9 @@ export default {
     ...mapState({
       rawChartData: state => state.data,
       keys: state => state.numericDimensions.concat(["selected"]),
-      hovered: state => state.hovered,
+      hovered: state => state.hovered
     }),
-    ...mapGetters(['isHoveringEnabled']),
+    ...mapGetters(["isHoveringEnabled"]),
     cardSelector() {
       return "card_" + this.viewID + "_";
     }
@@ -443,23 +445,27 @@ export default {
       return count;
     },
     load3DJSON(item) {
-      console.log('loading')
+      console.log("loading");
       if (item.json) {
-        d3.json(item.json).then(jsonModel => 
-        {
+        d3.json(item.json).then(jsonModel => {
           this.isLoading = false;
-                  if (!this.va3cViewer) {
-           console.log('setting up')
-            this.va3cViewer = new SPECTACLES($("#inspector"));
-        }
-          this.va3cViewer.loadNewModel(jsonModel);
+
+          if (!this.va3cViewer) {          
+            let inspector = d3.select("#" + this.viewID).select("#inspector");
+            if (inspector) {
+              this.va3cViewer = new SPECTACLES(inspector._groups[0][0]);
+            }
+          }
+
+          if (this.va3cViewer) {
+            this.va3cViewer.loadNewModel(jsonModel);
+          }
         });
       }
     }
   },
-  beforeDestroy()
-  {
-    console.log("before destroy")
+  beforeDestroy() {
+    console.log("before destroy");
   },
 
   watch: {
@@ -495,9 +501,7 @@ export default {
       if (this.inspectedItem && newValue == true) {
         this.isLoading = true;
         this.load3DJSON(this.inspectedItem);
-      }
-      else
-      {
+      } else {
         this.va3cViewer = null;
       }
     },
