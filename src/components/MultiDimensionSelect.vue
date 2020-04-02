@@ -6,7 +6,7 @@
       collapse
       @input="onChange"
       dense
-      v-model="initialValue"
+      v-model="value"
       :options="keys"
       :multiple="true"
       :close-on-select="false"
@@ -34,7 +34,7 @@ export default {
   data() {
     return {
      
-
+      value: this.initialValue,
      // keys: this.initialValue,
     };
   },
@@ -45,6 +45,13 @@ export default {
   methods: {
     onChange: function(value, id) {
       this.$emit("update", value);
+    }
+  },
+   watch: 
+  {
+    initialValue:  function(val)
+    {
+      this.value = val;
     }
   }
 };

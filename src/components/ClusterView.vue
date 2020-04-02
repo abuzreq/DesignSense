@@ -183,7 +183,7 @@ export default {
       onContextIcon: "mdi-eye",
       viewID: null,
       // keys: this.$store.numericDimensions.concat(["selected"]),
-      colSpan: 1,
+      colSpan: 0,
       possibleColSpans: [6, 8, 12],
       labels: ["S", "M", "XL"],
       numClustersLabels: ["4", "8", "12", "16"],

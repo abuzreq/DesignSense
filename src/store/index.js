@@ -564,7 +564,7 @@ function filterData(dataMap, toFilter) {
 function getNumeric(typesMap) {
     var numeric = []
     for (var dim in typesMap) {
-        if (typesMap[dim] == "Float") //|| typesMap[dim] == "Number"
+        if (typesMap[dim] == "Float" || typesMap[dim] == "Number")
         {
             numeric.push(dim);
         }

@@ -273,7 +273,9 @@ export default {
           url: "http://142.58.183.69:5051",
           type: "server"
         },
-        { name: "DreamLens", url: "http://142.58.183.69:5050", type: "server" }
+        { name: "DreamLens", url: "http://142.58.183.69:5050", type: "server" },
+        { name: "Local", url: "http://localhost:5050", type: "server" }
+
       ],
       url: "",
       cloudURL: "",
@@ -403,7 +405,8 @@ export default {
     showContextMenuHandler(e) {
       //TODO: change this.
       //A cheap trick to make sure the context menu does not appear on the 3D viewer DOM.
-      if (!e.target.id.includes("inspector")) {
+      console.log()
+      if (!e.target.id.includes("inspector") && (e.target.localName != 'canvas')) {
         e.preventDefault();
         this.rightClickPos = { x: e.clientX, y: e.pageY };
         this.showContextMenu = true;

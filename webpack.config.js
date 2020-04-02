@@ -13,7 +13,7 @@ const config = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
-    publicPath: './public/',
+    publicPath: ASSET_PATH,
   },
   module: {
     rules: [

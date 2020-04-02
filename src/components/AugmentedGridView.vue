@@ -126,6 +126,7 @@
             ></v-progress-circular>
 
             <v-img
+            contain
               width="100%"
               height="400px"
               v-if="!inspecting3DView"
@@ -133,16 +134,19 @@
               v-on:mouseover="hover(inspectedItem, true)"
               v-on:mouseleave="unhover(inspectedItem)"
             />
-
+                        
+            <model-gltf
+              ref="gltf"
+              v-else-if="inspecting3DView && isModelGLTF"
+              :src="inspectedItem.gltf"
+              :on-load="onGLTFLoaded(this)"
+              :rotation="modelRotation"
+              :position="modelPosition"
+              :lights="modelLights"
+            />
             <v-card v-else width="100%" height="400px" id="inspector" name="inspector"></v-card>
 
-            <!--
-            <model-gltf
-              v-else
-              :backgroundAlpha="0"
-              :src="inspectedItem.gltf"
-              :on-load="isLoading = false"
-            />-->
+
           </v-card>
         </template>
 
@@ -258,12 +262,25 @@ export default {
     return {
       isLoading: false,
       va3cViewer: null,
+      isModelGLTF: false,
+      modelCameraPosition: { x: 1, y: 2, z: -3 },
+      modelCameraRotation: { x: 3, y: 2, z: -1 },
+      modelRotation: { x: -Math.PI / 3, y: 0 , z:0 },
+      modelPosition: { x: 0,y:-30,z:-30},
       modelLights: [
         {
           type: "AmbientLight",
           color: 0xaaaaaa
-        }
+        },
+        {
+            type: 'hemispherelight',
+           groundColor  : 0xff0000,
+            skyColor : 0xffffff,
+            intensity: 0.8,
+          },
       ],
+
+
       modelURL:
         "https://raw.githubusercontent.com/abuzreq/DesignSense/4f9cdd01ee81c7b2bb724015f3003c3914d90ae8/Layer1%20(3).gltf?token=ABOQCFUIOABC2L5T5MHUQG26RAXJQ", //"https://gist.githubusercontent.com/abuzreq/3fb2ad6f964e10ea95332f0822ce899b/raw/a8a6ad6860f9ab6a6171dbee5987b4bcbf0a117a/Layer2.gltf",
       crossOrigin: "anonymous",
@@ -319,7 +336,9 @@ export default {
     });
     this.updateContext();
     //Inspection setup
+    this.isModelGLTF = this.chartData[0].gltf? true: false
     this.inspectedItem = this.chartData[0];
+
   },
   updated() {
     this.cards.splice(0, this.cards.length);
@@ -340,6 +359,34 @@ export default {
     });
   },
   methods: {
+    onGLTFLoaded()
+    { 
+        this.isLoading = false;
+        //TODO fetch the loaded object and color it.. see https://github.com/abuzreq/abuzreq.github.io/blob/develop/js/geom.js
+        /*
+        if(this.$refs.gltf)
+        {
+          let object = this.$refs.gltf.scene;
+          object.traverse(function(child) {
+            
+              if (child.type ==  'Mesh') 
+              {
+
+                  var materialColor = new THREE.Color();
+                  materialColor.setRGB( 0.4, 0.0, 0.0 );
+                  let material = new THREE.MeshPhongMaterial( { color: materialColor, side: THREE.DoubleSide } );
+                  
+                  child.material = material;//new THREE.Color(0xffb830);
+
+                //console.log(child)
+              }
+          });
+           //  this.$refs.gltf.update();
+          //this.$refs.gltf.updateRenderer();//renderer.render(object, this.$refs.gltf.camera)
+        }*/
+       
+
+    },
     onProgressLoading3DModel(d) {
       this.isLoading = true;
     },
@@ -455,9 +502,10 @@ export default {
       }
       return count;
     },
-    load3DJSON(item) {
+    load3DJSON(item) 
+    {
       console.log("loading");
-      if (item.json) {
+      if (this.inspecting3DView &&  !this.isModelGLTF) {
         d3.json(item.json).then(jsonModel => {
           this.isLoading = false;
 
@@ -509,15 +557,18 @@ export default {
       }
     },
     inspecting3DView: function(newValue) {
-      if (this.inspectedItem && newValue == true) {
+      if (this.inspectedItem && newValue == true) 
+      {
         this.isLoading = true;
         this.load3DJSON(this.inspectedItem);
-      } else {
+      } 
+      else {
         this.va3cViewer = null;
       }
     },
     inspectedItem: function(newItem) {
-      if (newItem && this.inspecting3DView) {
+      if (newItem && this.inspecting3DView) 
+      {
         this.isLoading = true;
         this.load3DJSON(newItem);
       }
