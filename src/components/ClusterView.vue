@@ -1,5 +1,5 @@
 <template>
-  <v-container :id="viewID" justify-start align-start  :style="{'height': `${height}px`}">
+  <v-container :id="viewID" justify-start align-start :style="{'height': `${height}px`}">
     <v-data-iterator
       style="height:100%;"
       :items="clusterReps"
@@ -70,7 +70,6 @@
           ></v-slider>
         </v-toolbar>
 
-   
         <!--
           <v-btn-toggle dense v-model="isSortDesc" mandatory>
             <v-btn medium depressed color="blue" :value="false">
@@ -82,7 +81,7 @@
           </v-btn-toggle>
         -->
       </template>
-      <template v-slot:default="items"   >
+      <template v-slot:default="items">
         <v-layout grid-list-sm column style="height: 75vh">
           <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
             <v-row dense>
@@ -96,7 +95,14 @@
                   v-bind:class="{ clusterRep: true, outlined: numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
                   v-bind:id="cardSelector+item._id"
                 >
-                  <v-img v-if="true" contain :src="item.image" v-on:click="toggle(item, $event)" />
+                  <v-img
+                    v-if="true"
+                    contain
+                    :src="item.image"
+                    v-on:click="toggle(item, $event)"
+                    v-on:mouseover="hover(item)"
+                    v-on:mouseleave="unhover(item)"
+                  />
                   <!--:id='"card_"+item._id' -->
                   <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
 
@@ -114,33 +120,42 @@
         </v-layout>
       </template>
     </v-data-iterator>
-         <v-toolbar dense fixed dark color="blue darken-3" class="mb-1" style="margin-top:-35px">
-          <MultiDimensionSelect
-            :initialValue="dimensions"
-            :keys="numericDimensions"
-            :width="(3/4)*width"
-            v-on:update="onDimensionChange($event)"
-            initialOpenDirection="above" 
-          />
-          <v-btn x-small icon @click="() => dimensions = []">
-              <v-icon>mdi-close</v-icon>
+    <v-toolbar dense fixed dark color="blue darken-3" class="mb-1" style="margin-top:-35px">
+      <MultiDimensionSelect
+        :initialValue="dimensions"
+        :keys="numericDimensions"
+        :width="(3/4)*width"
+        v-on:update="onDimensionChange($event)"
+        initialOpenDirection="above"
+      />
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" x-small icon @click="() => dimensions = []">
+            <v-icon>mdi-close</v-icon>
           </v-btn>
-        </v-toolbar>
+        </template>
+        <span>Rest the dimensions.</span>
+      </v-tooltip>
+    </v-toolbar>
   </v-container>
 </template>
 
 <style scoped>
-.col > .v-card.clusterRep {
+.col > .v-card.clusterRep .v-image {
   filter: sepia() saturate(4) hue-rotate(295deg);
 }
 .col > .v-card.outlined {
-  border: 2px solid red;
+  border: 2px solid rgb(33, 119, 180);
 }
 .col > .v-card:not(.transparent) {
   opacity: 1;
 }
 .col > .v-card.transparent {
   opacity: 0.4;
+}
+
+.col > .v-card.hovered {
+  border: 4px solid rgb(33, 119, 180); /*#82b1ff;*/
 }
 
 /deep/ .multiselect__tag {
@@ -155,9 +170,6 @@
 /deep/ .v-slider--horizontal {
   min-width: 5vw;
 }
-
-
-
 </style>
 
 <script>
@@ -173,7 +185,7 @@ import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
 export default {
   name: "AugmentedGridCards",
   components: { ModelGltf, MultiDimensionSelect },
-  props: ["defaultEnableContext","width" ,"height" ,"x", "y"],
+  props: ["defaultEnableContext", "width", "height", "x", "y"],
 
   data: function() {
     return {
@@ -211,8 +223,10 @@ export default {
     },
     ...mapState({
       rawChartData: state => state.data,
-      numericDimensions: state => state.numericDimensions
+      numericDimensions: state => state.numericDimensions,
+      hovered: state => state.hovered
     }),
+    ...mapGetters(["isHoveringEnabled"]),
     cardSelector() {
       return "card_" + this.viewID + "_";
     }
@@ -304,8 +318,17 @@ export default {
       );*/
       this.compute();
     },
+    hover(item, forced) {
+      if (forced || this.isHoveringEnabled) {
+        this.$store.commit("hover", { hovered: item });
+      }
+    },
+    unhover(item) {
+      this.$store.commit("hover", { hovered: null });
+    },
     toggle(item, event) {
-      console.log("Toggle", this.clustersMap[item._id]._id);
+      //console.log("Toggle", this.clustersMap[item._id]._id);
+
       this.$store.commit("update", {
         view: this.viewID,
         selection: this.clustersMap[item._id].map(d => d._id),
@@ -402,6 +425,26 @@ export default {
     numClusters: {
       handler: function(newValue, oldValue) {
         this.compute();
+      }
+    },
+    hovered: function(newValue, oldValue) {
+      if (oldValue) {
+        d3.select("#" + this.viewID)
+          .select("#" + this.cardSelector + oldValue._id)
+          .classed("hovered", false);
+      }
+
+      if (newValue) {
+        console.log(
+          newValue,
+          d3.select("#" + this.viewID),
+          d3
+            .select("#" + this.viewID)
+            .select("#" + this.cardSelector + newValue._id)
+        );
+        d3.select("#" + this.viewID)
+          .select("#" + this.cardSelector + newValue._id)
+          .classed("hovered", true);
       }
     }
   }
