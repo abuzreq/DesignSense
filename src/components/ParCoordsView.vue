@@ -414,7 +414,7 @@ export default {
           //d3.select("#"+this.viewID).selectAll('.selection').style("display", "none");
 
           if (chart.brushed().length == chart.data().length) {
-            console.log("Clearing ", this.viewID);
+            //console.log("Clearing ", this.viewID);
             this.$store.commit("update", {
               view: this.viewID,
               selection: [],
@@ -437,7 +437,6 @@ export default {
           if (args && d3.event.type === "brush") {
             let sel = args.selection;
             if (sel.raw.length > 0) {
-              console.log(this.x, d3.event.sourceEvent)
               let x =  d3.event.sourceEvent.clientX - this.x;
               let rawY = sel.raw;
               let scaledY = sel.scaled;

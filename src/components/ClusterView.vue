@@ -96,7 +96,7 @@
                   v-bind:class="{ clusterRep: true, outlined: numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
                   v-bind:id="cardSelector+item._id"
                 >
-                  <v-img v-if="true" :src="item.image" v-on:click="toggle(item, $event)" />
+                  <v-img v-if="true" contain :src="item.image" v-on:click="toggle(item, $event)" />
                   <!--:id='"card_"+item._id' -->
                   <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
 

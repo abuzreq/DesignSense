@@ -128,8 +128,6 @@ var app = new Vue({
 });
 
 document.addEventListener('keydown', function (e) {
-  console.log(e)
-
   if (e.ctrlKey) 
   {
     if (!app.$store.state.isCtrlKey) 

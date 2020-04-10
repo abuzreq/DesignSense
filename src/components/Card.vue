@@ -54,6 +54,13 @@
       :x="this.x"
       :y="this.y"
     />
+    <SPLOMView
+      v-if="type == 'SPLOM'"
+      :width="this.width"
+      :height="this.height"
+      :x="this.x"
+      :y="this.y"
+    />
   </vdr>
 </template>
 

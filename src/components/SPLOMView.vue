@@ -13,7 +13,6 @@ import * as d3 from "d3";
 import TemplateView from "@/components/TemplateView.vue";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
 
-
 export default {
   mixins: [TemplateView],
   name: "SPLOMView",
@@ -22,7 +21,7 @@ export default {
     return {
       padding: 10,
       colorColumn: "collection",
-      columns: ["TotalFlrArea", "Height", "NetSolar", "EnergyUse"]
+      columns: ["out:Sunshine rs", "out:SVF", "out:A/V ratio"]
     };
   },
   mounted() {
@@ -38,16 +37,15 @@ export default {
       var result = this.$store.getters.selectedDataInView(this.viewID);
       this.chart.highlight(result);
     },
-    onBrushed: function(brushedIDs)
-    {
-        //TODO expose as a passable function (See onBrushed in ScaterplotView)
-        if (brushedIDs.length > 0) {
-          this.$store.commit("update", {
-            view: this.viewID,
-            selection: brushedIDs,
-            operation: getOperationFromEvent(d3.event.sourceEvent)
-          });
-        }
+    onBrushed: function(brushedIDs) {
+      //TODO expose as a passable function (See onBrushed in ScaterplotView)
+      if (brushedIDs.length > 0) {
+        this.$store.commit("update", {
+          view: this.viewID,
+          selection: brushedIDs,
+          operation: getOperationFromEvent(d3.event.sourceEvent)
+        });
+      }
     },
     Chart: function() {
       let colorColumn = this.colorColumn;
@@ -174,7 +172,7 @@ export default {
 
           let brushedIDs = [];
           let brushedMask = [];
-          circle.each((d) => {
+          circle.each(d => {
             if (
               x0 > x[columns[i]](d[columns[i]]) ||
               x1 < x[columns[i]](d[columns[i]]) ||
@@ -189,7 +187,7 @@ export default {
           });
           this.onBrushed(brushedIDs);
         };
-
+        /*
         // If the brush is empty, select all circles.
         let brushended = () => {
           if (d3.event.selection !== null) return;
@@ -197,7 +195,7 @@ export default {
           //circle.classed("hidden", false);
           //this.$store.commit("unhighlight", this.chartData);
         };
-
+        */
         const brushObj = d3
           .brush()
           .extent([
@@ -205,12 +203,11 @@ export default {
             [size - padding / 2, size - padding / 2]
           ])
           .on("start", brushstarted)
-          .on("brush", brushed)
-          .on("end", brushended);
+          //   .on("brush", brushed)
+          .on("end", brushed);
 
         //ref: https://github.com/d3/d3-brush/issues/20
         brushObj.keyModifiers(false);
-
         cells.call(brushObj);
       };
       const svg = d3
@@ -288,7 +285,7 @@ export default {
         .text(d => d);
 
       return {
-        highlight: (selection) => {
+        highlight: selection => {
           selection = selection.map(d => d._id);
           cells.each(([i, j]) => {
             let circles = d3
@@ -301,7 +298,7 @@ export default {
             });
           });
         },
-        unhighlight: (selection) => {
+        unhighlight: selection => {
           selection = selection.map(d => d._id);
           cells.each(([i, j]) => {
             let circles = d3
@@ -313,8 +310,8 @@ export default {
               return selection.includes(d._id) ? true : false;
             });
           });
-      }
-      }
+        }
+      };
     }
   }
   /*

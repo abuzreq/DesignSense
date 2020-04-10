@@ -38,7 +38,13 @@
             <v-spacer></v-spacer>
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
-                <v-chip  v-on="on" :ripple="false" class="ma-2" color="blue darken-2" text-color="white">
+                <v-chip
+                  v-on="on"
+                  :ripple="false"
+                  class="ma-2"
+                  color="blue darken-2"
+                  text-color="white"
+                >
                   <v-avatar left class="blue darken-3">{{numSelected}}</v-avatar>Selected
                 </v-chip>
               </template>
@@ -126,7 +132,7 @@
             ></v-progress-circular>
 
             <v-img
-            contain
+              contain
               width="100%"
               height="400px"
               v-if="!inspecting3DView"
@@ -134,7 +140,7 @@
               v-on:mouseover="hover(inspectedItem, true)"
               v-on:mouseleave="unhover(inspectedItem)"
             />
-                        
+
             <model-gltf
               ref="gltf"
               v-else-if="inspecting3DView && isModelGLTF"
@@ -145,8 +151,6 @@
               :lights="modelLights"
             />
             <v-card v-else width="100%" height="400px" id="inspector" name="inspector"></v-card>
-
-
           </v-card>
         </template>
 
@@ -265,21 +269,20 @@ export default {
       isModelGLTF: false,
       modelCameraPosition: { x: 1, y: 2, z: -3 },
       modelCameraRotation: { x: 3, y: 2, z: -1 },
-      modelRotation: { x: -Math.PI / 3, y: 0 , z:0 },
-      modelPosition: { x: 0,y:-30,z:-30},
+      modelRotation: { x: -Math.PI / 3, y: 0, z: 0 },
+      modelPosition: { x: 0, y: -30, z: -30 },
       modelLights: [
         {
           type: "AmbientLight",
           color: 0xaaaaaa
         },
         {
-            type: 'hemispherelight',
-           groundColor  : 0xff0000,
-            skyColor : 0xffffff,
-            intensity: 0.8,
-          },
+          type: "hemispherelight",
+          groundColor: 0xff0000,
+          skyColor: 0xffffff,
+          intensity: 0.8
+        }
       ],
-
 
       modelURL:
         "https://raw.githubusercontent.com/abuzreq/DesignSense/4f9cdd01ee81c7b2bb724015f3003c3914d90ae8/Layer1%20(3).gltf?token=ABOQCFUIOABC2L5T5MHUQG26RAXJQ", //"https://gist.githubusercontent.com/abuzreq/3fb2ad6f964e10ea95332f0822ce899b/raw/a8a6ad6860f9ab6a6171dbee5987b4bcbf0a117a/Layer2.gltf",
@@ -336,9 +339,8 @@ export default {
     });
     this.updateContext();
     //Inspection setup
-    this.isModelGLTF = this.chartData[0].gltf? true: false
+    this.isModelGLTF = this.chartData[0].gltf ? true : false;
     this.inspectedItem = this.chartData[0];
-
   },
   updated() {
     this.cards.splice(0, this.cards.length);
@@ -359,11 +361,10 @@ export default {
     });
   },
   methods: {
-    onGLTFLoaded()
-    { 
-        this.isLoading = false;
-        //TODO fetch the loaded object and color it.. see https://github.com/abuzreq/abuzreq.github.io/blob/develop/js/geom.js
-        /*
+    onGLTFLoaded() {
+      this.isLoading = false;
+      //TODO fetch the loaded object and color it.. see https://github.com/abuzreq/abuzreq.github.io/blob/develop/js/geom.js
+      /*
         if(this.$refs.gltf)
         {
           let object = this.$refs.gltf.scene;
@@ -384,8 +385,6 @@ export default {
            //  this.$refs.gltf.update();
           //this.$refs.gltf.updateRenderer();//renderer.render(object, this.$refs.gltf.camera)
         }*/
-       
-
     },
     onProgressLoading3DModel(d) {
       this.isLoading = true;
@@ -424,14 +423,15 @@ export default {
       this.$store.commit("hover", { hovered: null });
     },
     toggle(item) {
-      this.inspectedItem = item;
-      /*
-      this.$store.commit("update", {
-        view: this.viewID,
-        selection: [item._id],
-        operation: operations.TOGGLE
-      });
-      */
+      if (this.isHoveringEnabled) {
+        this.inspectedItem = item;
+      } else {
+        this.$store.commit("update", {
+          view: this.viewID,
+          selection: [item._id],
+          operation: operations.TOGGLE
+        });
+      }
     },
     update(item, event) {
       console.log("A", event);
@@ -502,10 +502,9 @@ export default {
       }
       return count;
     },
-    load3DJSON(item) 
-    {
+    load3DJSON(item) {
       console.log("loading");
-      if (this.inspecting3DView &&  !this.isModelGLTF) {
+      if (this.inspecting3DView && !this.isModelGLTF) {
         d3.json(item.json).then(jsonModel => {
           this.isLoading = false;
 
@@ -557,18 +556,15 @@ export default {
       }
     },
     inspecting3DView: function(newValue) {
-      if (this.inspectedItem && newValue == true) 
-      {
+      if (this.inspectedItem && newValue == true) {
         this.isLoading = true;
         this.load3DJSON(this.inspectedItem);
-      } 
-      else {
+      } else {
         this.va3cViewer = null;
       }
     },
     inspectedItem: function(newItem) {
-      if (newItem && this.inspecting3DView) 
-      {
+      if (newItem && this.inspecting3DView) {
         this.isLoading = true;
         this.load3DJSON(newItem);
       }

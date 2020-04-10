@@ -38,7 +38,7 @@ div >>> .frame {
 }
 
 div >>> circle {
-  fill-opacity: 0.7;
+  fill-opacity: 1;
 }
 
 div >>> circle.hidden {
