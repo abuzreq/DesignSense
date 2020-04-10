@@ -265,7 +265,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 });
             },
             resetData(context) {
-                context.commit('resetMarking', { "markingID": context.state.defaultMarkingID });
+                //context.commit('resetMarking', { "markingID": context.state.defaultMarkingID });
                 context.commit('setData', { newData: context.state.rawData });
             },
             resetAllMarkings(context) {
@@ -284,13 +284,15 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 let members = Object.keys(context.getters.selectedInMarking(context.state.defaultMarkingID))
                 context.commit('addSet', { members: members })
             },
-            restoreSet(context, payload) {
+            restoreSet(context, payload) 
+            {
+                context.dispatch("resetData");
                 context.commit("update",
-                    {
-                        markingID: context.state.defaultMarkingID,
-                        selection: context.state.setsMap[payload.setID],
-                        operation: payload.operation
-                    });
+                {
+                    markingID: context.state.defaultMarkingID,
+                    selection: context.state.setsMap[payload.setID],
+                    operation: payload.operation
+                });
             },
 
 
