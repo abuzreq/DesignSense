@@ -405,8 +405,12 @@ export default {
     showContextMenuHandler(e) {
       //TODO: change this.
       //A cheap trick to make sure the context menu does not appear on the 3D viewer DOM.
-      console.log()
-      if (!e.target.id.includes("inspector") && (e.target.localName != 'canvas')) {
+      console.log(e.target)
+      if (!e.target.id.includes("inspector") 
+      && (e.target.localName != 'canvas') 
+      && (e.target.localName != 'textarea') 
+      ) 
+      {
         e.preventDefault();
         this.rightClickPos = { x: e.clientX, y: e.pageY };
         this.showContextMenu = true;

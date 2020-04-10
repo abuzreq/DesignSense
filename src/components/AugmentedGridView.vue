@@ -156,9 +156,10 @@
 
         <template v-slot:default="items">
           <drag-select-container
-            :selectableItems="getAllCards"
+            selectorClass= "thumbnail_card"  
             :scrollAccessor="(el) => el.firstChild.firstChild"
-            @select="onMouseUp($event)"
+            @onmouseup="onSelectionDragMouseUp($event)"
+            @onmousemove="onSelectionDragMouseMove($event)"
           >
             <v-layout
               grid-list-sm
@@ -173,14 +174,14 @@
                     :cols="possibleColSpans[colSpan]"
                   >
                     <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
-                    <v-card v-bind:id="cardSelector+item._id">
+                    <v-card class= "thumbnail_card" v-bind:id="cardSelector+item._id">
                       <v-img
                         v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], 
                                       transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id],
                                       }"
                         v-if="true"
                         :src="item.image"
-                        v-on:click="toggle(item)"
+                        v-on:mouseup="toggle(item)"
                         v-on:mouseover="hover(item)"
                         v-on:mouseleave="unhover(item)"
                       />
@@ -309,7 +310,9 @@ export default {
       inspectedItem: null,
       inspecting3DView: false,
       inspected3DIcon: "mdi-video-3d",
-      inspected2DIcon: "mdi-file-image-outline"
+      inspected2DIcon: "mdi-file-image-outline",
+
+      isSelectionDragOn: false
     };
   },
   computed: {
@@ -342,9 +345,10 @@ export default {
     this.isModelGLTF = this.chartData[0].gltf ? true : false;
     this.inspectedItem = this.chartData[0];
   },
+
   updated() {
-    this.cards.splice(0, this.cards.length);
-    this.cards.push(...this.getAllCards());
+    //this.cards.splice(0, this.cards.length);
+    //this.cards.push(...this.getAllCards());
   },
   created() {
     this.viewID = "id" + this._uid;
@@ -357,6 +361,9 @@ export default {
           d.selected = this.selectionMap[d._id];
         });
         this.numSelected = this.countSelected(this.selectionMap);
+        if (mutation.type == "resetMarking") {
+          this.enableContext = true;
+        }
       }
     });
   },
@@ -393,26 +400,51 @@ export default {
       this.isLoading = false;
     },
     getAllCards() {
-      let cards = Array.prototype.slice.call(
-        d3.select("#" + this.viewID).selectAll(".v-card")._groups[0]
-      );
+      let cardNodes = d3.select("#" + this.viewID).selectAll(".v-card")._groups[0]     //.select('.vue-drag-select')
+      //console.log(cardNodes)
+      let cards = Array.prototype.slice.call(cardNodes).filter(d => d.id != '');
+      
+      //console.log(cards.length)
       return cards;
     },
-    onMouseUp(selectedItems) {
+    onSelectionDragMouseUp(selectedItems) {
+      this.isSelectionDragOn = false;
       let selectedIDs = selectedItems.map(s => {
         let start = s.id.indexOf("_");
         let secondPart = s.id.substring(start + 1);
         let secondStart = secondPart.indexOf("_"); //finding the 2nd occurance of _ , accounting for ids that start with _
         return secondPart.substring(secondStart + 1);
       });
-      //console.log(selectedIDs)
+ 
       //selectedIDs.forEach(s => this.update({ _id: s }, event));
+      if (selectedIDs.length > 0) {
+        this.$store.commit("update", {
+          view: this.viewID,
+          selection: selectedIDs,
+          operation: getOperationFromEvent(event)
+        });
+      }
+    },
+    onSelectionDragMouseMove(selectedItems) {
+      this.isSelectionDragOn = true;
+      /*
+      console.log("move",this.isSelectionDragOn, selectedItems)
+      if (!this.enableContext) {
+        let selectedIDs = selectedItems.map(s => {
+          let start = s.id.indexOf("_");
+          let secondPart = s.id.substring(start + 1);
+          let secondStart = secondPart.indexOf("_"); //finding the 2nd occurance of _ , accounting for ids that start with _
+          return secondPart.substring(secondStart + 1);
+        });
 
-      this.$store.commit("update", {
-        view: this.viewID,
-        selection: selectedIDs,
-        operation: getOperationFromEvent(event)
-      });
+        //console.log("aha", selectedIDs.length, selectedIDs);
+        /*
+        this.$store.commit("update", {
+          view: this.viewID,
+          selection: selectedIDs,
+          operation: getOperationFromEvent(event)
+        });
+      }*/
     },
     hover(item, forced) {
       if (forced || this.isHoveringEnabled) {
@@ -423,16 +455,16 @@ export default {
       this.$store.commit("hover", { hovered: null });
     },
     toggle(item) {
-
+      if (!this.isSelectionDragOn) {
         this.$store.commit("update", {
           view: this.viewID,
           selection: [item._id],
           operation: operations.TOGGLE
         });
-
+      }
     },
     update(item, event) {
-      console.log("A", event);
+      //console.log("A", event);
       //if(!event.altKey)
       //  event.shiftKey = true;
       //console.log("B", event)

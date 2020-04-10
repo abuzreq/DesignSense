@@ -50,8 +50,14 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             toggleEditingMode(state, payload) {
                 state.isEditingMode = !state.isEditingMode;
             },
-            toggleInspectionMode(state, payload) {
+            toggleInspectionMode(state, payload) 
+            {
+                
                 state.isInspectionMode = !state.isInspectionMode;
+                if(!state.isInspectionMode)
+                {
+                    state.hovered = null;
+                }
             },
 
             

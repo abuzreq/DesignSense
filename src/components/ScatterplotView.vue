@@ -185,12 +185,12 @@ class ScatterPlot {
 
     var keyFunc;
     function chart(selection) {
-      var innerWidth = outerWidth - margin.left - margin.right;
-      var innerHeight = outerHeight - margin.top - margin.bottom;
+      var innerWidth = outerWidth - margin.left - margin.right ;
+      var innerHeight = outerHeight - margin.top - margin.bottom ;
 
       colorScale.range();
-      xScale.range([0, innerWidth]);
-      yScale.range([innerHeight, 0]);
+      xScale.range([15, innerWidth-15]);
+      yScale.range([innerHeight-15, 15]);
       let thisChart = this;
 
       selection.each(function(data) {

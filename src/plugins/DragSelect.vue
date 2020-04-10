@@ -6,8 +6,7 @@
 </template>
 
 <script>
-
-//Adapted with minor changes from: 
+//Adapted with minor changes from:
 //https://github.com/JochenLutz/vue-drag-select
 
 export default {
@@ -17,7 +16,8 @@ export default {
       type: [Array, Function],
       required: false
     },
-    scrollAccessor: null
+    scrollAccessor: null,
+    selectorClass: '',
   },
   data() {
     return {
@@ -25,7 +25,7 @@ export default {
       changedItems: false,
       startPoint: null,
       endPoint: null,
-      selectedItems: [],
+      selectedItems: [],    
       scrollContainer: null
     };
   },
@@ -98,12 +98,10 @@ export default {
       }
       return {
         x:
-        
           this.$el.scrollLeft ||
           document.body.scrollLeft ||
           document.documentElement.scrollLeft,
         y:
-         
           this.$el.scrollTop ||
           document.body.scrollTop ||
           document.documentElement.scrollTop
@@ -129,20 +127,32 @@ export default {
           x: event.pageX,
           y: event.pageY
         };
+
+        const children = this.$children.length
+          ? this.$children
+          : this.$el.children;
+
+        this.selectedItems =  Array.from(children).filter(item => {
+          return this.isItemSelected(item.$el || item);
+        }).map(item => item.$el);
+        this.$emit("onmousemove", this.selectedItems);
+         this.changedItems = true;
+         /*
         if (this.items) {
           this.selectedItems = this.items.filter(item => {
             return this.isItemSelected(item.$el || item);
           });
-
+          this.$emit("onmousemove", this.selectedItems);
           this.changedItems = true;
         }
+        */
       }
     },
     onMouseUp(event) {
       // Clean up event listeners
       window.removeEventListener("mousemove", this.onMouseMove);
       window.removeEventListener("mouseup", this.onMouseUp);
-      if (this.changedItems) this.$emit("select", this.selectedItems);
+      if (this.changedItems) this.$emit("onmouseup", this.selectedItems);
       // Reset state
       this.mouseDown = false;
       this.changedItems = false;
@@ -150,32 +160,44 @@ export default {
       this.endPoint = null;
     },
     isItemSelected(el) {
-      const boxA = this.selectionBox;
-    
-      if(boxA.width < el.clientWidth && boxA.height < el.clientHeight) 
+      
+      if (!el.classList.contains(this.selectorClass))
       {
-         return false;
+        return false;
       }
-     
+    
+      const boxA = this.selectionBox;
+
+      if (
+        el.clientWidth != 0 &&
+        el.clientHeight != 0 &&
+        boxA.width < el.clientWidth / 2 &&
+        boxA.height < el.clientHeight / 2
+      ) {
+          return false;
+      }
+
       const boxB = {
         top: el.offsetTop - this.scrollContainer.scrollTop,
         left: el.offsetLeft - this.scrollContainer.scrollLeft,
         width: el.clientWidth,
         height: el.clientHeight
       };
-  
 
-      let inside =  !!(
+      let inside = !!(
         boxA.left <= boxB.left + boxB.width &&
         boxA.left + boxA.width >= boxB.left &&
         boxA.top <= boxB.top + boxB.height &&
         boxA.top + boxA.height >= boxB.top
       );
-  
+      if (!inside) {
+        //console.log(boxA, boxB, el.clientWidth, el.clientHeight);
+      }
       return inside;
     }
   },
   mounted() {
+    /*
     this.$children.forEach(child => {
       child.$on("click", event => {
         const included = this.selectedItems.find(item => {
@@ -190,7 +212,8 @@ export default {
         }
       });
     });
-     this.scrollContainer =  this.scrollAccessor(this.$el);
+*/
+    this.scrollContainer = this.scrollAccessor(this.$el);
   },
   beforeDestroy() {
     // Remove event listeners

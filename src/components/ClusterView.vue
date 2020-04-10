@@ -433,15 +433,7 @@ export default {
           .select("#" + this.cardSelector + oldValue._id)
           .classed("hovered", false);
       }
-
       if (newValue) {
-        console.log(
-          newValue,
-          d3.select("#" + this.viewID),
-          d3
-            .select("#" + this.viewID)
-            .select("#" + this.cardSelector + newValue._id)
-        );
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + newValue._id)
           .classed("hovered", true);
