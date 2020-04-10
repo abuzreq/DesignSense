@@ -490,13 +490,21 @@ export default {
       this.$store.commit("hover", { hovered: null });
     },
     toggle(item) {
-      if (!this.isSelectionDragOn) {
-        this.$store.commit("update", {
-          view: this.viewID,
-          selection: [item._id],
-          operation: operations.TOGGLE
-        });
+      if(this.isHoveringEnabled)
+      {
+          this.inspectedItem = item;
       }
+      else
+      {
+          if (!this.isSelectionDragOn) {
+            this.$store.commit("update", {
+              view: this.viewID,
+              selection: [item._id],
+              operation: operations.TOGGLE
+            });
+          }
+      }
+
     },
     update(item, event) {
       //console.log("A", event);
