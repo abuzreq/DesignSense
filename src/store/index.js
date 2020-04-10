@@ -260,9 +260,6 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 context.commit('setData', { newData: selection });
             },
             invertSelection(context) {
-                console.log(context.getters.unselectedInMarking(context.state.defaultMarkingID))
-                console.log("2", context.getters.data)
-                console.log("3", context.getters.dataMap)
                 let inverted = Object.keys(context.getters.unselectedInMarking(context.state.defaultMarkingID))
                 context.commit("update", {
                     markingID: context.state.defaultMarkingID,
@@ -458,14 +455,12 @@ function operate(marking, selection, operation) {
     else if (operation == operations.INTERSECTION)
     {
         let selected = getSelection(marking, selection)
-        console.log(selected, selection, marking)
         for (var alt in marking) 
         {
             
             if(marking[alt] == 1 && selected[alt] == 1)
             {
                 marking[alt] = 1;
-                console.log(alt)
             }
             else
             {

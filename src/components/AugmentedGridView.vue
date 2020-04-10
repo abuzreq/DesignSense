@@ -176,8 +176,10 @@
                     <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
                     <v-card class= "thumbnail_card" v-bind:id="cardSelector+item._id">
                       <v-img
-                        v-bind:class="{ outlined: enableContext && numSelected > 0 && selectionMap[item._id], 
-                                      transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id],
+                        v-bind:class="{ 
+                                        under_drag_selection: !enableContext && isSelectionDragOn && item._id in dragSelection,
+                                        outlined:  (enableContext && numSelected > 0 && selectionMap[item._id]), 
+                                        transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id],
                                       }"
                         v-if="true"
                         :src="item.image"
@@ -215,6 +217,11 @@
 </template>
 
 <style scoped>
+
+.col > .v-card:not(.hovered) .v-image.under_drag_selection {
+  border: 2px dashed rgb(33, 119, 180);
+}
+
 .col > .v-card:not(.hovered) .v-image.outlined {
   border: 2px solid rgb(33, 119, 180);
 }
@@ -312,7 +319,9 @@ export default {
       inspected3DIcon: "mdi-video-3d",
       inspected2DIcon: "mdi-file-image-outline",
 
-      isSelectionDragOn: false
+      isSelectionDragOn: false,
+      dragSelection: {},
+
     };
   },
   computed: {
@@ -409,6 +418,7 @@ export default {
     },
     onSelectionDragMouseUp(selectedItems) {
       this.isSelectionDragOn = false;
+      this.dragSelection = {}
       let selectedIDs = selectedItems.map(s => {
         let start = s.id.indexOf("_");
         let secondPart = s.id.substring(start + 1);
@@ -427,9 +437,13 @@ export default {
     },
     onSelectionDragMouseMove(selectedItems) {
       this.isSelectionDragOn = true;
-      /*
-      console.log("move",this.isSelectionDragOn, selectedItems)
-      if (!this.enableContext) {
+      
+     
+      if (!this.enableContext && selectedItems.length > 0) 
+      {
+        // console.log("move",selectedItems,  d3.select(selectedItems) )
+       // d3.selectAll(selectedItems).classed("outlined", true)
+
         let selectedIDs = selectedItems.map(s => {
           let start = s.id.indexOf("_");
           let secondPart = s.id.substring(start + 1);
@@ -437,14 +451,35 @@ export default {
           return secondPart.substring(secondStart + 1);
         });
 
+        this.dragSelection = {}
+        
+        selectedIDs.forEach(d => {
+          this.dragSelection[d] = null;
+        });
+
+        /*
+        console.log(selectedItems.map(d => d.id))
+            d3.select("#" + this.viewID)
+          .select("#" + this.cardSelector + s)
+          .classed("transparent", false)
+          .classed("outlined", true);*/
+
+        /*
+        let selectedIDs = selectedItems.map(s => {
+          let start = s.id.indexOf("_");
+          let secondPart = s.id.substring(start + 1);
+          let secondStart = secondPart.indexOf("_"); //finding the 2nd occurance of _ , accounting for ids that start with _
+          return secondPart.substring(secondStart + 1);
+        });*/
+
         //console.log("aha", selectedIDs.length, selectedIDs);
         /*
         this.$store.commit("update", {
           view: this.viewID,
           selection: selectedIDs,
           operation: getOperationFromEvent(event)
-        });
-      }*/
+        });*/
+      }
     },
     hover(item, forced) {
       if (forced || this.isHoveringEnabled) {

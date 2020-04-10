@@ -1,7 +1,7 @@
 <template>
   <div class="vue-drag-select" @mousedown="onMouseDown">
     <slot :selectedItems="selectedItems" />
-    <div v-if="mouseDown" class="vue-drag-select-box" :style="selectionBoxStyling"></div>
+    <div v-if="mouseDown" :class="selectedItems.length>0?'vue-drag-select-box':'vue-drag-select-box-empty'" :style="selectionBoxStyling"></div>
   </div>
 </template>
 
@@ -231,9 +231,15 @@ export default {
   position: relative;
   user-select: none;
 }
+
 .vue-drag-select-box {
   position: absolute;
   background: rgba(0, 162, 255, 0.4);
+  z-index: 99;
+}
+.vue-drag-select-box-empty {
+  position: absolute;
+  background: rgba(228, 63, 99, 0.4);
   z-index: 99;
 }
 </style>
