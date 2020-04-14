@@ -8,6 +8,14 @@
       &nbsp;&nbsp;
       Y:
       <SingleDimensionSelect :initialValue="this.yColumn" v-on:update="onYChange($event)" :width="170" />
+        <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="calculateParetoFrontier($event)">
+            <v-icon color= "yellow">mdi-trophy-outline</v-icon>         
+          </v-btn>
+        </template>
+        <span>Compute the Pareto-Frontier for the chosen dimensions.</span>
+      </v-tooltip>
     </v-toolbar>
     <div :id="viewID" ref="scatter" class="scatter" />
   </v-container>
@@ -55,6 +63,8 @@ div >>> .extent {
 }
 </style>
 <script>
+const pf = require('pareto-frontier');
+
 import * as d3 from "d3";
 //import ScatterPlot from "@/components/Scatterplot.js";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
@@ -70,7 +80,8 @@ export default {
     return {
       xColumn: "TotalFlrArea",
       yColumn: "EnergyUse",
-      colorColumn: "collection"
+      colorColumn: "collection",
+      isShowingParetoFrontier: false,
       /*  xColumn: "overhang_area_fraction",
       yColumn: "objective_value",*/
     };
@@ -84,6 +95,20 @@ export default {
     this.yColumn =this.numericDimensions[1];
   },
   methods: {
+    calculateParetoFrontier: function(event)
+    {
+      this.isShowingParetoFrontier = true;
+      let graph = this.chartData.map(d => [d[this.xColumn], d[this.yColumn], d._id])
+      //https://github.com/justinormont/pareto-frontier/pull/2
+      const out = pf.getParetoFrontier(graph, { optimize: 'topRight'}); //topLeft topRight bottomRight bottomLeft
+      console.log(out)
+      this.$store.commit("update", {
+        view: this.viewID,
+        selection: out.map(d => d[2]),
+        operation: getOperationFromEvent(event)
+      });
+        
+    },
     onXChange: function(newXColumn)
     {
       this.xColumn = newXColumn;
@@ -358,13 +383,27 @@ class ScatterPlot {
 
         var highlight = function(selection) {
           selection = selection.map(keyFunc);
+          
+          let circles = thisG.selectAll("circle")
           thisG.selectAll("circle").classed("hidden", (d, i) => {
-            if (selection.includes(keyFunc(d))) {
+            if (selection.includes(keyFunc(d))) { //TODO can be made faster by doing a membership test on a key-value map 
               return false;
             } else {
               return true;
             }
-          });
+          }).sort( (a, b) => //To insure that the highlighted circles will be moved down in the DOM making sure they will drawn on top
+          { 
+            let aIn = selection.includes(keyFunc(a))
+            let bIn = selection.includes(keyFunc(b))
+            if (aIn == bIn) {
+              return 0;
+            } else if (aIn == true) {
+              return 1;
+            } 
+            else if (bIn == true) {
+              return -1;
+            }                         
+          });;
         };
 
         var unhighlightAll = function() {

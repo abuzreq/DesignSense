@@ -24,6 +24,7 @@
     "numjs": "^0.16.0",
     "papaparse": "^5.1.1",
     "parcoord-es": "^2.2.10",
+    "pareto-frontier": "^1.1.1",
     "vue": "^2.6.11",
     "vue-3d-model": "^1.2.2",
     "vue-drag-select": "^0.2.0",
