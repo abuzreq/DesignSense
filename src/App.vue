@@ -274,8 +274,8 @@ export default {
           type: "server"
         },
         { name: "DreamLens", url: "http://142.58.183.69:5050", type: "server" },
-        { name: "Local", url: "http://localhost:5050", type: "server" }
-
+        { name: "Local", url: "http://localhost:5050", type: "server" },
+        { name: "D*", url: "http://sr-02645.iat.sfu.ca:5052", type: "server" }
       ],
       url: "",
       cloudURL: "",

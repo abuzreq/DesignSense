@@ -164,9 +164,18 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 state.setsMetadataMap[ID] = {name:name, comment:comment};
             },
             addSet(state, payload) {
-                state.setsCounter += 1
-                let ID = 'Set #'+state.setsCounter;//generateID();
-
+                
+                let ID = "";
+                if ((payload.hasOwnProperty("setName"))) 
+                {
+                    ID = payload.setName;
+                }
+                else
+                {
+                    state.setsCounter += 1    
+                    ID = 'Set #'+state.setsCounter;//generateID();
+                }
+               
                 state.setsIDs.push(ID)
                 state.setsMap[ID] = payload.members;
 
@@ -332,9 +341,6 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         }
 
     });
-
-
-
 }
 
 

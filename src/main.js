@@ -49,6 +49,8 @@ function loadDataFromURL(url, request) {
               similarity_map[i] = entry; //row[0]
             }
           })
+
+
           app = new Vue({
             vuetify,
             vdr,
@@ -58,6 +60,31 @@ function loadDataFromURL(url, request) {
             render: h => h(App),
           });
 
+
+          if(data[0].collection)
+          {
+            console.log("creating sets");
+            let initialSets = {}
+            data.forEach(d=> 
+              {
+                let collection = d.collection
+
+               
+                if(!(collection in initialSets))
+                {
+  
+                  initialSets[collection] = []
+                }
+                initialSets[collection].push(d._id)
+              })
+              for(var setName in initialSets)
+              { 
+                  app.$store.commit("addSet", {setName:setName, members:initialSets[setName]})
+              }
+ 
+          }
+        
+          
 
           let args = {}
           //Creates the default marking

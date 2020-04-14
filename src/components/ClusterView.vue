@@ -327,13 +327,14 @@ export default {
       this.$store.commit("hover", { hovered: null });
     },
     toggle(item, event) {
-      //console.log("Toggle", this.clustersMap[item._id]._id);
-
+      //console.log("Toggle", this.clustersMap[item._id]._id);   
       this.$store.commit("update", {
         view: this.viewID,
         selection: this.clustersMap[item._id].map(d => d._id),
         operation: getOperationFromEvent(event)
       });
+       this.$store.commit("hover", { hovered: item });
+
     },
     highlight(selection) {
       let count = 0;
