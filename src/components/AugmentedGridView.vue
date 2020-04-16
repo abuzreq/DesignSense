@@ -203,7 +203,29 @@
                     :src="item.gltf" 
                   />
                       -->
-                      <!--</router-link>-->
+                      
+                      <!-- -->
+                      <v-expansion-panels v-if="possibleColSpans[colSpan] > 3">
+                      <v-expansion-panel >
+                        <v-expansion-panel-header>
+                          {{"ID:" }} &nbsp;&nbsp;&nbsp;&nbsp; {{ item["_id"] }}
+                        </v-expansion-panel-header>
+                        <v-expansion-panel-content >
+                          <v-list dense >
+                            <v-list-item
+                              v-for="(param, j) in keys"
+                              :key="j"
+                            >
+                              <v-list-item-content  class="ml--1" >{{ param }}</v-list-item-content>
+                              <v-list-item-content  class="justify-end">{{
+                                item[param]
+                              }}</v-list-item-content>
+                            </v-list-item>
+                          </v-list>
+                        </v-expansion-panel-content>
+                      </v-expansion-panel>
+                    </v-expansion-panels>
+
                     </v-card>
                   </v-col>
                 </v-row>
@@ -217,6 +239,11 @@
 </template>
 
 <style scoped>
+
+/deep/ div.v-expansion-panel-content__wrap {
+padding-left: 0px;
+padding-right: 0px;
+}
 
 .col > .v-card:not(.hovered) .v-image.under_drag_selection {
   border: 2px dashed rgb(33, 119, 180);

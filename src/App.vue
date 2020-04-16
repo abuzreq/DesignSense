@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app >
     <v-app-bar app dark dense flat short color=" white--text text--lighten-1" height="50">
       <v-toolbar-title>DesignSense</v-toolbar-title>
       <v-spacer></v-spacer>
@@ -209,6 +209,10 @@
 
 
 <style>
+body {
+  overflow: hidden; /* Hide scrollbars */
+}
+
 .v-toolbar {
   margin-top: -5px;
 }

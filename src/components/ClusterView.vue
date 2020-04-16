@@ -49,7 +49,12 @@
 
           <v-spacer></v-spacer>
         -->
-        <v-toolbar dense fixed dark color="blue darken-3" class="mb-1">
+        <v-toolbar  fixed dark color="blue darken-3" class="mb-1">
+          <v-container fluid>
+          <v-row dense justify="center" style="margin-bottom:-10px;">
+           <v-toolbar-title >Clusters</v-toolbar-title>
+          </v-row>
+          <v-row dense>
           <v-slider
             min="4"
             max="16"
@@ -68,6 +73,8 @@
             tick-size="4"
             v-model="colSpan"
           ></v-slider>
+          </v-row>
+          </v-container>
         </v-toolbar>
 
         <!--

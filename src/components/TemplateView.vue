@@ -39,7 +39,7 @@ export default {
       if (mutation.type === "update" || mutation.type === "resetMarking") 
       {
           if(this.hasOwnProperty("markingChangeHandler"))
-              this.markingChangeHandler();
+              this.markingChangeHandler(mutation.type  === "resetMarking");
       }
     });
   },

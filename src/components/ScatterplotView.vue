@@ -119,10 +119,18 @@ export default {
         this.yColumn = newYColumn;
         this.refresh();
     },
-    markingChangeHandler: function() {
-      //this.chart.unhighlight(this.$store.getters.data);
-      var result = this.$store.getters.selectedDataInView(this.viewID);
-      this.chart.highlight(result);
+    markingChangeHandler: function(reset) {
+      if(reset)
+      {
+          this.chart.unhighlightAll();
+      }
+      else
+      {
+        //this.chart.unhighlight(this.$store.getters.data);
+        var result = this.$store.getters.selectedDataInView(this.viewID);
+        this.chart.highlight(result);
+      }
+    
     },
     hoverHandler : function()
     {

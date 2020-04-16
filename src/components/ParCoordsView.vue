@@ -162,10 +162,17 @@ export default {
       */
       this.refresh();
     },
-    markingChangeHandler: function() {
-      this.chart.unhighlight(this.$store.getters.data);
-      var result = this.$store.getters.selectedDataInView(this.viewID);
-      this.chart.highlight(result);
+    markingChangeHandler: function(reset) {    
+      if(reset)
+      {
+         this.chart.unhighlight();   
+      }
+      else
+      {
+        this.chart.unhighlight(this.$store.getters.data);    
+        var result = this.$store.getters.selectedDataInView(this.viewID);
+        this.chart.highlight(result);
+      }
     },
     hoverHandler: function() {
       this.cleanTooltip();
