@@ -99,7 +99,7 @@ export default {
       this.excludedDimensions.push(e);
     }
     */
-    this.keysBlackList = ['gltf','image','ID','id','_id','geometry','json','img','threeD','collection']
+    this.keysBlackList = ['gltf','image','ID','id','_id','geometry','json','img','threeD','collection', 'images']
     /*
     this.excludedDimensions = Object.keys(this.chartData[0]).filter(
       d => !this.numericDimensions.includes(d)

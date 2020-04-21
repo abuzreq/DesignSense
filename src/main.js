@@ -369,6 +369,10 @@ function prepareGFolder(folderLink) {
 
         } else if (fileType.startsWith("image")) {
           //this item is a image file
+          /*if(!imgFiles.hasOwnProperty(fileName))
+          {
+            imgFiles[fileName] = []
+          }*/
           imgFiles[fileName] = fileLink;
 
         } else if (fileType === "application/json") {
@@ -428,7 +432,6 @@ function prepareGFolder(folderLink) {
 }
 
 function readyToLoad(csvFilePathLink, imgFiles, jsonFiles) {
-
   if (csvFilePathLink.length > 0) {
     // remove the current selection
     d3.csv(csvFilePathLink).then(function (data) {
@@ -442,9 +445,22 @@ function readyToLoad(csvFilePathLink, imgFiles, jsonFiles) {
           }
 
         }
+        if(x.img)
+        {
 
-        x.image = imgFiles[x.img]
-        x.json = jsonFiles[x.threeD]
+          x.image = (Object.keys(imgFiles).length === 0)?x.img:imgFiles[x.img];
+          x.images = [x.image]
+        }
+        else
+        {
+           let imgKeys = Object.keys(x).filter(x => x.includes("img"))
+           x.images = imgKeys.map(key => (Object.keys(imgFiles).length === 0)?x[key]:imgFiles[x[key]])
+           x.image = x.images[0]
+           console.log('ahaaa', imgFiles, imgKeys[0])
+        }
+       
+        x.json = (Object.keys(jsonFiles).length === 0)?x.threeD:jsonFiles[x.threeD];
+       
         return x
       });
 

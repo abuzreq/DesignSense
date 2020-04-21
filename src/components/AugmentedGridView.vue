@@ -131,6 +131,13 @@
               color="primary"
             ></v-progress-circular>
 
+             <v-btn icon  @click="() => previousView(inspectedItem)" >
+                  <v-icon small >mdi-arrow-left</v-icon>
+                </v-btn>
+            <v-btn icon  @click="() => nextView(inspectedItem)" >
+                  <v-icon small >mdi-arrow-right</v-icon>
+                </v-btn>
+           
             <v-img
               contain
               width="100%"
@@ -156,7 +163,7 @@
 
         <template v-slot:default="items">
           <drag-select-container
-            selectorClass= "thumbnail_card"  
+            selectorClass="thumbnail_card"
             :scrollAccessor="(el) => el.firstChild.firstChild"
             @onmouseup="onSelectionDragMouseUp($event)"
             @onmousemove="onSelectionDragMouseMove($event)"
@@ -174,7 +181,7 @@
                     :cols="possibleColSpans[colSpan]"
                   >
                     <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
-                    <v-card class= "thumbnail_card" v-bind:id="cardSelector+item._id">
+                    <v-card class="thumbnail_card" v-bind:id="cardSelector+item._id">
                       <v-img
                         v-bind:class="{ 
                                         under_drag_selection: !enableContext && isSelectionDragOn && item._id in dragSelection,
@@ -203,29 +210,28 @@
                     :src="item.gltf" 
                   />
                       -->
-                      
-                      <!-- -->
-                      <v-expansion-panels v-if="possibleColSpans[colSpan] > 3">
-                      <v-expansion-panel >
-                        <v-expansion-panel-header>
-                          {{"ID:" }} &nbsp;&nbsp;&nbsp;&nbsp; {{ item["_id"] }}
-                        </v-expansion-panel-header>
-                        <v-expansion-panel-content >
-                          <v-list dense >
-                            <v-list-item
-                              v-for="(param, j) in keys"
-                              :key="j"
-                            >
-                              <v-list-item-content  class="ml--1" >{{ param }}</v-list-item-content>
-                              <v-list-item-content  class="justify-end">{{
-                                item[param]
-                              }}</v-list-item-content>
-                            </v-list-item>
-                          </v-list>
-                        </v-expansion-panel-content>
-                      </v-expansion-panel>
-                    </v-expansion-panels>
 
+                      <!-- -->
+                      <v-expansion-panels v-show="possibleColSpans[colSpan] > 2">
+                        <v-expansion-panel>
+                          <v-expansion-panel-header>{{"ID:" }} &nbsp;&nbsp;&nbsp;&nbsp; {{ item["_id"] }}</v-expansion-panel-header>
+
+                          <v-expansion-panel-content >
+                            <scroll-sync static vertical> <!-- style="height: 200px; overflow-y:scroll;" -->
+                              <v-list >
+                                <v-list-item v-for="(param, j) in keys" :key="j">
+                                  <v-list-item-content>{{ param }}</v-list-item-content>
+                                  <v-list-item-content class="justify-center">
+                                    {{
+                                    item[param]
+                                    }}
+                                  </v-list-item-content>
+                                </v-list-item>
+                              </v-list>
+                            </scroll-sync>
+                          </v-expansion-panel-content>
+                        </v-expansion-panel>
+                      </v-expansion-panels>
                     </v-card>
                   </v-col>
                 </v-row>
@@ -239,10 +245,9 @@
 </template>
 
 <style scoped>
-
 /deep/ div.v-expansion-panel-content__wrap {
-padding-left: 0px;
-padding-right: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
 .col > .v-card:not(.hovered) .v-image.under_drag_selection {
@@ -292,10 +297,16 @@ import * as d3 from "d3";
 import DragSelect from "@/plugins/DragSelect.vue";
 import SPECTACLES from "@/plugins/SPECTACLES.js";
 import $ from "jquery";
+import ScrollSync from "vue-scroll-sync";
 
 export default {
   name: "AugmentedGridCards",
-  components: { ModelGltf, ModelThree, "drag-select-container": DragSelect },
+  components: {
+    ModelGltf,
+    ModelThree,
+    "drag-select-container": DragSelect,
+    "scroll-sync": ScrollSync
+  },
   props: ["defaultEnableContext", "width", "height", "x", "y"],
   data: function() {
     return {
@@ -343,12 +354,12 @@ export default {
       numSelected: 0,
       inspectedItem: null,
       inspecting3DView: false,
+      inspectedItemViewIndex: 0,
       inspected3DIcon: "mdi-video-3d",
       inspected2DIcon: "mdi-file-image-outline",
 
       isSelectionDragOn: false,
-      dragSelection: {},
-
+      dragSelection: {}
     };
   },
   computed: {
@@ -404,6 +415,21 @@ export default {
     });
   },
   methods: {
+    nextView(item)
+    {
+      this.inspectedItemViewIndex = (this.inspectedItemViewIndex+1)% item.images.length;
+       item.image =  item.images[this.inspectedItemViewIndex]
+    },
+    previousView(item)
+    {
+      let index = this.inspectedItemViewIndex-1;
+      if(index < 0)
+      {
+          index = item.images.length - 1;
+      }
+      this.inspectedItemViewIndex = index;
+      item.image =  item.images[this.inspectedItemViewIndex]
+    },
     onGLTFLoaded() {
       this.isLoading = false;
       //TODO fetch the loaded object and color it.. see https://github.com/abuzreq/abuzreq.github.io/blob/develop/js/geom.js
@@ -436,23 +462,24 @@ export default {
       this.isLoading = false;
     },
     getAllCards() {
-      let cardNodes = d3.select("#" + this.viewID).selectAll(".v-card")._groups[0]     //.select('.vue-drag-select')
+      let cardNodes = d3.select("#" + this.viewID).selectAll(".v-card")
+        ._groups[0]; //.select('.vue-drag-select')
       //console.log(cardNodes)
-      let cards = Array.prototype.slice.call(cardNodes).filter(d => d.id != '');
-      
+      let cards = Array.prototype.slice.call(cardNodes).filter(d => d.id != "");
+
       //console.log(cards.length)
       return cards;
     },
     onSelectionDragMouseUp(selectedItems) {
       this.isSelectionDragOn = false;
-      this.dragSelection = {}
+      this.dragSelection = {};
       let selectedIDs = selectedItems.map(s => {
         let start = s.id.indexOf("_");
         let secondPart = s.id.substring(start + 1);
         let secondStart = secondPart.indexOf("_"); //finding the 2nd occurance of _ , accounting for ids that start with _
         return secondPart.substring(secondStart + 1);
       });
- 
+
       //selectedIDs.forEach(s => this.update({ _id: s }, event));
       if (selectedIDs.length > 0) {
         this.$store.commit("update", {
@@ -464,12 +491,10 @@ export default {
     },
     onSelectionDragMouseMove(selectedItems) {
       this.isSelectionDragOn = true;
-      
-     
-      if (!this.enableContext && selectedItems.length > 0) 
-      {
+
+      if (!this.enableContext && selectedItems.length > 0) {
         // console.log("move",selectedItems,  d3.select(selectedItems) )
-       // d3.selectAll(selectedItems).classed("outlined", true)
+        // d3.selectAll(selectedItems).classed("outlined", true)
 
         let selectedIDs = selectedItems.map(s => {
           let start = s.id.indexOf("_");
@@ -478,8 +503,8 @@ export default {
           return secondPart.substring(secondStart + 1);
         });
 
-        this.dragSelection = {}
-        
+        this.dragSelection = {};
+
         selectedIDs.forEach(d => {
           this.dragSelection[d] = null;
         });
@@ -517,21 +542,17 @@ export default {
       this.$store.commit("hover", { hovered: null });
     },
     toggle(item) {
-      if(this.isHoveringEnabled)
-      {
-          this.inspectedItem = item;
+      if (this.isHoveringEnabled) {
+        this.inspectedItem = item;
+      } else {
+        if (!this.isSelectionDragOn) {
+          this.$store.commit("update", {
+            view: this.viewID,
+            selection: [item._id],
+            operation: operations.TOGGLE
+          });
+        }
       }
-      else
-      {
-          if (!this.isSelectionDragOn) {
-            this.$store.commit("update", {
-              view: this.viewID,
-              selection: [item._id],
-              operation: operations.TOGGLE
-            });
-          }
-      }
-
     },
     update(item, event) {
       //console.log("A", event);
@@ -664,6 +685,7 @@ export default {
       }
     },
     inspectedItem: function(newItem) {
+      this.inspectedItemViewIndex = 0;
       if (newItem && this.inspecting3DView) {
         this.isLoading = true;
         this.load3DJSON(newItem);

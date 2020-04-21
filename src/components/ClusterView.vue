@@ -148,9 +148,10 @@
 </template>
 
 <style scoped>
+/*
 .col > .v-card.clusterRep .v-image {
   filter: sepia() saturate(4) hue-rotate(295deg);
-}
+}*/
 .col > .v-card.outlined {
   border: 2px solid rgb(33, 119, 180);
 }
@@ -340,7 +341,8 @@ export default {
         selection: this.clustersMap[item._id].map(d => d._id),
         operation: getOperationFromEvent(event)
       });
-       this.$store.commit("hover", { hovered: item });
+
+      //this.$store.commit("hover", { hovered: item });
 
     },
     highlight(selection) {

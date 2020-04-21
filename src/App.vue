@@ -273,13 +273,23 @@ export default {
           type: "cloud"
         },
         {
+          name: "Malaeeb_New",
+          url: "https://1drv.ms/u/s!AsGWrbL1DmbagapU81lDG2mw2-QwaQ",
+          type: "cloud"
+        },  
+        {
           name: "SmartGeometry",
           url: "http://142.58.183.69:5051",
           type: "server"
         },
         { name: "DreamLens", url: "http://142.58.183.69:5050", type: "server" },
         { name: "Local", url: "http://localhost:5050", type: "server" },
-        { name: "D*", url: "http://sr-02645.iat.sfu.ca:5052", type: "server" }
+        { name: "D*", url: "http://sr-02645.iat.sfu.ca:5052", type: "server" },
+        {
+          name: "Cars",
+          url: "https://1drv.ms/u/s!AsGWrbL1DmbagapOAQDFpMAheHksZw",
+          type: "cloud"
+        },
       ],
       url: "",
       cloudURL: "",
