@@ -212,12 +212,11 @@
                       -->
 
                       <!-- -->
-                      <v-expansion-panels v-show="possibleColSpans[colSpan] > 2">
+                      <v-expansion-panels v-show="possibleColSpans[colSpan] > 3">
                         <v-expansion-panel>
                           <v-expansion-panel-header>{{"ID:" }} &nbsp;&nbsp;&nbsp;&nbsp; {{ item["_id"] }}</v-expansion-panel-header>
 
                           <v-expansion-panel-content >
-                            <scroll-sync static vertical> <!-- style="height: 200px; overflow-y:scroll;" -->
                               <v-list >
                                 <v-list-item v-for="(param, j) in keys" :key="j">
                                   <v-list-item-content>{{ param }}</v-list-item-content>
@@ -228,7 +227,6 @@
                                   </v-list-item-content>
                                 </v-list-item>
                               </v-list>
-                            </scroll-sync>
                           </v-expansion-panel-content>
                         </v-expansion-panel>
                       </v-expansion-panels>
@@ -297,7 +295,6 @@ import * as d3 from "d3";
 import DragSelect from "@/plugins/DragSelect.vue";
 import SPECTACLES from "@/plugins/SPECTACLES.js";
 import $ from "jquery";
-import ScrollSync from "vue-scroll-sync";
 
 export default {
   name: "AugmentedGridCards",
@@ -305,7 +302,6 @@ export default {
     ModelGltf,
     ModelThree,
     "drag-select-container": DragSelect,
-    "scroll-sync": ScrollSync
   },
   props: ["defaultEnableContext", "width", "height", "x", "y"],
   data: function() {

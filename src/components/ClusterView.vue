@@ -49,31 +49,31 @@
 
           <v-spacer></v-spacer>
         -->
-        <v-toolbar  fixed dark color="blue darken-3" class="mb-1">
+        <v-toolbar fixed dark color="blue darken-3" class="mb-1">
           <v-container fluid>
-          <v-row dense justify="center" style="margin-bottom:-10px;">
-           <v-toolbar-title >Clusters</v-toolbar-title>
-          </v-row>
-          <v-row dense>
-          <v-slider
-            min="4"
-            max="16"
-            step="4"
-            :tick-labels="numClustersLabels"
-            ticks="always"
-            tick-size="4"
-            v-model="numClusters"
-          ></v-slider>
-          <v-slider
-            min="0"
-            max="2"
-            step="1"
-            :tick-labels="labels"
-            ticks="always"
-            tick-size="4"
-            v-model="colSpan"
-          ></v-slider>
-          </v-row>
+            <v-row dense justify="center" style="margin-bottom:-10px;">
+              <v-toolbar-title>Clusters</v-toolbar-title>
+            </v-row>
+            <v-row dense>
+              <v-slider
+                min="4"
+                max="16"
+                step="4"
+                :tick-labels="numClustersLabels"
+                ticks="always"
+                tick-size="4"
+                v-model="numClusters"
+              ></v-slider>
+              <v-slider
+                min="0"
+                max="2"
+                step="1"
+                :tick-labels="labels"
+                ticks="always"
+                tick-size="4"
+                v-model="colSpan"
+              ></v-slider>
+            </v-row>
           </v-container>
         </v-toolbar>
 
@@ -127,6 +127,9 @@
         </v-layout>
       </template>
     </v-data-iterator>
+
+    <!-- <canvas style="dispaly:none;" id="canvas"></canvas> -->
+
     <v-toolbar dense fixed dark color="blue darken-3" class="mb-1" style="margin-top:-35px">
       <MultiDimensionSelect
         :initialValue="dimensions"
@@ -143,6 +146,12 @@
         </template>
         <span>Rest the dimensions.</span>
       </v-tooltip>
+
+      <!--
+       <v-btn  x-small icon @click="() => isComputingVisualSimilarity = !isComputingVisualSimilarity">
+            <v-icon>mdi-play</v-icon>
+        </v-btn>
+        -->
     </v-toolbar>
   </v-container>
 </template>
@@ -190,6 +199,10 @@ import * as kmeans from "node-kmeans";
 import * as nj from "numjs";
 import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
 
+//import  * as PNGImage from 'pngjs-image';
+import * as pixelmatch from "pixelmatch";
+const PNG = require("pngjs").PNG;
+
 export default {
   name: "AugmentedGridCards",
   components: { ModelGltf, MultiDimensionSelect },
@@ -216,7 +229,9 @@ export default {
       clustersMap: {},
       clusterReps: [],
       dimensions: [],
-      numClusters: 3
+      numClusters: 3,
+      isComputingVisualSimilarity: false
+
     };
   },
   computed: {
@@ -297,6 +312,16 @@ export default {
     compute() {
       var matrix = to2DMatrix(this.chartData, this.dimensions, true); //['TotalFlrArea']
 
+      /*
+      if(this.isComputingVisualSimilarity)
+      {
+            var matrix2 = to2DVisualSimilarityMatrix(this.chartData, "image", true); //['TotalFlrArea']
+            console.log("matrix2", matrix2)
+            //need to compute  to2DVisualSimilarityMatrix in a sync way or async with promise
+      }
+      */ 
+
+      
       kmeans.clusterize(matrix, { k: this.numClusters }, (err, res) => {
         if (err) console.error(err);
         else {
@@ -335,7 +360,7 @@ export default {
       this.$store.commit("hover", { hovered: null });
     },
     toggle(item, event) {
-      //console.log("Toggle", this.clustersMap[item._id]._id);   
+      //console.log("Toggle", this.clustersMap[item._id]._id);
       this.$store.commit("update", {
         view: this.viewID,
         selection: this.clustersMap[item._id].map(d => d._id),
@@ -343,7 +368,6 @@ export default {
       });
 
       //this.$store.commit("hover", { hovered: item });
-
     },
     highlight(selection) {
       let count = 0;
@@ -448,9 +472,27 @@ export default {
           .select("#" + this.cardSelector + newValue._id)
           .classed("hovered", true);
       }
+    },
+    isComputingVisualSimilarity: function(newValue, oldValue)
+    {
+        if(newValue)
+        {
+          this.compute()
+        }
     }
   }
 };
+
+function fetchImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.src = src;
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+  });
+}
+
 function get(obj, keys) {
   var newObj = {};
   for (var key of keys) {
@@ -462,6 +504,42 @@ function values(obj, keys) {
   let v = Object.values(get(obj, keys));
   return v;
 }
+
+function to2DVisualSimilarityMatrix(data, imgKey, normalize) {
+  var matrix = [];
+  var a = document.getElementById("canvas");
+  for (var i in data) {
+    var obj1 = data[i];
+    var row = [];
+    fetchImage(obj1[imgKey]).then((img1, err) => {
+      for (var j = 0; j < i; j++) {
+        var obj2 = data[j];
+        console.log(i, j);
+        fetchImage(obj2[imgKey]).then((img2, err) => {
+          const w = img1.width;
+          const h = img1.height;
+
+          var ctx = a.getContext("2d");
+          ctx.drawImage(img1, 0, 0);
+
+          const data1 = ctx.getImageData(0, 0, w, h).data;
+          ctx.drawImage(img2, 0, 0);
+          const data2 = ctx.getImageData(0, 0, w, h).data;
+          const diff = ctx.createImageData(w, h);
+          //const ctx = a.context2d(width, height, 1);
+
+          let numMistmatch = pixelmatch(data1, data2, diff.data, w, h, {
+            threshold: 0.1
+          });
+          row.push(numMistmatch);
+        });
+      }
+    });
+    matrix.push(row);
+  }
+  return matrix;
+}
+
 function to2DMatrix(data, keys, normalize) {
   if (normalize) {
     var scales = {};

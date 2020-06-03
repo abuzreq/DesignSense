@@ -4,10 +4,10 @@
   <v-container fluid>
     <v-toolbar dense dark color="blue darken-3" class="mb-1">
       X:
-      <SingleDimensionSelect :initialValue="this.xColumn" v-on:update="onXChange($event)"  :width="170"/>
+      <SingleDimensionSelect :initialValue="this.xColumn" v-on:update="onXChange($event)"  :width="180"/>
       &nbsp;&nbsp;
       Y:
-      <SingleDimensionSelect :initialValue="this.yColumn" v-on:update="onYChange($event)" :width="170" />
+      <SingleDimensionSelect :initialValue="this.yColumn" v-on:update="onYChange($event)" :width="180" />
         <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="calculateParetoFrontier($event)">

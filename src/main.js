@@ -293,14 +293,19 @@ function loadDataFromCloudURL(rawUrl) {
     }
   })
 }
+
+var Gkey = "AIzaSyCSrF08UMawxKIb0m4JsA1mYE5NMmP36bY";
+
+let _googleReturnObj = { //{"fileName":Google Drive ID}
+csvFiles: {},
+imgFiles: {},
+jsonFiles: {},
+settingFiles: {}
+};
+  
 function prepareGFolder(folderLink) {
 
-  let _googleReturnObj = { //{"fileName":Google Drive ID}
-    csvFiles: {},
-    imgFiles: {},
-    jsonFiles: {},
-    settingFiles: {}
-  };
+
 
   var folder = {
     "DE_PW": "", // short code from google or base64 coded inLink
@@ -318,7 +323,7 @@ function prepareGFolder(folderLink) {
     var imgFiles = {};
     var jsonFiles = {};
     var settingFiles = {};
-
+	console.log(data)
     if (folder.type === "GoogleDrive") { //this is google returned obj
       data.files.forEach(function (item) {
         var GLink = "";
@@ -388,6 +393,7 @@ function prepareGFolder(folderLink) {
 
       });
     }
+	
     _googleReturnObj.csvFiles = { ..._googleReturnObj.csvFiles, ...csvFiles }
     _googleReturnObj.imgFiles = { ..._googleReturnObj.imgFiles, ...imgFiles }
     _googleReturnObj.jsonFiles = { ..._googleReturnObj.jsonFiles, ...jsonFiles }

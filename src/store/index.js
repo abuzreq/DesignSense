@@ -181,6 +181,18 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
 
                 state.setsMetadataMap[ID] = {name: ID, comment:"Comment Here"};        
             },
+            updateSet(state, payload)
+            {
+                let ID = payload.setID;
+                        
+                let setMarking = setToMarking(state.setsMap[ID], state.rawData)
+                console.log(ID, state.setsMap[ID], setMarking)  
+                operate(setMarking, payload.members, payload.operation);
+                console.log(getSelectedIDs(setMarking))  
+                state.setsMap[ID] = getSelectedIDs(setMarking); //Object.keys(setMarking)
+
+
+            },
             removeSet(state, payload) {
                 let ID = payload.setID;
 
@@ -298,7 +310,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             },
             restoreSet(context, payload) 
             {
-                context.dispatch("resetData");
+                context.dispatch("resetData"); //Ahmed: in case restoring is called when portions of the data is being zoomed on. Altneratives includes adding only the content of set not present
                 context.commit("update",
                 {
                     markingID: context.state.defaultMarkingID,
@@ -306,7 +318,17 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                     operation: payload.operation
                 });
             },
+            updateSet(context, payload) 
+            {
+                let members = Object.keys(context.getters.selectedInMarking(context.state.defaultMarkingID))
 
+                context.commit("updateSet",
+                {
+                    setID: payload.setID,
+                    members: members,
+                    operation: payload.operation
+                });
+            },
 
         },
         modules: {},
@@ -377,6 +399,30 @@ function getSelection(marking, selection) {
         selected[alt] = marking[alt]
     }
     return selected;
+}
+
+function getSelectedIDs(marking) {
+    var selectedIDs = [];
+    for (var alt in marking) {
+        if(marking[alt] == 1)
+        {
+            selectedIDs.push(alt)
+        }
+    }
+    return selectedIDs;
+}
+
+function setToMarking(IDs, data)
+{
+    var marking = {};
+    data.forEach(element => {
+        marking[element._id] = 0;
+    })
+    for (var alt of IDs)
+    {
+        marking[alt] = 1;
+    }
+    return marking;
 }
 
 function getSelectedInMarking(marking, dataMap) {
@@ -478,6 +524,7 @@ function operate(marking, selection, operation) {
     else {
         console.error('Unknown Selection Operation')
     }
+    return marking;
 }
 function createMarkingObject(data) {
     let marking = {}

@@ -24,10 +24,19 @@
                 </template>
                 <span>Restore</span>
               </v-tooltip>
+
+              <v-tooltip left>
+                <template v-slot:activator="{ on }">
+                  <v-btn v-on="on" icon ripple color="red" @click="updateSet(item, $event)">
+                    <v-icon>mdi-find-replace</v-icon>
+                  </v-btn>
+                </template>
+                <span>Update</span>
+              </v-tooltip>
             </v-list-item-action>
 
             <v-list-item-content>
-              <v-list-item-title class="title">{{setsMetadataMap[item].name}}</v-list-item-title>
+                <v-list-item-title class="title">{{setsMetadataMap[item].name}} &nbsp;&nbsp;&nbsp; (#{{setsMap[item].length}})</v-list-item-title>
               <v-textarea
                 class="comment-text-area"
                 height="7vh"
@@ -50,11 +59,9 @@
 </template>
 
 <style scoped>
-
-
 .comment-text-area {
-    font-size: 0.8em;
-  }
+  font-size: 0.8em;
+}
 .v-list-item {
   height: 100px;
 }
@@ -79,7 +86,8 @@ export default {
   computed: {
     ...mapState({
       setsIDs: state => state.setsIDs,
-      setsMetadataMap: state => state.setsMetadataMap
+      setsMetadataMap: state => state.setsMetadataMap,
+      setsMap: state => state.setsMap 
     })
   },
   mounted() {},
@@ -106,6 +114,13 @@ export default {
         setID: ID,
         operation: getOperationFromEvent(event)
       });
+    },
+    updateSet(ID, event) {
+      this.$store.dispatch("updateSet", {
+        setID: ID,
+        operation: getOperationFromEvent(event)
+      });
+      this.$forceUpdate();
     }
   }
 };

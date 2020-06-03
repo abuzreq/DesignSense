@@ -553,7 +553,7 @@ export default function SPECTACLES(divToBind, jsonFileData, callback) {
         var loader = new THREE.ObjectLoader();
         
         //var loader = new LegacyJSONLoader();
-        
+        console.log(jsonToLoad)
         SPECT.scene = new THREE.Scene();
         SPECT.scene = loader.parse(jsonToLoad);
         //SPECT.scene.fog = new THREE.FogExp2(0x000000, 0.025);

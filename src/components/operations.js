@@ -9,15 +9,15 @@ function getOperation(args)
     let operation = operations.REPLACE;
     if(args.altKey && args.shiftKey)
     {
-        operation = operations.INTERSECTION;
+        operation = operations.TOGGLE;
     }
     else if(args.altKey)
     {
-        operation = operations.TOGGLE;
+        operation = operations.ADD ;
     }
     else if(args.shiftKey)
     {
-        operation = operations.ADD;
+        operation = operations.INTERSECTION;
     }
     else if(args.ctrlKey)
     {

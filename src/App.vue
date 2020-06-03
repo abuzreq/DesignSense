@@ -263,10 +263,21 @@ export default {
     return {
       URLs: [
         {
+          name: "P+W Crofton",
+          url: "https://drive.google.com/open?id=1QBanCG1t4xak_5lj0Nwazhy5ANHAX_x7",
+          type: "cloud"
+        },
+        {
           name: "P+W Solar",
           url: "https://1drv.ms/u/s!AsGWrbL1DmbagakFTScT6VocK9ELbw",
           type: "cloud"
         },
+		{
+          name: "SmartGeometry",
+          url: "http://142.58.183.69:5051",
+          type: "server"
+        },
+        { name: "DreamLens", url: "http://142.58.183.69:5050", type: "server" },
         {
           name: "Malaeeb",
           url: "https://1drv.ms/f/s!AsGWrbL1DmbagaggJpgic85d0z3Sgw",
@@ -274,22 +285,22 @@ export default {
         },
         {
           name: "Malaeeb_New",
-          url: "https://1drv.ms/u/s!AsGWrbL1DmbagapU81lDG2mw2-QwaQ",
+          url: "https://drive.google.com/open?id=1LNFH92UGzsLbP07JJJ3fvwMAKlf6FE2h",
           type: "cloud"
-        },  
-        {
-          name: "SmartGeometry",
-          url: "http://142.58.183.69:5051",
-          type: "server"
-        },
-        { name: "DreamLens", url: "http://142.58.183.69:5050", type: "server" },
-        { name: "Local", url: "http://localhost:5050", type: "server" },
+        },        
         { name: "D*", url: "http://sr-02645.iat.sfu.ca:5052", type: "server" },
         {
           name: "Cars",
           url: "https://1drv.ms/u/s!AsGWrbL1DmbagapOAQDFpMAheHksZw",
           type: "cloud"
         },
+		 {
+          name: "Covid",
+          url: "https://drive.google.com/drive/folders/1FtHuhukPhaD8Fk9o8cjUH65Pr8ryBmcY?usp=sharing",
+          type: "cloud"
+        },
+		{ name: "Local", url: "http://localhost:5050", type: "server" },
+
       ],
       url: "",
       cloudURL: "",
