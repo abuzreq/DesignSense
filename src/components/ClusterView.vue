@@ -175,16 +175,16 @@
   border: 4px solid rgb(33, 119, 180); /*#82b1ff;*/
 }
 
-/deep/ .multiselect__tag {
+::v-deep .multiselect__tag {
   width: 50px;
   display: none;
 }
 
-/deep/ .multiselect {
+::v-deep .multiselect {
   width: 200px;
 }
 
-/deep/ .v-slider--horizontal {
+::v-deep .v-slider--horizontal {
   min-width: 5vw;
 }
 </style>
@@ -271,8 +271,7 @@ export default {
       vueComponent: this
     });
     this.chartData = this.rawChartData;
-
-    this.compute();
+    this.compute();   
     /*
     var clusters = kmeans(this.chartData, 4, function(d) {return d.TotalFlrArea})
     var centroids = clusters.map(c => d3.mean(c, d => values(d, ['TotalFlrArea'])))
@@ -310,6 +309,12 @@ export default {
   },
   methods: {
     compute() {
+
+      if(this.chartData.length < 5)
+      {
+        return;
+      }
+
       var matrix = to2DMatrix(this.chartData, this.dimensions, true); //['TotalFlrArea']
 
       /*

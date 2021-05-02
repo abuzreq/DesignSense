@@ -15,16 +15,12 @@ const config = {
     filename: 'bundle.js',
     publicPath: ASSET_PATH,
   },
+  devtool: 'source-map',
   module: {
     rules: [
       {
         test: /\.vue$/,
         loader: 'vue-loader'
-      },
-      {
-        test: /\.js$/,
-        use: 'babel-loader',
-        exclude: /node_modules/
       },
       {
         test: /\.(png|jpe?g|gif|svg|eot|ttf|woff|woff2)(\?.+)?$/,

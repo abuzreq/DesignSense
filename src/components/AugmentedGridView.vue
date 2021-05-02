@@ -11,7 +11,7 @@
         <template v-slot:header>
           <v-toolbar dense dark color="blue darken-3" class="mb-1">
             <v-select
-              style="width:150px"
+              style="width: 150px"
               dense
               v-model="sortByVar"
               solo-inverted
@@ -23,7 +23,7 @@
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-checkbox
-                  style="margin-bottom:-20px;"
+                  style="margin-bottom: -20px"
                   v-on="on"
                   dense
                   v-model="isSortDesc"
@@ -45,7 +45,10 @@
                   color="blue darken-2"
                   text-color="white"
                 >
-                  <v-avatar left class="blue darken-3">{{numSelected}}</v-avatar>Selected
+                  <v-avatar left class="blue darken-3">{{
+                    numSelected
+                  }}</v-avatar
+                  >Selected
                 </v-chip>
               </template>
               <span>Number of selected items</span>
@@ -55,7 +58,7 @@
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-checkbox
-                  style="margin-bottom:-20px;"
+                  style="margin-bottom: -20px"
                   v-on="on"
                   align-center
                   v-model="enableContext"
@@ -89,10 +92,15 @@
             -->
           </v-toolbar>
 
-          <v-card v-if="inspectedItem" cols="12" style="width:100%">
+          <v-card v-if="inspectedItem" cols="12" style="width: 100%">
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
-                <v-btn x-small icon v-on="on" @click="() => inspectedItem = null">
+                <v-btn
+                  x-small
+                  icon
+                  v-on="on"
+                  @click="() => (inspectedItem = null)"
+                >
                   <v-icon>mdi-close</v-icon>
                 </v-btn>
               </template>
@@ -112,8 +120,14 @@
                           :on-icon="inspected2DIcon"
                         />
                 -->
-                <v-btn icon v-on="on" @click="() => inspecting3DView = !inspecting3DView">
-                  <v-icon v-if="inspecting3DView">mdi-file-image-outline</v-icon>
+                <v-btn
+                  icon
+                  v-on="on"
+                  @click="() => (inspecting3DView = !inspecting3DView)"
+                >
+                  <v-icon v-if="inspecting3DView"
+                    >mdi-file-image-outline</v-icon
+                  >
                   <v-icon v-else>mdi-video-3d</v-icon>
                 </v-btn>
               </template>
@@ -131,13 +145,13 @@
               color="primary"
             ></v-progress-circular>
 
-             <v-btn icon  @click="() => previousView(inspectedItem)" >
-                  <v-icon small >mdi-arrow-left</v-icon>
-                </v-btn>
-            <v-btn icon  @click="() => nextView(inspectedItem)" >
-                  <v-icon small >mdi-arrow-right</v-icon>
-                </v-btn>
-           
+            <v-btn icon @click="() => previousView(inspectedItem)">
+              <v-icon small>mdi-arrow-left</v-icon>
+            </v-btn>
+            <v-btn icon @click="() => nextView(inspectedItem)">
+              <v-icon small>mdi-arrow-right</v-icon>
+            </v-btn>
+
             <v-img
               contain
               width="100%"
@@ -157,7 +171,13 @@
               :position="modelPosition"
               :lights="modelLights"
             />
-            <v-card v-else width="100%" height="400px" id="inspector" name="inspector"></v-card>
+            <v-card
+              v-else
+              width="100%"
+              height="400px"
+              id="inspector"
+              name="inspector"
+            ></v-card>
           </v-card>
         </template>
 
@@ -171,23 +191,39 @@
             <v-layout
               grid-list-sm
               column
-              :style="{'max-height': `calc(${height}px - ${inspectedItem?400:0}px -  100px)`}"
+              :style="{
+                'max-height': `calc(${height}px - ${
+                  inspectedItem ? 400 : 0
+                }px -  100px)`,
+              }"
             >
               <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
                 <v-row dense>
                   <v-col
-                    v-for="(item) in items.items"
-                    v-bind:key="cardSelector+item._id"
+                    v-for="item in items.items"
+                    v-bind:key="cardSelector + item._id"
                     :cols="possibleColSpans[colSpan]"
                   >
                     <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
-                    <v-card class="thumbnail_card" v-bind:id="cardSelector+item._id">
+                    <v-card
+                      class="thumbnail_card"
+                      v-bind:id="cardSelector + item._id"
+                    >
                       <v-img
-                        v-bind:class="{ 
-                                        under_drag_selection: !enableContext && isSelectionDragOn && item._id in dragSelection,
-                                        outlined:  (enableContext && numSelected > 0 && selectionMap[item._id]), 
-                                        transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id],
-                                      }"
+                        v-bind:class="{
+                          under_drag_selection:
+                            !enableContext &&
+                            isSelectionDragOn &&
+                            item._id in dragSelection,
+                          outlined:
+                            enableContext &&
+                            numSelected > 0 &&
+                            selectionMap[item._id],
+                          transparent:
+                            enableContext &&
+                            numSelected > 0 &&
+                            !selectionMap[item._id],
+                        }"
                         v-if="true"
                         :src="item.image"
                         v-on:mouseup="toggle(item)"
@@ -212,21 +248,26 @@
                       -->
 
                       <!-- -->
-                      <v-expansion-panels v-show="possibleColSpans[colSpan] > 3">
+                      <v-expansion-panels
+                        v-show="possibleColSpans[colSpan] > 3"
+                      >
                         <v-expansion-panel>
-                          <v-expansion-panel-header>{{"ID:" }} &nbsp;&nbsp;&nbsp;&nbsp; {{ item["_id"] }}</v-expansion-panel-header>
+                          <v-expansion-panel-header
+                            >{{ "ID:" }} &nbsp;&nbsp;&nbsp;&nbsp;
+                            {{ item["_id"] }}</v-expansion-panel-header
+                          >
 
-                          <v-expansion-panel-content >
-                              <v-list >
-                                <v-list-item v-for="(param, j) in keys" :key="j">
-                                  <v-list-item-content>{{ param }}</v-list-item-content>
-                                  <v-list-item-content class="justify-center">
-                                    {{
-                                    item[param]
-                                    }}
-                                  </v-list-item-content>
-                                </v-list-item>
-                              </v-list>
+                          <v-expansion-panel-content>
+                            <v-list>
+                              <v-list-item v-for="(param, j) in keys" :key="j">
+                                <v-list-item-content>{{
+                                  param
+                                }}</v-list-item-content>
+                                <v-list-item-content class="justify-center">
+                                  {{ item[param] }}
+                                </v-list-item-content>
+                              </v-list-item>
+                            </v-list>
                           </v-expansion-panel-content>
                         </v-expansion-panel>
                       </v-expansion-panels>
@@ -243,7 +284,7 @@
 </template>
 
 <style scoped>
-/deep/ div.v-expansion-panel-content__wrap {
+::v-deep div.v-expansion-panel-content__wrap {
   padding-left: 0px;
   padding-right: 0px;
 }
@@ -268,7 +309,7 @@
   opacity: 0.4;
 }
 
-/deep/ .v-slider--horizontal {
+::v-deep .v-slider--horizontal {
   min-width: 5vw;
 }
 
@@ -304,7 +345,7 @@ export default {
     "drag-select-container": DragSelect,
   },
   props: ["defaultEnableContext", "width", "height", "x", "y"],
-  data: function() {
+  data: function () {
     return {
       isLoading: false,
       va3cViewer: null,
@@ -316,14 +357,14 @@ export default {
       modelLights: [
         {
           type: "AmbientLight",
-          color: 0xaaaaaa
+          color: 0xaaaaaa,
         },
         {
           type: "hemispherelight",
           groundColor: 0xff0000,
           skyColor: 0xffffff,
-          intensity: 0.8
-        }
+          intensity: 0.8,
+        },
       ],
 
       modelURL:
@@ -355,7 +396,7 @@ export default {
       inspected2DIcon: "mdi-file-image-outline",
 
       isSelectionDragOn: false,
-      dragSelection: {}
+      dragSelection: {},
     };
   },
   computed: {
@@ -369,19 +410,19 @@ export default {
       return Object.values(this.chartData);
     },
     ...mapState({
-      rawChartData: state => state.data,
-      keys: state => state.numericDimensions.concat(["selected"]),
-      hovered: state => state.hovered
+      rawChartData: (state) => state.data,
+      keys: (state) => state.numericDimensions.concat(["selected"]),
+      hovered: (state) => state.hovered,
     }),
     ...mapGetters(["isHoveringEnabled"]),
     cardSelector() {
       return "card_" + this.viewID + "_";
-    }
+    },
   },
   mounted() {
     this.$store.dispatch("createDefaultView", {
       view: this.viewID,
-      vueComponent: this
+      vueComponent: this,
     });
     this.updateContext();
     //Inspection setup
@@ -396,11 +437,12 @@ export default {
   created() {
     this.viewID = "id" + this._uid;
     this.sortByVar = this.keys[0];
+    console.log(this.chartData);
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === "update" || mutation.type === "resetMarking") {
         this.updateContext();
         this.selectionMap = this.$store.getters.getMarking(this.viewID);
-        this.chartData.forEach(d => {
+        this.chartData.forEach((d) => {
           d.selected = this.selectionMap[d._id];
         });
         this.numSelected = this.countSelected(this.selectionMap);
@@ -411,20 +453,18 @@ export default {
     });
   },
   methods: {
-    nextView(item)
-    {
-      this.inspectedItemViewIndex = (this.inspectedItemViewIndex+1)% item.images.length;
-       item.image =  item.images[this.inspectedItemViewIndex]
+    nextView(item) {
+      this.inspectedItemViewIndex =
+        (this.inspectedItemViewIndex + 1) % item.images.length;
+      item.image = item.images[this.inspectedItemViewIndex];
     },
-    previousView(item)
-    {
-      let index = this.inspectedItemViewIndex-1;
-      if(index < 0)
-      {
-          index = item.images.length - 1;
+    previousView(item) {
+      let index = this.inspectedItemViewIndex - 1;
+      if (index < 0) {
+        index = item.images.length - 1;
       }
       this.inspectedItemViewIndex = index;
-      item.image =  item.images[this.inspectedItemViewIndex]
+      item.image = item.images[this.inspectedItemViewIndex];
     },
     onGLTFLoaded() {
       this.isLoading = false;
@@ -461,7 +501,9 @@ export default {
       let cardNodes = d3.select("#" + this.viewID).selectAll(".v-card")
         ._groups[0]; //.select('.vue-drag-select')
       //console.log(cardNodes)
-      let cards = Array.prototype.slice.call(cardNodes).filter(d => d.id != "");
+      let cards = Array.prototype.slice
+        .call(cardNodes)
+        .filter((d) => d.id != "");
 
       //console.log(cards.length)
       return cards;
@@ -469,7 +511,7 @@ export default {
     onSelectionDragMouseUp(selectedItems) {
       this.isSelectionDragOn = false;
       this.dragSelection = {};
-      let selectedIDs = selectedItems.map(s => {
+      let selectedIDs = selectedItems.map((s) => {
         let start = s.id.indexOf("_");
         let secondPart = s.id.substring(start + 1);
         let secondStart = secondPart.indexOf("_"); //finding the 2nd occurance of _ , accounting for ids that start with _
@@ -481,7 +523,7 @@ export default {
         this.$store.commit("update", {
           view: this.viewID,
           selection: selectedIDs,
-          operation: getOperationFromEvent(event)
+          operation: getOperationFromEvent(event),
         });
       }
     },
@@ -492,7 +534,7 @@ export default {
         // console.log("move",selectedItems,  d3.select(selectedItems) )
         // d3.selectAll(selectedItems).classed("outlined", true)
 
-        let selectedIDs = selectedItems.map(s => {
+        let selectedIDs = selectedItems.map((s) => {
           let start = s.id.indexOf("_");
           let secondPart = s.id.substring(start + 1);
           let secondStart = secondPart.indexOf("_"); //finding the 2nd occurance of _ , accounting for ids that start with _
@@ -501,7 +543,7 @@ export default {
 
         this.dragSelection = {};
 
-        selectedIDs.forEach(d => {
+        selectedIDs.forEach((d) => {
           this.dragSelection[d] = null;
         });
 
@@ -545,7 +587,7 @@ export default {
           this.$store.commit("update", {
             view: this.viewID,
             selection: [item._id],
-            operation: operations.TOGGLE
+            operation: operations.TOGGLE,
           });
         }
       }
@@ -559,7 +601,7 @@ export default {
         view: this.viewID,
         selection: [item._id],
 
-        operation: getOperationFromEvent(event)
+        operation: getOperationFromEvent(event),
       });
     },
     highlight(selection) {
@@ -591,12 +633,12 @@ export default {
     },
     getCompareData() {
       let res = [];
-      this.selected.forEach(e => {
+      this.selected.forEach((e) => {
         res.push(this.chartData[e]);
       });
       return res;
     },
-    destroyChart: function() {
+    destroyChart: function () {
       let node = d3.select("#" + this.viewID)._groups[0][0]; //this.$refs["parcoords"];
       while (node.firstChild) {
         node.removeChild(node.firstChild);
@@ -622,7 +664,7 @@ export default {
     load3DJSON(item) {
       console.log("loading");
       if (this.inspecting3DView && !this.isModelGLTF) {
-        d3.json(item.json).then(jsonModel => {
+        d3.json(item.json).then((jsonModel) => {
           this.isLoading = false;
 
           if (!this.va3cViewer) {
@@ -637,7 +679,7 @@ export default {
           }
         });
       }
-    }
+    },
   },
   beforeDestroy() {
     console.log("before destroy");
@@ -645,18 +687,18 @@ export default {
 
   watch: {
     enableContext: {
-      handler: function(enableContextNewValue, oldValue) {
+      handler: function (enableContextNewValue, oldValue) {
         this.updateContext();
-      }
+      },
       //deep: true
     },
     rawChartData: {
-      handler: function(newValue, oldValue) {
+      handler: function (newValue, oldValue) {
         this.updateContext();
-      }
+      },
       //deep: true
     },
-    hovered: function(newValue, oldValue) {
+    hovered: function (newValue, oldValue) {
       if (oldValue) {
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + oldValue._id)
@@ -672,7 +714,7 @@ export default {
           this.inspectedItem = newValue;
       }
     },
-    inspecting3DView: function(newValue) {
+    inspecting3DView: function (newValue) {
       if (this.inspectedItem && newValue == true) {
         this.isLoading = true;
         this.load3DJSON(this.inspectedItem);
@@ -680,13 +722,13 @@ export default {
         this.va3cViewer = null;
       }
     },
-    inspectedItem: function(newItem) {
+    inspectedItem: function (newItem) {
       this.inspectedItemViewIndex = 0;
       if (newItem && this.inspecting3DView) {
         this.isLoading = true;
         this.load3DJSON(newItem);
       }
-    }
-  }
+    },
+  },
 };
 </script>

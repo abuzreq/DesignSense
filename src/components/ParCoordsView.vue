@@ -2,7 +2,7 @@
 
 <template>
   <v-container>
-    <span style="position:relative;left:-10px;top:-12px;">
+    <span style="position: relative; left: -10px; top: -12px">
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn
@@ -10,7 +10,7 @@
             x-small
             icon
             v-on="on"
-            @click="() => isCustomizingDimensions = !isCustomizingDimensions"
+            @click="() => (isCustomizingDimensions = !isCustomizingDimensions)"
           >
             <v-icon>mdi-wrench-outline</v-icon>
           </v-btn>
@@ -19,16 +19,16 @@
       </v-tooltip>
     </span>
 
-    <v-row style="position:relative;top:-25px;">
+    <v-row style="position: relative; top: -25px">
       <v-col v-if="isCustomizingDimensions" cols="2">
         <MultiDimensionSelect
           :initialValue="numericDimensions"
           :keys="allKeys"
-          :width="(1/6.0) * width"
+          :width="(1 / 6.0) * width"
           v-on:update="onDimensionChange($event)"
         />
       </v-col>
-      <v-col :cols="isCustomizingDimensions?10:12" >
+      <v-col :cols="isCustomizingDimensions ? 10 : 12">
         <div :id="viewID" ref="parcoords" class="parcoords"></div>
       </v-col>
     </v-row>
@@ -65,7 +65,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["isHoveringEnabled"])
+    ...mapGetters(["isHoveringEnabled"]),
   },
   mounted() {},
   created() {
@@ -79,7 +79,7 @@ export default {
       "collection",
       "UsableSpace",
       "index",
-      "selected"
+      "selected",
     ];
     /*excluded = [
       "center_of_mass_x",
@@ -99,31 +99,42 @@ export default {
       this.excludedDimensions.push(e);
     }
     */
-    this.keysBlackList = ['gltf','image','ID','id','_id','geometry','json','img','threeD','collection', 'images']
+    this.keysBlackList = [
+      "gltf",
+      "image",
+      "ID",
+      "id",
+      "_id",
+      "geometry",
+      "json",
+      "img",
+      "threeD",
+      "collection",
+      "images",
+    ];
     /*
     this.excludedDimensions = Object.keys(this.chartData[0]).filter(
       d => !this.numericDimensions.includes(d)
     );
     */
-   
-    this.allKeys = Object.keys(this.chartData[0])
+
+    this.allKeys = Object.keys(this.chartData[0]);
 
     this.excludedDimensions.push("selected");
-    this.excludedDimensions.push(...this.keysBlackList)
+    this.excludedDimensions.push(...this.keysBlackList);
   },
   watch: {
     isCustomizingDimensions: {
-      handler: function(newValue) 
-      {
+      handler: function (newValue) {
         this.refresh();
-      }
+      },
       //deep: true
-    }
+    },
   },
   methods: {
     formatDimensions(dimensions) {
       var result = {};
-      dimensions.forEach(dim => {
+      dimensions.forEach((dim) => {
         result[dim] = {};
       });
       return result;
@@ -131,12 +142,9 @@ export default {
     prepareDimensions(data, dimensions, chart) {
       let range = this.height; //- chart.margin().top - chart.margin().bottom;
       var result = {};
-      dimensions.forEach(dim => {
-        let extents = d3.extent(data, d => d[dim]);
-        let scale = d3
-          .scaleLinear()
-          .domain(extents)
-          .range([range, 1]);
+      dimensions.forEach((dim) => {
+        let extents = d3.extent(data, (d) => d[dim]);
+        let scale = d3.scaleLinear().domain(extents).range([range, 1]);
         result[dim] = {
           yscale: scale,
           title: dim,
@@ -144,17 +152,16 @@ export default {
           innerTickSize: 8,
           type: "number",
           orient: "right",
-          ticks: 10
+          ticks: 10,
         };
       });
       //console.log("dimensions", result);
 
       return result;
     },
-    onDimensionChange(newDimensions) 
-    {
+    onDimensionChange(newDimensions) {
       this.excludedDimensions = Object.keys(this.chartData[0]).filter(
-        d => !newDimensions.includes(d)
+        (d) => !newDimensions.includes(d)
       );
       /*
       this.excludedDimensions.push("selected");
@@ -162,19 +169,16 @@ export default {
       */
       this.refresh();
     },
-    markingChangeHandler: function(reset) {    
-      if(reset)
-      {
-         this.chart.unhighlight();   
-      }
-      else
-      {
-        this.chart.unhighlight(this.$store.getters.data);    
+    markingChangeHandler: function (reset) {
+      if (reset) {
+        this.chart.unhighlight();
+      } else {
+        this.chart.unhighlight(this.$store.getters.data);
         var result = this.$store.getters.selectedDataInView(this.viewID);
         this.chart.highlight(result);
       }
     },
-    hoverHandler: function() {
+    hoverHandler: function () {
       this.cleanTooltip();
       this.chart.unmark();
 
@@ -242,7 +246,7 @@ export default {
           let x = xscale(dimName);
 
           var text = datum[dimName];
-          clickedDataSet.push([x, y, ''+text]);
+          clickedDataSet.push([x, y, "" + text]);
         }
       }
       this.createTooltip(clickedDataSet);
@@ -254,16 +258,15 @@ export default {
       var padding = 2;
       var rectHeight = fontSize + 2 * padding; //based on font size
 
-
       this.chart.svg
         .selectAll("rect[id='tooltip']")
         .data(specs)
         .enter()
         .append("rect")
-        .attr("x", function(d) {
+        .attr("x", function (d) {
           return d[0] - d[2].length * 5;
         })
-        .attr("y", function(d) {
+        .attr("y", function (d) {
           return d[1] - rectHeight + 2 * padding;
         })
         .attr("rx", "2")
@@ -271,8 +274,8 @@ export default {
         .attr("id", "tooltip")
         .attr("fill", "grey")
         .attr("opacity", 0.9)
-        .attr("width", function(d) {
-          return d[2].length * 10; 
+        .attr("width", function (d) {
+          return d[2].length * 10;
         })
         .attr("height", rectHeight);
 
@@ -282,17 +285,17 @@ export default {
         .data(specs)
         .enter()
         .append("text")
-        .attr("x", function(d) {
+        .attr("x", function (d) {
           return d[0];
         })
-        .attr("y", function(d) {
+        .attr("y", function (d) {
           return d[1];
         })
         .attr("id", "tooltip")
         .attr("fill", "white")
         .attr("text-anchor", "middle")
         .attr("font-size", fontSize)
-        .text(function(d) {
+        .text(function (d) {
           return d[2];
         });
     },
@@ -347,11 +350,11 @@ export default {
       var margins = this.chart.margin();
       var graphCentPts = [];
 
-      data.forEach(d => {
+      data.forEach((d) => {
         var initCenPts = this.chart.compute_real_centroids(d);
 
         // move points based on margins
-        var cenPts = initCenPts.map(function(d) {
+        var cenPts = initCenPts.map(function (d) {
           return [d[0] + margins["left"], d[1] + margins["top"]];
         });
 
@@ -393,20 +396,23 @@ export default {
       if (this.chart.brushed() != false) return this.chart.brushed();
       return this.chart.data();
     },
-    Chart: function() {
+    Chart: function () {
       //   nullValueSeparator: "bottom",
       const chart = ParCoords({
         markedLineWidth: 5,
         highlightedLineWidth: 3,
-        lineWidth: 1
+        lineWidth: 1,
       })("#" + this.viewID)
         .data(this.chartData)
-        .width((this.isCustomizingDimensions? (5/6.0)*this.width : this.width) - 20 )
-        .height(this.height-25)
+        .width(
+          (this.isCustomizingDimensions ? (5 / 6.0) * this.width : this.width) -
+            20
+        )
+        .height(this.height - 25)
         .hideAxis(this.excludedDimensions)
         .createAxes()
         //.alpha(0.7)
-      //  .margin({ top: 25, left:30, bottom: 10, right: 30 })
+        //  .margin({ top: 25, left:30, bottom: 10, right: 30 })
 
         .brushMode("1D-axes") //1D-axes-multi 2D-strums angular 1D-axes
         //  .alphaOnBrushed(0.1)
@@ -425,7 +431,7 @@ export default {
             this.$store.commit("update", {
               view: this.viewID,
               selection: [],
-              operation: operations.REPLACE
+              operation: operations.REPLACE,
             });
           } else {
             //console.log("Brushing ",this.viewID, d3.event)
@@ -433,8 +439,8 @@ export default {
             //this.chart.unhighlight( this.$store.getters.data) ;
             this.$store.commit("update", {
               view: this.viewID,
-              selection: brushed.map(d => d._id),
-              operation: getOperationFromEvent(d3.event.sourceEvent)
+              selection: brushed.map((d) => d._id),
+              operation: getOperationFromEvent(d3.event.sourceEvent),
             });
           }
         })
@@ -444,29 +450,29 @@ export default {
           if (args && d3.event.type === "brush") {
             let sel = args.selection;
             if (sel.raw.length > 0) {
-              let x =  d3.event.sourceEvent.clientX - this.x;
+              let x = d3.event.sourceEvent.clientX - this.x;
               let rawY = sel.raw;
               let scaledY = sel.scaled;
               this.createTooltip([
-                [x, rawY[0], round(scaledY[0], 4) + ''],
-                [x, rawY[1], round(scaledY[1], 4) + '']
+                [x, rawY[0], round(scaledY[0], 4) + ""],
+                [x, rawY[1], round(scaledY[1], 4) + ""],
               ]);
             }
           }
         })
-        .on("highlight", e => {
+        .on("highlight", (e) => {
           // console.log("highlighting")
         });
 
       var colorScale = this.$store.state.colorScale; //d3.scale.ordinal().range(colorRange);
-      chart.color(d => colorScale(d[this.colorColumn])).render();
+      chart.color((d) => colorScale(d[this.colorColumn])).render();
 
       //Source for the hover on mouse over is adopted from: http://bl.ocks.org/mostaphaRoudsari/b4e090bb50146d88aec4
       //This includes all the auxilary functions called downstream from markLineOnHover() which was called highlightLineOnClick() in the orignal source
       var vueThis = this;
       d3.select("#" + this.viewID)
         .select("svg")
-        .on("mousemove", function() {
+        .on("mousemove", function () {
           if (vueThis.isHoveringEnabled) {
             var mousePosition = d3.mouse(this);
             //console.log(mousePosition);
@@ -508,8 +514,8 @@ export default {
 */
 
       return chart;
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -526,14 +532,14 @@ export default {
   color: black;
 }
 
-/deep/ .multiselect__tag {
+::v-deep .multiselect__tag {
   width: 50px;
   display: none;
 }
 
-/deep/ .multiselect {
+::v-deep .multiselect {
   width: 200px;
-    margin-top: 10px;
+  margin-top: 10px;
 }
 
 .parcoords /deep/ .label {

@@ -7,14 +7,11 @@ import * as d3 from "d3";
 import vdr from "./plugins/vdr";
 import layouts from './layout.js'
 import Papa from 'papaparse'
-import {generateID} from "@/components/utils.js";
-
+import { generateID } from "@/components/utils.js";
 
 Vue.config.productionTip = false;
 
-
 function loadDataFromURL(url, request) {
-  //var collection = "feas";//"c-ZNTs0"
   d3.json(url + request,
     function (d) {
       return d._id;
@@ -24,124 +21,40 @@ function loadDataFromURL(url, request) {
       for (var column in json_data.valueBands) {
         dataTypesMap[column] = json_data.valueBands[column].type
       }
-      //console.log("similarity ",similarity)
-      console.log(json_data, error)
       json_data = json_data.alternatives
       let data = getParallelDataFromAlternatives(url, json_data)
 
-      //data = data.slice(0,50)    
+      app = new Vue({
+        vuetify,
+        vdr,
+        router,
+        store: store(data, dataTypesMap, layouts, similarity_map),
+        el: '#app',
+        render: h => h(App),
+      });
 
-      Papa.parse("https://gist.githubusercontent.com/abuzreq/41784c98a70e36619d046877e0df8c02/raw/cb52f39c7f0f1c526d5c1bf0dea61993d368fe68/smart_hausdorff_ids.csv", {
-        download: true,
-        complete: function (results) {
-          let similarity_map = {}
-          let similarity = results.data;
-          let headers = similarity[0];
-          similarity.forEach((row, i) => {
-            if (i > 0) {
-              let entry = {}
-              row.forEach((x, j) => {
-                if (j > 0) {
-                  entry[j] = x; //headers[j]
-                }
-
-              })
-              similarity_map[i] = entry; //row[0]
-            }
-          })
+      if (data[0].collection) {
+        console.log("creating sets");
+        let initialSets = {}
+        data.forEach(d => {
+          let collection = d.collection
 
 
-          app = new Vue({
-            vuetify,
-            vdr,
-            router,
-            store: store(data, dataTypesMap, layouts, similarity_map),
-            el: '#app',
-            render: h => h(App),
-          });
+          if (!(collection in initialSets)) {
 
-
-          if(data[0].collection)
-          {
-            console.log("creating sets");
-            let initialSets = {}
-            data.forEach(d=> 
-              {
-                let collection = d.collection
-
-               
-                if(!(collection in initialSets))
-                {
-  
-                  initialSets[collection] = []
-                }
-                initialSets[collection].push(d._id)
-              })
-              for(var setName in initialSets)
-              { 
-                  app.$store.commit("addSet", {setName:setName, members:initialSets[setName]})
-              }
- 
+            initialSets[collection] = []
           }
-        
-          
+          initialSets[collection].push(d._id)
+        })
 
-          let args = {}
-          //Creates the default marking
-          app.$store.commit('createMarkingEntry', args)
-          console.log(args)
-          console.log(data)
-          //app.$store.commit('setSimilarityMap', {'similarity_map': similarity_map});
+        for (var setName in initialSets) {
+          app.$store.commit("addSet", { setName: setName, members: initialSets[setName] })
         }
-      })
+      }
 
-
-
-      /*
-            let sim = Papa.parse("https://gist.githubusercontent.com/abuzreq/6c606acee28f218621b6ca79996cd2a1/raw/6a95738c47cd76e683236b6b383354619f9e5fb4/smart_hausdorff.csv", {
-              download: true,
-              complete: function(results) 
-              {
-                let new_similarity = []
-                let similarity = results.data;
-                similarity.forEach(row => {
-                  let new_row = []
-                  row.forEach(x => {
-                    if (x == "")
-                    {
-                      new_row.push(x)
-                    }
-                    else if(isNaN(x))
-                    {
-                      let item = data.find(d => d.ID === x)
-                      if(item != undefined)
-                      {
-                        new_row.push(item._id)
-                      }
-                      else
-                      {
-                        new_row.push(x)
-                      }
-                     
-                    }
-                    else
-                    {
-                      new_row.push(x)
-                    }
-                  })
-                  new_similarity.push(new_row)
-                })
-                console.log(new_similarity)
-                var csv = Papa.unparse(new_similarity);
-      
-                let csvContent = "data:text/csv;charset=utf-8," + csv;
-                var encodedUri = encodeURI(csvContent);
-                  window.open(encodedUri);
-              }
-            })
-          */
-
-
+      let args = {}
+      //Creates the default marking
+      app.$store.commit('createMarkingEntry', args)
     })
 
 }
@@ -155,10 +68,8 @@ var app = new Vue({
 });
 
 document.addEventListener('keydown', function (e) {
-  if (e.ctrlKey) 
-  {
-    if (!app.$store.state.isCtrlKey) 
-    {
+  if (e.ctrlKey) {
+    if (!app.$store.state.isCtrlKey) {
       app.$store.dispatch('updateCtrlKey', { value: true })
       /*
         //console.log(app.$store.state)
@@ -168,18 +79,14 @@ document.addEventListener('keydown', function (e) {
         app.$store.dispatch('createDetailsView',{master_view: views[0], details_view: views[1]})
       */
     }
-  } 
-  if (e.shiftKey) 
-  {
-    if (!app.$store.state.isShiftKey) 
-    {
+  }
+  if (e.shiftKey) {
+    if (!app.$store.state.isShiftKey) {
       app.$store.dispatch('updateShiftKey', { value: true })
     }
   }
-  if (e.altKey) 
-  {
-    if (!app.$store.state.isAltKey) 
-    {
+  if (e.altKey) {
+    if (!app.$store.state.isAltKey) {
       app.$store.dispatch('updateAltKey', { value: true })
     }
   }
@@ -197,11 +104,38 @@ document.addEventListener('keyup', function (e) {
     app.$store.dispatch('updateAltKey', { value: false })
   }
 
-  if (e.keyCode === 192) {
+  if (e.key === '`') {
     app.$store.commit('toggleEditingMode');
   }
 })
 
+function prepareData(data, imgFiles, jsonFiles) {
+  return data.map(x => {
+    if (!x._id) {
+      if (x.ID) {
+        x._id = x.ID;
+      }
+      else {
+        x._id = generateID();
+      }
+    }
+    if (x.img) {
+
+      x.image = (imgFiles == undefined || Object.keys(imgFiles).length === 0) ? x.img : imgFiles[x.img];
+      x.images = [x.image]
+    }
+    else {
+      let imgKeys = Object.keys(x).filter(x => x.includes("img"))
+      x.images = imgKeys.map(key => (imgFiles == undefined ||Object.keys(imgFiles).length === 0) ? x[key] : imgFiles[x[key]])
+      x.image = x.images[0]
+      console.log('ahaaa', imgFiles, imgKeys[0])
+    }
+
+    x.json = (jsonFiles == undefined || Object.keys(jsonFiles).length === 0) ? x.threeD : jsonFiles[x.threeD];
+
+    return x
+  });
+}
 
 function loadData(data) {
 
@@ -275,7 +209,7 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
 //export default {loadDataFromURL, loadDataFromCloudURL}
 //exports.loadDataFromURL = opeloadDataFromURLrations;
 //exports.loadDataFromCloudURL = loadDataFromCloudURL;
-export { loadDataFromURL, loadDataFromCloudURL }
+export { loadDataFromURL, loadDataFromCloudURL, loadData, prepareData }
 
 /*******************        Design Explorer ********************** */
 
@@ -297,12 +231,12 @@ function loadDataFromCloudURL(rawUrl) {
 var Gkey = "AIzaSyCSrF08UMawxKIb0m4JsA1mYE5NMmP36bY";
 
 let _googleReturnObj = { //{"fileName":Google Drive ID}
-csvFiles: {},
-imgFiles: {},
-jsonFiles: {},
-settingFiles: {}
+  csvFiles: {},
+  imgFiles: {},
+  jsonFiles: {},
+  settingFiles: {}
 };
-  
+
 function prepareGFolder(folderLink) {
 
 
@@ -323,7 +257,7 @@ function prepareGFolder(folderLink) {
     var imgFiles = {};
     var jsonFiles = {};
     var settingFiles = {};
-	console.log(data)
+    console.log(data)
     if (folder.type === "GoogleDrive") { //this is google returned obj
       data.files.forEach(function (item) {
         var GLink = "";
@@ -393,7 +327,7 @@ function prepareGFolder(folderLink) {
 
       });
     }
-	
+
     _googleReturnObj.csvFiles = { ..._googleReturnObj.csvFiles, ...csvFiles }
     _googleReturnObj.imgFiles = { ..._googleReturnObj.imgFiles, ...imgFiles }
     _googleReturnObj.jsonFiles = { ..._googleReturnObj.jsonFiles, ...jsonFiles }
@@ -440,39 +374,10 @@ function prepareGFolder(folderLink) {
 function readyToLoad(csvFilePathLink, imgFiles, jsonFiles) {
   if (csvFilePathLink.length > 0) {
     // remove the current selection
-    d3.csv(csvFilePathLink).then(function (data) {
-      data = data.map(x => {
-        if (!x._id) {
-          if (x.ID) {
-            x._id = x.ID;
-          }
-          else {
-            x._id = generateID();
-          }
-
-        }
-        if(x.img)
-        {
-
-          x.image = (Object.keys(imgFiles).length === 0)?x.img:imgFiles[x.img];
-          x.images = [x.image]
-        }
-        else
-        {
-           let imgKeys = Object.keys(x).filter(x => x.includes("img"))
-           x.images = imgKeys.map(key => (Object.keys(imgFiles).length === 0)?x[key]:imgFiles[x[key]])
-           x.image = x.images[0]
-           console.log('ahaaa', imgFiles, imgKeys[0])
-        }
-       
-        x.json = (Object.keys(jsonFiles).length === 0)?x.threeD:jsonFiles[x.threeD];
-       
-        return x
+    d3.csv(csvFilePathLink).then(
+      function (data) {      
+        loadData(prepareData(data, imgFiles, jsonFiles))
       });
-
-      loadData(data)
-
-    });
 
   } else {
     alert("You have to put Google Drive Folder information first!");

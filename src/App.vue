@@ -1,6 +1,14 @@
 <template>
-  <v-app >
-    <v-app-bar app dark dense flat short color=" white--text text--lighten-1" height="50">
+  <v-app>
+    <v-app-bar
+      app
+      dark
+      dense
+      flat
+      short
+      color=" white--text text--lighten-1"
+      height="50"
+    >
       <v-toolbar-title>DesignSense</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-divider vertical />
@@ -8,10 +16,10 @@
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="actions['help'].clickAction">
-            <v-icon>{{actions['help'].icon}}</v-icon>
+            <v-icon>{{ actions["help"].icon }}</v-icon>
           </v-btn>
         </template>
-        <span>{{actions['help'].tooltip()}}</span>
+        <span>{{ actions["help"].tooltip() }}</span>
       </v-tooltip>
 
       <v-divider vertical />
@@ -24,52 +32,37 @@
             icon
             @click="actions['toggleEditingMode'].clickAction"
           >
-            <v-icon>{{actions['toggleEditingMode'].icon}}</v-icon>
+            <v-icon>{{ actions["toggleEditingMode"].icon }}</v-icon>
           </v-btn>
         </template>
-        <span>{{actions['toggleEditingMode'].tooltip()}}</span>
+        <span>{{ actions["toggleEditingMode"].tooltip() }}</span>
       </v-tooltip>
 
-      <v-divider vertical />    
+      <v-divider vertical />
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-chip  outlined v-on="on" :ripple="false" label class="ma-2" color="grey darken-2" text-color="white">
-            {{selectionOperation()}}
+          <v-chip
+            outlined
+            v-on="on"
+            :ripple="false"
+            label
+            class="ma-2"
+            color="grey darken-2"
+            text-color="white"
+          >
+            {{ selectionOperation() }}
             <v-avatar right class="grey lighten-2">
               <v-icon small color="black">mdi-vector-selection</v-icon>
             </v-avatar>
           </v-chip>
         </template>
-        <span>Shows how new selections will impact the existing selection.</span>
+        <span
+          >Shows how new selections will impact the existing selection.</span
+        >
       </v-tooltip>
-
       <v-divider vertical />
-      <!--
-     
-     <v-spacer></v-spacer>
-      
-      <v-text-field
-          v-model="cloudURL"
-          label="URL"
-        ></v-text-field>
-      <v-btn icon @click="onCloudUrlChange">
-            <v-icon>mdi-cloud-upload-outline</v-icon>
-            
-      </v-btn>
-      -->
       <v-spacer></v-spacer>
-      <!--
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-file-input label="File input" outlined dense @change="loadFromCSV($event)"></v-file-input>
-        </template>
-        <span>Load</span>
-      </v-tooltip>
-      -->
-      <span>Pick a Dataset:&emsp;</span>
-      <v-select v-model="url" :items="URLs" item-text="name" return-object @change="onUrlChange">
-        <v-icon>mdi-select-off</v-icon>
-      </v-select>
+      <LoadDataModal> </LoadDataModal>
 
       <v-spacer></v-spacer>
       <v-divider vertical />
@@ -82,10 +75,10 @@
             icon
             @click="actions['toggleInspectionMode'].clickAction"
           >
-            <v-icon>{{actions['toggleInspectionMode'].icon}}</v-icon>
+            <v-icon>{{ actions["toggleInspectionMode"].icon }}</v-icon>
           </v-btn>
         </template>
-        <span>{{actions['toggleInspectionMode'].tooltip()}}</span>
+        <span>{{ actions["toggleInspectionMode"].tooltip() }}</span>
       </v-tooltip>
 
       <v-divider vertical />
@@ -93,75 +86,92 @@
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="actions['createSet'].clickAction">
-            <v-icon>{{actions['createSet'].icon}}</v-icon>
+            <v-icon>{{ actions["createSet"].icon }}</v-icon>
           </v-btn>
         </template>
-        <span>{{actions['createSet'].tooltip()}}</span>
+        <span>{{ actions["createSet"].tooltip() }}</span>
       </v-tooltip>
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="actions['resetAllMarkings'].clickAction">
-            <v-icon>{{actions['resetAllMarkings'].icon}}</v-icon>
+          <v-btn
+            v-on="on"
+            icon
+            @click="actions['resetAllMarkings'].clickAction"
+          >
+            <v-icon>{{ actions["resetAllMarkings"].icon }}</v-icon>
           </v-btn>
         </template>
-        <span>{{actions['resetAllMarkings'].tooltip()}}</span>
+        <span>{{ actions["resetAllMarkings"].tooltip() }}</span>
       </v-tooltip>
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="actions['invertSelection'].clickAction">
-            <v-icon>{{actions['invertSelection'].icon}}</v-icon>
+            <v-icon>{{ actions["invertSelection"].icon }}</v-icon>
           </v-btn>
         </template>
-        <span>{{actions['invertSelection'].tooltip()}}</span>
+        <span>{{ actions["invertSelection"].tooltip() }}</span>
       </v-tooltip>
 
       <v-divider vertical />
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="actions['undoDataTransformation'].clickAction">
-            <v-icon>{{actions['undoDataTransformation'].icon}}</v-icon>
+          <v-btn
+            v-on="on"
+            icon
+            @click="actions['undoDataTransformation'].clickAction"
+          >
+            <v-icon>{{ actions["undoDataTransformation"].icon }}</v-icon>
           </v-btn>
         </template>
-        <span>{{actions['undoDataTransformation'].tooltip()}}</span>
+        <span>{{ actions["undoDataTransformation"].tooltip() }}</span>
       </v-tooltip>
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="actions['zoomToSelection'].clickAction">
-            <v-icon>{{actions['zoomToSelection'].icon}}</v-icon>
+            <v-icon>{{ actions["zoomToSelection"].icon }}</v-icon>
           </v-btn>
         </template>
-        <span>{{actions['zoomToSelection'].tooltip()}}</span>
+        <span>{{ actions["zoomToSelection"].tooltip() }}</span>
       </v-tooltip>
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="actions['excludeSelection'].clickAction">
-            <v-icon>{{actions['excludeSelection'].icon}}</v-icon>
+          <v-btn
+            v-on="on"
+            icon
+            @click="actions['excludeSelection'].clickAction"
+          >
+            <v-icon>{{ actions["excludeSelection"].icon }}</v-icon>
           </v-btn>
         </template>
-        <span>{{actions['excludeSelection'].tooltip()}}</span>
+        <span>{{ actions["excludeSelection"].tooltip() }}</span>
       </v-tooltip>
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="actions['resetData'].clickAction">
-            <v-icon>{{actions['resetData'].icon}}</v-icon>
+            <v-icon>{{ actions["resetData"].icon }}</v-icon>
           </v-btn>
         </template>
-        <span>{{actions['resetData'].tooltip()}}</span>
+        <span>{{ actions["resetData"].tooltip() }}</span>
       </v-tooltip>
     </v-app-bar>
 
-    <v-content style="padding: 50px 0px 0px;">
+    <v-main style="padding: 50px 0px 0px">
       <div
         @contextmenu="showContextMenuHandler"
-        style="height: 100%; width: 100%; border: 1px solid red; position: relative;"
+        style="
+          height: 100%;
+          width: 100%;
+          border: 1px solid red;
+          position: relative;
+        "
       >
-        <template v-for="(item,index) in layouts">
+        <template v-for="(item, index) in layouts">
           <Card
             :key="index"
             :initX="item.x"
@@ -172,13 +182,22 @@
           />
         </template>
       </div>
-    </v-content>
+    </v-main>
 
     <radial-menu
       ref="contextMenu"
       v-show="showContextMenu"
-      :style="{'position':'absolute','left': `${rightClickPos.x}px`, 'top': `${rightClickPos.y}px`}"
-      style="margin: auto; margin-top: -15px; margin-left: -15px; background-color: white"
+      :style="{
+        position: 'absolute',
+        left: `${rightClickPos.x}px`,
+        top: `${rightClickPos.y}px`,
+      }"
+      style="
+        margin: auto;
+        margin-top: -15px;
+        margin-left: -15px;
+        background-color: white;
+      "
       :itemSize="50"
       :radius="65"
       :angle-restriction="360"
@@ -187,7 +206,7 @@
         v-for="(item, index) in contextMenuItems"
         :key="index"
         style="background-color: white"
-        @click="() => showContextMenu = false"
+        @click="() => (showContextMenu = false)"
       >
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
@@ -197,10 +216,10 @@
               icon
               @click="actions[item].clickAction"
             >
-              <v-icon>{{actions[item].icon}}</v-icon>
+              <v-icon>{{ actions[item].icon }}</v-icon>
             </v-btn>
           </template>
-          <span>{{actions[item].tooltip()}}</span>
+          <span>{{ actions[item].tooltip() }}</span>
         </v-tooltip>
       </radial-menu-item>
     </radial-menu>
@@ -235,10 +254,10 @@ import Card from "@/components/Card.vue";
 
 import { mapState, mapGetters } from "vuex";
 
-import { loadDataFromURL, loadDataFromCloudURL } from "./main.js";
 import * as d3 from "d3";
 
 import { RadialMenu, RadialMenuItem } from "vue-radial-menu";
+import LoadDataModal from "@/components/LoadDataModal.vue";
 
 import { getOperation } from "@/components/operations.js";
 
@@ -256,96 +275,54 @@ export default {
     ClusterView,
     Card,
     RadialMenu,
-    RadialMenuItem
+    RadialMenuItem,
+    LoadDataModal,
   },
 
-  data: function() {
+  data: function () {
     return {
-      URLs: [
-        {
-          name: "P+W Crofton",
-          url: "https://drive.google.com/open?id=1QBanCG1t4xak_5lj0Nwazhy5ANHAX_x7",
-          type: "cloud"
-        },
-        {
-          name: "P+W Solar",
-          url: "https://1drv.ms/u/s!AsGWrbL1DmbagakFTScT6VocK9ELbw",
-          type: "cloud"
-        },
-		{
-          name: "SmartGeometry",
-          url: "http://142.58.183.69:5051",
-          type: "server"
-        },
-        { name: "DreamLens", url: "http://142.58.183.69:5050", type: "server" },
-        {
-          name: "Malaeeb",
-          url: "https://1drv.ms/f/s!AsGWrbL1DmbagaggJpgic85d0z3Sgw",
-          type: "cloud"
-        },
-        {
-          name: "Malaeeb_New",
-          url: "https://drive.google.com/open?id=1LNFH92UGzsLbP07JJJ3fvwMAKlf6FE2h",
-          type: "cloud"
-        },        
-        { name: "D*", url: "http://sr-02645.iat.sfu.ca:5052", type: "server" },
-        {
-          name: "Cars",
-          url: "https://1drv.ms/u/s!AsGWrbL1DmbagapOAQDFpMAheHksZw",
-          type: "cloud"
-        },
-		 {
-          name: "Covid",
-          url: "https://drive.google.com/drive/folders/1FtHuhukPhaD8Fk9o8cjUH65Pr8ryBmcY?usp=sharing",
-          type: "cloud"
-        },
-		{ name: "Local", url: "http://localhost:5050", type: "server" },
-
-      ],
-      url: "",
-      cloudURL: "",
       actions: {
         createSet: {
           clickAction: () => this.$store.dispatch("createSet"),
           icon: "mdi-contain",
           tooltip: () => "Create Set",
-          type: "selection"
+          type: "selection",
         },
         resetAllMarkings: {
           clickAction: () => this.$store.dispatch("resetAllMarkings"),
           icon: "mdi-select-off",
           tooltip: () => "Reset Selection",
-          type: "selection"
+          type: "selection",
         },
         invertSelection: {
           clickAction: () => this.$store.dispatch("invertSelection"),
           icon: "mdi-select-compare",
           tooltip: () => "Invert Selection",
-          type: "selection"
+          type: "selection",
         },
         undoDataTransformation: {
           clickAction: () => this.$store.dispatch("undoDataTransformation"),
           icon: "mdi-undo",
           tooltip: () => "Undo",
-          type: "data"
+          type: "data",
         },
         zoomToSelection: {
           clickAction: () => this.$store.dispatch("zoomToSelection"),
           icon: "mdi-selection-search",
           tooltip: () => "Zoom on the Selected",
-          type: "data"
+          type: "data",
         },
         excludeSelection: {
           clickAction: () => this.$store.dispatch("excludeSelection"),
           icon: "mdi-filter-remove-outline",
           tooltip: () => "Exclude the Selected",
-          type: "data"
+          type: "data",
         },
         resetData: {
           clickAction: () => this.$store.dispatch("resetData"),
           icon: "mdi-cached",
           tooltip: () => "Reset Data",
-          type: "data"
+          type: "data",
         },
         toggleInspectionMode: {
           clickAction: () => this.$store.dispatch("toggleInspectionMode"),
@@ -354,13 +331,13 @@ export default {
             this.isInspectionMode
               ? "Disable inspection on hovering"
               : "Enable inspection on hovering",
-          type: "inspecting"
+          type: "inspecting",
         },
         help: {
           clickAction: () => console.log("TODO"),
           icon: "mdi-help-circle-outline",
           tooltip: () => "Help.. to come.",
-          type: "misc"
+          type: "misc",
         },
         toggleEditingMode: {
           clickAction: () => this.$store.dispatch("toggleEditingMode"),
@@ -369,8 +346,8 @@ export default {
             this.isEditingMode
               ? "Disable Editing Mode."
               : "Enable Editing Mode. (to resize and move the panels)",
-          type: "editing"
-        }
+          type: "editing",
+        },
       },
       contextMenuItems: [
         "toggleInspectionMode",
@@ -379,7 +356,7 @@ export default {
         "invertSelection",
         "excludeSelection",
         "zoomToSelection",
-        "undoDataTransformation"
+        "undoDataTransformation",
       ],
 
       showContextMenu: false,
@@ -388,15 +365,15 @@ export default {
         getOperation({
           altKey: this.$store.state.isAltKey,
           shiftKey: this.$store.state.isShiftKey,
-          ctrlKey: this.$store.state.isCtrlKey
-        })
+          ctrlKey: this.$store.state.isCtrlKey,
+        }),
     };
   },
   computed: {},
   destroyed() {},
   created() {
     //To close the context menu when a click happens anywhere
-    document.addEventListener("click", e => {
+    document.addEventListener("click", (e) => {
       //To prevent the context menu from closing when the click is on it
       let contextMenuNode = d3.select(".vue-radial-menu-container")
         ._groups[0][0];
@@ -412,30 +389,30 @@ export default {
   },
   computed: {
     ...mapState({
-      layouts: state => state.layouts,
-      isEditingMode: state => state.isEditingMode,
-      isInspectionMode: state => state.isInspectionMode
-    })
+      layouts: (state) => state.layouts,
+      isEditingMode: (state) => state.isEditingMode,
+      isInspectionMode: (state) => state.isInspectionMode,
+    }),
   },
   methods: {
-    actionType2Color: function(type) {
+    actionType2Color: function (type) {
       return {
         data: "red",
         selection: "blue",
         misc: "black",
         inspecting: this.isInspectionMode ? "green accent-4" : "grey",
-        editing: this.isEditingMode ? "green accent-4" : "grey"
+        editing: this.isEditingMode ? "green accent-4" : "grey",
       }[type];
     },
     showContextMenuHandler(e) {
       //TODO: change this.
       //A cheap trick to make sure the context menu does not appear on the 3D viewer DOM.
       //console.log(e.target)
-      if (!e.target.id.includes("inspector") 
-      && (e.target.localName != 'canvas') 
-      && (e.target.localName != 'textarea') 
-      ) 
-      {
+      if (
+        !e.target.id.includes("inspector") &&
+        e.target.localName != "canvas" &&
+        e.target.localName != "textarea"
+      ) {
         e.preventDefault();
         this.rightClickPos = { x: e.clientX, y: e.pageY };
         this.showContextMenu = true;
@@ -445,32 +422,7 @@ export default {
     handleContextMenuClick(item) {
       console.log(item);
     },
-    onUrlChange(value) {
-      if (value.type === "server") {
-        loadDataFromURL(value.url, "/alternatives");
-      } else if (value.type === "cloud") {
-        loadDataFromCloudURL(value.url);
-      }
-    },
-    onCloudUrlChange() {
-      loadDataFromCloudURL(this.cloudURL);
-    },
-    loadFromCSV(file) {
-      console.log(file);
-      var reader = new FileReader();
-
-      reader.onload = function(e) {
-        var inputString = e.target.result;
-
-        // I need to add some defense here
-        // separateInputOutputs(e);
-
-        var data = d3.csvParse(inputString);
-        loadData(data);
-      };
-      reader.readAsText(file);
-    }
-  }
+  },
 };
 
 // TODO create refs here in the app to the other charts so that charts can refer to each other using this.$parent.pcoords
