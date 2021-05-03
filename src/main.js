@@ -128,7 +128,6 @@ function prepareData(data, imgFiles, jsonFiles) {
       let imgKeys = Object.keys(x).filter(x => x.includes("img"))
       x.images = imgKeys.map(key => (imgFiles == undefined ||Object.keys(imgFiles).length === 0) ? x[key] : imgFiles[x[key]])
       x.image = x.images[0]
-      console.log('ahaaa', imgFiles, imgKeys[0])
     }
 
     x.json = (jsonFiles == undefined || Object.keys(jsonFiles).length === 0) ? x.threeD : jsonFiles[x.threeD];
@@ -139,9 +138,12 @@ function prepareData(data, imgFiles, jsonFiles) {
 
 function loadData(data) {
 
+  var isNotFloat = function(n){ return Number.isNaN(Number.parseFloat(n)) };
+
   var dataTypesMap = {}
   for (var column of Object.keys(data[0])) {
-    if (isNaN(data[0][column]) || column == '_id' || column == 'ID') {
+    if (isNaN(data[0][column]) || isNotFloat(data[0][column]) || column == '_id' || column == 'ID' || column == 'id') 
+    {
       dataTypesMap[column] = 'string'
     }
     else {
@@ -209,12 +211,11 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
 //export default {loadDataFromURL, loadDataFromCloudURL}
 //exports.loadDataFromURL = opeloadDataFromURLrations;
 //exports.loadDataFromCloudURL = loadDataFromCloudURL;
-export { loadDataFromURL, loadDataFromCloudURL, loadData, prepareData }
+export { loadDataFromURL, loadDataFromCloudURL, loadData, prepareData, readyToLoad }
 
 /*******************        Design Explorer ********************** */
 
 function loadDataFromCloudURL(rawUrl) {
-  console.log("Hello  Worlds")
   checkInputLink(rawUrl, function (d) {
     // _folderInfo = d; //set global fodler obj
     console.log("url, ", d)

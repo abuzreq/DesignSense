@@ -2,33 +2,36 @@
 
 <template>
   <v-container>
-    <span style="position: relative; left: -10px; top: -12px">
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn
-            color="red"
-            x-small
-            icon
-            v-on="on"
-            @click="() => (isCustomizingDimensions = !isCustomizingDimensions)"
-          >
-            <v-icon>mdi-wrench-outline</v-icon>
-          </v-btn>
-        </template>
-        <span>Customize the Chart</span>
-      </v-tooltip>
-    </span>
-
-    <v-row style="position: relative; top: -25px">
-      <v-col v-if="isCustomizingDimensions" cols="2">
+    <v-row no-gutters>
+      <v-col  style= "position: relative; left: -12px; top:-12px" :cols="isCustomizingDimensions ? 2 : 1">
+        <span>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                color="red"
+                small
+                icon
+                v-on="on"
+                @click="
+                  () => (isCustomizingDimensions = !isCustomizingDimensions)
+                "
+              >
+                <v-icon>mdi-wrench-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>Customize the Chart</span>
+          </v-tooltip>
+        </span>
         <MultiDimensionSelect
+          v-show="isCustomizingDimensions"
           :initialValue="numericDimensions"
           :keys="allKeys"
           :width="(1 / 6.0) * width"
           v-on:update="onDimensionChange($event)"
         />
       </v-col>
-      <v-col :cols="isCustomizingDimensions ? 10 : 12">
+      <v-col :style= "[!isCustomizingDimensions? {'position': 'relative', 'left': '-60px'} : {'position': 'relative', 'left': '0px'}]"
+             :cols="isCustomizingDimensions ? 10 : 11">
         <div :id="viewID" ref="parcoords" class="parcoords"></div>
       </v-col>
     </v-row>
@@ -45,7 +48,7 @@ import "parcoord-es/dist/parcoords.css";
 import ParCoords from "parcoord-es";
 import * as d3 from "d3";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
-import { mapGetters } from "vuex";
+import { mapGetters, mapState } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
 import { round } from "@/components/utils.js";
@@ -58,7 +61,6 @@ export default {
     return {
       excludedDimensions: [],
       colorColumn: "",
-      dimensions: [],
       isCustomizingDimensions: false,
       allKeys: [],
       keysBlackList: [],
@@ -66,40 +68,18 @@ export default {
   },
   computed: {
     ...mapGetters(["isHoveringEnabled"]),
+    ...mapState({
+      numericDimensions: (state) => state.numericDimensions,
+      nonNumericDimensions: (state) => state.nonNumericDimensions,
+    }),
   },
   mounted() {},
   created() {
     this.colorColumn = "collection";
-    var excluded = [
-      "image",
-      "gltf",
-      "geometry",
-      "ID",
-      "_id",
-      "collection",
-      "UsableSpace",
+
+    this.keysBlackList = [
       "index",
       "selected",
-    ];
-    /*excluded = [
-      "center_of_mass_x",
-      "iterationmax_displacment",
-      "mu",
-      "ID",
-      "_id",
-      "collection",
-      "index",
-        "image",
-      "gltf",
-      "geometry","max_vonmises_stress"
-    ]; */
-    /*
-    this.excludedDimensions = [];
-    for (var e of excluded) {
-      this.excludedDimensions.push(e);
-    }
-    */
-    this.keysBlackList = [
       "gltf",
       "image",
       "ID",
@@ -112,16 +92,11 @@ export default {
       "collection",
       "images",
     ];
-    /*
-    this.excludedDimensions = Object.keys(this.chartData[0]).filter(
-      d => !this.numericDimensions.includes(d)
-    );
-    */
-
     this.allKeys = Object.keys(this.chartData[0]);
 
+    this.excludedDimensions = this.nonNumericDimensions;
     this.excludedDimensions.push("selected");
-    this.excludedDimensions.push(...this.keysBlackList);
+    console.log("exclude " + this.excludedDimensions);
   },
   watch: {
     isCustomizingDimensions: {

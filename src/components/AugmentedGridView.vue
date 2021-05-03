@@ -15,6 +15,7 @@
               dense
               v-model="sortByVar"
               solo-inverted
+            
               hide-details
               prepend-inner-icon="search"
               :items="keys"
@@ -366,9 +367,6 @@ export default {
           intensity: 0.8,
         },
       ],
-
-      modelURL:
-        "https://raw.githubusercontent.com/abuzreq/DesignSense/4f9cdd01ee81c7b2bb724015f3003c3914d90ae8/Layer1%20(3).gltf?token=ABOQCFUIOABC2L5T5MHUQG26RAXJQ", //"https://gist.githubusercontent.com/abuzreq/3fb2ad6f964e10ea95332f0822ce899b/raw/a8a6ad6860f9ab6a6171dbee5987b4bcbf0a117a/Layer2.gltf",
       crossOrigin: "anonymous",
       chartData: [],
       cards: [],
@@ -378,14 +376,12 @@ export default {
       arrowUpIcon: "mdi-arrow-up",
       arrowDownIcon: "mdi-arrow-down",
       viewID: null,
-      //keys: ["Height", "NetSolar", "collection", "selected"],
       colSpan: 1,
       possibleColSpans: [1, 2, 3, 4],
       labels: ["S", "M", "L", "XL"],
       icons: ["mdi-snowflake", "mdi-leaf", "mdi-fire", "mdi-water"],
       maxPerPage: 10000,
-      // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
-      sortByVar: "height",
+      sortByVar: "",
       isSortDesc: true,
       enableContext: this.defaultEnableContext,
       numSelected: 0,
@@ -411,7 +407,7 @@ export default {
     },
     ...mapState({
       rawChartData: (state) => state.data,
-      keys: (state) => state.numericDimensions.concat(["selected"]),
+      keys: (state) => state.allDimensions.concat(["selected"]),
       hovered: (state) => state.hovered,
     }),
     ...mapGetters(["isHoveringEnabled"]),

@@ -1,7 +1,12 @@
 <template>
-  <v-container :id="viewID" justify-start align-start :style="{'height': `${height}px`}">
+  <v-container
+    :id="viewID"
+    justify-start
+    align-start
+    :style="{ height: `${height}px` }"
+  >
     <v-data-iterator
-      style="height:100%;"
+      style="height: 100%"
       :items="clusterReps"
       hide-default-footer
       :items-per-page="maxPerPage"
@@ -9,49 +14,9 @@
       :sort-desc="isSortDesc"
     >
       <template v-slot:header>
-        <!--<MultiDimensionSelect
-            :initialValue="numericDimensions"
-            v-on:update="onDimensionChange($event)"
-          />
-          <v-spacer></v-spacer>
-        -->
-        <!--
-          <v-select
-            dense
-            v-model="sortByVar"
-            flat
-            solo-inverted
-            hide-details
-            prepend-inner-icon="search"
-            :items="numericDimensions"
-            label="Sort by"
-          ></v-select>
-          <v-spacer></v-spacer>
-        
-          {{numSelected}}
-          <v-spacer></v-spacer>
- 
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <v-checkbox
-                v-on="on"
-                dense
-                align-center
-                v-model="enableContext"
-                icon="large"
-                :off-icon="offContextIcon"
-                :on-icon="onContextIcon"
-              />
-            </template>
-            <span v-if="enableContext">Show only selection</span>
-            <span v-else>Show selection in context</span>
-          </v-tooltip>
-
-          <v-spacer></v-spacer>
-        -->
         <v-toolbar fixed dark color="blue darken-3" class="mb-1">
           <v-container fluid>
-            <v-row dense justify="center" style="margin-bottom:-10px;">
+            <v-row dense justify="center" style="margin-bottom: -10px">
               <v-toolbar-title>Clusters</v-toolbar-title>
             </v-row>
             <v-row dense>
@@ -76,31 +41,26 @@
             </v-row>
           </v-container>
         </v-toolbar>
-
-        <!--
-          <v-btn-toggle dense v-model="isSortDesc" mandatory>
-            <v-btn medium depressed color="blue" :value="false">
-              <v-icon>mdi-arrow-up</v-icon>
-            </v-btn>
-            <v-btn medium depressed color="blue" :value="true">
-              <v-icon>mdi-arrow-down</v-icon>
-            </v-btn>
-          </v-btn-toggle>
-        -->
       </template>
       <template v-slot:default="items">
         <v-layout grid-list-sm column style="height: 75vh">
           <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
             <v-row dense>
               <v-col
-                v-for="(item) in items.items"
-                v-bind:key="cardSelector+item._id"
+                v-for="item in items.items"
+                v-bind:key="cardSelector + item._id"
                 :cols="possibleColSpans[colSpan]"
               >
-                <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
                 <v-card
-                  v-bind:class="{ clusterRep: true, outlined: numSelected > 0 && selectionMap[item._id], transparent: enableContext &&  numSelected > 0 &&  !selectionMap[item._id] }"
-                  v-bind:id="cardSelector+item._id"
+                  v-bind:class="{
+                    clusterRep: true,
+                    outlined: numSelected > 0 && selectionMap[item._id],
+                    transparent:
+                      enableContext &&
+                      numSelected > 0 &&
+                      !selectionMap[item._id],
+                  }"
+                  v-bind:id="cardSelector + item._id"
                 >
                   <v-img
                     v-if="true"
@@ -110,16 +70,6 @@
                     v-on:mouseover="hover(item)"
                     v-on:mouseleave="unhover(item)"
                   />
-                  <!--:id='"card_"+item._id' -->
-                  <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
-
-                  <!--:id='"card_"+item._id'
-                  <model-gltf 
-                    v-else
-                    :src="item.gltf" 
-                  />
-                  -->
-                  <!--</router-link>-->
                 </v-card>
               </v-col>
             </v-row>
@@ -128,39 +78,34 @@
       </template>
     </v-data-iterator>
 
-    <!-- <canvas style="dispaly:none;" id="canvas"></canvas> -->
-
-    <v-toolbar dense fixed dark color="blue darken-3" class="mb-1" style="margin-top:-35px">
+    <v-toolbar
+      dense
+      fixed
+      dark
+      color="blue darken-3"
+      class="mb-1"
+      style="margin-top: -35px"
+    >
       <MultiDimensionSelect
         :initialValue="dimensions"
         :keys="numericDimensions"
-        :width="(3/4)*width"
+        :width="(3 / 4) * width"
         v-on:update="onDimensionChange($event)"
         initialOpenDirection="above"
       />
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" x-small icon @click="() => dimensions = []">
+          <v-btn v-on="on" x-small icon @click="() => (dimensions = [])">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </template>
         <span>Rest the dimensions.</span>
       </v-tooltip>
-
-      <!--
-       <v-btn  x-small icon @click="() => isComputingVisualSimilarity = !isComputingVisualSimilarity">
-            <v-icon>mdi-play</v-icon>
-        </v-btn>
-        -->
     </v-toolbar>
   </v-container>
 </template>
 
 <style scoped>
-/*
-.col > .v-card.clusterRep .v-image {
-  filter: sepia() saturate(4) hue-rotate(295deg);
-}*/
 .col > .v-card.outlined {
   border: 2px solid rgb(33, 119, 180);
 }
@@ -208,14 +153,13 @@ export default {
   components: { ModelGltf, MultiDimensionSelect },
   props: ["defaultEnableContext", "width", "height", "x", "y"],
 
-  data: function() {
+  data: function () {
     return {
       chartData: [],
       selectionMap: {},
       offContextIcon: "mdi-eye-off",
       onContextIcon: "mdi-eye",
       viewID: null,
-      // keys: this.$store.numericDimensions.concat(["selected"]),
       colSpan: 0,
       possibleColSpans: [6, 8, 12],
       labels: ["S", "M", "XL"],
@@ -230,8 +174,7 @@ export default {
       clusterReps: [],
       dimensions: [],
       numClusters: 3,
-      isComputingVisualSimilarity: false
-
+      isComputingVisualSimilarity: false,
     };
   },
   computed: {
@@ -245,50 +188,22 @@ export default {
       return Object.values(this.chartData);
     },
     ...mapState({
-      rawChartData: state => state.data,
-      numericDimensions: state => state.numericDimensions,
-      hovered: state => state.hovered
+      rawChartData: (state) => state.data,
+      numericDimensions: (state) => state.numericDimensions,
+      hovered: (state) => state.hovered,
     }),
     ...mapGetters(["isHoveringEnabled"]),
     cardSelector() {
       return "card_" + this.viewID + "_";
-    }
-    /*  clustersReps()
-    {
-      console.log("clusters ", this.clustersMap)
-      console.log(this.clustersMap[0])
-      for(var rep in this.clustersMap)
-      {
-        console.log(rep)
-      }
-      console.log("clusters map", Object.keys(this.clustersMap.value))
-      return Object.keys(this.clustersMap.value);
-    }*/
+    },
   },
   mounted() {
     this.$store.dispatch("createDefaultView", {
       view: this.viewID,
-      vueComponent: this
+      vueComponent: this,
     });
     this.chartData = this.rawChartData;
-    this.compute();   
-    /*
-    var clusters = kmeans(this.chartData, 4, function(d) {return d.TotalFlrArea})
-    var centroids = clusters.map(c => d3.mean(c, d => values(d, ['TotalFlrArea'])))
-    var closest = clusters.map((c,i) => 
-        {
-            return indexOfSmallest(c.map( d =>  Math.abs(centroids[i] - values(d, ['TotalFlrArea']))))
-        }
-    )
-    var clusterReps = [];
-    for(var i = 0; i < closest.length;i++)
-    {
-        clusterReps.push(this.chartData[closest[i]])
-        
-        this.clustersMap[this.chartData[closest[i]]._id] = clusters[i]
-    }
-    this.chartData = clusterReps;
-    */
+    // this.compute();
   },
   created() {
     this.dimensions = this.numericDimensions;
@@ -308,9 +223,10 @@ export default {
     });
   },
   methods: {
-    compute() {
-
-      if(this.chartData.length < 5)
+    compute()
+    {
+      
+      if (!this.areDimensionsValid()) 
       {
         return;
       }
@@ -324,16 +240,15 @@ export default {
             console.log("matrix2", matrix2)
             //need to compute  to2DVisualSimilarityMatrix in a sync way or async with promise
       }
-      */ 
+      */
 
-      
       kmeans.clusterize(matrix, { k: this.numClusters }, (err, res) => {
         if (err) console.error(err);
         else {
-          var centroids = res.map(c => c.centroid);
+          var centroids = res.map((c) => c.centroid);
           var closest = res.map((c, i) => {
             let smallestInClusterIndex = indexOfSmallest(
-              c.cluster.map(d => distance(centroids[i], d))
+              c.cluster.map((d) => distance(centroids[i], d))
             );
             return c.clusterInd[smallestInClusterIndex];
           });
@@ -344,7 +259,7 @@ export default {
             this.clusterReps.push(this.chartData[closest[i]]);
             this.clustersMap[this.chartData[closest[i]]._id] = res[
               i
-            ].clusterInd.map(idx => this.chartData[idx]);
+            ].clusterInd.map((idx) => this.chartData[idx]);
           }
         }
       });
@@ -354,7 +269,11 @@ export default {
       /*Object.keys(this.chartData[0]).filter(
         d => !newDimensions.includes(d)
       );*/
-      this.compute();
+      this.compute();          
+    },
+    areDimensionsValid()
+    {
+      return this.dimensions && this.dimensions.length > 0
     },
     hover(item, forced) {
       if (forced || this.isHoveringEnabled) {
@@ -365,11 +284,10 @@ export default {
       this.$store.commit("hover", { hovered: null });
     },
     toggle(item, event) {
-      //console.log("Toggle", this.clustersMap[item._id]._id);
       this.$store.commit("update", {
         view: this.viewID,
-        selection: this.clustersMap[item._id].map(d => d._id),
-        operation: getOperationFromEvent(event)
+        selection: this.clustersMap[item._id].map((d) => d._id),
+        operation: getOperationFromEvent(event),
       });
 
       //this.$store.commit("hover", { hovered: item });
@@ -411,30 +329,23 @@ export default {
     },
     getCompareData() {
       let res = [];
-      this.selected.forEach(e => {
+      this.selected.forEach((e) => {
         res.push(this.chartData[e]);
       });
       return res;
     },
-    destroyChart: function() {
-      let node = d3.select("#" + this.viewID)._groups[0][0]; //this.$refs["parcoords"];
+    destroyChart: function () {
+      let node = d3.select("#" + this.viewID)._groups[0][0];
       while (node.firstChild) {
         node.removeChild(node.firstChild);
       }
     },
     updateContext() {
-      console.log("Updating Context");
       if (this.enableContext) {
         this.chartData = this.rawChartData;
       } else {
         this.chartData = this.$store.getters.selectedDataInView(this.viewID);
       }
-      /*
-      let selected = this.$store.getters.selectedInView(this.viewID);
-      this.unhighlight(this.$store.getters.unselectedInView(this.viewID));
-      this.unhighlight(selected);
-      this.highlight(selected);
-*/
     },
     countSelected(selectionMap) {
       let count = 0;
@@ -444,29 +355,29 @@ export default {
         }
       }
       return count;
-    }
+    },
   },
   watch: {
     enableContext: {
-      handler: function(enableContextNewValue, oldValue) {
+      handler: function (enableContextNewValue, oldValue) {
         this.updateContext();
         this.compute();
-      }
+      },
       //deep: true
     },
     rawChartData: {
-      handler: function(newValue, oldValue) {
+      handler: function (newValue, oldValue) {
         this.updateContext();
         this.compute();
-      }
+      },
       //deep: true
     },
     numClusters: {
-      handler: function(newValue, oldValue) {
+      handler: function (newValue, oldValue) {
         this.compute();
-      }
+      },
     },
-    hovered: function(newValue, oldValue) {
+    hovered: function (newValue, oldValue) {
       if (oldValue) {
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + oldValue._id)
@@ -478,14 +389,12 @@ export default {
           .classed("hovered", true);
       }
     },
-    isComputingVisualSimilarity: function(newValue, oldValue)
-    {
-        if(newValue)
-        {
-          this.compute()
-        }
-    }
-  }
+    isComputingVisualSimilarity: function (newValue, oldValue) {
+      if (newValue) {
+        this.compute();
+      }
+    },
+  },
 };
 
 function fetchImage(src) {
@@ -534,7 +443,7 @@ function to2DVisualSimilarityMatrix(data, imgKey, normalize) {
           //const ctx = a.context2d(width, height, 1);
 
           let numMistmatch = pixelmatch(data1, data2, diff.data, w, h, {
-            threshold: 0.1
+            threshold: 0.1,
           });
           row.push(numMistmatch);
         });
@@ -548,11 +457,11 @@ function to2DVisualSimilarityMatrix(data, imgKey, normalize) {
 function to2DMatrix(data, keys, normalize) {
   if (normalize) {
     var scales = {};
-    keys.forEach(key => {
+    keys.forEach((key) => {
       scales[key] = d3
         .scaleLinear()
         .domain(
-          d3.extent(data, function(d) {
+          d3.extent(data, function (d) {
             return d[key];
           })
         )

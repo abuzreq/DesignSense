@@ -25,7 +25,8 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             setsIDs: [],
             setsMetadataMap: {},
             setsMap: {},
-            numericDimensions: getNumeric(dataTypesMap),
+            numericDimensions: getNumericDimensions(dataTypesMap),
+            nonNumericDimensions: getNonNumericDimensions(dataTypesMap),
             allDimensions: Object.keys(dataTypesMap),
             setsCounter: 0,
 
@@ -615,9 +616,18 @@ function filterData(dataMap, toFilter) {
     }
     return dataMapCopy;
 }
+function getNonNumericDimensions(typesMap) {
+    var nonnumeric = []
+    for (var dim in typesMap) {
+        if (typesMap[dim] != "Float" && typesMap[dim] != "Number")
+        {
+            nonnumeric.push(dim);
+        }
+    }
+    return nonnumeric;
+}
 
-
-function getNumeric(typesMap) {
+function getNumericDimensions(typesMap) {
     var numeric = []
     for (var dim in typesMap) {
         if (typesMap[dim] == "Float" || typesMap[dim] == "Number")
@@ -625,9 +635,9 @@ function getNumeric(typesMap) {
             numeric.push(dim);
         }
     }
-    console.log(typesMap, numeric)
     return numeric;
 }
+
 
 //ref: https://stackoverflow.com/questions/41572974/how-to-load-all-server-side-data-on-initial-vue-js-vue-router-load
 export default builder;
