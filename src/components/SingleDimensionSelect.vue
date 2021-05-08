@@ -1,12 +1,19 @@
 <!-- Vue component -->
 <template>
-  <div>
+  <div style="padding-top: 4px; padding-bottom: 4px">
+    <div :style="{ float: 'left', height: '100%', width: `${prefixWidth}px` }">
+      {{ prefix }}
+    </div>
     <multiselect
-      :style="{'height':'30px;','width': `${width}px`}"
+      :style="{
+        float: 'left',
+        height: '100%',
+        width: `${width - prefixWidth}px`,
+      }"
       @input="onChange"
       dense
-        searchable
-        :showLabels="false"
+      searchable
+      :showLabels="false"
       v-model="value"
       :options="keys"
     ></multiselect>
@@ -22,23 +29,23 @@ import { mapState, mapGetters } from "vuex";
 
 export default {
   // OR register locally
-  components: { Multiselect },  
-  props: ["initialValue","width"],
+  components: { Multiselect },
+  props: ["initialValue", "width", "prefix", "prefixWidth"],
   data() {
     return {
-      value: this.initialValue
+      value: this.initialValue,
     };
   },
   computed: {
     ...mapState({
-      keys: state => state.numericDimensions.concat(["selected"])
-    })
+      keys: (state) => state.numericDimensions.concat(["selected"]),
+    }),
   },
   methods: {
-    onChange: function(value, id) {
+    onChange: function (value, id) {
       this.$emit("update", value);
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -46,5 +53,10 @@ export default {
      Add Multiselect CSS. Can be added as a static asset or inside a component. -->
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 
-<style>
+<style scoped>
+::v-deep .multiselect__tags > .multiselect__single,
+::v-deep .multiselect__tags > .multiselect__placeholder {
+  overflow: hidden;
+  white-space: nowrap;
+}
 </style>

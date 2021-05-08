@@ -50,7 +50,7 @@ export default {
       return chart;
     },
     destroyChart: function() {
-      let node = d3.select("#" + this.viewID)._groups[0][0]; //this.$refs["parcoords"];
+      let node = d3.select("#" + this.viewID)._groups[0][0]; 
       while (node && node.firstChild) {
         node.removeChild(node.firstChild);
       }
