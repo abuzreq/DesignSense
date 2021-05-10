@@ -3,7 +3,10 @@
 <template>
   <v-container>
     <v-row no-gutters>
-      <v-col  style= "position: relative; left: -12px; top:-12px" :cols="isCustomizingDimensions ? 2 : 1">
+      <v-col
+        style="position: relative; left: -12px; top: -12px"
+        :cols="isCustomizingDimensions ? 2 : 1"
+      >
         <span>
           <v-tooltip bottom>
             <template v-slot:activator="{ on }">
@@ -30,8 +33,14 @@
           v-on:update="onDimensionChange($event)"
         />
       </v-col>
-      <v-col :style= "[!isCustomizingDimensions? {'position': 'relative', 'left': '-60px'} : {'position': 'relative', 'left': '0px'}]"
-             :cols="isCustomizingDimensions ? 10 : 11">
+      <v-col
+        :style="[
+          !isCustomizingDimensions
+            ? { position: 'relative', left: '-60px' }
+            : { position: 'relative', left: '0px' },
+        ]"
+        :cols="isCustomizingDimensions ? 10 : 11"
+      >
         <div :id="viewID" ref="parcoords" class="parcoords"></div>
       </v-col>
     </v-row>
@@ -64,6 +73,7 @@ export default {
       isCustomizingDimensions: false,
       allKeys: [],
       keysBlackList: [],
+      graphCentriodPoints: null,
     };
   },
   computed: {
@@ -192,12 +202,10 @@ export default {
       var hoveredCenPts = [];
 
       let hoveredData = this.getHoveredLines(mousePosition);
-
-      if (hoveredData && hoveredData[0].length != 0) {
-        hovered = hoveredData[0];
-        hoveredCenPts = hoveredData[1];
-        this.$store.commit("hover", { hovered: hovered[0] });
-        this.hoveredCenPts = hoveredCenPts;
+      //console.log(hoveredData);
+      if (hoveredData && hoveredData.length != 0) {
+        //picking the first in the array for now (todo: consider picking the closes to mouse?)
+        this.$store.commit("hover", { hovered: hoveredData[0] });
       }
     },
     cleanTooltip() {
@@ -276,28 +284,25 @@ export default {
     },
     getHoveredLines(mouseClick) {
       var hovered = [];
-      var hoveredCenPts = [];
-
-      // find which data is activated right now
       var activeData = this.getActiveData();
 
-      // find centriod points
-      var graphCentPts = this.getCentroids(activeData);
+      if (this.graphCentriodPoints == null) {
+        // find centriod points. This value will be null if the chart data changed
+        this.graphCentriodPoints = this.getCentroids(activeData);
+      }
 
-      if (graphCentPts.length == 0) return false;
+      if (this.graphCentriodPoints.length == 0) return false;
 
       // find between which axes the point is
-      var axeNum = this.findAxes(mouseClick, graphCentPts[0]);
+      var axeNum = this.findAxes(mouseClick, this.graphCentriodPoints[0]);
       if (!axeNum) return false;
-
-      graphCentPts.forEach((d, i) => {
-        if (this.isOnLine(d[axeNum - 1], d[axeNum], mouseClick, 2)) {
+      var tolerance = 3;
+      this.graphCentriodPoints.forEach((d, i) => {
+        if (this.isOnLine(d[axeNum - 1], d[axeNum], mouseClick, tolerance)) {
           hovered.push(activeData[i]);
-          hoveredCenPts.push(graphCentPts[i]); // for tooltip
         }
       });
-
-      return [hovered, hoveredCenPts];
+      return hovered;
     },
     isOnLine(startPt, endPt, testPt, tol) {
       // check if test point is close enough to a line
@@ -324,7 +329,7 @@ export default {
       // but I couldn't find it so I just wrote this for now
       var margins = this.chart.margin();
       var graphCentPts = [];
-
+      // console.log("filtered " + data);
       data.forEach((d) => {
         var initCenPts = this.chart.compute_real_centroids(d);
 
@@ -337,20 +342,6 @@ export default {
       });
 
       return graphCentPts;
-    },
-    findAxes(testPt, cenPts) {
-      // finds between which two axis the mouse is
-      var x = testPt[0];
-      var y = testPt[1];
-
-      // make sure it is inside the range of x
-      if (cenPts[0][0] > x) return false;
-      if (cenPts[cenPts.length - 1][0] < x) return false;
-
-      // find between which segment the point is
-      for (var i = 0; i < cenPts.length; i++) {
-        if (cenPts[i][0] > x) return i;
-      }
     },
     findAxes(testPt, cenPts) {
       // finds between which two axis the mouse is
@@ -462,7 +453,9 @@ export default {
           //    var mousePosition = d3.mouse(this);
           //    highlightLineOnClick(mousePosition, true); //true will also add tooltip
         });
-      //chart.brushPredicate("OR");
+
+      //Resetting the centroids data used for faster hovering via memoization.
+      this.graphCentriodPoints = null;
 
       //To place the zero values at center vertically  https://github.com/BigFatDog/parcoords-es/issues/16
       /* 
@@ -495,11 +488,9 @@ export default {
 </script>
 
 <style scoped>
-/*
-.brushTootlip {
-  position: absolute;
+.parcoords {
+  cursor: crosshair;
 }
-*/
 #tooltip {
   font-family: sans-serif;
   font-size: 14px;

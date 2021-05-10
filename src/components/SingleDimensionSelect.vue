@@ -1,9 +1,7 @@
 <!-- Vue component -->
 <template>
   <div style="padding-top: 4px; padding-bottom: 4px">
-    <div :style="{ float: 'left', height: '100%', width: `${prefixWidth}px` }">
-      {{ prefix }}
-    </div>
+    <slot name="prefix"> </slot>
     <multiselect
       :style="{
         float: 'left',

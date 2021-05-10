@@ -285,6 +285,12 @@
 </template>
 
 <style scoped>
+
+/** To show a crosshair when the curson is on the grid */
+.vue-drag-select  {
+  cursor: crosshair;
+}
+
 ::v-deep div.v-expansion-panel-content__wrap {
   padding-left: 0px;
   padding-right: 0px;
@@ -496,12 +502,10 @@ export default {
     getAllCards() {
       let cardNodes = d3.select("#" + this.viewID).selectAll(".v-card")
         ._groups[0]; //.select('.vue-drag-select')
-      //console.log(cardNodes)
       let cards = Array.prototype.slice
         .call(cardNodes)
         .filter((d) => d.id != "");
 
-      //console.log(cards.length)
       return cards;
     },
     onSelectionDragMouseUp(selectedItems) {

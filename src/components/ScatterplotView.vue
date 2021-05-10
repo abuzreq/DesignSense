@@ -1,7 +1,7 @@
 
 
 <template>
-  <v-container style="width: 100%; height: 100%" fluid class="pa-2">
+  <v-container style="width: 100%; height: 100%" fluid class="pa-1">
     <v-toolbar dense dark color="blue darken-3" class="mb-1">
       <v-row no-gutters style="height: 100%">
         <v-col :cols="5">
@@ -9,18 +9,78 @@
             :initialValue="this.xColumn"
             v-on:update="onXChange($event)"
             :width="this.singleDimensionWidth"
-            :prefix="'X: '"
-            :prefixWidth="20"
-          />
+            :prefixWidth="this.prefixWidth"
+          >
+            <template v-slot:prefix>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on }">
+                  <v-checkbox
+                    style="float: left"
+                    v-on="on"
+                    dense
+                    v-model="isXAxisIncremental"
+                    icon="x-small"
+                    :off-icon="arrowRightIcon"
+                    :on-icon="arrowLeftIcon"
+                  />
+                </template>
+                <span v-if="isXAxisIncremental"
+                  >Press to change to Ascending from right to left</span
+                >
+                <span v-else
+                  >Press to change to Descending from right to left</span
+                >
+              </v-tooltip>
+              <div
+                :style="{
+                  float: 'left',
+                  height: '100%',
+                  width: `${prefixWidth}px`,
+                }"
+              >
+                X:
+              </div>
+            </template>
+          </SingleDimensionSelect>
         </v-col>
         <v-col :cols="5">
           <SingleDimensionSelect
             :initialValue="this.yColumn"
             v-on:update="onYChange($event)"
             :width="this.singleDimensionWidth"
-            :prefix="'Y: '"
-            :prefixWidth="20"
-          />
+            :prefixWidth="this.prefixWidth"
+          >
+            <template v-slot:prefix>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on }">
+                  <v-checkbox
+                    style="float: left"
+                    v-on="on"
+                    dense
+                    v-model="isYAxisIncremental"
+                    icon="x-small"
+                    :off-icon="arrowUpIcon"
+                    :on-icon="arrowDownIcon"
+                  />
+                </template>
+                <span v-if="isYAxisIncremental"
+                  >Press to change to Ascending from bottom to top</span
+                >
+                <span v-else
+                  >Press to change to Descending from bottom to top</span
+                >
+              </v-tooltip>
+              <div
+                :style="{
+                  float: 'left',
+                  height: '100%',
+                  width: `${prefixWidth}px`,
+                }"
+              >
+                Y:
+              </div>
+            </template>
+          </SingleDimensionSelect>
         </v-col>
         <v-col :cols="2">
           <v-tooltip bottom>
@@ -42,12 +102,17 @@
     <div
       :id="viewID"
       ref="scatter"
-      :style="{ height: `${this.height - this.toolbarHeight}px` }"
+      :style="{
+        height: `${this.height - this.toolbarHeight}px`,
+      }"
     />
   </v-container>
 </template>
 
 <style scoped>
+::v-deep .v-toolbar > .v-toolbar__content {
+  padding: 0 0 0 0;
+}
 div >>> .axis line {
   stroke: #ddd;
 }
@@ -98,18 +163,43 @@ export default {
     return {
       xColumn: "",
       yColumn: "",
+      isXAxisIncremental: false,
+      isYAxisIncremental: false,
       colorColumn: "",
       isShowingParetoFrontier: false,
       toolbarHeight: 48,
+      arrowUpIcon: "mdi-arrow-up",
+      arrowDownIcon: "mdi-arrow-down",
+      arrowRightIcon: "mdi-arrow-right",
+      arrowLeftIcon: "mdi-arrow-left",
+      prefixWidth: 20,
     };
   },
   computed: {
     ...mapGetters(["isHoveringEnabled"]),
     singleDimensionWidth() {
-      return Math.min(180, (4 * this.width) / 12);
+      if (this.width <= 400) {
+        `1`;
+        return Math.min(110, (4 * this.width) / 12);
+      } else {
+        return Math.min(180, (4 * this.width) / 12);
+      }
     },
   },
-  mounted() {},
+  watch: {
+    isXAxisIncremental: {
+      handler: function (newValue) {
+        this.isXAxisIncremental = newValue;
+        this.refresh();
+      },
+    },
+    isYAxisIncremental: {
+      handler: function (newValue) {
+        this.isYAxisIncremental = newValue;
+        this.refresh();
+      },
+    },
+  },
   created() {
     this.xColumn = this.numericDimensions[0];
     this.yColumn = this.numericDimensions[1];
@@ -157,15 +247,17 @@ export default {
       scatterPlot
         .outerWidth(this.width)
         .outerHeight(this.height - this.toolbarHeight)
-        .margin({ left: 35, top: 10, right: 10, bottom: 40 })
+        .margin({ left: 45, top: 10, right: 10, bottom: 50 })
         .xColumn(this.xColumn)
         .xAxisLabel(this.xColumn)
-        .xAxisLabelOffset(30)
+        .xAxisLabelOffset(35)
         .xTicks(20)
         .yColumn(this.yColumn)
         .yAxisLabel(this.yColumn)
-        .yAxisLabelOffset(30)
+        .yAxisLabelOffset(35)
         .yTicks(20)
+        .isXAxisIncremental(this.isXAxisIncremental)
+        .isYAxisIncremental(this.isYAxisIncremental)
         .colorColumn(this.colorColumn)
         .colorScale(this.$store.state.colorScale)
         .onBrushed((brushedIDs) => {
@@ -204,9 +296,11 @@ class ScatterPlot {
 
     var xAxisLabel = "No X axis label configured";
     var xAxisLabelOffset = 40;
+    var isXAxisIncremental = true;
 
     var yAxisLabel = "No Y axis label configured";
     var yAxisLabelOffset = 30;
+    var isYAxisIncremental = true;
 
     var xScale = d3.scaleLinear();
     var yScale = d3.scaleLinear();
@@ -228,8 +322,18 @@ class ScatterPlot {
       var innerHeight = outerHeight - margin.top - margin.bottom;
 
       colorScale.range();
-      xScale.range([15, innerWidth - 15]);
-      yScale.range([innerHeight - 15, 15]);
+      //[todo] externalize this offset parameter
+      var offset = 15;
+      xScale.range(
+        isXAxisIncremental
+          ? [innerWidth - offset, offset]
+          : [offset, innerWidth - offset]
+      );
+      yScale.range(
+        isYAxisIncremental
+          ? [offset, innerHeight - offset]
+          : [innerHeight - offset, offset]
+      );
 
       selection.each(function (data) {
         var div = d3.select(this);
@@ -243,7 +347,7 @@ class ScatterPlot {
 
         svg.attr("width", outerWidth).attr("height", outerHeight);
         svg.attr("viewBox", [0, 0, outerWidth, outerHeight]);
-        
+
         var g = svg.append("g");
 
         var circles = g
@@ -255,13 +359,13 @@ class ScatterPlot {
         g.append("g")
           .attr("class", "x axis")
           .append("text")
-          .attr("class", "label")
+          .attr("class", "label x_label")
           .style("text-anchor", "middle");
 
         g.append("g")
           .attr("class", "y axis")
           .append("text")
-          .attr("class", "label")
+          .attr("class", "label y_label")
           .style("text-anchor", "middle");
 
         xScale.domain(
@@ -301,7 +405,8 @@ class ScatterPlot {
           .attr("x", innerWidth / 2)
           .attr("y", xAxisLabelOffset)
           .attr("fill", "black")
-          .text(xAxisLabel);
+          .text(xAxisLabel)
+          .style("font-size", "12px");
         //console.log(g.select(".x.axis").select("text"));
         g.select(".y.axis")
           .call(d3.axisLeft(yScale))
@@ -315,7 +420,8 @@ class ScatterPlot {
               ") rotate(-90)"
           )
           .text(yAxisLabel)
-          .attr("fill", "black");
+          .attr("fill", "black")
+          .style("font-size", "12px");
 
         circles
           .attr("cx", function (d) {
@@ -424,6 +530,7 @@ class ScatterPlot {
 
         var mark = function (item) {
           thisG.selectAll("circle").attr("r", (d, i) => {
+            //[todo] parametrize those radii
             if (item && keyFunc(item) == keyFunc(d)) {
               return 5;
             } else {
@@ -454,6 +561,15 @@ class ScatterPlot {
           onHovered(site && site.data);
         });
 
+        /*
+        d3.select(".x_label").on("dblclick", function (d) {
+          isXAxisFlipped = !isXAxisFlipped;
+        });
+
+        d3.select(".y_label").on("dblclick", function (d) {
+          isYAxisFlipped = !isYAxisFlipped;
+        });
+*/
         thisG = g;
       });
     }
@@ -519,6 +635,17 @@ class ScatterPlot {
     chart.yAxisLabel = function (_) {
       if (!arguments.length) return yAxisLabel;
       yAxisLabel = _;
+      return chart;
+    };
+
+    chart.isXAxisIncremental = function (_) {
+      if (!arguments.length) return isXAxisIncremental;
+      isXAxisIncremental = _;
+      return chart;
+    };
+    chart.isYAxisIncremental = function (_) {
+      if (!arguments.length) return isYAxisIncremental;
+      isYAxisIncremental = _;
       return chart;
     };
 

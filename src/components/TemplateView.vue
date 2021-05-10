@@ -69,7 +69,9 @@ export default {
     hovered: function(newValue, oldValue)
     {
       if(this.hasOwnProperty("hoverHandler"))
+      {
           this.hoverHandler();     
+      }
     },
 
     width: function(newValue, oldValue) {

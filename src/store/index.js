@@ -271,9 +271,11 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             zoomToSelection(context) {
                 let dataMapSubset = context.getters.selectedInMarking(context.state.defaultMarkingID);
                 let selection = map2Data(dataMapSubset)
-
-                context.commit('pushDataStack', { data: context.state.data });
-                context.commit('setData', { newData: selection });
+                if(selection.length > 0)
+                {         
+                    context.commit('pushDataStack', { data: context.state.data });
+                    context.commit('setData', { newData: selection });
+                }
             },
             excludeSelection(context) {
                 let toFilter = context.getters.selectedInMarking(context.state.defaultMarkingID);
