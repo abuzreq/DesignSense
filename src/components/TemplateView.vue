@@ -21,8 +21,8 @@ export default {
   },
   computed: {
     ...mapState({ chartData: state => state.data ,
-          numericDimensions: state => state.numericDimensions.concat(["selected"]),
-          allDimensions: state => state.allDimensions.concat(["selected"]),
+          numericDimensions: state => state.numericDimensions,
+          allDimensions: state => state.allDimensions,
           hovered: state => state.hovered}),
   },
   mounted() {

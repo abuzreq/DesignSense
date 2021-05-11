@@ -22,10 +22,11 @@
               label="Sort by"
             ></v-select>
             <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <v-checkbox
-                  style="margin-bottom: -20px"
+              <template v-slot:activator="{ on, attrs  }">
+                <v-simple-checkbox
+                :ripple="false"
                   v-on="on"
+                  v-bind="attrs"
                   dense
                   v-model="isSortDesc"
                   icon="large"
@@ -41,7 +42,6 @@
               <template v-slot:activator="{ on }">
                 <v-chip
                   v-on="on"
-                  :ripple="false"
                   class="ma-2"
                   color="blue darken-2"
                   text-color="white"
@@ -57,10 +57,11 @@
 
             <v-spacer></v-spacer>
             <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <v-checkbox
-                  style="margin-bottom: -20px"
+              <template v-slot:activator="{ on, attrs }">
+                <v-simple-checkbox
+                 :ripple="false"
                   v-on="on"
+                   v-bind="attrs"
                   align-center
                   v-model="enableContext"
                   :off-icon="offContextIcon"

@@ -13,10 +13,12 @@
           >
             <template v-slot:prefix>
               <v-tooltip bottom>
-                <template v-slot:activator="{ on }">
-                  <v-checkbox
+                <template v-slot:activator="{ on, attrs }">
+                  <v-simple-checkbox
+                  :ripple="false"
                     style="float: left"
                     v-on="on"
+                    v-bind="attrs"
                     dense
                     v-model="isXAxisIncremental"
                     icon="x-small"
@@ -52,10 +54,12 @@
           >
             <template v-slot:prefix>
               <v-tooltip bottom>
-                <template v-slot:activator="{ on }">
-                  <v-checkbox
+                <template v-slot:activator="{ on, attrs }">
+                  <v-simple-checkbox
+                  :ripple="false"
                     style="float: left"
                     v-on="on"
+                    v-bind="attrs"
                     dense
                     v-model="isYAxisIncremental"
                     icon="x-small"
@@ -109,46 +113,58 @@
   </v-container>
 </template>
 
-<style scoped>
-::v-deep .v-toolbar > .v-toolbar__content {
-  padding: 0 0 0 0;
-}
-div >>> .axis line {
-  stroke: #ddd;
-}
+<style scoped lang="sass">
+::v-deep .v-toolbar > .v-toolbar__content
+  padding: 0 0 0 0
 
-div >>> .axis path {
-  display: none;
-}
+div ::v-deep .axis line
+  stroke: #ddd
 
-div >>> .cell text {
-  font-weight: bold;
-  text-transform: capitalize;
-}
+div ::v-deep .axis path
+  display: none
 
-div >>> .frame {
-  fill: none;
-  stroke: #aaa;
-}
+div ::v-deep .cell text
+  font-weight: bold
+  text-transform: capitalize
 
-div >>> circle {
-  fill-opacity: 1;
-}
+div ::v-deep .frame
+  fill: none
+  stroke: #aaa
 
-div >>> circle.hidden {
-  fill: #ccc !important;
-}
+div ::v-deep circle
+  fill-opacity: 1
 
-div >>> .extent {
-  fill: #000;
-  fill-opacity: 0.125;
-  stroke: #fff;
-}
+div ::v-deep circle.hidden
+  fill: #ccc !important
+
+div ::v-deep .extent
+  fill: #000
+  fill-opacity: 0.125
+  stroke: #fff
+
+::v-deep .lasso path
+  stroke: rgb(80,80,80)
+  stroke-width: 2px
+
+::v-deep .lasso .drawn
+  fill-opacity: .05
+
+::v-deep .lasso .loop_close
+  fill: none
+  stroke-dasharray: 4,4
+
+::v-deep .lasso .origin
+  fill: #3399FF
+  fill-opacity: .5
+  
 </style>
 <script>
 const pf = require("pareto-frontier");
 
 import * as d3 from "d3";
+import { lasso } from "d3-lasso";
+d3.lasso = lasso;
+
 //import ScatterPlot from "@/components/Scatterplot.js";
 import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapGetters } from "vuex";
@@ -201,6 +217,9 @@ export default {
     },
   },
   created() {
+    //To give access to d3-lasso to the d3 object
+    window["d3"] = d3;
+
     this.xColumn = this.numericDimensions[0];
     this.yColumn = this.numericDimensions[1];
   },
@@ -378,20 +397,44 @@ class ScatterPlot {
             return d[yColumn];
           })
         );
-        var brush = d3
-          .brush()
-          .extent([
-            [0, 0],
-            [innerWidth, innerHeight],
-          ])
-          .on("start", brushstart)
-          .on("brush", brushmove)
-          .on("end", brushend);
 
-        //ref: https://github.com/d3/d3-brush/issues/20
-        brush.keyModifiers(false);
-        //brush.keyModifiers(d3.brushFixSize, null)
-        //brush.keyModifiers(d3.brushFixCenter , null)
+        var useLasso = true;
+        var rectBrush, lassoBrush;
+        if (!useLasso) {
+          rectBrush = d3
+            .brush()
+            .extent([
+              [0, 0],
+              [innerWidth, innerHeight],
+            ])
+            .on("start", brushstart)
+            .on("brush", brushmove)
+            .on("end", brushend);
+          //ref: https://github.com/d3/d3-brush/issues/20
+          rectBrush.keyModifiers(false);
+          //brush.keyModifiers(d3.brushFixSize, null)
+          //brush.keyModifiers(d3.brushFixCenter , null)
+        } else {
+          var lasso_area = svg
+            .append("rect")
+            .attr("width", innerWidth)
+            .attr("height", innerHeight)
+            .style("opacity", 0)
+            .attr("transform", "translate("+margin.left + ", " +margin.top + ")")
+         //   .translate();
+          // Define the lasso
+          lassoBrush = d3
+            .lasso()
+            .closePathDistance(75) // max distance for the lasso loop to be closed
+            .closePathSelect(true) // can items be selected by closing the path?
+            .hoverSelect(true) // can items by selected by hovering over them?
+            .targetArea(lasso_area) // area where the lasso can be started
+            .on("start", brushstart)
+            .on("brush", brushmove)
+            .on("end", brushend);
+
+          lassoBrush.items(circles);
+        }
 
         g.attr(
           "transform",
@@ -446,7 +489,10 @@ class ScatterPlot {
         // Clear the previously-active brush, if any.
         function brushstart(p) {
           if (brushCell !== this) {
-            g.select(brushCell).call(brush.clear);
+            if (rectBrush) {
+              g.select(brushCell).call(rectBrush.clear);
+            }
+
             //console.log(brush.empty()? xScale.domain(): brush.extent());
             //x.domain(brush.empty()? xScale.domain(): brush.extent());//domainByTrait[p.x]);
             //y.domain(brush.empty()? yScale.domain(): brush.extent());//domainByTrait[p.y]);
@@ -456,40 +502,40 @@ class ScatterPlot {
 
         // Highlight the selected circles.
         function brushend(p) {
-          if (d3.event.selection !== null) {
-            const e = d3.event.selection;
+          let brushedIDs = [];
+          if (rectBrush) {
+            if (d3.event.selection !== null) {
+              const e = d3.event.selection;
+              let circles = g.selectAll("circle");
 
-            let brushed = [];
-            let brushedMask = [];
-            let brushedIDs = [];
+              circles.each((d) => {
+                var cx = xScale(d[xColumn]);
+                var cy = yScale(d[yColumn]);
+                var isOutside =
+                  e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1];
 
-            let circles = g.selectAll("circle");
-            circles.each((d, i) => {
-              var cx = xScale(d[xColumn]);
-              var cy = yScale(d[yColumn]);
-              var isOutside =
-                e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1];
-
-              if (isOutside) {
-                brushedMask.push(0);
-              } else if (!isOutside) {
-                // && currentMask[i])  //TODO this will work only in case of a details view
-                brushedIDs.push(keyFunc(d));
-                brushed.push(d);
-                brushedMask.push(1);
-              }
-            });
-
-            if (brushed.length > 0) {
-              //console.log("Brush move")
-              onBrushed(brushedIDs);
-            } else {
-              onBrushed([]);
+                if (isOutside) {
+                } else if (!isOutside) {
+                  // && currentMask[i])  //TODO this will work only in case of a details view
+                  brushedIDs.push(keyFunc(d));
+                }
+              });
             }
+          } else if (lassoBrush) 
+          {
+            var selected = lassoBrush.selectedItems();
+
+              selected.each((d) => {
+                brushedIDs.push(keyFunc(d));
+              });
+          }
+          console.log(brushedIDs.length)
+          if (brushedIDs.length > 0) {
+            onBrushed(brushedIDs);
           } else {
+            onBrushed([]);
           }
         }
-
         // If the brush is empty, select all circles.
         function brushmove() {}
 
@@ -542,9 +588,12 @@ class ScatterPlot {
         chart.highlight = highlight;
         chart.unhighlightAll = unhighlightAll;
         chart.mark = mark;
-
-        g.call(brush);
-
+        if (rectBrush) {
+          g.call(rectBrush);
+        }
+        if (lassoBrush) {
+          g.call(lassoBrush);
+        }
         //using a voronoi diagram to quickly find the nearest point to the mouse
         const voronoiDiagram = d3
           .voronoi()

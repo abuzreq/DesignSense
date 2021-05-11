@@ -46,11 +46,7 @@
     </v-row>
   </v-container>
 </template>
- <!--
-     <v-toolbar dense dark color="blue darken-3" class="mb-1">
-      
-    </v-toolbar>
--->
+
 <script>
 import "parcoord-es/dist/parcoords.css";
 
@@ -155,6 +151,7 @@ export default {
       this.refresh();
     },
     markingChangeHandler: function (reset) {
+      console.log("markingChangeHandler " + reset);
       if (reset) {
         this.chart.unhighlight();
       } else {
@@ -182,14 +179,10 @@ export default {
         .forEach((d, i) => {
           let canvas = d3.select(d);
           if (canvas.attr("class").includes("foreground")) {
-            if (hovered) {
-              canvas.style("opacity", 0.1);
-            } else {
-              canvas.style("opacity", 0.25);
-            }
+            canvas.style("opacity", 0.35);
           } else if (canvas.attr("class").includes("highlight")) {
             if (hovered) {
-              canvas.style("opacity", 0.25);
+              canvas.style("opacity", 0.5);
             } else {
               canvas.style("opacity", 1);
             }
@@ -256,7 +249,7 @@ export default {
         .attr("ry", "2")
         .attr("id", "tooltip")
         .attr("fill", "grey")
-        .attr("opacity", 0.9)
+        .attr("opacity", 1)
         .attr("width", function (d) {
           return d[2].length * 10;
         })
