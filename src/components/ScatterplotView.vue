@@ -15,7 +15,7 @@
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
                   <v-simple-checkbox
-                  :ripple="false"
+                    :ripple="false"
                     style="float: left"
                     v-on="on"
                     v-bind="attrs"
@@ -56,7 +56,7 @@
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
                   <v-simple-checkbox
-                  :ripple="false"
+                    :ripple="false"
                     style="float: left"
                     v-on="on"
                     v-bind="attrs"
@@ -87,6 +87,24 @@
           </SingleDimensionSelect>
         </v-col>
         <v-col :cols="2">
+          <v-row no-gutters>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <v-simple-checkbox
+                :ripple="false"
+                style="float: left"
+                v-on="on"
+                v-bind="attrs"
+                dense
+                v-model="useLassoBrush"
+                icon="x-small"
+                :off-icon="rectBrushIcon"
+                :on-icon="lassoBrushIcon"
+              />
+            </template>
+            <span>Switch between rectangular and Lasso brushes.</span>
+          </v-tooltip>
+
           <v-tooltip bottom>
             <template v-slot:activator="{ on }">
               <v-btn
@@ -100,7 +118,9 @@
             </template>
             <span>Compute the Pareto-Frontier for the chosen dimensions.</span>
           </v-tooltip>
+          </v-row>
         </v-col>
+
       </v-row>
     </v-toolbar>
     <div
@@ -156,7 +176,6 @@ div ::v-deep .extent
 ::v-deep .lasso .origin
   fill: #3399FF
   fill-opacity: .5
-  
 </style>
 <script>
 const pf = require("pareto-frontier");
@@ -181,6 +200,7 @@ export default {
       yColumn: "",
       isXAxisIncremental: false,
       isYAxisIncremental: false,
+      useLassoBrush: false,
       colorColumn: "",
       isShowingParetoFrontier: false,
       toolbarHeight: 48,
@@ -188,6 +208,8 @@ export default {
       arrowDownIcon: "mdi-arrow-down",
       arrowRightIcon: "mdi-arrow-right",
       arrowLeftIcon: "mdi-arrow-left",
+      lassoBrushIcon: "mdi-lasso",
+      rectBrushIcon: "mdi-select-drag",
       prefixWidth: 20,
     };
   },
@@ -203,6 +225,12 @@ export default {
     },
   },
   watch: {
+    useLassoBrush: {
+      handler: function (newValue) {
+        this.useLassoBrush = newValue;
+        this.refresh();
+      },
+    },
     isXAxisIncremental: {
       handler: function (newValue) {
         this.isXAxisIncremental = newValue;
@@ -277,6 +305,7 @@ export default {
         .yTicks(20)
         .isXAxisIncremental(this.isXAxisIncremental)
         .isYAxisIncremental(this.isYAxisIncremental)
+        .useLassoBrush(this.useLassoBrush)
         .colorColumn(this.colorColumn)
         .colorScale(this.$store.state.colorScale)
         .onBrushed((brushedIDs) => {
@@ -332,6 +361,7 @@ class ScatterPlot {
     var yTicks = 5;
     let thisG = null;
 
+    var useLassoBrush;
     var onBrushed;
     var onHovered;
 
@@ -398,9 +428,8 @@ class ScatterPlot {
           })
         );
 
-        var useLasso = true;
         var rectBrush, lassoBrush;
-        if (!useLasso) {
+        if (!useLassoBrush) {
           rectBrush = d3
             .brush()
             .extent([
@@ -420,8 +449,11 @@ class ScatterPlot {
             .attr("width", innerWidth)
             .attr("height", innerHeight)
             .style("opacity", 0)
-            .attr("transform", "translate("+margin.left + ", " +margin.top + ")")
-         //   .translate();
+            .attr(
+              "transform",
+              "translate(" + margin.left + ", " + margin.top + ")"
+            );
+          //   .translate();
           // Define the lasso
           lassoBrush = d3
             .lasso()
@@ -521,15 +553,14 @@ class ScatterPlot {
                 }
               });
             }
-          } else if (lassoBrush) 
-          {
+          } else if (lassoBrush) {
             var selected = lassoBrush.selectedItems();
 
-              selected.each((d) => {
-                brushedIDs.push(keyFunc(d));
-              });
+            selected.each((d) => {
+              brushedIDs.push(keyFunc(d));
+            });
           }
-          console.log(brushedIDs.length)
+          console.log(brushedIDs.length);
           if (brushedIDs.length > 0) {
             onBrushed(brushedIDs);
           } else {
@@ -725,6 +756,11 @@ class ScatterPlot {
     chart.margin = function (_) {
       if (!arguments.length) return margin;
       margin = _;
+      return chart;
+    };
+    chart.useLassoBrush = function (_) {
+      if (!arguments.length) return useLassoBrush;
+      useLassoBrush = _;
       return chart;
     };
 
