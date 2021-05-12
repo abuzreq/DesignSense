@@ -102,7 +102,6 @@ export default {
 
     this.excludedDimensions = this.nonNumericDimensions;
     this.excludedDimensions.push("selected");
-    console.log("exclude " + this.excludedDimensions);
   },
   watch: {
     isCustomizingDimensions: {
@@ -136,7 +135,6 @@ export default {
           ticks: 10,
         };
       });
-      //console.log("dimensions", result);
 
       return result;
     },
@@ -151,7 +149,6 @@ export default {
       this.refresh();
     },
     markingChangeHandler: function (reset) {
-      console.log("markingChangeHandler " + reset);
       if (reset) {
         this.chart.unhighlight();
       } else {
@@ -191,9 +188,6 @@ export default {
         });
     },
     markLineOnHover(mousePosition) {
-      var hovered = [];
-      var hoveredCenPts = [];
-
       let hoveredData = this.getHoveredLines(mousePosition);
       //console.log(hoveredData);
       if (hoveredData && hoveredData.length != 0) {
@@ -208,6 +202,7 @@ export default {
     addTooltip(clicked) {
       // add tooltip to multiple clicked lines
       var clickedDataSet = [];
+
       var margins = this.chart.margin();
       let dimensions = this.chart.dimensions();
       let xscale = this.chart.xscale;
@@ -357,6 +352,17 @@ export default {
     },
     Chart: function () {
       //   nullValueSeparator: "bottom",
+var sampleDimensions={
+
+    "in:width":{"title":"Width", "orient":"left","type":"number", "yscale": d3.scaleLinear().range([0, this.height])},
+    "in:height":{"title":"Height", "orient":"left","type":"number", "yscale": d3.scaleLinear().range([0, this.height])},
+     "in:length":{"title":"Length", "orient":"left","type":"number", "yscale": d3.scaleLinear().range([0, this.height])},
+      "out:surfaceArea":{"title":"Surface Area", "orient":"left","type":"ynumber", "scale": d3.scaleLinear().range([0, this.height])},
+       "out:volume":{"title":"Volume", "orient":"left","type":"number", "yscale": d3.scaleLinear().range([0, this.height])},
+         "out:edgeLength":{"title":"Edge Length", "orient":"left","type":"number", "yscale": d3.scaleLinear().range([0, this.height])},
+};
+
+
       const chart = ParCoords({
         markedLineWidth: 5,
         highlightedLineWidth: 3,
@@ -368,34 +374,30 @@ export default {
             20
         )
         .height(this.height - 25)
+    //    .dimensions(sampleDimensions)
+//chart.detectDimensions();
         .hideAxis(this.excludedDimensions)
-        .createAxes()
-        //.alpha(0.7)
-        //  .margin({ top: 25, left:30, bottom: 10, right: 30 })
+        chart.createAxes()
 
         .brushMode("1D-axes") //1D-axes-multi 2D-strums angular 1D-axes
-        //  .alphaOnBrushed(0.1)
         .reorderable()
         .mode("queue")
-
+        
         .render()
         .on("brushend", (brushed, args) => {
           if (d3.event.selection === null) return;
-
           //To clear the brush/strum once done
           //d3.select("#"+this.viewID).selectAll('.selection').style("display", "none");
 
           if (chart.brushed().length == chart.data().length) {
-            //console.log("Clearing ", this.viewID);
             this.$store.commit("update", {
               view: this.viewID,
               selection: [],
               operation: operations.REPLACE,
             });
           } else {
-            //console.log("Brushing ",this.viewID, d3.event)
+
             this.chart.brushReset();
-            //this.chart.unhighlight( this.$store.getters.data) ;
             this.$store.commit("update", {
               view: this.viewID,
               selection: brushed.map((d) => d._id),
@@ -420,8 +422,14 @@ export default {
           }
         })
         .on("highlight", (e) => {
-          // console.log("highlighting")
-        });
+         //  console.log("highlighting")
+        })
+        .on("render", (e) => {
+          //[todo] this event is raised many time. Is there a better event to listen to or a more efficient implementation of code below?
+          var selection = this.$store.getters.selectedDataInView(this.viewID);
+          chart.highlight(selection);
+          this.graphCentriodPoints = null;
+        })
 
       var colorScale = this.$store.state.colorScale; //d3.scale.ordinal().range(colorRange);
       chart.color((d) => colorScale(d[this.colorColumn])).render();
@@ -434,7 +442,6 @@ export default {
         .on("mousemove", function () {
           if (vueThis.isHoveringEnabled) {
             var mousePosition = d3.mouse(this);
-            //console.log(mousePosition);
             vueThis.markLineOnHover(mousePosition); //true will also add tooltip
           }
         })

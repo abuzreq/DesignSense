@@ -560,7 +560,7 @@ class ScatterPlot {
               brushedIDs.push(keyFunc(d));
             });
           }
-          console.log(brushedIDs.length);
+
           if (brushedIDs.length > 0) {
             onBrushed(brushedIDs);
           } else {
