@@ -15,16 +15,15 @@
               dense
               v-model="sortByVar"
               solo-inverted
-            
               hide-details
               prepend-inner-icon="search"
               :items="keys"
               label="Sort by"
             ></v-select>
             <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs  }">
+              <template v-slot:activator="{ on, attrs }">
                 <v-simple-checkbox
-                :ripple="false"
+                  :ripple="false"
                   v-on="on"
                   v-bind="attrs"
                   dense
@@ -59,9 +58,9 @@
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-simple-checkbox
-                 :ripple="false"
+                  :ripple="false"
                   v-on="on"
-                   v-bind="attrs"
+                  v-bind="attrs"
                   align-center
                   v-model="enableContext"
                   :off-icon="offContextIcon"
@@ -205,6 +204,7 @@
                     v-for="item in items.items"
                     v-bind:key="cardSelector + item._id"
                     :cols="possibleColSpans[colSpan]"
+                    class="thumbnail_container"
                   >
                     <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
                     <v-card
@@ -286,9 +286,8 @@
 </template>
 
 <style scoped>
-
 /** To show a crosshair when the curson is on the grid */
-.vue-drag-select  {
+.vue-drag-select {
   cursor: crosshair;
 }
 
@@ -297,23 +296,30 @@
   padding-right: 0px;
 }
 
-.col > .v-card:not(.hovered) .v-image.under_drag_selection {
+.thumbnail_container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+
+.col > .thumbnail_card:not(.hovered) .v-image.under_drag_selection {
   border: 2px dashed rgb(33, 119, 180);
 }
 
-.col > .v-card:not(.hovered) .v-image.outlined {
-  border: 2px solid rgb(33, 119, 180);
+.col > .thumbnail_card:not(.hovered) .v-image.outlined {
+  border: 3px solid rgb(33, 119, 180);
 }
 
-.col > .v-card.hovered .v-image.outlined {
-  border: 0px solid rgb(33, 119, 180);
+.col > .thumbnail_card.hovered .v-image.outlined {
+  border: 1px solid rgb(33, 119, 180);
 }
 
-.col > .v-card .v-image:not(.transparent) {
+.col > .thumbnail_card .v-image:not(.transparent) {
   opacity: 1;
 }
 
-.col > .v-card:not(.hovered) .v-image.transparent {
+.col > .thumbnail_card:not(.hovered) .v-image.transparent {
   opacity: 0.4;
 }
 
@@ -321,7 +327,7 @@
   min-width: 5vw;
 }
 
-.col > .v-card.hovered {
+.col > .thumbnail_card.hovered {
   border: 4px solid rgb(33, 119, 180); /*#82b1ff;*/
 }
 
@@ -416,8 +422,9 @@ export default {
       rawChartData: (state) => state.data,
       keys: (state) => state.allDimensions.concat(["selected"]),
       hovered: (state) => state.hovered,
+      colorColumn: (state) => state.colorColumn,
     }),
-    ...mapGetters(["isHoveringEnabled"]),
+    ...mapGetters(["colorScale", "colorize", "isHoveringEnabled"]),
     cardSelector() {
       return "card_" + this.viewID + "_";
     },
@@ -501,13 +508,20 @@ export default {
       this.isLoading = false;
     },
     getAllCards() {
-      let cardNodes = d3.select("#" + this.viewID).selectAll(".v-card")
+      let cardNodes = d3.select("#" + this.viewID).selectAll(".thumbnail_card")
         ._groups[0]; //.select('.vue-drag-select')
       let cards = Array.prototype.slice
         .call(cardNodes)
         .filter((d) => d.id != "");
 
       return cards;
+    },
+    getAllCardsSelection() {
+      let cardsSelection = d3
+        .select("#" + this.viewID)
+        .selectAll(".thumbnail_card");
+
+      return cardsSelection;
     },
     onSelectionDragMouseUp(selectedItems) {
       this.isSelectionDragOn = false;
@@ -623,7 +637,7 @@ export default {
     },
     unhighlightAll() {
       d3.select("#" + this.viewID)
-        .selectAll(".v-card")
+        .selectAll(".thumbnail_card")
         .classed("outlined", false)
         .classed("transparent", true);
     },
@@ -729,6 +743,20 @@ export default {
         this.isLoading = true;
         this.load3DJSON(newItem);
       }
+    },
+    colorColumn: function (newValue, oldValue) {
+      let cardNodes = d3.select("#" + this.viewID).selectAll(".thumbnail_card");
+      console.log(cardNodes);
+      this.getAllCards().forEach((node, i) => {
+
+      let id = node.id.substring(this.cardSelector.length)
+      let datum = this.$store.getters.dataMap[id];
+      d3.select(node.parentNode).style("background-color", this.colorize(datum) + '55')
+
+      });
+    },
+    colorScale: function (newValue, oldValue) {
+      this.refresh();
     },
   },
 };

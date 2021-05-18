@@ -65,7 +65,6 @@ export default {
   data() {
     return {
       excludedDimensions: [],
-      colorColumn: "",
       isCustomizingDimensions: false,
       allKeys: [],
       keysBlackList: [],
@@ -73,7 +72,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["isHoveringEnabled"]),
+
     ...mapState({
       numericDimensions: (state) => state.numericDimensions,
       nonNumericDimensions: (state) => state.nonNumericDimensions,
@@ -81,8 +80,6 @@ export default {
   },
   mounted() {},
   created() {
-    this.colorColumn = "collection";
-
     this.keysBlackList = [
       "index",
       "selected",
@@ -430,9 +427,7 @@ var sampleDimensions={
           chart.highlight(selection);
           this.graphCentriodPoints = null;
         })
-
-      var colorScale = this.$store.state.colorScale; //d3.scale.ordinal().range(colorRange);
-      chart.color((d) => colorScale(d[this.colorColumn])).render();
+      chart.color((d) => this.colorize(d)).render();
 
       //Source for the hover on mouse over is adopted from: http://bl.ocks.org/mostaphaRoudsari/b4e090bb50146d88aec4
       //This includes all the auxilary functions called downstream from markLineOnHover() which was called highlightLineOnClick() in the orignal source

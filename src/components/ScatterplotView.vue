@@ -10,6 +10,7 @@
             v-on:update="onXChange($event)"
             :width="this.singleDimensionWidth"
             :prefixWidth="this.prefixWidth"
+            :dimensionsType= "0"
           >
             <template v-slot:prefix>
               <v-tooltip bottom>
@@ -51,6 +52,7 @@
             v-on:update="onYChange($event)"
             :width="this.singleDimensionWidth"
             :prefixWidth="this.prefixWidth"
+            :dimensionsType= "0"
           >
             <template v-slot:prefix>
               <v-tooltip bottom>
@@ -201,7 +203,6 @@ export default {
       isXAxisIncremental: false,
       isYAxisIncremental: false,
       useLassoBrush: false,
-      colorColumn: "",
       isShowingParetoFrontier: false,
       toolbarHeight: 48,
       arrowUpIcon: "mdi-arrow-up",
@@ -214,7 +215,6 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["isHoveringEnabled"]),
     singleDimensionWidth() {
       if (this.width <= 400) {
         `1`;
@@ -307,7 +307,7 @@ export default {
         .isYAxisIncremental(this.isYAxisIncremental)
         .useLassoBrush(this.useLassoBrush)
         .colorColumn(this.colorColumn)
-        .colorScale(this.$store.state.colorScale)
+        .colorScale(this.colorScale)
         .onBrushed((brushedIDs) => {
           this.$store.commit("update", {
             view: this.viewID,
@@ -340,7 +340,6 @@ class ScatterPlot {
     var xColumn = "No X column configured";
     var yColumn = "No Y column configured";
     var colorColumn = "No color column configured";
-    //var colorRange = d3.scaleOrdinal(this.$store.state.colorScale).range();
 
     var xAxisLabel = "No X axis label configured";
     var xAxisLabelOffset = 40;
@@ -370,7 +369,7 @@ class ScatterPlot {
       var innerWidth = outerWidth - margin.left - margin.right;
       var innerHeight = outerHeight - margin.top - margin.bottom;
 
-      colorScale.range();
+      //colorScale.range();
       //[todo] externalize this offset parameter
       var offset = 15;
       xScale.range(

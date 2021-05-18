@@ -1,7 +1,9 @@
 <!-- Vue component -->
 <template>
   <div style="padding-top: 4px; padding-bottom: 4px">
-    <slot name="prefix"> </slot>
+    <div v-if="!!$slots.prefix">
+      <slot name="prefix"> </slot>
+    </div>
     <multiselect
       :style="{
         float: 'left',
@@ -22,13 +24,12 @@
 import Multiselect from "vue-multiselect";
 import { mapState, mapGetters } from "vuex";
 
-// register globally
-//Vue.component('multiselect', Multiselect)
+//[todo] handle the case when no prefix is provided then show nothing
 
 export default {
   // OR register locally
   components: { Multiselect },
-  props: ["initialValue", "width", "prefix", "prefixWidth"],
+  props: ["initialValue", "width", "prefixWidth", "dimensionsType"],
   data() {
     return {
       value: this.initialValue,
@@ -36,8 +37,15 @@ export default {
   },
   computed: {
     ...mapState({
-      keys: (state) => state.numericDimensions.concat(["selected"]),
+      numericDimensions: (state) =>
+        state.numericDimensions.concat(["selected"]),
+      allDimensions: (state) => state.allDimensions.concat(["selected"]),
     }),
+    keys() {
+      return this.dimensionsType == "0"
+        ? this.numericDimensions
+        : this.allDimensions;
+    },
   },
   methods: {
     onChange: function (value, id) {

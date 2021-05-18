@@ -63,6 +63,10 @@
       <v-divider vertical />
       <v-spacer></v-spacer>
       <LoadDataModal> </LoadDataModal>
+            <v-spacer></v-spacer> 
+               <v-divider vertical />
+      <ColorSelectionModal> </ColorSelectionModal>
+   
 
       <v-spacer></v-spacer>
       <v-divider vertical />
@@ -258,7 +262,7 @@ import * as d3 from "d3";
 
 import { RadialMenu, RadialMenuItem } from "vue-radial-menu";
 import LoadDataModal from "@/components/LoadDataModal.vue";
-
+import ColorSelectionModal from "@/components/ColorSelectionModal.vue"; 
 import { getOperation } from "@/components/operations.js";
 
 export default {
@@ -277,6 +281,7 @@ export default {
     RadialMenu,
     RadialMenuItem,
     LoadDataModal,
+    ColorSelectionModal
   },
 
   data: function () {

@@ -4,13 +4,14 @@ import views from "@/components/constants.js";
 import { operations } from "@/components/operations.js";
 import {generateID} from "@/components/utils.js";
 import * as d3 from "d3";
+import * as d3Chromatic from 'd3-scale-chromatic';
 
 Vue.use(Vuex);
 
 function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
     return new Vuex.Store({
         state: {
-            colorScale: d3.scaleOrdinal(d3.schemeCategory10),
+
             layouts: new_layouts,
             defaultMarkingID: generateID(), //"_lqpkb07gn"
             rawData: new_data,
@@ -40,7 +41,42 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             isShiftKey: false,
             isAltKey: false,
             isInspectionMode: false,
-            
+
+            colorRange: d3Chromatic.schemeTableau10,      
+            colorColumn:"year",
+        },      
+        getters: {
+            colorScale: state => d3.scaleOrdinal(state.colorRange),
+            colorize: (state, getters) => dataItem => {
+                return getters.colorScale(dataItem[state.colorColumn])
+            },
+            getEditingMode: state => state.isEditingMode,
+            getMarking: state => view => { return findMarkingAffectingView(state.markingsMap, state.markingID2views, view) },
+            data: state => { return state.data },
+            dataMap: state => { return createDataMap(state.data); },
+            selectedInMarking: (state, getters) => markingID => {
+                return getSelectedInMarking(state.markingsMap[markingID], getters.dataMap)
+            },
+            unselectedInMarking: (state, getters) => markingID => {
+                return getUnselectedInMarking(state.markingsMap[markingID], getters.dataMap)
+            },
+            selectedInView: (state, getters) => view => {
+                let marking = findMarkingAffectingView(state.markingsMap, state.markingID2views, view);
+                return getSelectedInMarking(marking, getters.dataMap)
+            },
+            unselectedInView: (state, getters) => view => {
+                let marking = findMarkingAffectingView(state.markingsMap, state.markingID2views, view);
+                return getUnselectedInMarking(marking, getters.dataMap)
+            },
+            selectedDataInView: (state, getters) => view => {
+                var selectedInMarking = getters.selectedInView(view);
+                var result = map2Data(selectedInMarking)
+                return result;
+            },
+            markingsDefaultGetter: state => { return state.markingsMap[state.defaultMarkingID] },
+            markingsMapGetter: (state) => (markingID) => { return state.markingsMap[markingID] },
+            getHovered: (state) => {return state.hovered;},
+            isHoveringEnabled: (state) => state.isCtrlKey || state.isInspectionMode
         },
         mutations:
         {
@@ -48,6 +84,15 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             {   
                 state.similarity_map = payload.similarity_map;
             },  */
+
+            changeColorColumn(state, newColorColumn)
+            {
+                state.colorColumn = newColorColumn;
+            },
+            changeColorRange(state, newColorRange)
+            {
+                state.colorRange = newColorRange;
+            },
             toggleEditingMode(state, payload) {
                 state.isEditingMode = !state.isEditingMode;
             },
@@ -335,35 +380,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
 
         },
         modules: {},
-        getters: {
-            getEditingMode: state => state.isEditingMode,
-            getMarking: state => view => { return findMarkingAffectingView(state.markingsMap, state.markingID2views, view) },
-            data: state => { return state.data },
-            dataMap: state => { return createDataMap(state.data); },
-            selectedInMarking: (state, getters) => markingID => {
-                return getSelectedInMarking(state.markingsMap[markingID], getters.dataMap)
-            },
-            unselectedInMarking: (state, getters) => markingID => {
-                return getUnselectedInMarking(state.markingsMap[markingID], getters.dataMap)
-            },
-            selectedInView: (state, getters) => view => {
-                let marking = findMarkingAffectingView(state.markingsMap, state.markingID2views, view);
-                return getSelectedInMarking(marking, getters.dataMap)
-            },
-            unselectedInView: (state, getters) => view => {
-                let marking = findMarkingAffectingView(state.markingsMap, state.markingID2views, view);
-                return getUnselectedInMarking(marking, getters.dataMap)
-            },
-            selectedDataInView: (state, getters) => view => {
-                var selectedInMarking = getters.selectedInView(view);
-                var result = map2Data(selectedInMarking)
-                return result;
-            },
-            markingsDefaultGetter: state => { return state.markingsMap[state.defaultMarkingID] },
-            markingsMapGetter: (state) => (markingID) => { return state.markingsMap[markingID] },
-            getHovered: (state) => {return state.hovered;},
-            isHoveringEnabled: (state) => state.isCtrlKey || state.isInspectionMode
-        }
+
 
     });
 }
