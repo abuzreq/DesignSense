@@ -344,7 +344,7 @@
 
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
 import { ModelGltf, ModelThree } from "vue-3d-model";
-import { operations, getOperationFromEvent } from "@/components/operations.js";
+import { operations } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import DragSelect from "@/plugins/DragSelect.vue";
@@ -419,6 +419,7 @@ export default {
       return Object.values(this.chartData);
     },
     ...mapState({
+      currentSelectionOperation: (state) => state.currentSelectionOperation,
       rawChartData: (state) => state.data,
       keys: (state) => state.allDimensions.concat(["selected"]),
       hovered: (state) => state.hovered,
@@ -533,12 +534,11 @@ export default {
         return secondPart.substring(secondStart + 1);
       });
 
-      //selectedIDs.forEach(s => this.update({ _id: s }, event));
       if (selectedIDs.length > 0) {
         this.$store.commit("update", {
           view: this.viewID,
           selection: selectedIDs,
-          operation: getOperationFromEvent(event),
+          operation: this.currentSelectionOperation,
         });
       }
     },
@@ -561,29 +561,6 @@ export default {
         selectedIDs.forEach((d) => {
           this.dragSelection[d] = null;
         });
-
-        /*
-        console.log(selectedItems.map(d => d.id))
-            d3.select("#" + this.viewID)
-          .select("#" + this.cardSelector + s)
-          .classed("transparent", false)
-          .classed("outlined", true);*/
-
-        /*
-        let selectedIDs = selectedItems.map(s => {
-          let start = s.id.indexOf("_");
-          let secondPart = s.id.substring(start + 1);
-          let secondStart = secondPart.indexOf("_"); //finding the 2nd occurance of _ , accounting for ids that start with _
-          return secondPart.substring(secondStart + 1);
-        });*/
-
-        //console.log("aha", selectedIDs.length, selectedIDs);
-        /*
-        this.$store.commit("update", {
-          view: this.viewID,
-          selection: selectedIDs,
-          operation: getOperationFromEvent(event)
-        });*/
       }
     },
     hover(item, forced) {
@@ -607,18 +584,7 @@ export default {
         }
       }
     },
-    update(item, event) {
-      //console.log("A", event);
-      //if(!event.altKey)
-      //  event.shiftKey = true;
-      //console.log("B", event)
-      this.$store.commit("update", {
-        view: this.viewID,
-        selection: [item._id],
 
-        operation: getOperationFromEvent(event),
-      });
-    },
     highlight(selection) {
       let count = 0;
       for (var s in selection) {

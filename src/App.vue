@@ -50,7 +50,7 @@
             color="grey darken-2"
             text-color="white"
           >
-            {{ selectionOperation() }}
+            {{ currentSelectionOperation }}
             <v-avatar right class="grey lighten-2">
               <v-icon small color="black">mdi-vector-selection</v-icon>
             </v-avatar>
@@ -61,6 +61,9 @@
         >
       </v-tooltip>
       <v-divider vertical />
+
+
+ <v-divider vertical />
       <v-spacer></v-spacer>
       <LoadDataModal> </LoadDataModal>
             <v-spacer></v-spacer> 
@@ -210,7 +213,7 @@
         v-for="(item, index) in contextMenuItems"
         :key="index"
         style="background-color: white"
-        @click="() => (showContextMenu = false)"
+        @click="moveToNextOperation"
       >
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
@@ -263,7 +266,16 @@ import * as d3 from "d3";
 import { RadialMenu, RadialMenuItem } from "vue-radial-menu";
 import LoadDataModal from "@/components/LoadDataModal.vue";
 import ColorSelectionModal from "@/components/ColorSelectionModal.vue"; 
-import { getOperation } from "@/components/operations.js";
+import { operations } from "@/components/operations.js";
+
+/*
+import ReplaceIcon from "../assets/replace_icon.svg";
+ import AddIcon from "../src/assets/add_icon.svg";
+import SubtractIcon from "../assets/subtract_icon.svg";
+import IntersectIcon from "../assets/intersect_icon.svg";
+import ToggleIcon from "../assets/toggle_icon.svg";
+ */
+
 
 export default {
   name: "App",
@@ -281,7 +293,10 @@ export default {
     RadialMenu,
     RadialMenuItem,
     LoadDataModal,
-    ColorSelectionModal
+    ColorSelectionModal,
+   /* ReplaceIcon,
+      AddIcon,
+   SubtractIcon,IntersectIcon,ToggleIcon */
   },
 
   data: function () {
@@ -394,12 +409,25 @@ export default {
   },
   computed: {
     ...mapState({
+      currentSelectionOperation: (state) => state.currentSelectionOperation,
       layouts: (state) => state.layouts,
       isEditingMode: (state) => state.isEditingMode,
       isInspectionMode: (state) => state.isInspectionMode,
     }),
   },
   methods: {
+    moveToNextOperation()
+    {
+      
+      let current = currentSelectionOperation;
+      let allOperations = Object.values(operations);
+      let index = allOperations.findIndex(current);    
+      console.log("move " +current)  
+      app.$store.commit('changeSelectionOperation', getOperationFromKey((index + 1)/allOperations.length))
+      console.log("next " +this.$store.state.currentSelectionOperation)  
+
+      
+    },
     actionType2Color: function (type) {
       return {
         data: "red",

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="100mm"
+   height="100mm"
+   viewBox="0 0 100 100"
+   version="1.1"
+   id="svg20094"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   sodipodi:docname="intersect_icon.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview20096"
+     pagecolor="#ffffff"
+     bordercolor="#999999"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     width="100mm"
+     inkscape:zoom="1.02"
+     inkscape:cx="460.29412"
+     inkscape:cy="191.66667"
+     inkscape:window-width="2400"
+     inkscape:window-height="1271"
+     inkscape:window-x="2391"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs20091" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g20435">
+      <rect
+         style="fill:#ececec;fill-opacity:1;fill-rule:evenodd;stroke:#1565c0;stroke-width:1.96004;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect20391"
+         width="48.039974"
+         height="48.039963"
+         x="15.98002"
+         y="15.98002"
+         ry="6.9578676" />
+      <rect
+         style="fill:#ececec;fill-opacity:1;fill-rule:evenodd;stroke:#1565c0;stroke-width:1.96004;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect20393"
+         width="48.039974"
+         height="48.039963"
+         x="40.980034"
+         y="40.980019"
+         ry="6.9578676" />
+      <path
+         id="rect20125"
+         style="fill:#1976d2;fill-opacity:1;fill-rule:evenodd;stroke:#1565c0;stroke-width:7.40803;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 181.18164 154.88477 C 166.61285 154.88477 154.88477 166.61285 154.88477 181.18164 L 154.88477 241.96484 L 215.66797 241.96484 C 230.23676 241.96484 241.96484 230.23676 241.96484 215.66797 L 241.96484 154.88477 L 181.18164 154.88477 z "
+         transform="scale(0.26458333)" />
+    </g>
+  </g>
+</svg>

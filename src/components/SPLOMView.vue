@@ -11,7 +11,6 @@
 <script>
 import * as d3 from "d3";
 import TemplateView from "@/components/TemplateView.vue";
-import { operations, getOperationFromEvent } from "@/components/operations.js";
 
 export default {
   mixins: [TemplateView],
@@ -50,7 +49,7 @@ export default {
         this.$store.commit("update", {
           view: this.viewID,
           selection: brushedIDs,
-          operation: getOperationFromEvent(d3.event.sourceEvent)
+          operation: this.currentSelectionOperation
         });
       }
     },

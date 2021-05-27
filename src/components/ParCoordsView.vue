@@ -52,11 +52,11 @@ import "parcoord-es/dist/parcoords.css";
 
 import ParCoords from "parcoord-es";
 import * as d3 from "d3";
-import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapGetters, mapState } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
 import { round } from "@/components/utils.js";
+import { operations } from "@/components/operations.js";
 
 export default {
   mixins: [TemplateView],
@@ -398,7 +398,7 @@ var sampleDimensions={
             this.$store.commit("update", {
               view: this.viewID,
               selection: brushed.map((d) => d._id),
-              operation: getOperationFromEvent(d3.event.sourceEvent),
+              operation: this.currentSelectionOperation,
             });
           }
         })

@@ -187,7 +187,6 @@ import { lasso } from "d3-lasso";
 d3.lasso = lasso;
 
 //import ScatterPlot from "@/components/Scatterplot.js";
-import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapGetters } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import SingleDimensionSelect from "@/components/SingleDimensionSelect.vue";
@@ -265,7 +264,7 @@ export default {
       this.$store.commit("update", {
         view: this.viewID,
         selection: out.map((d) => d[2]),
-        operation: getOperationFromEvent(event),
+        operation: this.$store.currentSelectionOperation,
       });
     },
     onXChange: function (newXColumn) {
@@ -312,7 +311,7 @@ export default {
           this.$store.commit("update", {
             view: this.viewID,
             selection: brushedIDs,
-            operation: getOperationFromEvent(d3.event.sourceEvent),
+            operation: this.currentSelectionOperation,
           });
         })
         .onHovered((hovered) => {

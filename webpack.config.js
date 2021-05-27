@@ -23,6 +23,13 @@ const config = {
         loader: 'vue-loader'
       },
       {
+        test: /\.svg$/,
+        use: [
+          'babel-loader',
+          'vue-svg-loader',
+        ],
+      },
+      {
         test: /\.(png|jpe?g|gif|svg|eot|ttf|woff|woff2)(\?.+)?$/,
 
         use: [
@@ -90,6 +97,7 @@ const config = {
     new VueLoaderPlugin(),
     new VuetifyLoaderPlugin(),
     new LodashModuleReplacementPlugin,
+
     new HtmlWebpackPlugin({
       vue: true
     })

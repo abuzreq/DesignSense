@@ -137,7 +137,6 @@
 <script>
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
 import { ModelGltf } from "vue-3d-model";
-import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import * as kmeans from "node-kmeans";
@@ -287,7 +286,7 @@ export default {
       this.$store.commit("update", {
         view: this.viewID,
         selection: this.clustersMap[item._id].map((d) => d._id),
-        operation: getOperationFromEvent(event),
+        operation: this.$store.currentSelectionOperation,
       });
 
       //this.$store.commit("hover", { hovered: item });

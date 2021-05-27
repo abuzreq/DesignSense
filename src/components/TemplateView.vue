@@ -22,6 +22,7 @@ export default {
   computed: {
     ...mapGetters(["colorScale", "colorize", "isHoveringEnabled"]),
     ...mapState({
+      currentSelectionOperation: (state) => state.currentSelectionOperation,
       chartData: (state) => state.data,
       numericDimensions: (state) => state.numericDimensions,
       allDimensions: (state) => state.allDimensions,

@@ -8,6 +8,7 @@ import vdr from "./plugins/vdr";
 import layouts from './layout.js'
 import Papa from 'papaparse'
 import { generateID } from "@/components/utils.js";
+import { operations, getOperationFromKey } from '@/components/operations.js';
 
 Vue.config.productionTip = false;
 
@@ -67,8 +68,13 @@ var app = new Vue({
   render: h => h(App),
 });
 
-document.addEventListener('keydown', function (e) {
-  if (e.ctrlKey) {
+document.addEventListener('keydown', function (e)
+ {
+   if(e.key >= 1 && e.key <= Object.keys(operations).length)
+   {
+      app.$store.commit('changeSelectionOperation', getOperationFromKey(e.key-1))
+   }
+   if (e.ctrlKey) {
     if (!app.$store.state.isCtrlKey) {
       app.$store.dispatch('updateCtrlKey', { value: true })
       /*
@@ -80,16 +86,6 @@ document.addEventListener('keydown', function (e) {
       */
     }
   }
-  if (e.shiftKey) {
-    if (!app.$store.state.isShiftKey) {
-      app.$store.dispatch('updateShiftKey', { value: true })
-    }
-  }
-  if (e.altKey) {
-    if (!app.$store.state.isAltKey) {
-      app.$store.dispatch('updateAltKey', { value: true })
-    }
-  }
 
 })
 document.addEventListener('keyup', function (e) {
@@ -97,13 +93,6 @@ document.addEventListener('keyup', function (e) {
     app.$store.dispatch('updateCtrlKey', { value: false })
     app.$store.commit("hover", { hovered: null });
   }
-  if (e.key === 'Shift') {
-    app.$store.dispatch('updateShiftKey', { value: false })
-  }
-  if (e.key === 'Alt') {
-    app.$store.dispatch('updateAltKey', { value: false })
-  }
-
   if (e.key === '`') {
     app.$store.commit('toggleEditingMode');
   }

@@ -73,7 +73,6 @@
 <script>
 //Source: https://codepen.io/sharon-the-encoder/pen/NzOLGy
 import * as d3 from "d3";
-import { operations, getOperationFromEvent } from "@/components/operations.js";
 import { mapState } from "vuex";
 
 export default {
@@ -85,6 +84,7 @@ export default {
   },
   computed: {
     ...mapState({
+      currentSelectionOperation: (state) => state.currentSelectionOperation,
       setsIDs: state => state.setsIDs,
       setsMetadataMap: state => state.setsMetadataMap,
       setsMap: state => state.setsMap 
@@ -112,13 +112,13 @@ export default {
     restoreSet(ID, event) {
       this.$store.dispatch("restoreSet", {
         setID: ID,
-        operation: getOperationFromEvent(event)
+        operation: this.$store.currentSelectionOperation
       });
     },
     updateSet(ID, event) {
       this.$store.dispatch("updateSet", {
         setID: ID,
-        operation: getOperationFromEvent(event)
+        operation: this.$store.currentSelectionOperation
       });
       this.$forceUpdate();
     }

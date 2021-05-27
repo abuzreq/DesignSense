@@ -11,7 +11,7 @@ Vue.use(Vuex);
 function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
     return new Vuex.Store({
         state: {
-
+            currentSelectionOperation: operations.REPLACE,
             layouts: new_layouts,
             defaultMarkingID: generateID(), //"_lqpkb07gn"
             rawData: new_data,
@@ -85,6 +85,10 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 state.similarity_map = payload.similarity_map;
             },  */
 
+            changeSelectionOperation(state, newOperation)
+            {
+                state.currentSelectionOperation = newOperation;
+            },
             changeColorColumn(state, newColorColumn)
             {
                 state.colorColumn = newColorColumn;
@@ -496,7 +500,8 @@ function flip(value) {
 }
 
 function operate(marking, selection, operation) {
-    //TODO
+ 
+    console.log(operation)
     if (operation == operations.REPLACE) {
         for (var alt in marking) {
             marking[alt] = 0;
@@ -539,6 +544,11 @@ function operate(marking, selection, operation) {
                 marking[alt] = 0;
             }
                     
+        }
+    }
+    else if (operation == operations.SUBTRACT) {
+        for (var alt of selection) {
+            marking[alt] = 0;
         }
     }
     else {

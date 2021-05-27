@@ -1,42 +1,29 @@
 const operations = {
     REPLACE: "Replace",
     ADD: "Add",
-    TOGGLE: "Toggle",
+    SUBTRACT: "Subtract",
+    TOGGLE: "Toggle",   
     INTERSECTION: "Intersect",
 };
-function getOperation(args)
-{
-    let operation = operations.REPLACE;
-    if(args.altKey && args.shiftKey)
-    {
-        operation = operations.TOGGLE;
-    }
-    else if(args.altKey)
-    {
-        operation = operations.ADD ;
-    }
-    else if(args.shiftKey)
-    {
-        operation = operations.INTERSECTION;
-    }
-    else if(args.ctrlKey)
-    {
-        //console.log("control")
-        //operation = operations.ADD;
-    }
-    else
-    {
-        operation = operations.REPLACE;
-    }
+const operations_icons = {
+    REPLACE: "Replace",
+    ADD: "Add",
+    SUBTRACT: "Subtract",
+    TOGGLE: "Toggle",   
+    INTERSECTION: "Intersect",
+};
 
-    return operation;
-}
-function getOperationFromEvent(event)
+
+function getOperationFromKey(index)
 {
-    return getOperation({altKey:event.altKey, shiftKey:event.shiftKey, ctrlKey:event.ctrlKey})
+    let allOperations =  Object.values(operations);
+    console.log(operations)
+    if(index >= allOperations.length || index < 0)
+    {
+        return;
+    }
+    return allOperations[index];
 }
+
 exports.operations = operations;
-exports.getOperationFromEvent = getOperationFromEvent;
-exports.getOperation = getOperation;
-
-//export default {operations, getOperationFromEvent};
+exports.getOperationFromKey = getOperationFromKey;
