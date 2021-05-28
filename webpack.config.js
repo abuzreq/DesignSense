@@ -30,7 +30,7 @@ const config = {
         ],
       },
       {
-        test: /\.(png|jpe?g|gif|svg|eot|ttf|woff|woff2)(\?.+)?$/,
+        test: /\.(png|jpe?g|gif|eot|ttf|woff|woff2)(\?.+)?$/,
 
         use: [
           {

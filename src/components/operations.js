@@ -3,14 +3,14 @@ const operations = {
     ADD: "Add",
     SUBTRACT: "Subtract",
     TOGGLE: "Toggle",   
-    INTERSECTION: "Intersect",
+    INTERSECT: "Intersect",
 };
 const operations_icons = {
     REPLACE: "Replace",
     ADD: "Add",
     SUBTRACT: "Subtract",
     TOGGLE: "Toggle",   
-    INTERSECTION: "Intersect",
+    INTERSECT: "Intersect",
 };
 
 

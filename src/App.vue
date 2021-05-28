@@ -62,14 +62,18 @@
       </v-tooltip>
       <v-divider vertical />
 
+      <ReplaceIcon @click="onReplace" class="operation-icon" />
+      <AddIcon @click="onAdd" class="operation-icon" />
+      <SubtractIcon @click="onSubtract" class="operation-icon" />
+      <IntersectIcon @click="onIntersect" class="operation-icon" />
+      <ToggleIcon @click="onToggle" class="operation-icon" />
 
- <v-divider vertical />
+      <v-divider vertical />
       <v-spacer></v-spacer>
       <LoadDataModal> </LoadDataModal>
-            <v-spacer></v-spacer> 
-               <v-divider vertical />
+      <v-spacer></v-spacer>
+      <v-divider vertical />
       <ColorSelectionModal> </ColorSelectionModal>
-   
 
       <v-spacer></v-spacer>
       <v-divider vertical />
@@ -235,6 +239,11 @@
 
 
 <style>
+.operation-icon {
+  width: 10mm;
+  height: 10mm;
+}
+
 body {
   overflow: hidden; /* Hide scrollbars */
 }
@@ -265,17 +274,14 @@ import * as d3 from "d3";
 
 import { RadialMenu, RadialMenuItem } from "vue-radial-menu";
 import LoadDataModal from "@/components/LoadDataModal.vue";
-import ColorSelectionModal from "@/components/ColorSelectionModal.vue"; 
+import ColorSelectionModal from "@/components/ColorSelectionModal.vue";
 import { operations } from "@/components/operations.js";
 
-/*
-import ReplaceIcon from "../assets/replace_icon.svg";
- import AddIcon from "../src/assets/add_icon.svg";
-import SubtractIcon from "../assets/subtract_icon.svg";
-import IntersectIcon from "../assets/intersect_icon.svg";
-import ToggleIcon from "../assets/toggle_icon.svg";
- */
-
+import ReplaceIcon from "../src/assets/replace_icon.svg";
+import AddIcon from "../src/assets/add_icon.svg";
+import SubtractIcon from "../src/assets/subtract_icon.svg";
+import IntersectIcon from "../src/assets/intersect_icon.svg";
+import ToggleIcon from "../src/assets/toggle_icon.svg";
 
 export default {
   name: "App",
@@ -294,9 +300,11 @@ export default {
     RadialMenuItem,
     LoadDataModal,
     ColorSelectionModal,
-   /* ReplaceIcon,
-      AddIcon,
-   SubtractIcon,IntersectIcon,ToggleIcon */
+    ReplaceIcon,
+    AddIcon,
+    SubtractIcon,
+    IntersectIcon,
+    ToggleIcon,
   },
 
   data: function () {
@@ -416,17 +424,31 @@ export default {
     }),
   },
   methods: {
-    moveToNextOperation()
-    {
-      
+    onReplace() {
+      this.$store.commit("changeSelectionOperation", operations.REPLACE);
+    },
+        onAdd() {
+      this.$store.commit("changeSelectionOperation", operations.ADD);
+    },
+        onSubtract() {
+      this.$store.commit("changeSelectionOperation", operations.SUBTRACT);
+    },
+        onIntersect() {
+      this.$store.commit("changeSelectionOperation", operations.INTERSECT);
+    },
+        onToggle() {
+      this.$store.commit("changeSelectionOperation", operations.TOGGLE);
+    },
+    moveToNextOperation() {
       let current = currentSelectionOperation;
       let allOperations = Object.values(operations);
-      let index = allOperations.findIndex(current);    
-      console.log("move " +current)  
-      app.$store.commit('changeSelectionOperation', getOperationFromKey((index + 1)/allOperations.length))
-      console.log("next " +this.$store.state.currentSelectionOperation)  
-
-      
+      let index = allOperations.findIndex(current);
+      console.log("move " + current);
+      app.$store.commit(
+        "changeSelectionOperation",
+        getOperationFromKey((index + 1) / allOperations.length)
+      );
+      console.log("next " + this.$store.state.currentSelectionOperation);
     },
     actionType2Color: function (type) {
       return {

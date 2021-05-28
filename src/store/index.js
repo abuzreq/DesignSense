@@ -529,7 +529,7 @@ function operate(marking, selection, operation) {
             }
         }
     }
-    else if (operation == operations.INTERSECTION)
+    else if (operation == operations.INTERSECT)
     {
         let selected = getSelection(marking, selection)
         for (var alt in marking) 
