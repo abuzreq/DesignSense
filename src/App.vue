@@ -9,7 +9,7 @@
       color=" white--text text--lighten-1"
       height="50"
     >
-      <v-toolbar-title>DesignSense</v-toolbar-title>
+      <v-toolbar-title style="width: 15vw;" >DesignSense</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-divider vertical />
 
@@ -39,35 +39,7 @@
       </v-tooltip>
 
       <v-divider vertical />
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-chip
-            outlined
-            v-on="on"
-            :ripple="false"
-            label
-            class="ma-2"
-            color="grey darken-2"
-            text-color="white"
-          >
-            {{ currentSelectionOperation }}
-            <v-avatar right class="grey lighten-2">
-              <v-icon small color="black">mdi-vector-selection</v-icon>
-            </v-avatar>
-          </v-chip>
-        </template>
-        <span
-          >Shows how new selections will impact the existing selection.</span
-        >
-      </v-tooltip>
-      <v-divider vertical />
-
-      <ReplaceIcon @click="onReplace" class="operation-icon" />
-      <AddIcon @click="onAdd" class="operation-icon" />
-      <SubtractIcon @click="onSubtract" class="operation-icon" />
-      <IntersectIcon @click="onIntersect" class="operation-icon" />
-      <ToggleIcon @click="onToggle" class="operation-icon" />
-
+      <SelectionOperationsBar/>
       <v-divider vertical />
       <v-spacer></v-spacer>
       <LoadDataModal> </LoadDataModal>
@@ -239,10 +211,6 @@
 
 
 <style>
-.operation-icon {
-  width: 10mm;
-  height: 10mm;
-}
 
 body {
   overflow: hidden; /* Hide scrollbars */
@@ -277,11 +245,8 @@ import LoadDataModal from "@/components/LoadDataModal.vue";
 import ColorSelectionModal from "@/components/ColorSelectionModal.vue";
 import { operations } from "@/components/operations.js";
 
-import ReplaceIcon from "../src/assets/replace_icon.svg";
-import AddIcon from "../src/assets/add_icon.svg";
-import SubtractIcon from "../src/assets/subtract_icon.svg";
-import IntersectIcon from "../src/assets/intersect_icon.svg";
-import ToggleIcon from "../src/assets/toggle_icon.svg";
+import SelectionOperationsBar from "@/components/SelectionOperationsBar.vue";
+
 
 export default {
   name: "App",
@@ -300,15 +265,12 @@ export default {
     RadialMenuItem,
     LoadDataModal,
     ColorSelectionModal,
-    ReplaceIcon,
-    AddIcon,
-    SubtractIcon,
-    IntersectIcon,
-    ToggleIcon,
+SelectionOperationsBar
   },
 
   data: function () {
     return {
+      operationsList: operations,
       actions: {
         createSet: {
           clickAction: () => this.$store.dispatch("createSet"),
@@ -409,11 +371,9 @@ export default {
         this.showContextMenu = false;
       }
     });
-    // this.url =  this.URLs[0];
-    //  this.onUrlChange(this.url);
+  
   },
   mounted() {
-    //   this.onUrlChange(this.URLs[0]);
   },
   computed: {
     ...mapState({
@@ -424,21 +384,6 @@ export default {
     }),
   },
   methods: {
-    onReplace() {
-      this.$store.commit("changeSelectionOperation", operations.REPLACE);
-    },
-        onAdd() {
-      this.$store.commit("changeSelectionOperation", operations.ADD);
-    },
-        onSubtract() {
-      this.$store.commit("changeSelectionOperation", operations.SUBTRACT);
-    },
-        onIntersect() {
-      this.$store.commit("changeSelectionOperation", operations.INTERSECT);
-    },
-        onToggle() {
-      this.$store.commit("changeSelectionOperation", operations.TOGGLE);
-    },
     moveToNextOperation() {
       let current = currentSelectionOperation;
       let allOperations = Object.values(operations);
