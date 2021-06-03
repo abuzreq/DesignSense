@@ -5,8 +5,7 @@
         <ReplaceIcon
           :class="{
             selected:
-              operationsList &&
-              currentSelectionOperation == operationsList.REPLACE,
+              operationsList && currentSelectionOperation == operationsList.REPLACE,
           }"
           v-on="on"
           @click="onReplace"
@@ -19,8 +18,7 @@
       <template v-slot:activator="{ on }">
         <AddIcon
           :class="{
-            selected:
-              operationsList && currentSelectionOperation == operationsList.ADD,
+            selected: operationsList && currentSelectionOperation == operationsList.ADD,
           }"
           v-on="on"
           @click="onAdd"
@@ -34,8 +32,7 @@
         <SubtractIcon
           :class="{
             selected:
-              operationsList &&
-              currentSelectionOperation == operationsList.SUBTRACT,
+              operationsList && currentSelectionOperation == operationsList.SUBTRACT,
           }"
           v-on="on"
           @click="onSubtract"
@@ -49,8 +46,7 @@
         <ToggleIcon
           :class="{
             selected:
-              operationsList &&
-              currentSelectionOperation == operationsList.TOGGLE,
+              operationsList && currentSelectionOperation == operationsList.TOGGLE,
           }"
           v-on="on"
           @click="onToggle"
@@ -64,8 +60,7 @@
         <IntersectIcon
           :class="{
             selected:
-              operationsList &&
-              currentSelectionOperation == operationsList.INTERSECT,
+              operationsList && currentSelectionOperation == operationsList.INTERSECT,
           }"
           v-on="on"
           @click="onIntersect"

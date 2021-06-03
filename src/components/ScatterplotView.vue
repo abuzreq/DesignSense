@@ -543,10 +543,7 @@ class ScatterPlot {
                 var cy = yScale(d[yColumn]);
                 var isOutside =
                   e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1];
-
-                if (isOutside) {
-                } else if (!isOutside) {
-                  // && currentMask[i])  //TODO this will work only in case of a details view
+ if (!isOutside) {
                   brushedIDs.push(keyFunc(d));
                 }
               });
@@ -561,11 +558,9 @@ class ScatterPlot {
 
           if (brushedIDs.length > 0) {
             onBrushed(brushedIDs);
-          } else {
-            onBrushed([]);
-          }
+          } 
         }
-        // If the brush is empty, select all circles.
+
         function brushmove() {}
 
         var highlight = function (selection) {

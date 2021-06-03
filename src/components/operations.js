@@ -17,7 +17,6 @@ const operations_icons = {
 function getOperationFromKey(index)
 {
     let allOperations =  Object.values(operations);
-    console.log(operations)
     if(index >= allOperations.length || index < 0)
     {
         return;

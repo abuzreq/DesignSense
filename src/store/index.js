@@ -2,7 +2,7 @@ import Vue from "vue";
 import Vuex from "vuex";
 import views from "@/components/constants.js";
 import { operations } from "@/components/operations.js";
-import {generateID} from "@/components/utils.js";
+import { generateID } from "@/components/utils.js";
 import * as d3 from "d3";
 import * as d3Chromatic from 'd3-scale-chromatic';
 
@@ -22,7 +22,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             markingsMap: {}, // markingID -> marking object. Marking object is {altID -> highlightState}
             viewsMap: {},
 
-       
+
             setsIDs: [],
             setsMetadataMap: {},
             setsMap: {},
@@ -42,9 +42,9 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             isAltKey: false,
             isInspectionMode: false,
 
-            colorRange: d3Chromatic.schemeTableau10,      
-            colorColumn:"year",
-        },      
+            colorRange: d3Chromatic.schemeTableau10,
+            colorColumn: "year",
+        },
         getters: {
             colorScale: state => d3.scaleOrdinal(state.colorRange),
             colorize: (state, getters) => dataItem => {
@@ -75,42 +75,37 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             },
             markingsDefaultGetter: state => { return state.markingsMap[state.defaultMarkingID] },
             markingsMapGetter: (state) => (markingID) => { return state.markingsMap[markingID] },
-            getHovered: (state) => {return state.hovered;},
-            isHoveringEnabled: (state) => state.isCtrlKey || state.isInspectionMode
+            getHovered: (state) => { return state.hovered; },
+            isHoveringEnabled: (state) => state.isCtrlKey || state.isInspectionMode,
         },
         mutations:
         {
-           /* setSimilarityMap(state, payload)
-            {   
-                state.similarity_map = payload.similarity_map;
-            },  */
+            /* setSimilarityMap(state, payload)
+             {   
+                 state.similarity_map = payload.similarity_map;
+             },  */
 
-            changeSelectionOperation(state, newOperation)
-            {
+            changeSelectionOperation(state, newOperation) {
                 state.currentSelectionOperation = newOperation;
             },
-            changeColorColumn(state, newColorColumn)
-            {
+            changeColorColumn(state, newColorColumn) {
                 state.colorColumn = newColorColumn;
             },
-            changeColorRange(state, newColorRange)
-            {
+            changeColorRange(state, newColorRange) {
                 state.colorRange = newColorRange;
             },
             toggleEditingMode(state, payload) {
                 state.isEditingMode = !state.isEditingMode;
             },
-            toggleInspectionMode(state, payload) 
-            {
-                
+            toggleInspectionMode(state, payload) {
+
                 state.isInspectionMode = !state.isInspectionMode;
-                if(!state.isInspectionMode)
-                {
+                if (!state.isInspectionMode) {
                     state.hovered = null;
                 }
             },
 
-            
+
             setData(state, payload) {
                 state.data = payload.newData;
             },
@@ -196,49 +191,43 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 state.dataStack.push(payload.data);
             },
 
-            setSetMetadata(state, payload) 
-            {
+            setSetMetadata(state, payload) {
                 let ID = payload.setID;
                 let metadata = state.setsMetadataMap[ID]
 
                 let comment = metadata.comment;
                 let name = metadata.name;
-                if ((payload.hasOwnProperty("comment"))) 
-                {
+                if ((payload.hasOwnProperty("comment"))) {
                     comment = payload.comment;
                 }
-                if ((payload.hasOwnProperty("name"))) 
-                {
+                if ((payload.hasOwnProperty("name"))) {
                     name = payload.name;
                 }
-                state.setsMetadataMap[ID] = {name:name, comment:comment};
+                state.setsMetadataMap[ID] = { name: name, comment: comment };
             },
             addSet(state, payload) {
-                
+
                 let ID = "";
-                if ((payload.hasOwnProperty("setName"))) 
-                {
+                if ((payload.hasOwnProperty("setName"))) {
                     ID = payload.setName;
                 }
-                else
-                {
-                    state.setsCounter += 1    
-                    ID = 'Set #'+state.setsCounter;//generateID();
+                else {
+                    state.setsCounter += 1
+                    ID = 'Set #' + state.setsCounter;//generateID();
                 }
-               
+
                 state.setsIDs.push(ID)
                 state.setsMap[ID] = payload.members;
 
-                state.setsMetadataMap[ID] = {name: ID, comment:"Comment Here"};        
+                state.setsMetadataMap[ID] = { name: ID, comment: "Comment Here" };
             },
-            updateSet(state, payload)
-            {
+            updateSet(state, payload) {
                 let ID = payload.setID;
-                        
+
                 let setMarking = setToMarking(state.setsMap[ID], state.rawData)
-                console.log(ID, state.setsMap[ID], setMarking)  
+                console.log(ID, state.setsMap[ID], setMarking)
                 operate(setMarking, payload.members, payload.operation);
-                console.log(getSelectedIDs(setMarking))  
+                console.log(getSelectedIDs(setMarking))
                 state.setsMap[ID] = getSelectedIDs(setMarking); //Object.keys(setMarking)
 
 
@@ -250,42 +239,37 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                     if (state.setsIDs[i] === ID) {
                         state.setsIDs.splice(i, 1);
                     }
-                }             
+                }
                 delete state.setsMap[ID]
                 delete state.setsMetadataMap[ID]
             },
-            updateCtrlKey(state, payload)
-            {
+            updateCtrlKey(state, payload) {
                 state.isCtrlKey = payload.value;
             },
-            updateShiftKey(state, payload)
-            {
+            updateShiftKey(state, payload) {
                 state.isShiftKey = payload.value;
             },
-            updateAltKey(state, payload)
-            {
+            updateAltKey(state, payload) {
                 state.isAltKey = payload.value;
             },
         },
         actions: {
-            toggleInspectionMode(context, payload)
-            {
+            clearInspection(context) {
+                context.commit("hover", { hovered: null });
+            },
+            toggleInspectionMode(context, payload) {
                 context.commit('toggleInspectionMode');
             },
-            toggleEditingMode(context, payload)
-            {
+            toggleEditingMode(context, payload) {
                 context.commit('toggleEditingMode');
             },
-            updateCtrlKey(context, payload)
-            {
+            updateCtrlKey(context, payload) {
                 context.commit('updateCtrlKey', payload);
             },
-            updateShiftKey(context, payload)
-            {
+            updateShiftKey(context, payload) {
                 context.commit('updateShiftKey', payload);
             },
-            updateAltKey(context, payload)
-            {
+            updateAltKey(context, payload) {
                 context.commit('updateAltKey', payload);
             },
             createDefaultView(context, payload) // {commit}, payload
@@ -320,8 +304,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             zoomToSelection(context) {
                 let dataMapSubset = context.getters.selectedInMarking(context.state.defaultMarkingID);
                 let selection = map2Data(dataMapSubset)
-                if(selection.length > 0)
-                {         
+                if (selection.length > 0) {
                     context.commit('pushDataStack', { data: context.state.data });
                     context.commit('setData', { newData: selection });
                 }
@@ -360,26 +343,24 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 let members = Object.keys(context.getters.selectedInMarking(context.state.defaultMarkingID))
                 context.commit('addSet', { members: members })
             },
-            restoreSet(context, payload) 
-            {
+            restoreSet(context, payload) {
                 context.dispatch("resetData"); //Ahmed: in case restoring is called when portions of the data is being zoomed on. Altneratives includes adding only the content of set not present
                 context.commit("update",
-                {
-                    markingID: context.state.defaultMarkingID,
-                    selection: context.state.setsMap[payload.setID],
-                    operation: payload.operation
-                });
+                    {
+                        markingID: context.state.defaultMarkingID,
+                        selection: context.state.setsMap[payload.setID],
+                        operation: payload.operation
+                    });
             },
-            updateSet(context, payload) 
-            {
+            updateSet(context, payload) {
                 let members = Object.keys(context.getters.selectedInMarking(context.state.defaultMarkingID))
 
                 context.commit("updateSet",
-                {
-                    setID: payload.setID,
-                    members: members,
-                    operation: payload.operation
-                });
+                    {
+                        setID: payload.setID,
+                        members: members,
+                        operation: payload.operation
+                    });
             },
 
         },
@@ -428,22 +409,19 @@ function getSelection(marking, selection) {
 function getSelectedIDs(marking) {
     var selectedIDs = [];
     for (var alt in marking) {
-        if(marking[alt] == 1)
-        {
+        if (marking[alt] == 1) {
             selectedIDs.push(alt)
         }
     }
     return selectedIDs;
 }
 
-function setToMarking(IDs, data)
-{
+function setToMarking(IDs, data) {
     var marking = {};
     data.forEach(element => {
         marking[element._id] = 0;
     })
-    for (var alt of IDs)
-    {
+    for (var alt of IDs) {
         marking[alt] = 1;
     }
     return marking;
@@ -500,8 +478,7 @@ function flip(value) {
 }
 
 function operate(marking, selection, operation) {
- 
-    console.log(operation)
+
     if (operation == operations.REPLACE) {
         for (var alt in marking) {
             marking[alt] = 0;
@@ -529,21 +506,17 @@ function operate(marking, selection, operation) {
             }
         }
     }
-    else if (operation == operations.INTERSECT)
-    {
+    else if (operation == operations.INTERSECT) {
         let selected = getSelection(marking, selection)
-        for (var alt in marking) 
-        {
-            
-            if(marking[alt] == 1 && selected[alt] == 1)
-            {
+        for (var alt in marking) {
+
+            if (marking[alt] == 1 && selected[alt] == 1) {
                 marking[alt] = 1;
             }
-            else
-            {
+            else {
                 marking[alt] = 0;
             }
-                    
+
         }
     }
     else if (operation == operations.SUBTRACT) {
@@ -648,8 +621,7 @@ function filterData(dataMap, toFilter) {
 function getNonNumericDimensions(typesMap) {
     var nonnumeric = []
     for (var dim in typesMap) {
-        if (typesMap[dim] != "Float" && typesMap[dim] != "Number")
-        {
+        if (typesMap[dim] != "Float" && typesMap[dim] != "Number") {
             nonnumeric.push(dim);
         }
     }
@@ -659,8 +631,7 @@ function getNonNumericDimensions(typesMap) {
 function getNumericDimensions(typesMap) {
     var numeric = []
     for (var dim in typesMap) {
-        if (typesMap[dim] == "Float" || typesMap[dim] == "Number")
-        {
+        if (typesMap[dim] == "Float" || typesMap[dim] == "Number") {
             numeric.push(dim);
         }
     }

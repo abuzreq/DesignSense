@@ -1,7 +1,7 @@
 
 
 <template>
-  <v-container>
+  <v-container >
     <v-row no-gutters>
       <v-col
         style="position: relative; left: -12px; top: -12px"

@@ -9,7 +9,7 @@
       color=" white--text text--lighten-1"
       height="50"
     >
-      <v-toolbar-title style="width: 15vw;" >DesignSense</v-toolbar-title>
+      <v-toolbar-title style="width: 15vw">DesignSense</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-divider vertical />
 
@@ -39,7 +39,7 @@
       </v-tooltip>
 
       <v-divider vertical />
-      <SelectionOperationsBar/>
+      <SelectionOperationsBar />
       <v-divider vertical />
       <v-spacer></v-spacer>
       <LoadDataModal> </LoadDataModal>
@@ -48,7 +48,22 @@
       <ColorSelectionModal> </ColorSelectionModal>
 
       <v-spacer></v-spacer>
+
       <v-divider vertical />
+
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            v-on="on"
+            :color="actionType2Color(actions['clearInspection'].type)"
+            icon
+            @click="actions['clearInspection'].clickAction"
+          >
+            <v-icon>{{ actions["clearInspection"].icon }}</v-icon>
+          </v-btn>
+        </template>
+        <span>{{ actions["clearInspection"].tooltip() }}</span>
+      </v-tooltip>
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
@@ -182,14 +197,13 @@
         background-color: white;
       "
       :itemSize="50"
-      :radius="65"
+      :radius="70"
       :angle-restriction="360"
     >
       <radial-menu-item
         v-for="(item, index) in contextMenuItems"
         :key="index"
         style="background-color: white"
-        @click="moveToNextOperation"
       >
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
@@ -211,7 +225,6 @@
 
 
 <style>
-
 body {
   overflow: hidden; /* Hide scrollbars */
 }
@@ -247,7 +260,6 @@ import { operations } from "@/components/operations.js";
 
 import SelectionOperationsBar from "@/components/SelectionOperationsBar.vue";
 
-
 export default {
   name: "App",
   components: {
@@ -265,7 +277,7 @@ export default {
     RadialMenuItem,
     LoadDataModal,
     ColorSelectionModal,
-SelectionOperationsBar
+    SelectionOperationsBar,
   },
 
   data: function () {
@@ -323,6 +335,12 @@ SelectionOperationsBar
               : "Enable inspection on hovering",
           type: "inspecting",
         },
+        clearInspection: {
+          clickAction: () => this.$store.dispatch("clearInspection"),
+          icon: "mdi-cancel",
+          tooltip: () => "Clear the current inspection",
+          type: "inspecting",
+        },
         help: {
           clickAction: () => console.log("TODO"),
           icon: "mdi-help-circle-outline",
@@ -341,9 +359,9 @@ SelectionOperationsBar
       },
       contextMenuItems: [
         "toggleInspectionMode",
+        "clearInspection",
         "resetAllMarkings",
         "createSet",
-        "invertSelection",
         "excludeSelection",
         "zoomToSelection",
         "undoDataTransformation",
@@ -371,9 +389,15 @@ SelectionOperationsBar
         this.showContextMenu = false;
       }
     });
-  
   },
   mounted() {
+    let contextMenuCenter = this.$el.getElementsByClassName(
+      "vue-radial-menu-container"
+    )[0];
+
+    contextMenuCenter.addEventListener("wheel", () => {
+      this.moveToNextOperation();
+    });
   },
   computed: {
     ...mapState({
@@ -385,15 +409,13 @@ SelectionOperationsBar
   },
   methods: {
     moveToNextOperation() {
-      let current = currentSelectionOperation;
-      let allOperations = Object.values(operations);
-      let index = allOperations.findIndex(current);
-      console.log("move " + current);
-      app.$store.commit(
-        "changeSelectionOperation",
-        getOperationFromKey((index + 1) / allOperations.length)
-      );
-      console.log("next " + this.$store.state.currentSelectionOperation);
+      console.log("move");
+      let current = this.$store.state.currentSelectionOperation;
+      let allOperationsValues = Object.values(operations);
+      let index = allOperationsValues.findIndex((x) => x == current);
+      let newOperation =
+        allOperationsValues[(index + 1) % allOperationsValues.length];
+      this.$store.commit("changeSelectionOperation", newOperation);
     },
     actionType2Color: function (type) {
       return {

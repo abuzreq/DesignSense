@@ -67,8 +67,7 @@
                     contain
                     :src="item.image"
                     v-on:click="toggle(item, $event)"
-                    v-on:mouseover="hover(item)"
-                    v-on:mouseleave="unhover(item)"
+                    v-on:mouseover="hover(item)"     
                   />
                 </v-card>
               </v-col>

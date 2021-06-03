@@ -93,7 +93,11 @@
             -->
           </v-toolbar>
 
-          <v-card v-if="inspectedItem" cols="12" style="width: 100%">
+          <v-card
+            v-if="inspectedItem || isInspectionViewPinned"
+            cols="12"
+            style="width: 100%"
+          >
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-btn
@@ -106,6 +110,26 @@
                 </v-btn>
               </template>
               <span>Close inspection</span>
+            </v-tooltip>
+
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-btn
+                  x-small
+                  icon
+                  v-on="on"
+                  @click="
+                    () => (isInspectionViewPinned = !isInspectionViewPinned)
+                  "
+                >
+                  <v-icon v-if="isInspectionViewPinned">mdi-pin-outline</v-icon>
+                  <v-icon v-else>mdi-pin-off-outline</v-icon>
+                </v-btn>
+              </template>
+              <span
+                >Pin the inspection view even if no items are currently
+                inspected</span
+              >
             </v-tooltip>
 
             <v-tooltip bottom>
@@ -159,8 +183,6 @@
               height="400px"
               v-if="!inspecting3DView"
               :src="inspectedItem.image"
-              v-on:mouseover="hover(inspectedItem, true)"
-              v-on:mouseleave="unhover(inspectedItem)"
             />
 
             <model-gltf
@@ -230,7 +252,6 @@
                         :src="item.image"
                         v-on:mouseup="toggle(item)"
                         v-on:mouseover="hover(item)"
-                        v-on:mouseleave="unhover(item)"
                       />
                       <!--  -->
                       <!--:id='"card_"+item._id' -->
@@ -300,7 +321,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
 }
 
 .col > .thumbnail_card:not(.hovered) .v-image.under_drag_selection {
@@ -312,14 +332,15 @@
 }
 
 .col > .thumbnail_card.hovered .v-image.outlined {
-  border: 1px solid rgb(33, 119, 180);
+  margin: 2px;
+  border: 3px solid rgb(33, 119, 180);
 }
 
 .col > .thumbnail_card .v-image:not(.transparent) {
   opacity: 1;
 }
 
-.col > .thumbnail_card:not(.hovered) .v-image.transparent {
+.col > .thumbnail_card .v-image.transparent {
   opacity: 0.4;
 }
 
@@ -328,7 +349,7 @@
 }
 
 .col > .thumbnail_card.hovered {
-  border: 4px solid rgb(33, 119, 180); /*#82b1ff;*/
+  border: 3px dashed rgb(33, 119, 180); /*#82b1ff;*/
 }
 
 #enableContextBtn {
@@ -403,7 +424,7 @@ export default {
       inspectedItemViewIndex: 0,
       inspected3DIcon: "mdi-video-3d",
       inspected2DIcon: "mdi-file-image-outline",
-
+      isInspectionViewPinned: true,
       isSelectionDragOn: false,
       dragSelection: {},
     };
@@ -572,16 +593,12 @@ export default {
       this.$store.commit("hover", { hovered: null });
     },
     toggle(item) {
-      if (this.isHoveringEnabled) {
-        this.inspectedItem = item;
-      } else {
-        if (!this.isSelectionDragOn) {
-          this.$store.commit("update", {
-            view: this.viewID,
-            selection: [item._id],
-            operation: operations.TOGGLE,
-          });
-        }
+      if (!this.isSelectionDragOn) {
+        this.$store.commit("update", {
+          view: this.viewID,
+          selection: [item._id],
+          operation: operations.TOGGLE,
+        });
       }
     },
 
@@ -690,9 +707,12 @@ export default {
           .select("#" + this.cardSelector + newValue._id)
           .classed("hovered", true);
 
-        if (!this.inspecting3DView)
+        if (!this.inspecting3DView) {
           //Change inpsection only if showing 2D. Quickly changing 3D models would be too slow.
           this.inspectedItem = newValue;
+        }
+      } else {
+        this.inspectedItem = null;
       }
     },
     inspecting3DView: function (newValue) {
@@ -714,11 +734,12 @@ export default {
       let cardNodes = d3.select("#" + this.viewID).selectAll(".thumbnail_card");
       console.log(cardNodes);
       this.getAllCards().forEach((node, i) => {
-
-      let id = node.id.substring(this.cardSelector.length)
-      let datum = this.$store.getters.dataMap[id];
-      d3.select(node.parentNode).style("background-color", this.colorize(datum) + '55')
-
+        let id = node.id.substring(this.cardSelector.length);
+        let datum = this.$store.getters.dataMap[id];
+        d3.select(node.parentNode).style(
+          "background-color",
+          this.colorize(datum) + "55"
+        );
       });
     },
     colorScale: function (newValue, oldValue) {

@@ -9,6 +9,9 @@ import layouts from './layout.js'
 import Papa from 'papaparse'
 import { generateID } from "@/components/utils.js";
 import { operations, getOperationFromKey } from '@/components/operations.js';
+import vuewheel from 'vuewheel'
+
+Vue.use(vuewheel)
 
 Vue.config.productionTip = false;
 
@@ -91,7 +94,6 @@ document.addEventListener('keydown', function (e)
 document.addEventListener('keyup', function (e) {
   if (e.key === 'Control') {
     app.$store.dispatch('updateCtrlKey', { value: false })
-    app.$store.commit("hover", { hovered: null });
   }
   if (e.key === '`') {
     app.$store.commit('toggleEditingMode');
