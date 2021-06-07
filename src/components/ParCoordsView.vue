@@ -78,7 +78,9 @@ export default {
       nonNumericDimensions: (state) => state.nonNumericDimensions,
     }),
   },
-  mounted() {},
+  mounted() {
+      console.log('PCORDS', this)
+  },
   created() {
     this.keysBlackList = [
       "index",
@@ -95,6 +97,7 @@ export default {
       "collection",
       "images",
     ];
+  
     this.allKeys = Object.keys(this.chartData[0]);
 
     this.excludedDimensions = this.nonNumericDimensions;

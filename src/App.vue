@@ -169,16 +169,31 @@
           position: relative;
         "
       >
-        <template v-for="(item, index) in layouts">
-          <Card
-            :key="index"
-            :initX="item.x"
-            :initY="item.y"
-            :initW="item.w"
-            :initH="item.h"
-            :type="item.type"
-          />
-        </template>
+        <grid-layout
+          :layout.sync="layout"
+          :col-num="24"
+          :is-draggable="true"
+          :is-resizable="true"
+          :is-mirrored="false"
+          :responsive="false"
+          :vertical-compact="false"
+          :prevent-collision="false"
+          :margin="[5, 5]"
+          :use-css-transforms="true"
+          :autoSize="false"
+        >
+          <template v-for="(item, index) in layout">
+            <Card
+              :key="item.i"
+              :ix="item.x"
+              :iy="item.y"
+              :iw="item.w"
+              :ih="item.h"
+              :i="item.i"
+              :type="item.type"
+            />
+          </template>
+        </grid-layout>
       </div>
     </v-main>
 
@@ -247,6 +262,7 @@ import TSNEView from "@/components/TSNEView.vue";
 import SetsView from "@/components/SetsView.vue";
 import ClusterView from "@/components/ClusterView.vue";
 
+import { GridLayout, GridItem } from "vue-grid-layout";
 import Card from "@/components/Card.vue";
 
 import { mapState, mapGetters } from "vuex";
@@ -278,10 +294,24 @@ export default {
     LoadDataModal,
     ColorSelectionModal,
     SelectionOperationsBar,
+    GridLayout,
+    GridItem,
   },
 
   data: function () {
     return {
+      layout: [
+        { type: "ParallelCoordinatesPlot", x: 6, y: 0, w: 6, h: 3, i: 1 },
+        { type: "ScatterPlot", x: 8, y: 3, w: 4, h: 3, i: 2 },
+        //   {type:"ScatterPlot", x: 12, y: 9, w: 12, h: 9},
+        //   {type:"ScatterPlot", x: 12, y: 9, w: 12, h: 9},
+
+        // {type:"SPLOM", x: 38, y: 0, w: 16, h: 18},
+        { type: "Grid", x: 2, y: 0, w: 4, h: 6, i: 3 },
+        { type: "Sets", x: 0, y: 0, w: 2, h: 6, i: 4 },
+        { type: "Clusters", x: 6, y: 3, w: 2, h: 3, i: 5 },
+      ],
+
       operationsList: operations,
       actions: {
         createSet: {

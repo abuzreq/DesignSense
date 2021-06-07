@@ -1,21 +1,17 @@
 <template>
-  <vdr
+  <grid-item
+    style="touch-action: none"
     class="v-card v-card--outlined v-sheet theme--light"
-    :minWidth="type == 'Grid'?500:((type == 'ScatterPlot')?400:((type == 'ParallelCoordinatesPlot')?600:300))"
-    :minHeight="type == 'Grid'?600:300"
-    :w="this.width"
-    :h="this.height"
-    @dragging="onDrag"
-    @resizing="onResize"
-    :parent="true"
-    :is-conflict-check="true"
-    :snap="true"
-    v-bind:handles="this.currentEditingMode ? ['br', 'tr', 'tl', 'bl'] : []"
-    :draggable="this.currentEditingMode"
-    :resizable="this.currentEditingMode"
-    v-bind:grid="[this.gridSize, this.gridSize]"
-    :x="this.x"
-    :y="this.y"
+    :w="this.iw"
+    :h="this.ih"
+    @move="onMove"
+    @resize="onResize"
+    @container-resized="onContainerResize"
+    :is-draggable="this.currentEditingMode"
+    :is-resizable="this.currentEditingMode"
+    :x="this.ix"
+    :y="this.iy"
+    :i="this.i"
   >
     <ScatterplotView
       v-if="type == 'ScatterPlot'"
@@ -61,10 +57,12 @@
       :x="this.x"
       :y="this.y"
     />
-  </vdr>
+  </grid-item>
 </template>
 
 <script>
+import { GridLayout, GridItem } from "vue-grid-layout";
+
 import vdr from "vue-draggable-resizable-gorkys";
 import { mapState, mapGetters } from "vuex";
 
@@ -91,16 +89,24 @@ export default {
     ScatterplotView,
     TSNEView,
     SetsView,
-    ClusterView
+    ClusterView,
+    GridLayout,
+    GridItem,
   },
-  props: ["initX", "initY", "initW", "initH", "type"],
-  data: function() {
+  props: ["ix", "iy", "iw", "ih", "type"],
+  data: function () {
     return {
-      width: 800,
-      height: 400,
+      iw: 1,
+      ih: 1,
+      ix: 0,
+      iy: 0,
+      width: 1,
+      height: 1,
       x: 0,
       y: 0,
-      gridSize: 50
+      i: 0,
+      gridSizeX: 160,
+      gridSizeY: 160,
     };
   },
   computed: {
@@ -109,16 +115,13 @@ export default {
       console.log(val)
       return val;
     }*/
-    ...mapGetters({ currentEditingMode: "getEditingMode" })
+    ...mapGetters({ currentEditingMode: "getEditingMode" }),
   },
-  created() {
-    console.log("editingMode", this.currentEditingMode);
-    this.x = this.initX * this.gridSize;
-    this.y = this.initY * this.gridSize;
-    this.width = this.initW * this.gridSize;
-    this.height = this.initH * this.gridSize;
+  mounted() {
+    this.width = this.iw * this.$parent.rowHeight;
+    this.height = this.ih * this.$parent.rowHeight;
 
-    document.addEventListener("keyup", function(e) {
+    document.addEventListener("keyup", function (e) {
       /* if (e.keyCode === 192) {
         this.currentEditingMode = !this.currentEditingMode;
         console.log("Ahaa", this.currentEditingMode, e);
@@ -126,20 +129,58 @@ export default {
     });
   },
   methods: {
-    onResize: function(x, y, width, height) {
+    onResize: function (i, newH, newW, newHPx, newWPx) {
       if (this.currentEditingMode) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+        this.iw = newW;
+        this.ih = newH;
+        this.width = newWPx;
+        this.height = newHPx;
       }
     },
-    onDrag: function(x, y) {
+    onMove: function (i, newX, newY) {
       if (this.currentEditingMode) {
-        this.x = x;
-        this.y = y;
+        this.ix = newX;
+        this.iy = newY;
+
+      /*   let layout = this.$parent.layout;
+       // console.log("Before ", layout);
+        let inX = layout[i]['x'];
+        var p;
+        for (p = 0; p < layout.length; p++) {
+          // console.log(layout[p])
+          //Horizontal swapping
+          if (
+            newX >= layout[p]["x"] &&
+            newX < layout[p]["x"] + layout[p]["w"] &&
+            layout[i]["y"] === layout[p]["y"] &&
+            i !== layout[p]["i"]
+          ) {
+            let initialX = layout[i]["x"];
+            let finalX = layout[p]["x"];
+            layout[i]["x"] = finalX;
+            layout[p]["x"] = initialX;
+          }
+          //Vertical swapping
+          if (
+            newY >= layout[p]["y"] &&
+            newY < layout[p]["y"] + 1 &&
+            layout[i]["x"] === layout[p]["x"] &&
+            i !== layout[p]["i"]
+          ) {
+            let initialY = layout[i]["y"];
+            let finalY = layout[p]["y"];
+            layout[i]["y"] = finalY;
+            layout[p]["y"] = initialY;
+          }
+        }
+        this.$emit("layoutUpdate", layout);
+        if( layout[i]['x'] != inX){
+                console.log("After ",);
+
+        }
+       */
       }
-    }
-  }
+    },
+  },
 };
 </script>
