@@ -6,7 +6,6 @@
     :h="this.ih"
     @move="onMove"
     @resize="onResize"
-    @container-resized="onContainerResize"
     :is-draggable="this.currentEditingMode"
     :is-resizable="this.currentEditingMode"
     :x="this.ix"
@@ -93,18 +92,13 @@ export default {
     GridLayout,
     GridItem,
   },
-  props: ["ix", "iy", "iw", "ih", "type"],
+  props: ["i", "ix", "iy", "iw", "ih", "type"],
   data: function () {
     return {
-      iw: 1,
-      ih: 1,
-      ix: 0,
-      iy: 0,
       width: 1,
       height: 1,
       x: 0,
       y: 0,
-      i: 0,
       gridSizeX: 160,
       gridSizeY: 160,
     };
@@ -131,37 +125,51 @@ export default {
   methods: {
     onResize: function (i, newH, newW, newHPx, newWPx) {
       if (this.currentEditingMode) {
-        this.iw = newW;
-        this.ih = newH;
+        this.$store.commit("updateLayoutItem", {
+          i: i,
+          x: this.ix,
+          y: this.iy,
+          w: newW,
+          h: newH,
+        });
         this.width = newWPx;
         this.height = newHPx;
       }
     },
     onMove: function (i, newX, newY) {
+      console.log(this.$parent)
       if (this.currentEditingMode) {
-        this.ix = newX;
-        this.iy = newY;
+        this.$store.commit("updateLayoutItem", {
+          i: i,
+          x: newX,
+          y: newY,
+          w: this.iw,
+          h: this.ih,
+        });
+      }
 
-      /*   let layout = this.$parent.layout;
-       // console.log("Before ", layout);
-        let inX = layout[i]['x'];
+      /*  if (this.currentEditingMode) {
+        let layout = this.$store.state.layouts;
+        // console.log("Before ", layout);
+        let inX = layout[i]["x"];
         var p;
         for (p = 0; p < layout.length; p++) {
-          // console.log(layout[p])
           //Horizontal swapping
+          console.log(layout[i].type, layout[p].type, layout[i]["y"] , layout[p]["y"],  newX >= layout[p]["x"],  newX < layout[p]["x"] + layout[p]["w"],  layout[i]["y"] === layout[p]["y"],  i !== layout[p]["i"])
           if (
             newX >= layout[p]["x"] &&
             newX < layout[p]["x"] + layout[p]["w"] &&
             layout[i]["y"] === layout[p]["y"] &&
             i !== layout[p]["i"]
           ) {
+            console.log('hello')
             let initialX = layout[i]["x"];
             let finalX = layout[p]["x"];
             layout[i]["x"] = finalX;
             layout[p]["x"] = initialX;
           }
           //Vertical swapping
-          if (
+          else if (
             newY >= layout[p]["y"] &&
             newY < layout[p]["y"] + 1 &&
             layout[i]["x"] === layout[p]["x"] &&
@@ -172,14 +180,23 @@ export default {
             layout[i]["y"] = finalY;
             layout[p]["y"] = initialY;
           }
-        }
-        this.$emit("layoutUpdate", layout);
-        if( layout[i]['x'] != inX){
-                console.log("After ",);
+          this.$store.commit("updateLayoutItem", {
+            i: i,
+            x: layout[i]["x"],
+            y: layout[i]["y"],
+            w: layout[i]["w"],
+            h: layout[i]["h"],
+          });
 
+          this.$store.commit("updateLayoutItem", {
+            i: layout[p]["i"],
+            x: layout[p]["x"],
+            y: layout[p]["y"],
+            w: layout[p]["w"],
+            h: layout[p]["h"],
+          });
         }
-       */
-      }
+      } */
     },
   },
 };

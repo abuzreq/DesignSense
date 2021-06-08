@@ -170,19 +170,19 @@
         "
       >
         <grid-layout
-          :layout.sync="layout"
+          :layout="layouts"
           :col-num="24"
           :is-draggable="true"
           :is-resizable="true"
           :is-mirrored="false"
           :responsive="false"
-          :vertical-compact="false"
+          :vertical-compact="true"
           :prevent-collision="false"
           :margin="[5, 5]"
           :use-css-transforms="true"
-          :autoSize="false"
+          :autoSize="true"
         >
-          <template v-for="(item, index) in layout">
+          <template v-for="(item, index) in layouts">
             <Card
               :key="item.i"
               :ix="item.x"
@@ -301,15 +301,15 @@ export default {
   data: function () {
     return {
       layout: [
-        { type: "ParallelCoordinatesPlot", x: 6, y: 0, w: 6, h: 3, i: 1 },
-        { type: "ScatterPlot", x: 8, y: 3, w: 4, h: 3, i: 2 },
+        { type: "ParallelCoordinatesPlot", x: 12, y: 0, w: 12, h: 3, i: 1 },
+        { type: "ScatterPlot", x: 16, y: 3, w: 8, h: 3, i: 2 },
         //   {type:"ScatterPlot", x: 12, y: 9, w: 12, h: 9},
         //   {type:"ScatterPlot", x: 12, y: 9, w: 12, h: 9},
 
         // {type:"SPLOM", x: 38, y: 0, w: 16, h: 18},
-        { type: "Grid", x: 2, y: 0, w: 4, h: 6, i: 3 },
-        { type: "Sets", x: 0, y: 0, w: 2, h: 6, i: 4 },
-        { type: "Clusters", x: 6, y: 3, w: 2, h: 3, i: 5 },
+        { type: "Grid", x: 4, y: 0, w: 8, h: 6, i: 3 },
+        { type: "Sets", x: 0, y: 0, w: 4, h: 6, i: 4 },
+        { type: "Clusters", x: 12, y: 3, w: 4, h: 3, i: 5 },
       ],
 
       operationsList: operations,

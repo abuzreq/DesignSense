@@ -84,7 +84,19 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
              {   
                  state.similarity_map = payload.similarity_map;
              },  */
-
+             updateLayoutItem(state, payload)
+             {
+                
+                let index = state.layouts.findIndex(x => x.i === payload.i);
+                if(index >= 0)
+                {
+                    console.log('updating ', state.layouts[index].type)
+                    Vue.set(state.layouts, 'w', payload.w);
+                    Vue.set(state.layouts, 'h', payload.h);
+                    Vue.set(state.layouts, 'x', payload.x);
+                    Vue.set(state.layouts, 'y', payload.y);
+                }
+            },
             changeSelectionOperation(state, newOperation) {
                 state.currentSelectionOperation = newOperation;
             },
