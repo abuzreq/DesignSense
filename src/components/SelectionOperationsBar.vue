@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container style="display: flex;">
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
         <ReplaceIcon

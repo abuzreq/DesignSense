@@ -4,8 +4,9 @@
     class="v-card v-card--outlined v-sheet theme--light"
     :w="this.iw"
     :h="this.ih"
-    @move="onMove"
+    @moved="onMove"
     @resize="onResize"
+     @container-resized="onResize"
     :is-draggable="this.currentEditingMode"
     :is-resizable="this.currentEditingMode"
     :x="this.ix"
@@ -14,20 +15,23 @@
   >
     <ScatterplotView
       v-if="type == 'ScatterPlot'"
+      :ref="'cardChart'"
       :width="this.width"
       :height="this.height"
       :x="this.x"
       :y="this.y"
     />
     <ParCoordsView
-      v-if="type == 'ParallelCoordinatesPlot'"
+      v-else-if="type == 'ParallelCoordinatesPlot'"
+      :ref="'cardChart'"
       :width="this.width"
       :height="this.height"
       :x="this.x"
       :y="this.y"
     />
     <AugmentedGridView
-      v-if="type == 'Grid'"
+      v-else-if="type == 'Grid'"
+      :ref="'cardChart'"
       :width="this.width"
       :height="this.height"
       :defaultEnableContext="true"
@@ -35,14 +39,16 @@
       :y="this.y"
     />
     <SetsView
-      v-if="type == 'Sets'"
+      v-else-if="type == 'Sets'"
+      :ref="'cardChart'"
       :width="this.width"
       :height="this.height"
       :x="this.x"
       :y="this.y"
     />
     <ClusterView
-      v-if="type == 'Clusters'"
+      v-else-if="type == 'Clusters'"
+      :ref="'cardChart'"
       :width="this.width"
       :height="this.height"
       :defaultEnableContext="true"
@@ -50,7 +56,8 @@
       :y="this.y"
     />
     <SPLOMView
-      v-if="type == 'SPLOM'"
+      v-else-if="type == 'SPLOM'"
+      :ref="'cardChart'"
       :width="this.width"
       :height="this.height"
       :x="this.x"
@@ -61,8 +68,6 @@
 
 <script>
 import { GridLayout, GridItem } from "vue-grid-layout";
-
-import vdr from "vue-draggable-resizable-gorkys";
 import { mapState, mapGetters } from "vuex";
 
 import ParCoordsView from "@/components/ParCoordsView.vue";
@@ -104,16 +109,10 @@ export default {
     };
   },
   computed: {
-    /*computedHandles() {
-      let val = this.currentEditingMode ? ["br", "tr", "tl", "bl"] : [];
-      console.log(val)
-      return val;
-    }*/
     ...mapGetters({ currentEditingMode: "getEditingMode" }),
   },
   mounted() {
-    this.width = this.iw * this.$parent.rowHeight;
-    this.height = this.ih * this.$parent.rowHeight;
+  
 
     document.addEventListener("keyup", function (e) {
       /* if (e.keyCode === 192) {
@@ -124,28 +123,29 @@ export default {
   },
   methods: {
     onResize: function (i, newH, newW, newHPx, newWPx) {
-      if (this.currentEditingMode) {
-        this.$store.commit("updateLayoutItem", {
+    //  if (this.currentEditingMode)
+    {
+      /*  this.$store.commit("updateLayoutItem", {
           i: i,
           x: this.ix,
           y: this.iy,
           w: newW,
           h: newH,
-        });
+        });  */
         this.width = newWPx;
         this.height = newHPx;
       }
     },
     onMove: function (i, newX, newY) {
-      console.log(this.$parent)
+      console.log(this.$parent);
       if (this.currentEditingMode) {
-        this.$store.commit("updateLayoutItem", {
+        /*      this.$store.commit("updateLayoutItem", {
           i: i,
           x: newX,
           y: newY,
           w: this.iw,
           h: this.ih,
-        });
+        }); */
       }
 
       /*  if (this.currentEditingMode) {

@@ -75,6 +75,7 @@ export default {
       }
     },
     width: function (newValue, oldValue) {
+      console.log("new width");
       this.refresh();
     },
     height: function (newValue, oldValue) {
