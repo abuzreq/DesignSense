@@ -6,11 +6,11 @@
     :h="this.ih"
     @moved="onMove"
     @resize="onResize"
-     @container-resized="onResize"
-    :is-draggable="this.currentEditingMode"
-    :is-resizable="this.currentEditingMode"
-    :x="this.ix"
-    :y="this.iy"
+    @container-resized="onResize"
+    :is-draggable="this.currentEditingMode > 0"
+    :is-resizable="this.currentEditingMode > 0"
+    :x="this.currentEditingMode <= 1? this.ix : this.lix"
+    :y="this.currentEditingMode <= 1? this.iy: this.liy"
     :i="this.i"
   >
     <ScatterplotView
@@ -100,6 +100,10 @@ export default {
   props: ["i", "ix", "iy", "iw", "ih", "type"],
   data: function () {
     return {
+      lix: 0,
+      liy: 0,
+      liw: 0,
+      lih: 0,
       width: 1,
       height: 1,
       x: 0,
@@ -108,12 +112,31 @@ export default {
       gridSizeY: 160,
     };
   },
+  watch: {
+    ix: {
+      handler: function (newValue, oldValue) {
+        console.log('ix changed', this.ix)
+        if (this.currentEditingMode == 0 || this.currentEditingMode == 1) {
+          this.lix = newValue;
+        }
+      },
+    },
+    iy: {
+      handler: function (newValue, oldValue) {
+                console.log('iy changed', this.iy)
+
+        if (this.currentEditingMode == 0 || this.currentEditingMode == 1) {
+          this.liy = newValue;
+        }
+      },
+    },
+  },
   computed: {
     ...mapGetters({ currentEditingMode: "getEditingMode" }),
   },
   mounted() {
-  
-
+    this.lix = this.ix;
+    this.liy = this.iy;
     document.addEventListener("keyup", function (e) {
       /* if (e.keyCode === 192) {
         this.currentEditingMode = !this.currentEditingMode;
@@ -123,9 +146,9 @@ export default {
   },
   methods: {
     onResize: function (i, newH, newW, newHPx, newWPx) {
-    //  if (this.currentEditingMode)
-    {
-      /*  this.$store.commit("updateLayoutItem", {
+      //  if (this.currentEditingMode)
+      {
+        /*  this.$store.commit("updateLayoutItem", {
           i: i,
           x: this.ix,
           y: this.iy,

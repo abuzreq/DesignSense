@@ -33,7 +33,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
 
             similarity_map: new_similarity_map,
 
-            isEditingMode: false,
+            isEditingMode: 0,
 
             hovered: null,
 
@@ -107,7 +107,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 state.colorRange = newColorRange;
             },
             toggleEditingMode(state, payload) {
-                state.isEditingMode = !state.isEditingMode;
+                state.isEditingMode = (state.isEditingMode + 1)%3;
             },
             toggleInspectionMode(state, payload) {
                 state.isInspectionMode = !state.isInspectionMode;

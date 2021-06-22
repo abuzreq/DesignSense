@@ -96,7 +96,7 @@ document.addEventListener('keyup', function (e) {
     app.$store.dispatch('updateCtrlKey', { value: false })
   }
   if (e.key === '`') {
-    app.$store.commit('toggleEditingMode');
+    app.$store.dispatch('toggleEditingMode');
   }
 })
 

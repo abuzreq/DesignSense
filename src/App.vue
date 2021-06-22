@@ -171,7 +171,7 @@
       >
         <grid-layout
           :ref="'gridLayout'"
-          :layout.sync ="layouts"
+          :layout.sync = "activeLayout"
           :col-num="24"
           :row-height="rowHeight"
           :is-draggable="true"
@@ -182,9 +182,8 @@
           :margin="[5, 5]"
           :use-css-transforms="true"
           :autoSize="true"
-  
         >
-          <template v-for="(item) in layouts">
+          <template v-for="item in activeLayout">
             <Card
               :key="item.i"
               :ix="item.x"
@@ -302,6 +301,7 @@ export default {
 
   data: function () {
     return {
+      activeLayout: [],
       rowHeight: 120,
       operationsList: operations,
       actions: {
@@ -372,7 +372,7 @@ export default {
           clickAction: () => this.$store.dispatch("toggleEditingMode"),
           icon: "mdi-table-edit",
           tooltip: () =>
-            this.isEditingMode
+            this.isEditingMode == 0
               ? "Disable Editing Mode."
               : "Enable Editing Mode. (to resize and move the panels)",
           type: "editing",
@@ -399,9 +399,41 @@ export default {
     };
   },
   computed: {},
+  watch: {
+
+    activeLayout : {
+      handler: function (newValue, oldValue) {
+        console.log('layout changed',newValue, oldValue)
+      //  console.log(this.$refs.gridLayout)
+        //Vue.set(, 'layout', newValue)
+        //this.$refs.gridLayout.layout = newValue;
+
+/*         if (this.isEditingMode == 1) {
+          console.log('change this', this.activeLayout)
+          this.activeLayout = newValue;
+                    console.log('After this', this.activeLayout)
+
+        } */
+      }, 
+    }
+ /*    layouts: {
+      handler: function (newValue, oldValue) {
+        console.log('layout changed')
+        if (this.isEditingMode == 1) {
+          console.log('change this', this.activeLayout)
+          this.activeLayout = newValue;
+                    console.log('After this', this.activeLayout)
+
+        }
+      },
+    }, */
+  },
   created() {
     window.addEventListener("resize", this.updateRowHeight);
     this.updateRowHeight();
+    this.activeLayout = this.layouts;
+
+
     //To close the context menu when a click happens anywhere
     document.addEventListener("click", (e) => {
       //To prevent the context menu from closing when the click is on it
@@ -451,7 +483,12 @@ export default {
         selection: "blue",
         misc: "black",
         inspecting: this.isInspectionMode ? "green accent-4" : "grey",
-        editing: this.isEditingMode ? "green accent-4" : "grey",
+        editing:
+          this.isEditingMode == 1
+            ? "green accent-4"
+            : this.isEditingMode == 2
+            ? "red accent-3"
+            : "grey",
       }[type];
     },
     showContextMenuHandler(e) {
