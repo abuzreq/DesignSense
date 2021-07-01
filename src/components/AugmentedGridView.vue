@@ -369,8 +369,6 @@ import { operations } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import DragSelect from "@/plugins/DragSelect.vue";
-import SPECTACLES from "@/plugins/SPECTACLES.js";
-import $ from "jquery";
 
 export default {
   name: "AugmentedGridCards",
@@ -660,8 +658,9 @@ export default {
       return count;
     },
     load3DJSON(item) {
-      console.log("loading");
-      if (this.inspecting3DView && !this.isModelGLTF) {
+      console.log("loading 3D TODO: not implemented");
+
+   /*    if (this.inspecting3DView && !this.isModelGLTF) {
         d3.json(item.json).then((jsonModel) => {
           this.isLoading = false;
 
@@ -676,7 +675,7 @@ export default {
             this.va3cViewer.loadNewModel(jsonModel);
           }
         });
-      }
+      } */
     },
   },
   beforeDestroy() {

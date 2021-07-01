@@ -32,6 +32,7 @@
         "pareto-frontier": "^1.1.1",
         "pixelmatch": "^5.2.0",
         "pngjs-image": "^0.11.7",
+        "three": "^0.130.0",
         "vue": "^2.6.11",
         "vue-3d-model": "^1.2.2",
         "vue-drag-select": "^0.2.0",
