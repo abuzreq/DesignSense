@@ -181,13 +181,13 @@
               contain
               width="100%"
               height="400px"
-              v-if="!inspecting3DView"
+              v-if="inspectedItem && !inspecting3DView"
               :src="inspectedItem.image"
             />
 
             <model-gltf
               ref="gltf"
-              v-else-if="inspecting3DView && isModelGLTF"
+              v-else-if="inspectedItem && inspecting3DView && isModelGLTF"
               :src="inspectedItem.gltf"
               :on-load="onGLTFLoaded(this)"
               :rotation="modelRotation"
@@ -248,7 +248,7 @@
                             numSelected > 0 &&
                             !selectionMap[item._id],
                         }"
-                        v-if="true"
+                        v-if="item"
                         :src="item.image"
                         v-on:mouseup="toggle(item)"
                         v-on:mouseover="hover(item)"
@@ -458,6 +458,7 @@ export default {
     //Inspection setup
     this.isModelGLTF = this.chartData[0].gltf ? true : false;
     this.inspectedItem = this.chartData[0];
+    console.log(this.chartData.filter(x => x == null || !x.image))
   },
 
   updated() {
