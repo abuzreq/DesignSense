@@ -1,14 +1,25 @@
 <template>
   <vdr
     class="v-card v-card--outlined v-sheet theme--light"
-    :minWidth="type == 'Grid'?500:((type == 'ScatterPlot')?400:((type == 'ParallelCoordinatesPlot')?600:300))"
-    :minHeight="type == 'Grid'?600:300"
+    :minWidth="
+      type == 'Grid'
+        ? 500
+        : type == 'ScatterPlot'
+        ? 400
+        : type == 'ParallelCoordinatesPlot'
+        ? 600
+        : 300
+    "
+    :minHeight="type == 'Grid' ? 600 : 300"
     :w="this.width"
     :h="this.height"
+    @activated="onActivated"
     @dragging="onDrag"
+    @dragstop="onDragstop"
     @resizing="onResize"
+    @resizestop="onResizestop"
     :parent="true"
-    :is-conflict-check="true"
+    :is-conflict-check="false"
     :snap="true"
     v-bind:handles="this.currentEditingMode ? ['br', 'tr', 'tl', 'bl'] : []"
     :draggable="this.currentEditingMode"
@@ -63,7 +74,11 @@
     />
   </vdr>
 </template>
-
+<style scoped>
+.top-card {
+  z-index: 25 !important;
+}
+</style>
 <script>
 import vdr from "vue-draggable-resizable-gorkys";
 import { mapState, mapGetters } from "vuex";
@@ -91,16 +106,16 @@ export default {
     ScatterplotView,
     TSNEView,
     SetsView,
-    ClusterView
+    ClusterView,
   },
   props: ["initX", "initY", "initW", "initH", "type"],
-  data: function() {
+  data: function () {
     return {
       width: 800,
       height: 400,
       x: 0,
       y: 0,
-      gridSize: 50
+      gridSize: 50,
     };
   },
   computed: {
@@ -109,7 +124,7 @@ export default {
       console.log(val)
       return val;
     }*/
-    ...mapGetters({ currentEditingMode: "getEditingMode" })
+    ...mapGetters({ currentEditingMode: "getEditingMode" }),
   },
   created() {
     console.log("editingMode", this.currentEditingMode);
@@ -118,7 +133,7 @@ export default {
     this.width = this.initW * this.gridSize;
     this.height = this.initH * this.gridSize;
 
-    document.addEventListener("keyup", function(e) {
+    document.addEventListener("keyup", function (e) {
       /* if (e.keyCode === 192) {
         this.currentEditingMode = !this.currentEditingMode;
         console.log("Ahaa", this.currentEditingMode, e);
@@ -126,20 +141,56 @@ export default {
     });
   },
   methods: {
-    onResize: function(x, y, width, height) {
+    onResize: function (x, y, width, height) {
       if (this.currentEditingMode) {
-        this.x = x;
-        this.y = y;
-        this.width = width;
-        this.height = height;
+        if (
+          this.x !== x ||
+          this.y !== y ||
+          this.width !== width ||
+          this.height !== height
+        ) {
+          this.assignTopCard(this.$el);
+          this.x = x;
+          this.y = y;
+          this.width = width;
+          this.height = height;
+        }
       }
     },
-    onDrag: function(x, y) {
+    onDrag: function (x, y) {
       if (this.currentEditingMode) {
-        this.x = x;
-        this.y = y;
+        if (this.x !== x || this.y !== y) {
+          this.assignTopCard(this.$el);
+          this.x = x;
+          this.y = y;
+        }
       }
-    }
-  }
+    },
+    onDragstop: function (x, y) {
+        this.assignTopCard(this.$el);
+    },
+    onResizestop: function (x, y) {
+      // this.$el.classList.remove("top-card");
+    },
+    onActivated: function () {
+      //  console.log('ahaa', this.$el)
+      //    this.assignTopCard(this.$el);
+    },
+    assignTopCard: function (el) {
+      var currentTopCard = document.getElementsByClassName("top-card");
+      if (currentTopCard.length > 0) {
+        console.log(
+          el.isEqualNode(currentTopCard[0]),
+          el.innerHTML === currentTopCard[0].innerHTML
+        );
+
+        if (!el.isEqualNode(currentTopCard[0])) {
+          console.log(currentTopCard);
+          currentTopCard[0].classList.remove("top-card");
+        }
+      }
+      el.classList.add("top-card");
+    },
+  },
 };
 </script>
