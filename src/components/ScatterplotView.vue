@@ -10,7 +10,7 @@
             v-on:update="onXChange($event)"
             :width="this.singleDimensionWidth"
             :prefixWidth="this.prefixWidth"
-            :dimensionsType= "0"
+            :dimensionsType="0"
           >
             <template v-slot:prefix>
               <v-tooltip bottom>
@@ -52,7 +52,7 @@
             v-on:update="onYChange($event)"
             :width="this.singleDimensionWidth"
             :prefixWidth="this.prefixWidth"
-            :dimensionsType= "0"
+            :dimensionsType="0"
           >
             <template v-slot:prefix>
               <v-tooltip bottom>
@@ -90,39 +90,41 @@
         </v-col>
         <v-col :cols="2">
           <v-row no-gutters>
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on, attrs }">
-              <v-simple-checkbox
-                :ripple="false"
-                style="float: left"
-                v-on="on"
-                v-bind="attrs"
-                dense
-                v-model="useLassoBrush"
-                icon="x-small"
-                :off-icon="rectBrushIcon"
-                :on-icon="lassoBrushIcon"
-              />
-            </template>
-            <span>Switch between rectangular and Lasso brushes.</span>
-          </v-tooltip>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on, attrs }">
+                <v-simple-checkbox
+                  :ripple="false"
+                  style="float: left"
+                  v-on="on"
+                  v-bind="attrs"
+                  dense
+                  v-model="useLassoBrush"
+                  icon="x-small"
+                  :off-icon="lassoBrushIcon"
+                  :on-icon="rectBrushIcon"
+                />
+              </template>
+              <span v-if="useLassoBrush">Switch to the rectangular brush</span>
+              <span v-else>Switch to the Lasso brush</span>
+            </v-tooltip>
 
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <v-btn
-                style="float: right"
-                v-on="on"
-                icon
-                @click="calculateParetoFrontier($event)"
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-btn
+                  style="float: right"
+                  v-on="on"
+                  icon
+                  @click="calculateParetoFrontier($event)"
+                >
+                  <v-icon color="yellow">mdi-trophy-outline</v-icon>
+                </v-btn>
+              </template>
+              <span
+                >Compute the Pareto-Frontier for the chosen dimensions.</span
               >
-                <v-icon color="yellow">mdi-trophy-outline</v-icon>
-              </v-btn>
-            </template>
-            <span>Compute the Pareto-Frontier for the chosen dimensions.</span>
-          </v-tooltip>
+            </v-tooltip>
           </v-row>
         </v-col>
-
       </v-row>
     </v-toolbar>
     <div
@@ -135,49 +137,61 @@
   </v-container>
 </template>
 
-<style scoped lang="sass">
-::v-deep .v-toolbar > .v-toolbar__content
-  padding: 0 0 0 0
+<style scoped>
+::v-deep .v-toolbar > .v-toolbar__content {
+  padding: 0 0 0 0;
+}
 
-div ::v-deep .axis line
-  stroke: #ddd
+div ::v-deep .axis line {
+  stroke: #ddd;
+}
 
-div ::v-deep .axis path
-  display: none
+div ::v-deep .axis path {
+  display: none;
+}
 
-div ::v-deep .cell text
-  font-weight: bold
-  text-transform: capitalize
+div ::v-deep .cell text {
+  font-weight: bold;
+  text-transform: capitalize;
+}
 
-div ::v-deep .frame
-  fill: none
-  stroke: #aaa
+div ::v-deep .frame {
+  fill: none;
+  stroke: #aaa;
+}
 
-div ::v-deep circle
-  fill-opacity: 1
+div ::v-deep circle {
+  fill-opacity: 1;
+}
 
-div ::v-deep circle.hidden
-  fill: #ccc !important
+div ::v-deep circle.hidden:not(.mark-circle) {
+  fill: #ccc !important;
+}
 
-div ::v-deep .extent
-  fill: #000
-  fill-opacity: 0.125
-  stroke: #fff
+div ::v-deep .extent {
+  fill: #000;
+  fill-opacity: 0.125;
+  stroke: #fff;
+}
 
-::v-deep .lasso path
-  stroke: rgb(80,80,80)
-  stroke-width: 2px
+::v-deep .lasso path {
+  stroke: rgb(80, 80, 80);
+  stroke-width: 2px;
+}
 
-::v-deep .lasso .drawn
-  fill-opacity: .05
+::v-deep .lasso .drawn {
+  fill-opacity: 0.05;
+}
 
-::v-deep .lasso .loop_close
-  fill: none
-  stroke-dasharray: 4,4
+::v-deep .lasso .loop_close {
+  fill: none;
+  stroke-dasharray: 4, 4;
+}
 
-::v-deep .lasso .origin
-  fill: #3399FF
-  fill-opacity: .5
+::v-deep .lasso .origin {
+  fill: #3399ff;
+  fill-opacity: 0.5;
+}
 </style>
 <script>
 const pf = require("pareto-frontier");
@@ -260,11 +274,11 @@ export default {
       ]);
       //https://github.com/justinormont/pareto-frontier/pull/2
       const out = pf.getParetoFrontier(graph, { optimize: "topRight" }); //topLeft topRight bottomRight bottomLeft
-      console.log(out);
+      console.log(out, this.$store);
       this.$store.commit("update", {
         view: this.viewID,
         selection: out.map((d) => d[2]),
-        operation: this.$store.currentSelectionOperation,
+        operation: this.$store.state.currentSelectionOperation,
       });
     },
     onXChange: function (newXColumn) {
@@ -335,6 +349,9 @@ class ScatterPlot {
     var outerHeight = 0;
 
     var margin = { left: 0, top: 0, right: 0, bottom: 0 };
+
+    var circlesRadius = 3;
+    var markCircleRadius = 9;
 
     var xColumn = "No X column configured";
     var yColumn = "No Y column configured";
@@ -442,22 +459,18 @@ class ScatterPlot {
           //brush.keyModifiers(d3.brushFixSize, null)
           //brush.keyModifiers(d3.brushFixCenter , null)
         } else {
-          var lasso_area = svg
-            .append("rect")
+          var lasso_area = g
+            .insert("rect", ":first-child")
             .attr("width", innerWidth)
             .attr("height", innerHeight)
-            .style("opacity", 0)
-            .attr(
-              "transform",
-              "translate(" + margin.left + ", " + margin.top + ")"
-            );
-          //   .translate();
+            .style("opacity", 0);
+
           // Define the lasso
           lassoBrush = d3
             .lasso()
-            .closePathDistance(75) // max distance for the lasso loop to be closed
+            .closePathDistance(120) // max distance for the lasso loop to be closed
             .closePathSelect(true) // can items be selected by closing the path?
-            .hoverSelect(true) // can items by selected by hovering over them?
+            .hoverSelect(false) // can items by selected by hovering over them?
             .targetArea(lasso_area) // area where the lasso can be started
             .on("start", brushstart)
             .on("brush", brushmove)
@@ -504,12 +517,20 @@ class ScatterPlot {
             return yScale(d[yColumn]);
           })
           .attr("r", function (d) {
-            return 3;
+            return circlesRadius;
           })
           .attr("fill", function (d) {
             return colorScale(d[colorColumn]);
           });
-        //
+
+        var markCircle = g
+          .append("circle")
+          .attr("class", "mark-circle")
+          .attr("r", markCircleRadius)
+          .attr("stroke", "#ff0000")
+          .attr("stroke-width", "2")
+          .attr("fill", "none");
+        markCircle.attr("opacity", 0);
 
         circles.exit().remove();
 
@@ -543,7 +564,7 @@ class ScatterPlot {
                 var cy = yScale(d[yColumn]);
                 var isOutside =
                   e[0][0] > cx || cx > e[1][0] || e[0][1] > cy || cy > e[1][1];
- if (!isOutside) {
+                if (!isOutside) {
                   brushedIDs.push(keyFunc(d));
                 }
               });
@@ -558,7 +579,7 @@ class ScatterPlot {
 
           if (brushedIDs.length > 0) {
             onBrushed(brushedIDs);
-          } 
+          }
         }
 
         function brushmove() {}
@@ -596,17 +617,31 @@ class ScatterPlot {
 
         var unhighlightAll = function () {
           thisG.selectAll("circle").classed("hidden", false);
+          markCircle.attr("opacity", 0);
         };
 
         var mark = function (item) {
-          thisG.selectAll("circle").attr("r", (d, i) => {
+          if (item) {
+            markCircle
+              .attr("stroke", colorScale(item[colorColumn]))
+              .attr("opacity", 1)
+              .attr("cx", xScale(item[xColumn]))
+              .attr("cy", yScale(item[yColumn]));
+          } else {
+            markCircle.attr("opacity", 0);
+          }
+
+          /*    thisG.selectAll("circle").attr("r", (d, i) => {
+            console.log(markCircle,d,xColumn, xScale(d[xColumn]))
+
+           
             //[todo] parametrize those radii
             if (item && keyFunc(item) == keyFunc(d)) {
               return 5;
             } else {
               return 3;
             }
-          });
+          }); */
         };
 
         chart.highlight = highlight;

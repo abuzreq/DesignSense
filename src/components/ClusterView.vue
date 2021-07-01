@@ -285,7 +285,7 @@ export default {
       this.$store.commit("update", {
         view: this.viewID,
         selection: this.clustersMap[item._id].map((d) => d._id),
-        operation: this.$store.currentSelectionOperation,
+        operation: this.$store.state.currentSelectionOperation,
       });
 
       //this.$store.commit("hover", { hovered: item });

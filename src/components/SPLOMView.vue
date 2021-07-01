@@ -49,7 +49,7 @@ export default {
         this.$store.commit("update", {
           view: this.viewID,
           selection: brushedIDs,
-          operation: this.currentSelectionOperation
+          operation: this.$store.state.currentSelectionOperation
         });
       }
     },
