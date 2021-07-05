@@ -19,7 +19,7 @@
             <v-row dense justify="center" style="margin-bottom: -10px">
               <v-toolbar-title>Clusters</v-toolbar-title>
             </v-row>
-            <v-row dense>
+            <v-row dense style="flex-wrap: nowrap;">
               <v-slider
                 min="4"
                 max="16"
