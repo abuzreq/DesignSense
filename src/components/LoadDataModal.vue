@@ -249,9 +249,6 @@ export default {
         readyToLoad(value.url);
       }
     },
-    onCloudUrlChange() {
-      loadDataFromCloudURL(this.cloudURL);
-    },
     loadFromCSV(file) {
       console.log(file);
       var reader = new FileReader();

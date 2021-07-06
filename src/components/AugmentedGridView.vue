@@ -433,12 +433,6 @@ export default {
     chartDataLength() {
       return this.chartData.length;
     },
-    headers() {
-      return Object.keys(this.chartData);
-    },
-    values() {
-      return Object.values(this.chartData);
-    },
     ...mapState({
       currentSelectionOperation: (state) => state.currentSelectionOperation,
       rawChartData: (state) => state.data,
@@ -460,7 +454,10 @@ export default {
     //Inspection setup
     this.isModelGLTF = this.chartData[0].gltf ? true : false;
     this.inspectedItem = this.chartData[0];
-    console.log(this.chartData.filter(x => x == null || !x.image))
+
+    this.sortByVar = this.keys.find((k) => !isNaN(this.chartData[0][k])) || this.keys[0];
+
+    // console.log(this.chartData.filter((x) => x == null || !x.image));
   },
 
   updated() {
@@ -469,8 +466,7 @@ export default {
   },
   created() {
     this.viewID = "id" + this._uid;
-    this.sortByVar = this.keys[0];
-    console.log(this.chartData);
+
     this.$store.subscribe((mutation, state) => {
       if (mutation.type === "update" || mutation.type === "resetMarking") {
         this.updateContext();

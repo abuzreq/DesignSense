@@ -137,13 +137,14 @@ export default {
     restoreSet(ID, event) {
       this.$store.dispatch("restoreSet", {
         setID: ID,
-        operation: this.$store.currentSelectionOperation,
+        operation: this.$store.state.currentSelectionOperation,
       });
     },
     updateSet(ID, event) {
+      console.log('updateSet',ID, event, this.$store.state.currentSelectionOperation)
       this.$store.dispatch("updateSet", {
         setID: ID,
-        operation: this.$store.currentSelectionOperation,
+        operation: this.$store.state.currentSelectionOperation,
       });
       this.$forceUpdate();
     },

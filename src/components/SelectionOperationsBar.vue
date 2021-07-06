@@ -1,79 +1,89 @@
 <template>
-  <v-container>
+  <v-container class="selectionOperationsContainer">
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
         <ReplaceIcon
           :class="{
             selected:
-              operationsList && currentSelectionOperation == operationsList.REPLACE,
+              operationsList &&
+              currentSelectionOperation == operationsList.REPLACE,
           }"
           v-on="on"
           @click="onReplace"
           class="operation-icon"
         />
       </template>
-      <span>Replace</span>
+      <span>Replace&emsp;[1]</span>
     </v-tooltip>
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
         <AddIcon
           :class="{
-            selected: operationsList && currentSelectionOperation == operationsList.ADD,
+            selected:
+              operationsList && currentSelectionOperation == operationsList.ADD,
           }"
           v-on="on"
           @click="onAdd"
           class="operation-icon"
         />
       </template>
-      <span>Add</span>
+      <span>Add&emsp;[2]</span>
     </v-tooltip>
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
         <SubtractIcon
           :class="{
             selected:
-              operationsList && currentSelectionOperation == operationsList.SUBTRACT,
+              operationsList &&
+              currentSelectionOperation == operationsList.SUBTRACT,
           }"
           v-on="on"
           @click="onSubtract"
           class="operation-icon"
         />
       </template>
-      <span>Subtract</span>
+      <span>Subtract&emsp;[3]</span>
     </v-tooltip>
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
         <ToggleIcon
           :class="{
             selected:
-              operationsList && currentSelectionOperation == operationsList.TOGGLE,
+              operationsList &&
+              currentSelectionOperation == operationsList.TOGGLE,
           }"
           v-on="on"
           @click="onToggle"
           class="operation-icon"
         />
       </template>
-      <span>Toggle</span>
+      <span>Toggle&emsp;[4]</span>
     </v-tooltip>
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
         <IntersectIcon
           :class="{
             selected:
-              operationsList && currentSelectionOperation == operationsList.INTERSECT,
+              operationsList &&
+              currentSelectionOperation == operationsList.INTERSECT,
           }"
           v-on="on"
           @click="onIntersect"
           class="operation-icon"
         />
       </template>
-      <span>Intersect</span>
+      <span>Intersect&emsp;[5]</span>
     </v-tooltip>
   </v-container>
 </template>
 
 
 <style scoped>
+.selectionOperationsContainer {
+  width: 250px;
+  display: flex;
+  justify-content: center;
+}
 .operation-icon {
   width: 10mm;
   height: 10mm;

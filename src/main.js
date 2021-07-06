@@ -10,13 +10,17 @@ import Papa from 'papaparse'
 import { generateID } from "@/components/utils.js";
 import { operations, getOperationFromKey } from '@/components/operations.js';
 import vuewheel from 'vuewheel'
+import VueTour from 'vue-tour'
 
+require('vue-tour/dist/vue-tour.css')
+
+Vue.use(VueTour)
 Vue.use(vuewheel)
 
 Vue.config.productionTip = false;
 
 function loadDataFromURL(url, request) {
-  d3.json(url + request,
+  return d3.json(url + request,
     function (d) {
       return d._id;
     })
@@ -43,9 +47,7 @@ function loadDataFromURL(url, request) {
         data.forEach(d => {
           let collection = d.collection
 
-
           if (!(collection in initialSets)) {
-
             initialSets[collection] = []
           }
           initialSets[collection].push(d._id)
@@ -71,15 +73,16 @@ var app = new Vue({
   render: h => h(App),
 });
 
-document.addEventListener('keydown', function (e)
- {
-   if(e.key >= 1 && e.key <= Object.keys(operations).length)
-   {
-      app.$store.commit('changeSelectionOperation', getOperationFromKey(e.key-1))
-   }
-   if (e.ctrlKey) {
+document.addEventListener('keydown', function (e) {
+  if (e.key >= 1 && e.key <= Object.keys(operations).length) {
+    app.$store.commit('changeSelectionOperation', getOperationFromKey(e.key - 1))
+  }
+  if (e.ctrlKey) {
+
     if (!app.$store.state.isCtrlKey) {
       app.$store.dispatch('updateCtrlKey', { value: true })
+      app.$store.commit('toggleInspectionMode', { value: true })
+
       /*
         //console.log(app.$store.state)
         let views = Object.keys(app.$store.state.viewsMap)
@@ -94,6 +97,8 @@ document.addEventListener('keydown', function (e)
 document.addEventListener('keyup', function (e) {
   if (e.key === 'Control') {
     app.$store.dispatch('updateCtrlKey', { value: false })
+    app.$store.commit('toggleInspectionMode', { value: false })
+
   }
   if (e.key === '`') {
     app.$store.commit('toggleEditingMode');
@@ -117,7 +122,7 @@ function prepareData(data, imgFiles, jsonFiles) {
     }
     else {
       let imgKeys = Object.keys(x).filter(x => x.includes("img"))
-      x.images = imgKeys.map(key => (imgFiles == undefined ||Object.keys(imgFiles).length === 0) ? x[key] : imgFiles[x[key]])
+      x.images = imgKeys.map(key => (imgFiles == undefined || Object.keys(imgFiles).length === 0) ? x[key] : imgFiles[x[key]])
       x.image = x.images[0]
     }
 
@@ -128,25 +133,20 @@ function prepareData(data, imgFiles, jsonFiles) {
 }
 
 function loadData(data) {
-
-  var isNotFloat = function(n){ return Number.isNaN(Number.parseFloat(n)) };
+  var isNotFloat = function (n) { return Number.isNaN(Number.parseFloat(n)) };
 
   var dataTypesMap = {}
   for (var column of Object.keys(data[0])) {
-    if (isNaN(data[0][column]) || isNotFloat(data[0][column]) || column == '_id' || column == 'ID' || column == 'id') 
-    {
+    if (isNaN(data[0][column]) || isNotFloat(data[0][column]) || column == '_id' || column == 'ID' || column == 'id') {
       dataTypesMap[column] = 'string'
     }
     else {
       dataTypesMap[column] = 'Float'
     }
-
-    // dataTypesMap[column] = typeof data[0][column]//json_data.valueBands[column].type
   }
-  console.log(dataTypesMap)
-  console.log(data)
+  console.log('Data types map:', dataTypesMap)
+  console.log('First row in data:', data[0])
 
-  //data = data.slice(0,25)
   app = new Vue({
     vuetify,
     vdr,
@@ -197,11 +197,7 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
 
   return parallelData;
 }
-//exports.loadData = loadData;
-//exports.loadDataFromURL = loadDataFromURL;
-//export default {loadDataFromURL, loadDataFromCloudURL}
-//exports.loadDataFromURL = opeloadDataFromURLrations;
-//exports.loadDataFromCloudURL = loadDataFromCloudURL;
+
 export { loadDataFromURL, loadDataFromCloudURL, loadData, prepareData, readyToLoad }
 
 /*******************        Design Explorer ********************** */
@@ -249,7 +245,6 @@ function prepareGFolder(folderLink) {
     var imgFiles = {};
     var jsonFiles = {};
     var settingFiles = {};
-    console.log(data)
     if (folder.type === "GoogleDrive") { //this is google returned obj
       data.files.forEach(function (item) {
         var GLink = "";
@@ -366,8 +361,8 @@ function prepareGFolder(folderLink) {
 function readyToLoad(csvFilePathLink, imgFiles, jsonFiles) {
   if (csvFilePathLink.length > 0) {
     // remove the current selection
-    d3.csv(csvFilePathLink).then(
-      function (data) {      
+    return d3.csv(csvFilePathLink).then(
+      function (data) {
         loadData(prepareData(data, imgFiles, jsonFiles))
       });
 

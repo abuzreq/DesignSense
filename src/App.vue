@@ -10,9 +10,8 @@
       height="50"
     >
       <v-toolbar-title style="width: 15vw">DesignSense</v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-divider vertical />
 
+      <v-divider vertical />
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="actions['help'].clickAction">
@@ -37,15 +36,14 @@
         </template>
         <span>{{ actions["toggleEditingMode"].tooltip() }}</span>
       </v-tooltip>
-
       <v-divider vertical />
-      <SelectionOperationsBar />
+      <SelectionOperationsBar data-v-step="0" />
       <v-divider vertical />
       <v-spacer></v-spacer>
-      <LoadDataModal> </LoadDataModal>
+      <LoadDataModal data-v-step="1"> </LoadDataModal>
       <v-spacer></v-spacer>
       <v-divider vertical />
-      <ColorSelectionModal> </ColorSelectionModal>
+      <ColorSelectionModal data-v-step="2"> </ColorSelectionModal>
 
       <v-spacer></v-spacer>
 
@@ -220,11 +218,19 @@
         </v-tooltip>
       </radial-menu-item>
     </radial-menu>
+    <v-tour
+      name="onboardingTour"
+      :steps="onboardingTourSteps"
+      :options="{ highlight: true }"
+    ></v-tour>
   </v-app>
 </template>
 
 
 <style>
+.v-tour__target--highlighted {
+  box-shadow: 0 0 0 99999px rgba(0, 0, 0, 0.4) !important;
+}
 body {
   overflow: hidden; /* Hide scrollbars */
 }
@@ -260,6 +266,8 @@ import { operations } from "@/components/operations.js";
 
 import SelectionOperationsBar from "@/components/SelectionOperationsBar.vue";
 
+import { readyToLoad } from "./main.js";
+
 export default {
   name: "App",
   components: {
@@ -282,6 +290,27 @@ export default {
 
   data: function () {
     return {
+      onboardingTourSteps: [
+        {
+          target: '[data-v-step="0"]', // We're using document.querySelector() under the hood
+          header: {
+            title: "Get Started",
+          },
+          content: `Discover <strong>Vue Tour</strong>!`,
+        },
+        {
+          target: '[data-v-step="1"]',
+          content: "An awesome plugin made with Vue.js!",
+        },
+        {
+          target: '[data-v-step="2"]',
+          content:
+            "<div style='display:flex'> <img src='https://picsum.photos/500' alt='sample' width='500' height='500'> <div>Try it, you'll love it!<br>You can put HTML in the steps and completely customize the DOM to suit your needs.</div></div>",
+          params: {
+            placement: "top", // Any valid Popper.js placement. See https://popper.js.org/popper-documentation.html#Popper.placements
+          },
+        },
+      ],
       operationsList: operations,
       actions: {
         createSet: {
@@ -331,8 +360,8 @@ export default {
           icon: "mdi-selection-ellipse-arrow-inside",
           tooltip: () =>
             this.isInspectionMode
-              ? "Disable inspection on hovering"
-              : "Enable inspection on hovering",
+              ? "Disable inspection on hovering [CTRL to disable inspection]"
+              : "Enable continious inspection on hovering. [CTRL to enable on-spot inspection]",
           type: "inspecting",
         },
         clearInspection: {
@@ -342,7 +371,23 @@ export default {
           type: "inspecting",
         },
         help: {
-          clickAction: () => console.log("TODO"),
+          clickAction: () => {
+            readyToLoad(
+              "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv"
+            ).then(() => {
+              //TODO get skinny boxes then create a set from them + debug this
+
+              let data = this.$store.state.data.slice(0, 50);
+              console.log(data);
+              this.$store
+                .dispatch("createSet", {
+                  setName: "Set Name",
+                  members: data.map((x) => x._id),
+                  comment: "Skinny boxes",
+                })
+                .then(() => this.$tours["onboardingTour"].start());
+            });
+          },
           icon: "mdi-help-circle-outline",
           tooltip: () => "Help.. to come.",
           type: "misc",
@@ -352,8 +397,8 @@ export default {
           icon: "mdi-table-edit",
           tooltip: () =>
             this.isEditingMode
-              ? "Disable Editing Mode."
-              : "Enable Editing Mode. (to resize and move the panels)",
+              ? "Disable Editing Mode.  [`]"
+              : "Enable Editing Mode. (to resize and move the panels)   [`]",
           type: "editing",
         },
       },
@@ -369,12 +414,6 @@ export default {
 
       showContextMenu: false,
       rightClickPos: { x: 0, y: 0 },
-      selectionOperation: () =>
-        getOperation({
-          altKey: this.$store.state.isAltKey,
-          shiftKey: this.$store.state.isShiftKey,
-          ctrlKey: this.$store.state.isCtrlKey,
-        }),
     };
   },
   computed: {},

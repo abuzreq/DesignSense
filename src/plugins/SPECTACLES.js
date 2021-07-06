@@ -497,7 +497,6 @@ export default function SPECTACLES(divToBind, jsonFileData, callback) {
             $.getJSON(url, function (data) {
                 try {
                     //call our load scene function
-                    console.log(data)
                     SPECT.jsonLoader.loadSceneFromJson(data);
                     SPECT.zoomExtents();
                     SPECT.views.storeDefaultView();

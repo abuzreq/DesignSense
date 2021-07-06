@@ -179,12 +179,6 @@ export default {
     chartDataLength() {
       return this.chartData.length;
     },
-    headers() {
-      return Object.keys(this.chartData);
-    },
-    values() {
-      return Object.values(this.chartData);
-    },
     ...mapState({
       rawChartData: (state) => state.data,
       numericDimensions: (state) => state.numericDimensions,
@@ -411,10 +405,6 @@ function get(obj, keys) {
     newObj[key] = obj[key];
   }
   return newObj;
-}
-function values(obj, keys) {
-  let v = Object.values(get(obj, keys));
-  return v;
 }
 
 function to2DVisualSimilarityMatrix(data, imgKey, normalize) {
