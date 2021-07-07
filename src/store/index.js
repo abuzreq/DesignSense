@@ -15,13 +15,12 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             layouts: new_layouts,
             defaultMarkingID: generateID(), //"_lqpkb07gn"
             rawData: new_data,
-            data: preprocess(new_data),
+            data: new_data,
             dataStack: [],
             view2markingIDs: new Map(),
             markingID2views: new Map(),
             markingsMap: {}, // markingID -> marking object. Marking object is {altID -> highlightState}
             viewsMap: {},
-
 
             setsIDs: [],
             setsMetadataMap: {},
@@ -97,14 +96,11 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             toggleEditingMode(state, payload) {
                 state.isEditingMode = !state.isEditingMode;
             },
-            toggleInspectionMode(state, payload) 
-            {
-                if(payload)
-                {
+            toggleInspectionMode(state, payload) {
+                if (payload) {
                     state.isInspectionMode = payload.value
                 }
-                else
-                {
+                else {
                     state.isInspectionMode = !state.isInspectionMode;
                 }
             },
@@ -212,18 +208,18 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             addSet(state, payload) {
 
                 let ID = "";
-                if (payload && payload.hasOwnProperty("setName")) {
+                if (payload && payload.setName) {
                     ID = payload.setName;
                 }
                 else {
                     state.setsCounter += 1
                     ID = 'Set #' + state.setsCounter;//generateID();
                 }
-
                 state.setsIDs.push(ID)
                 state.setsMap[ID] = payload.members;
-
-                state.setsMetadataMap[ID] = { name: ID, comment: ((payload && payload.comment) || "Comment Here") };
+                let comment = payload && payload.comment ?payload.comment: "Comment Here"
+                state.setsMetadataMap[ID] = { name: ID, comment: comment };
+                console.log(state.setsMetadataMap)
             },
             updateSet(state, payload) {
                 let ID = payload.setID;
@@ -255,9 +251,20 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             },
             updateAltKey(state, payload) {
                 state.isAltKey = payload.value;
-            },
+            },      
+            updateData(state, payload)
+            {
+                state.rawData = payload.data;
+                state.data = payload.data;
+
+                state.dataTypesMap = payload.dataTypesMap;
+                state.numericDimensions = getNumericDimensions(payload.dataTypesMap),
+                state.nonNumericDimensions = getNonNumericDimensions(payload.dataTypesMap),
+                state.allDimensions=  Object.keys(payload.dataTypesMap)
+            }
         },
         actions: {
+
             update(context, payload) {
                 context.commit("update", payload);
             },
@@ -347,9 +354,15 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 }
             },
             createSet(context, payload) {
-                let members = Object.keys(context.getters.selectedInMarking(context.state.defaultMarkingID))
-
-                context.commit('addSet', { members: members, setName:(payload? payload.setName : null), comment: (payload? payload.comment : null) })
+                let members = [];
+                if (payload && payload.members) {
+                    members = payload.members
+                }
+                else {
+                    members = Object.keys(context.getters.selectedInMarking(context.state.defaultMarkingID))
+                }
+                    console.log("members",members)
+                context.commit('addSet', { members: members, setName: (payload ? payload.setName : null), comment: (payload ? payload.comment : null) })
             },
             restoreSet(context, payload) {
                 context.dispatch("resetData"); //Ahmed: in case restoring is called when portions of the data is being zoomed on. Altneratives includes adding only the content of set not present
@@ -362,7 +375,6 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             },
             updateSet(context, payload) {
                 let members = Object.keys(context.getters.selectedInMarking(context.state.defaultMarkingID))
-
                 context.commit("updateSet",
                     {
                         setID: payload.setID,
@@ -378,10 +390,6 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
     });
 }
 
-
-function preprocess(data) {
-    return data;
-}
 
 function prepare_map(data) {
     let map = {}

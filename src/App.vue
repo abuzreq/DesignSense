@@ -230,6 +230,7 @@
 <style>
 .v-tour__target--highlighted {
   box-shadow: 0 0 0 99999px rgba(0, 0, 0, 0.4) !important;
+  z-index: 8000 !important;
 }
 body {
   overflow: hidden; /* Hide scrollbars */
@@ -297,10 +298,78 @@ export default {
             title: "Get Started",
           },
           content: `Discover <strong>Vue Tour</strong>!`,
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
         },
         {
-          target: '[data-v-step="1"]',
+          target: '[type="ScatterPlot"]',
+          content:
+            "ScatterPlot are 2D visualizations good for X and Y. On this chart you can ...",
+          before: () => {
+            let selectedData = this.$store.state.data.slice(0, 5);
+
+            this.$store.dispatch("update", {
+              markingID: this.$store.state.defaultMarkingID,
+              selection: selectedData.map((x) => x._id),
+              operation: operations.REPLACE,
+            });
+          },
+          params: {
+            enableScrolling: false,
+            placement: "left",
+          },
+        },
+        {
+          target: '[type="ParallelCoordinatesPlot"]',
+          content:
+            "ParallelCoordinatesPlot are visualizations useful for multidimensional viz",
+          before: () => {
+            let selectedData = this.$store.state.data.slice(0, 5);
+
+            this.$store.dispatch("update", {
+              markingID: this.$store.state.defaultMarkingID,
+              selection: selectedData.map((x) => x._id),
+              operation: operations.REPLACE,
+            });
+          },
+          params: {
+            enableScrolling: false,
+            placement: "left",
+          },
+        },
+        {
+          target: '[type="Grid"]',
+          content: "This grid shows images of ",
+          params: {
+            enableScrolling: false,
+            placement: "right",
+          },
+        },
+        {
+          target: '[type="Clusters"]',
+          content: "Clusters view shows representatives",
+          params: {
+            enableScrolling: false,
+            placement: "top",
+          },
+        },
+        {
+          target: '[type="Sets"]',
           content: "An awesome plugin made with Vue.js!",
+          before: () => {
+            let selectedData = this.$store.state.data.slice(0, 5);
+            this.$store.dispatch("createSet", {
+              setName: "SetName",
+              members: selectedData.map((x) => x._id),
+              comment: "Skinny boxes",
+            });
+          },
+          params: {
+            enableScrolling: false,
+            placement: "right",
+          },
         },
         {
           target: '[data-v-step="2"]',
@@ -374,18 +443,9 @@ export default {
           clickAction: () => {
             readyToLoad(
               "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv"
-            ).then(() => {
+            ).then((data) => {
               //TODO get skinny boxes then create a set from them + debug this
-
-              let data = this.$store.state.data.slice(0, 50);
-              console.log(data);
-              this.$store
-                .dispatch("createSet", {
-                  setName: "Set Name",
-                  members: data.map((x) => x._id),
-                  comment: "Skinny boxes",
-                })
-                .then(() => this.$tours["onboardingTour"].start());
+              this.$tours["onboardingTour"].start();
             });
           },
           icon: "mdi-help-circle-outline",

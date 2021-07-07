@@ -82,6 +82,7 @@ export default {
     },
     chartData: {
       handler: function (newValue, oldValue) {
+        console.log('newData',newValue )
         this.refresh();
       },
     },

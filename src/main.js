@@ -146,7 +146,6 @@ function loadData(data) {
   }
   console.log('Data types map:', dataTypesMap)
   console.log('First row in data:', data[0])
-
   app = new Vue({
     vuetify,
     vdr,
@@ -156,11 +155,9 @@ function loadData(data) {
     render: h => h(App),
   });
 
-  console.log("After", app.$store)
   let args = {}
   //Creates the default marking
   app.$store.commit('createMarkingEntry', args)
-  console.log(args)
 }
 
 
@@ -363,7 +360,7 @@ function readyToLoad(csvFilePathLink, imgFiles, jsonFiles) {
     // remove the current selection
     return d3.csv(csvFilePathLink).then(
       function (data) {
-        loadData(prepareData(data, imgFiles, jsonFiles))
+        return loadData(prepareData(data, imgFiles, jsonFiles))
       });
 
   } else {

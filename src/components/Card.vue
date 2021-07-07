@@ -1,5 +1,6 @@
-<template>
+<template >
   <vdr
+    :type = "type"
     class="v-card v-card--outlined v-sheet theme--light"
     :minWidth="
       type == 'Grid'
