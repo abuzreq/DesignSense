@@ -22,7 +22,6 @@ el : "barChart",
         data.forEach((d) => {
             d.value = +d.value         
        })
-        console.log(data);
         this.chartData = data;
         this.chartData = this.$store.state.data
         this.width = 400;

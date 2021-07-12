@@ -9,10 +9,11 @@
       color=" white--text text--lighten-1"
       height="50"
     >
-      <v-toolbar-title style="width: 15vw">DesignSense</v-toolbar-title>
-      <v-spacer></v-spacer>
-      <v-divider vertical />
+      <v-toolbar-title id="designsense-title" style="width: 15vw"
+        >DesignSense</v-toolbar-title
+      >
 
+      <v-divider vertical />
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="actions['help'].clickAction">
@@ -27,6 +28,8 @@
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn
+                       id="editing-mode"
+
             v-on="on"
             :color="actionType2Color(actions['toggleEditingMode'].type)"
             icon
@@ -37,129 +40,137 @@
         </template>
         <span>{{ actions["toggleEditingMode"].tooltip() }}</span>
       </v-tooltip>
-
       <v-divider vertical />
-      <SelectionOperationsBar />
+      <SelectionOperationsBar id="selection-operations-bar" />
       <v-divider vertical />
       <v-spacer></v-spacer>
-      <LoadDataModal> </LoadDataModal>
+      <LoadDataModal id="loading-data-bar"> </LoadDataModal>
       <v-spacer></v-spacer>
       <v-divider vertical />
-      <ColorSelectionModal> </ColorSelectionModal>
+      <ColorSelectionModal id="color-selection-bar"> </ColorSelectionModal>
 
       <v-spacer></v-spacer>
 
       <v-divider vertical />
+      <span id="inspection-bar">
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              :color="actionType2Color(actions['clearInspection'].type)"
+              icon
+              @click="actions['clearInspection'].clickAction"
+            >
+              <v-icon>{{ actions["clearInspection"].icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ actions["clearInspection"].tooltip() }}</span>
+        </v-tooltip>
 
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            :color="actionType2Color(actions['clearInspection'].type)"
-            icon
-            @click="actions['clearInspection'].clickAction"
-          >
-            <v-icon>{{ actions["clearInspection"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["clearInspection"].tooltip() }}</span>
-      </v-tooltip>
-
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            :color="actionType2Color(actions['toggleInspectionMode'].type)"
-            icon
-            @click="actions['toggleInspectionMode'].clickAction"
-          >
-            <v-icon>{{ actions["toggleInspectionMode"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["toggleInspectionMode"].tooltip() }}</span>
-      </v-tooltip>
-
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              :color="actionType2Color(actions['toggleInspectionMode'].type)"
+              icon
+              @click="actions['toggleInspectionMode'].clickAction"
+            >
+              <v-icon>{{ actions["toggleInspectionMode"].icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ actions["toggleInspectionMode"].tooltip() }}</span>
+        </v-tooltip>
+      </span>
       <v-divider vertical />
+      <span id="sets-operations-bar">
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn v-on="on" icon @click="actions['createSet'].clickAction">
+              <v-icon>{{ actions["createSet"].icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ actions["createSet"].tooltip() }}</span>
+        </v-tooltip>
 
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="actions['createSet'].clickAction">
-            <v-icon>{{ actions["createSet"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["createSet"].tooltip() }}</span>
-      </v-tooltip>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              @click="actions['resetAllMarkings'].clickAction"
+            >
+              <v-icon>{{ actions["resetAllMarkings"].icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ actions["resetAllMarkings"].tooltip() }}</span>
+        </v-tooltip>
 
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            @click="actions['resetAllMarkings'].clickAction"
-          >
-            <v-icon>{{ actions["resetAllMarkings"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["resetAllMarkings"].tooltip() }}</span>
-      </v-tooltip>
-
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="actions['invertSelection'].clickAction">
-            <v-icon>{{ actions["invertSelection"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["invertSelection"].tooltip() }}</span>
-      </v-tooltip>
-
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              @click="actions['invertSelection'].clickAction"
+            >
+              <v-icon>{{ actions["invertSelection"].icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ actions["invertSelection"].tooltip() }}</span>
+        </v-tooltip>
+      </span>
       <v-divider vertical />
+      <span id="data-operations-bar">
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              @click="actions['undoDataTransformation'].clickAction"
+            >
+              <v-icon>{{ actions["undoDataTransformation"].icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ actions["undoDataTransformation"].tooltip() }}</span>
+        </v-tooltip>
 
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            @click="actions['undoDataTransformation'].clickAction"
-          >
-            <v-icon>{{ actions["undoDataTransformation"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["undoDataTransformation"].tooltip() }}</span>
-      </v-tooltip>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              @click="actions['zoomToSelection'].clickAction"
+            >
+              <v-icon>{{ actions["zoomToSelection"].icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ actions["zoomToSelection"].tooltip() }}</span>
+        </v-tooltip>
 
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="actions['zoomToSelection'].clickAction">
-            <v-icon>{{ actions["zoomToSelection"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["zoomToSelection"].tooltip() }}</span>
-      </v-tooltip>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              @click="actions['excludeSelection'].clickAction"
+            >
+              <v-icon>{{ actions["excludeSelection"].icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ actions["excludeSelection"].tooltip() }}</span>
+        </v-tooltip>
 
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            @click="actions['excludeSelection'].clickAction"
-          >
-            <v-icon>{{ actions["excludeSelection"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["excludeSelection"].tooltip() }}</span>
-      </v-tooltip>
-
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="actions['resetData'].clickAction">
-            <v-icon>{{ actions["resetData"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["resetData"].tooltip() }}</span>
-      </v-tooltip>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn v-on="on" icon @click="actions['resetData'].clickAction">
+              <v-icon>{{ actions["resetData"].icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ actions["resetData"].tooltip() }}</span>
+        </v-tooltip>
+      </span>
     </v-app-bar>
 
-    <v-main style="padding: 50px 0px 0px">
+    <v-main id="designsense-workspace" style="padding: 50px 0px 0px">
       <div
         @contextmenu="showContextMenuHandler"
         style="
@@ -220,11 +231,20 @@
         </v-tooltip>
       </radial-menu-item>
     </radial-menu>
+    <v-tour
+      name="onboardingTour"
+      :steps="onboardingTourSteps"
+      :options="{ highlight: true }"
+    ></v-tour>
   </v-app>
 </template>
 
 
 <style>
+.v-tour__target--highlighted {
+  box-shadow: 0 0 0 99999px rgba(0, 0, 0, 0.4) !important;
+  /* z-index: 8000 !important; */
+}
 body {
   overflow: hidden; /* Hide scrollbars */
 }
@@ -260,6 +280,8 @@ import { operations } from "@/components/operations.js";
 
 import SelectionOperationsBar from "@/components/SelectionOperationsBar.vue";
 
+import { readyToLoad } from "./main.js";
+
 export default {
   name: "App",
   components: {
@@ -282,6 +304,191 @@ export default {
 
   data: function () {
     return {
+      onboardingTourSteps: [
+        {
+          target: "#designsense-title", // We're using document.querySelector() under the hood
+          header: {
+            title: "Welcome to DesignSense!",
+          },
+          content: `DesignSense is a shopping interface augmented with data visualizations and analysis! The interface was designed to allow users to navigate through a large number of options while considering both the visual appearance and the multidimensional metrics of those options.`,
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+        {
+          target: "#loading-data-bar",
+          header: {
+            title: "Let's Get Started!",
+          },
+          content: `First, we need to load a dataset. DSense supports loading data by uploading local files or by loading them from a cloud folder. For now, we will use a simple dataset of boxes.`,
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+        /*        {
+          target: '#designsense-workspace', 
+          header: {
+            title: "Your Workspace",
+          },
+          content: "This is your workspace. Each component plays a different role in the process of navigation as we will see. We will learn later how to configure this workspace to suit our needs.",
+          params: {
+            enableScrolling: false,
+            placement: "top",
+          },
+        }, */
+        {
+          target: '[type="ScatterPlot"]',
+          content:
+            "The scatterplot is a basic but very effective visualization of 2-dimensional data. It can be used to identify patterns like correlations, outliers, and clusters. You can drag and hold on the scatterplot to draw a selection box. All the options falling in this box are selected as a result. The scatterplot supports other operations too, feel free to place your cursor over any of the icons to get tooltips on what they can do. By default, any new selection will replace the current one. Let's see how to change that.",
+          before: () => {
+            let selectedData = this.$store.state.data.slice(0, 5);
+
+            this.$store.dispatch("update", {
+              markingID: this.$store.state.defaultMarkingID,
+              selection: selectedData.map((x) => x._id),
+              operation: operations.REPLACE,
+            });
+          },
+          params: {
+            enableScrolling: false,
+            placement: "left",
+          },
+        },
+        {
+          target: "#selection-operations-bar",
+          content:
+            "DSense supports 5 different selection operations (i.e. how a newly made selection relates to the current one). You can press on the buttons here to change the operation or press on the numbers from 1 to 5 to easily change it. </br> You will also notice that when you make a selection on any component in the workspace then other components will respond by highlighting the same options. This coordination allows us to combine the best that each component offers.",
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+        {
+          target: '[type="ParallelCoordinatesPlot"]',
+          content:
+            "The second data visualization is the parallel coordinates plot (PCP). In contrast to the scatterplot, this chart can be used to visualize more than 2 dimensions. Here each vertical axis is a different dimension. Each option is represented by a sequence of lines that touch those axes exactly at the value of the option for that axes. You can also select options on the PCP by dragging a rectangle along any of the axes. You may also re-order the axes or flip them vertically by dragging and double-clicking on their titles respectively. Finally, you can also change the dimensions visualized via the wrench icon.",
+          before: () => {
+            let selectedData = this.$store.state.data.slice(0, 5);
+
+            this.$store.dispatch("update", {
+              markingID: this.$store.state.defaultMarkingID,
+              selection: selectedData.map((x) => x._id),
+              operation: operations.REPLACE,
+            });
+          },
+          params: {
+            enableScrolling: false,
+            placement: "left",
+          },
+        },
+        {
+          target: '[type="Grid"]',
+          content:
+            "Many aspects of the options we navigate cannot be understood through data and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on inspection shortly). We can sort the images based on a data dimension. We can select options by dragging a rectangle that touches their images or by simply clicking on them. Clicking on the eye icon will show only the options currently selected.",
+          params: {
+            enableScrolling: false,
+            placement: "left",
+          },
+        },
+
+        {
+          target: "#data-operations-bar",
+          content:
+            "Once you have selected a set of options there are few things you can do. You can choose to zoom on that set to examine it closely or exclude that set from your consideration. Both zooming and exclusion operations can be reverted.",
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+        {
+          target: "#sets-operations-bar",
+          content:
+            "On this panel, you can also invert your current selection, unselect everything or save your selection as a Set.",
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+        {
+          target: '[type="Sets"]',
+          content: "An awesome plugin made with Vue.js!",
+          before: () => {
+            let selectedData = this.$store.state.data.slice(0, 5);
+            this.$store.dispatch("createSet", {
+              setName: "SetName",
+              members: selectedData.map((x) => x._id),
+              comment: "Skinny boxes",
+            });
+          },
+          params: {
+            enableScrolling: false,
+            placement: "right",
+          },
+        },
+        {
+          target: "#inspection-bar",
+          content:
+            "Sometimes we will want to examine a single option in detail instead of sifting through options. This can be done in two ways, the first is by enabling the Continuous Inspection mode which allows us to examine any option the cursor passes by through any of its representations (e.g. its image in the gallery, dot in the scatterplot or line in the parallel coordinates plot). Once we do that the option is highlighted in special ways. Notably, a large image of it is shown on the Augmented Gallery (3D views of the inspected option are also supported if DSense can find 3D files in the dataset with the right formats).",
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+        {
+          target: '[type="Grid"]',
+          content:
+            "The second way to inspect options happens by holding the Control button and releasing it once the target option is found. This way allows us to maintain that inspection even if we move the cursor around. For example, we may be interested in an alternative that is outlying in the scatterplot but then wish to examine its appearance in detail without losing focus.",
+          params: {
+            enableScrolling: false,
+            placement: "left",
+          },
+        },
+        {
+          target: '[type="Clusters"]',
+          content:
+            "DSense automatically clusters the current options we are considering to groups based on their similarity. We can choose the aspects to compare options on and the number of groups to form. This panel shows a representative sample from each of the formed groups. By examining those representatives we can gain a bird-view of the dataset. Finally, we can inspect any of the representatives.",
+          params: {
+            enableScrolling: false,
+            placement: "top",
+          },
+        },
+        /*        {
+          target: '#designsense-workspace', 
+          header: {
+            title: "At Your Fingertips!",
+          },
+          content: "By right-clicking anywhere we can summon a fast-access menu that has some of the operations we mentioned earlier. This is especially effective when using DSense across multiple screens.",
+          params: {
+            enableScrolling: false,
+            placement: "top",
+          },
+        }, */
+        {
+          target: "#editing-mode",
+          content:
+            "We can adjust the workspace to suit our needs through the inspection mode. This mode allows us to move or resize any of the panels in our workspace.",
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+        {
+          target: "#designsense-title", // We're using document.querySelector() under the hood
+          header: {
+            title: "Welcome to DesignSense!",
+          },
+          content: `"This marks the end of our tour of DesignSense! Feel free to reach us on TODO or read more on TODO"`,
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+
+
+        
+      ],
       operationsList: operations,
       actions: {
         createSet: {
@@ -331,8 +538,8 @@ export default {
           icon: "mdi-selection-ellipse-arrow-inside",
           tooltip: () =>
             this.isInspectionMode
-              ? "Disable inspection on hovering"
-              : "Enable inspection on hovering",
+              ? "Disable inspection on hovering [CTRL to disable inspection]"
+              : "Enable continious inspection on hovering. [CTRL to enable on-spot inspection]",
           type: "inspecting",
         },
         clearInspection: {
@@ -342,7 +549,14 @@ export default {
           type: "inspecting",
         },
         help: {
-          clickAction: () => console.log("TODO"),
+          clickAction: () => {
+            readyToLoad(
+              "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv"
+            ).then((data) => {
+              //TODO get skinny boxes then create a set from them + debug this
+              this.$tours["onboardingTour"].start();
+            });
+          },
           icon: "mdi-help-circle-outline",
           tooltip: () => "Help.. to come.",
           type: "misc",
@@ -352,8 +566,8 @@ export default {
           icon: "mdi-table-edit",
           tooltip: () =>
             this.isEditingMode
-              ? "Disable Editing Mode."
-              : "Enable Editing Mode. (to resize and move the panels)",
+              ? "Disable Editing Mode.  [`]"
+              : "Enable Editing Mode. (to resize and move the panels)   [`]",
           type: "editing",
         },
       },
@@ -369,12 +583,6 @@ export default {
 
       showContextMenu: false,
       rightClickPos: { x: 0, y: 0 },
-      selectionOperation: () =>
-        getOperation({
-          altKey: this.$store.state.isAltKey,
-          shiftKey: this.$store.state.isShiftKey,
-          ctrlKey: this.$store.state.isCtrlKey,
-        }),
     };
   },
   computed: {},

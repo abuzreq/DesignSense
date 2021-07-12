@@ -66,6 +66,7 @@ export default {
       this.chart = this.createChart();
       var selection = this.$store.getters.selectedDataInView(this.viewID);
       this.highlight(selection);
+       this.hoverHandler();
     },
   },
   watch: {
@@ -82,6 +83,7 @@ export default {
     },
     chartData: {
       handler: function (newValue, oldValue) {
+        console.log('newData',newValue )
         this.refresh();
       },
     },

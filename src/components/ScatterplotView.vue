@@ -138,6 +138,12 @@
 </template>
 
 <style scoped>
+
+::v-deep .x.axis .tick text
+{
+  transform: rotate(35deg);
+}
+
 ::v-deep .v-toolbar > .v-toolbar__content {
   padding: 0 0 0 0;
 }
@@ -225,6 +231,7 @@ export default {
       lassoBrushIcon: "mdi-lasso",
       rectBrushIcon: "mdi-select-drag",
       prefixWidth: 20,
+      numTicks: 20
     };
   },
   computed: {
@@ -311,11 +318,11 @@ export default {
         .xColumn(this.xColumn)
         .xAxisLabel(this.xColumn)
         .xAxisLabelOffset(35)
-        .xTicks(20)
+        .xTicks(this.numTicks)
         .yColumn(this.yColumn)
         .yAxisLabel(this.yColumn)
         .yAxisLabelOffset(35)
-        .yTicks(20)
+        .yTicks(this.numTicks)
         .isXAxisIncremental(this.isXAxisIncremental)
         .isYAxisIncremental(this.isYAxisIncremental)
         .useLassoBrush(this.useLassoBrush)
@@ -370,10 +377,10 @@ class ScatterPlot {
     var colorScale = d3.scaleOrdinal();
 
     var xAxis = d3.axisBottom().ticks(6).tickFormat(d3.format("s"));
-    var xTicks = 5;
+    var xTicks = 6;
 
     var yAxis = d3.axisLeft().ticks(6).tickFormat(d3.format("s"));
-    var yTicks = 5;
+    var yTicks = 6;
     let thisG = null;
 
     var useLassoBrush;
@@ -486,16 +493,16 @@ class ScatterPlot {
 
         g.select(".x.axis")
           .attr("transform", "translate(0," + innerHeight + ")")
-          .call(d3.axisBottom(xScale))
+          .call(d3.axisBottom(xScale).ticks(xTicks))//.tickFormat(d3.format("s"))
           .select("text")
           .attr("x", innerWidth / 2)
           .attr("y", xAxisLabelOffset)
           .attr("fill", "black")
           .text(xAxisLabel)
-          .style("font-size", "12px");
+          .style("font-size", "12px")   
         //console.log(g.select(".x.axis").select("text"));
         g.select(".y.axis")
-          .call(d3.axisLeft(yScale))
+          .call(d3.axisLeft(yScale).ticks(yTicks))
           .select("text")
           .attr(
             "transform",

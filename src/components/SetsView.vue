@@ -1,15 +1,21 @@
 <template>
   <v-container fluid>
-    <v-card-title>Design Sets</v-card-title>
+    <v-card-title>Sets</v-card-title>
     <v-divider></v-divider>
     <v-list two-line>
       <template v-for="(item, index) in setsIDs">
         <v-card outlined :key="index">
           <v-list-item avatar>
-            <v-list-item-action style="margin-right:10px;">
+            <v-list-item-action style="margin-right: 8px">
               <v-tooltip left>
                 <template v-slot:activator="{ on }">
-                  <v-btn v-on="on" icon ripple color="red" @click="remove(item)">
+                  <v-btn
+                    v-on="on"
+                    icon
+                    ripple
+                    color="red"
+                    @click="remove(item)"
+                  >
                     <v-icon>mdi-close</v-icon>
                   </v-btn>
                 </template>
@@ -18,7 +24,13 @@
 
               <v-tooltip left>
                 <template v-slot:activator="{ on }">
-                  <v-btn v-on="on" icon ripple color="red" @click="restoreSet(item, $event)">
+                  <v-btn
+                    v-on="on"
+                    icon
+                    ripple
+                    color="blue"
+                    @click="restoreSet(item, $event)"
+                  >
                     <v-icon>mdi-backup-restore</v-icon>
                   </v-btn>
                 </template>
@@ -27,7 +39,13 @@
 
               <v-tooltip left>
                 <template v-slot:activator="{ on }">
-                  <v-btn v-on="on" icon ripple color="red" @click="updateSet(item, $event)">
+                  <v-btn
+                    v-on="on"
+                    icon
+                    ripple
+                    color="blue"
+                    @click="updateSet(item, $event)"
+                  >
                     <v-icon>mdi-find-replace</v-icon>
                   </v-btn>
                 </template>
@@ -36,11 +54,15 @@
             </v-list-item-action>
 
             <v-list-item-content>
-                <v-list-item-title class="title">{{setsMetadataMap[item].name}} &nbsp;&nbsp;&nbsp; (#{{setsMap[item].length}})</v-list-item-title>
+              <v-list-item-title class="title"
+                >{{ setsMetadataMap[item].name }} &nbsp;&nbsp;&nbsp; (#{{
+                  setsMap[item].length
+                }})</v-list-item-title
+              >
               <v-textarea
                 class="comment-text-area"
-                height="7vh"
-                style="margin-bottom:-15px;"
+                height="70px"
+                style="margin-bottom: -15px"
                 multiple
                 solo
                 full-width
@@ -62,8 +84,11 @@
 .comment-text-area {
   font-size: 0.8em;
 }
+
 .v-list-item {
-  height: 100px;
+  height: 120px;
+  margin-right: 8px;
+  margin-left: -4px;
 }
 .v-btn {
   height: 25px;
@@ -77,26 +102,26 @@ import { mapState } from "vuex";
 
 export default {
   name: "SetsView",
-  data: function() {
+  data: function () {
     return {
-      setNote: "Interesting"
+      setNote: "Interesting",
     };
   },
   computed: {
     ...mapState({
       currentSelectionOperation: (state) => state.currentSelectionOperation,
-      setsIDs: state => state.setsIDs,
-      setsMetadataMap: state => state.setsMetadataMap,
-      setsMap: state => state.setsMap 
-    })
+      setsIDs: (state) => state.setsIDs,
+      setsMetadataMap: (state) => state.setsMetadataMap,
+      setsMap: (state) => state.setsMap,
+    }),
   },
   mounted() {},
   watch: {
-    width: function(newValue, oldValue) {},
-    height: function(newValue, oldValue) {},
+    width: function (newValue, oldValue) {},
+    height: function (newValue, oldValue) {},
     chartData: {
-      handler: function(newValue, oldValue) {}
-    }
+      handler: function (newValue, oldValue) {},
+    },
   },
   created() {},
   methods: {
@@ -112,16 +137,17 @@ export default {
     restoreSet(ID, event) {
       this.$store.dispatch("restoreSet", {
         setID: ID,
-        operation: this.$store.currentSelectionOperation
+        operation: this.$store.state.currentSelectionOperation,
       });
     },
     updateSet(ID, event) {
+      console.log('updateSet',ID, event, this.$store.state.currentSelectionOperation)
       this.$store.dispatch("updateSet", {
         setID: ID,
-        operation: this.$store.currentSelectionOperation
+        operation: this.$store.state.currentSelectionOperation,
       });
       this.$forceUpdate();
-    }
-  }
+    },
+  },
 };
 </script>

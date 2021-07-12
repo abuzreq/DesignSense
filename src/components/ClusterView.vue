@@ -19,7 +19,7 @@
             <v-row dense justify="center" style="margin-bottom: -10px">
               <v-toolbar-title>Clusters</v-toolbar-title>
             </v-row>
-            <v-row dense>
+            <v-row dense style="flex-wrap: nowrap;">
               <v-slider
                 min="4"
                 max="16"
@@ -178,12 +178,6 @@ export default {
   computed: {
     chartDataLength() {
       return this.chartData.length;
-    },
-    headers() {
-      return Object.keys(this.chartData);
-    },
-    values() {
-      return Object.values(this.chartData);
     },
     ...mapState({
       rawChartData: (state) => state.data,
@@ -411,10 +405,6 @@ function get(obj, keys) {
     newObj[key] = obj[key];
   }
   return newObj;
-}
-function values(obj, keys) {
-  let v = Object.values(get(obj, keys));
-  return v;
 }
 
 function to2DVisualSimilarityMatrix(data, imgKey, normalize) {
