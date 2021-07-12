@@ -66,6 +66,7 @@ export default {
       this.chart = this.createChart();
       var selection = this.$store.getters.selectedDataInView(this.viewID);
       this.highlight(selection);
+       this.hoverHandler();
     },
   },
   watch: {

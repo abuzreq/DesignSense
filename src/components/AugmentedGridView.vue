@@ -180,7 +180,7 @@
             <v-img
               contain
               width="100%"
-              height="400px"
+              height="40vh"
               v-if="inspectedItem && !inspecting3DView"
               :src="inspectedItem.image"
             />
@@ -226,7 +226,8 @@
                     v-for="item in items.items"
                     v-bind:key="cardSelector + item._id"
                     :cols="possibleColSpans[colSpan]"
-                    class="thumbnail_container"
+             
+                    :class="['thumbnail_container', possibleColSpans[colSpan] > 3 ? 'top-thumbnails': '']"
                   >
                     <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
                     <v-card
@@ -253,24 +254,6 @@
                         v-on:mouseup="toggle(item)"
                         v-on:mouseover="hover(item)"
                       />
-                      <!--  -->
-                      <!--:id='"card_"+item._id' -->
-                      <!--<router-link :to="{ name: 'AltView', params: { item } }">-->
-                      <!--
-                      <model-three
-                        v-else
-                        :src="item.json" 
-
-                      />-->
-
-                      <!--:id='"card_"+item._id'
-                  <model-gltf 
-                    v-else
-                    :src="item.gltf" 
-                  />
-                      -->
-
-                      <!-- -->
                       <v-expansion-panels
                         v-show="possibleColSpans[colSpan] > 3"
                       >
@@ -319,9 +302,13 @@
 
 .thumbnail_container {
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
+.thumbnail_container.top-thumbnails {
+  align-items: start;
+}
+
 
 .col > .thumbnail_card:not(.hovered) .v-image.under_drag_selection {
   border: 2px dashed rgb(33, 119, 180);

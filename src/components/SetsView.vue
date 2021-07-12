@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-card-title>Design Sets</v-card-title>
+    <v-card-title>Sets</v-card-title>
     <v-divider></v-divider>
     <v-list two-line>
       <template v-for="(item, index) in setsIDs">
