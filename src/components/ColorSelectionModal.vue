@@ -1,20 +1,21 @@
 <template>
   <v-container style="width: 200px">
     <div class="text-center">
-      <v-dialog v-model="dialog" width="800"  overlay-opacity="0.5">
+      <v-dialog v-model="dialog" width="500"  overlay-opacity="0.5">
         <template v-slot:activator="{ on, attrs }">
           <v-btn color="blue lighten-2" dark v-bind="attrs" v-on="on">
             Color
           </v-btn>
         </template>
 
-        <v-card height="350">
+        <v-card height="350" style="overflow: hidden;">
           <v-card-title class="headline grey lighten-2">
-            Data Loading
+            Color Settings
           </v-card-title>
           <v-row  class="row-margins">
             <!-------------- Color Column ---------->
-            <v-col style=" height: 100%;" :cols="4">
+            <v-col style=" height: 100%;" :cols="12">
+              <div style="padding: 10px;">Choose the column to color based on (only categorical dimensions are supported) </div>
               <SingleDimensionSelect
                 :initialValue="this.$store.getters.colorColumn"
                 v-on:update="onColorColumnChange($event)"
@@ -36,6 +37,7 @@
               </SingleDimensionSelect>
             </v-col>
             <!-------------- Color Range ---------->
+            <!--
             <v-col :cols="4">
               <SingleDimensionSelect
                 :initialValue="this.$store.state.colorRange"
@@ -57,7 +59,9 @@
                 </template>
               </SingleDimensionSelect>
             </v-col>
+            -->
             <!-------------- Color Scale ---------->
+            <!--
         <v-col :cols="4">
          <SingleDimensionSelect
             :initialValue="this.$store.state.colorScale"
@@ -79,6 +83,7 @@
             </template>
           </SingleDimensionSelect>
             </v-col>
+            -->
           </v-row>
 
         </v-card>
@@ -104,7 +109,7 @@ export default {
     return {
       dialog: false,
       prefixWidth: 100,
-      selectorWidth: 200,
+      selectorWidth: 400,
     };
   },
   computed: {},
