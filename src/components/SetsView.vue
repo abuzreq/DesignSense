@@ -1,8 +1,8 @@
 <template>
-  <v-container fluid>
-    <v-card-title>Sets</v-card-title>
+  <v-container fluid  :style="{'overflow':'auto', 'height': `calc(${height}px)`,}">
+    <v-card-title>Sets Panel</v-card-title>
     <v-divider></v-divider>
-    <v-list two-line>
+    <v-list two-line >
       <template v-for="(item, index) in setsIDs">
         <v-card outlined :key="index">
           <v-list-item avatar>
@@ -102,6 +102,7 @@ import { mapState } from "vuex";
 
 export default {
   name: "SetsView",
+  props: ["width", "height", "x", "y"],
   data: function () {
     return {
       setNote: "Interesting",

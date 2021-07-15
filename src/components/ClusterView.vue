@@ -17,7 +17,7 @@
         <v-toolbar fixed dark color="blue darken-3" class="mb-1">
           <v-container fluid>
             <v-row dense justify="center" style="margin-bottom: -10px">
-              <v-toolbar-title>Clusters</v-toolbar-title>
+              <v-toolbar-title>Clusters Panel</v-toolbar-title>
             </v-row>
             <v-row dense style="flex-wrap: nowrap;">
               <v-slider

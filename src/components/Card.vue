@@ -60,6 +60,7 @@
         :height="this.height"
         :x="this.x"
         :y="this.y"
+       
       />
       <ClusterView
         v-if="type == 'Clusters'"

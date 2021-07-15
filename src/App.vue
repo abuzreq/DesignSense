@@ -233,6 +233,7 @@
       name="onboardingTour"
       :steps="onboardingTourSteps"
       :options="{ highlight: true }"
+      :callbacks="onboardingCallbacks"
     ></v-tour>
   </v-app>
 </template>
@@ -241,6 +242,9 @@
 <style>
 .v-tour {
   z-index: 8000;
+}
+.v-tour .v-step__header {
+  color: deepskyblue;
 }
 .v-tour__target--highlighted {
   box-shadow: 0 0 0 99999px rgba(0, 0, 0, 0.4) !important;
@@ -314,6 +318,10 @@ export default {
 
   data: function () {
     return {
+      onboardingCallbacks: {
+        onSkip: () => (document.body.style.pointerEvents = "all"),
+        onFinish: () => (document.body.style.pointerEvents = "all"),
+      },
       onboardingTourSteps: [
         {
           target: "#designsense-title", // We're using document.querySelector() under the hood
@@ -361,8 +369,7 @@ export default {
             "The scatterplot is a basic but very effective visualization of 2-dimensional data. It can be used to identify patterns like correlations, outliers, and clusters. You can drag and hold on the scatterplot to draw a selection box. All the options falling in this box are selected as a result. The scatterplot supports other operations too, feel free to place your cursor over any of the icons to get tooltips on what they can do. By default, any new selection will replace the current one. Let's see how to change that.",
           before: () => {
             document.body.style.pointerEvents = "none";
-
-            let selectedData = this.$store.state.data.slice(0, 5);
+            let selectedData = this.$store.state.data.filter(d => d['in:width'] > 3 && d['in:width'] <= 5 && d['in:length'] > 2 && d['in:length'] <= 4 );
 
             this.$store.dispatch("update", {
               markingID: this.$store.state.defaultMarkingID,
@@ -395,7 +402,7 @@ export default {
           content:
             "The second data visualization is the parallel coordinates plot (PCP). In contrast to the scatterplot, this chart can be used to visualize more than 2 dimensions. Here each vertical axis is a different dimension. Each option is represented by a sequence of lines that touch those axes exactly at the value of the option for that axes. You can also select options on the PCP by dragging a rectangle along any of the axes. You may also re-order the axes or flip them vertically by dragging and double-clicking on their titles respectively. Finally, you can also change the dimensions visualized via the wrench icon.",
           before: () => {
-            let selectedData = this.$store.state.data.slice(0, 5);
+            let selectedData = this.$store.state.data.filter(d => d['in:width'] > 3 && d['in:width'] <= 5 && d['in:length'] > 2 && d['in:length'] <= 4 );
 
             this.$store.dispatch("update", {
               markingID: this.$store.state.defaultMarkingID,
@@ -419,6 +426,9 @@ export default {
             enableScrolling: false,
             placement: "left",
           },
+          before: () => {
+            document.body.style.pointerEvents = "all";
+          },
         },
 
         {
@@ -431,6 +441,9 @@ export default {
           params: {
             enableScrolling: false,
             placement: "bottom",
+          },
+          before: () => {
+            document.body.style.pointerEvents = "none";
           },
         },
         {
@@ -453,7 +466,8 @@ export default {
           content:
             "Sets are a great mechanism for storing the progress we make during navigation. You can restore a set at any time by incorporating its members into the current selection. This will be based on the current selection operation, for example, if you choose to restore a set while the ADD operation is on then the set will be added to the current selection. You can choose to create different sets and combine them or update any of the existing sets.",
           before: () => {
-            let selectedData = this.$store.state.data.slice(0, 5);
+            let selectedData = this.$store.state.data.filter(d => d['in:width'] <= 2);
+
             this.$store.dispatch("createSet", {
               setName: "SetName",
               members: selectedData.map((x) => x._id),
@@ -493,7 +507,6 @@ export default {
           },
           before: () => {
             this.$store.commit("toggleInspectionMode", { value: false });
-            document.body.style.pointerEvents = "none";
           },
         },
         {
@@ -519,9 +532,6 @@ export default {
             enableScrolling: false,
             placement: "top",
           },
-          before: () => {
-            document.body.style.pointerEvents = "all";
-          },
         },
         {
           target: "#editing-mode",
@@ -529,7 +539,7 @@ export default {
             title: "Your Workspace, Your Process",
           },
           content:
-            "We can adjust the workspace to suit our needs through the inspection mode. This mode allows us to move or resize any of the panels in our workspace.",
+            "We can adjust the workspace to suit our needs through the inspection mode. This mode allows us to move or resize any of the panels in our workspace. </br>[Pro Tip]: zoom out in your browser before moving panels around.",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -547,7 +557,6 @@ export default {
           },
           before: () => {
             this.$store.commit("toggleEditingMode", { value: false });
-            document.body.style.pointerEvents = "none";
           },
         },
       ],
@@ -620,7 +629,7 @@ export default {
             });
           },
           icon: "mdi-help-circle-outline",
-          tooltip: () => "Help.. to come.",
+          tooltip: () => "Start the on-boarding tour!",
           type: "misc",
         },
         toggleEditingMode: {
