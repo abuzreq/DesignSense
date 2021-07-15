@@ -93,8 +93,14 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             changeColorRange(state, newColorRange) {
                 state.colorRange = newColorRange;
             },
-            toggleEditingMode(state, payload) {
-                state.isEditingMode = !state.isEditingMode;
+            toggleEditingMode(state, payload) 
+            {
+                if (payload) {
+                    state.isEditingMode = payload.value
+                }
+                else {
+                    state.isEditingMode = !state.isEditingMode;
+                }
             },
             toggleInspectionMode(state, payload) {
                 if (payload) {
