@@ -1,5 +1,9 @@
 <template>
   <v-app>
+    <span
+      id="designsense-center"
+      style="display: none; position: relative; left: 50%; top: 50%"
+    ></span>
     <v-app-bar
       app
       dark
@@ -28,8 +32,7 @@
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn
-                       id="editing-mode"
-
+            id="editing-mode"
             v-on="on"
             :color="actionType2Color(actions['toggleEditingMode'].type)"
             icon
@@ -52,7 +55,7 @@
       <v-spacer></v-spacer>
 
       <v-divider vertical />
-      <span id="inspection-bar">
+      <span id="inspection-bar" style="box-shadow: none !important">
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
             <v-btn
@@ -173,12 +176,7 @@
     <v-main id="designsense-workspace" style="padding: 50px 0px 0px">
       <div
         @contextmenu="showContextMenuHandler"
-        style="
-          height: 100%;
-          width: 100%;
-          border: 1px solid red;
-          position: relative;
-        "
+        style="height: 100%; width: 100%; border: 1px solid red"
       >
         <template v-for="(item, index) in layouts">
           <Card
@@ -241,14 +239,26 @@
 
 
 <style>
+.v-tour {
+  z-index: 8000;
+}
 .v-tour__target--highlighted {
   box-shadow: 0 0 0 99999px rgba(0, 0, 0, 0.4) !important;
-  /* z-index: 8000 !important; */
+  z-index: 30 !important;
+  /*   z-index: 8000 !important;  */
 }
+.v-tour--active .v-card.vdr.v-tour__target--relative {
+  position: absolute !important;
+}
+
 body {
   overflow: hidden; /* Hide scrollbars */
 }
 
+.v-tooltip__content,
+.v-tooltip__content--fixed {
+  z-index: 8002 !important;
+}
 .v-toolbar {
   margin-top: -5px;
 }
@@ -327,22 +337,31 @@ export default {
             placement: "bottom",
           },
         },
-        /*        {
-          target: '#designsense-workspace', 
+        {
+          target: "#designsense-center",
           header: {
             title: "Your Workspace",
           },
-          content: "This is your workspace. Each component plays a different role in the process of navigation as we will see. We will learn later how to configure this workspace to suit our needs.",
+          content:
+            "This is your workspace. Each component plays a different role in the process of navigation as we will see. We will learn later how to configure this workspace to suit our needs.",
           params: {
             enableScrolling: false,
             placement: "top",
           },
-        }, */
+          before: () => {
+            document.body.style.pointerEvents = "all";
+          },
+        },
         {
-          target: '[type="ScatterPlot"]',
+          target: ".v-card[type='ScatterPlot']",
+          header: {
+            title: "2D Scatterplot",
+          },
           content:
             "The scatterplot is a basic but very effective visualization of 2-dimensional data. It can be used to identify patterns like correlations, outliers, and clusters. You can drag and hold on the scatterplot to draw a selection box. All the options falling in this box are selected as a result. The scatterplot supports other operations too, feel free to place your cursor over any of the icons to get tooltips on what they can do. By default, any new selection will replace the current one. Let's see how to change that.",
           before: () => {
+            document.body.style.pointerEvents = "none";
+
             let selectedData = this.$store.state.data.slice(0, 5);
 
             this.$store.dispatch("update", {
@@ -358,6 +377,9 @@ export default {
         },
         {
           target: "#selection-operations-bar",
+          header: {
+            title: "Selection Operations",
+          },
           content:
             "DSense supports 5 different selection operations (i.e. how a newly made selection relates to the current one). You can press on the buttons here to change the operation or press on the numbers from 1 to 5 to easily change it. </br> You will also notice that when you make a selection on any component in the workspace then other components will respond by highlighting the same options. This coordination allows us to combine the best that each component offers.",
           params: {
@@ -366,7 +388,10 @@ export default {
           },
         },
         {
-          target: '[type="ParallelCoordinatesPlot"]',
+          target: '.v-card[type="ParallelCoordinatesPlot"]',
+          header: {
+            title: "The Multidimentional Detective",
+          },
           content:
             "The second data visualization is the parallel coordinates plot (PCP). In contrast to the scatterplot, this chart can be used to visualize more than 2 dimensions. Here each vertical axis is a different dimension. Each option is represented by a sequence of lines that touch those axes exactly at the value of the option for that axes. You can also select options on the PCP by dragging a rectangle along any of the axes. You may also re-order the axes or flip them vertically by dragging and double-clicking on their titles respectively. Finally, you can also change the dimensions visualized via the wrench icon.",
           before: () => {
@@ -384,7 +409,10 @@ export default {
           },
         },
         {
-          target: '[type="Grid"]',
+          target: '.v-card[type="Grid"]',
+          header: {
+            title: "The Augmented Gallery",
+          },
           content:
             "Many aspects of the options we navigate cannot be understood through data and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on inspection shortly). We can sort the images based on a data dimension. We can select options by dragging a rectangle that touches their images or by simply clicking on them. Clicking on the eye icon will show only the options currently selected.",
           params: {
@@ -395,6 +423,9 @@ export default {
 
         {
           target: "#data-operations-bar",
+          header: {
+            title: "Zooming/Filtering",
+          },
           content:
             "Once you have selected a set of options there are few things you can do. You can choose to zoom on that set to examine it closely or exclude that set from your consideration. Both zooming and exclusion operations can be reverted.",
           params: {
@@ -404,6 +435,9 @@ export default {
         },
         {
           target: "#sets-operations-bar",
+          header: {
+            title: "Saving to Sets",
+          },
           content:
             "On this panel, you can also invert your current selection, unselect everything or save your selection as a Set.",
           params: {
@@ -412,8 +446,12 @@ export default {
           },
         },
         {
-          target: '[type="Sets"]',
-          content: "An awesome plugin made with Vue.js!",
+          target: '.v-card[type="Sets"]',
+          header: {
+            title: "The Sets Panel",
+          },
+          content:
+            "Sets are a great mechanism for storing the progress we make during navigation. You can restore a set at any time by incorporating its members into the current selection. This will be based on the current selection operation, for example, if you choose to restore a set while the ADD operation is on then the set will be added to the current selection. You can choose to create different sets and combine them or update any of the existing sets.",
           before: () => {
             let selectedData = this.$store.state.data.slice(0, 5);
             this.$store.dispatch("createSet", {
@@ -429,24 +467,40 @@ export default {
         },
         {
           target: "#inspection-bar",
+          header: {
+            title: "Continuous Inspection",
+          },
           content:
             "Sometimes we will want to examine a single option in detail instead of sifting through options. This can be done in two ways, the first is by enabling the Continuous Inspection mode which allows us to examine any option the cursor passes by through any of its representations (e.g. its image in the gallery, dot in the scatterplot or line in the parallel coordinates plot). Once we do that the option is highlighted in special ways. Notably, a large image of it is shown on the Augmented Gallery (3D views of the inspected option are also supported if DSense can find 3D files in the dataset with the right formats).",
           params: {
             enableScrolling: false,
             placement: "bottom",
           },
+          before: () => {
+            document.body.style.pointerEvents = "all";
+          },
         },
         {
-          target: '[type="Grid"]',
+          target: '.v-card[type="Grid"]',
+          header: {
+            title: "On-Demand Inspection",
+          },
           content:
             "The second way to inspect options happens by holding the Control button and releasing it once the target option is found. This way allows us to maintain that inspection even if we move the cursor around. For example, we may be interested in an alternative that is outlying in the scatterplot but then wish to examine its appearance in detail without losing focus.",
           params: {
             enableScrolling: false,
             placement: "left",
           },
+          before: () => {
+            this.$store.commit("toggleInspectionMode", { value: false });
+            document.body.style.pointerEvents = "none";
+          },
         },
         {
-          target: '[type="Clusters"]',
+          target: '.v-card[type="Clusters"]',
+          header: {
+            title: "Clusters",
+          },
           content:
             "DSense automatically clusters the current options we are considering to groups based on their similarity. We can choose the aspects to compare options on and the number of groups to form. This panel shows a representative sample from each of the formed groups. By examining those representatives we can gain a bird-view of the dataset. Finally, we can inspect any of the representatives.",
           params: {
@@ -454,19 +508,26 @@ export default {
             placement: "top",
           },
         },
-        /*        {
-          target: '#designsense-workspace', 
+        {
+          target: "#designsense-center",
           header: {
             title: "At Your Fingertips!",
           },
-          content: "By right-clicking anywhere we can summon a fast-access menu that has some of the operations we mentioned earlier. This is especially effective when using DSense across multiple screens.",
+          content:
+            "By right-clicking anywhere we can summon a fast-access menu that has some of the operations we mentioned earlier. This is especially effective when using DSense across multiple screens.",
           params: {
             enableScrolling: false,
             placement: "top",
           },
-        }, */
+          before: () => {
+            document.body.style.pointerEvents = "all";
+          },
+        },
         {
           target: "#editing-mode",
+          header: {
+            title: "Your Workspace, Your Process",
+          },
           content:
             "We can adjust the workspace to suit our needs through the inspection mode. This mode allows us to move or resize any of the panels in our workspace.",
           params: {
@@ -475,19 +536,20 @@ export default {
           },
         },
         {
-          target: "#designsense-title", // We're using document.querySelector() under the hood
+          target: "#designsense-title",
           header: {
-            title: "Welcome to DesignSense!",
+            title: "Thanks!!",
           },
-          content: `"This marks the end of our tour of DesignSense! Feel free to reach us on TODO or read more on TODO"`,
+          content: `This marks the end of our tour of DesignSense! Feel free to reach us on TODO or read more on TODO`,
           params: {
             enableScrolling: false,
             placement: "bottom",
           },
+          before: () => {
+            this.$store.commit("toggleEditingMode", { value: false });
+            document.body.style.pointerEvents = "none";
+          },
         },
-
-
-        
       ],
       operationsList: operations,
       actions: {

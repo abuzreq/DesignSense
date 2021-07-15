@@ -1,81 +1,92 @@
 <template >
-  <vdr
-    :type = "type"
-    class="v-card v-card--outlined v-sheet theme--light"
-    :minWidth="
-      type == 'Grid'
-        ? 500
-        : type == 'ScatterPlot'
-        ? 400
-        : type == 'ParallelCoordinatesPlot'
-        ? 600
-        : 300
-    "
-    :minHeight="type == 'Grid' ? 600 : 300"
-    :w="this.width"
-    :h="this.height"
-    @activated="onActivated"
-    @dragging="onDrag"
-    @dragstop="onDragstop"
-    @resizing="onResize"
-    @resizestop="onResizestop"
-    :parent="true"
-    :is-conflict-check="false"
-    :snap="true"
-    v-bind:handles="this.currentEditingMode ? ['br', 'tr', 'tl', 'bl'] : []"
-    :draggable="this.currentEditingMode"
-    :resizable="this.currentEditingMode"
-    v-bind:grid="[this.gridSize, this.gridSize]"
-    :x="this.x"
-    :y="this.y"
-  >
-    <ScatterplotView
-      v-if="type == 'ScatterPlot'"
-      :width="this.width"
-      :height="this.height"
+    <vdr
+      :type="type"
+      class="v-card v-card--outlined v-sheet theme--light"
+      
+      :minWidth="
+        type == 'Grid'
+          ? 500
+          : type == 'ScatterPlot'
+          ? 400
+          : type == 'ParallelCoordinatesPlot'
+          ? 600
+          : 300
+      "
+      :minHeight="type == 'Grid' ? 600 : 300"
+      :w="this.width"
+      :h="this.height"
+      @activated="onActivated"
+      @dragging="onDrag"
+      @dragstop="onDragstop"
+      @resizing="onResize"
+      @resizestop="onResizestop"
+      :parent="true"
+      :is-conflict-check="false"
+      :snap="true"
+      v-bind:handles="this.currentEditingMode ? ['br', 'tr', 'tl', 'bl'] : []"
+      :draggable="this.currentEditingMode"
+      :resizable="this.currentEditingMode"
+      v-bind:grid="[this.gridSize, this.gridSize]"
       :x="this.x"
       :y="this.y"
-    />
-    <ParCoordsView
-      v-if="type == 'ParallelCoordinatesPlot'"
-      :width="this.width"
-      :height="this.height"
-      :x="this.x"
-      :y="this.y"
-    />
-    <AugmentedGridView
-      v-if="type == 'Grid'"
-      :width="this.width"
-      :height="this.height"
-      :defaultEnableContext="true"
-      :x="this.x"
-      :y="this.y"
-    />
-    <SetsView
-      v-if="type == 'Sets'"
-      :width="this.width"
-      :height="this.height"
-      :x="this.x"
-      :y="this.y"
-    />
-    <ClusterView
-      v-if="type == 'Clusters'"
-      :width="this.width"
-      :height="this.height"
-      :defaultEnableContext="true"
-      :x="this.x"
-      :y="this.y"
-    />
-    <SPLOMView
-      v-if="type == 'SPLOM'"
-      :width="this.width"
-      :height="this.height"
-      :x="this.x"
-      :y="this.y"
-    />
-  </vdr>
+    >
+      
+
+      <ScatterplotView
+        v-if="type == 'ScatterPlot'"
+        :width="this.width"
+        :height="this.height"
+        :x="this.x"
+        :y="this.y"
+      />
+      <ParCoordsView
+        v-if="type == 'ParallelCoordinatesPlot'"
+        :width="this.width"
+        :height="this.height"
+        :x="this.x"
+        :y="this.y"
+      />
+      <AugmentedGridView
+        v-if="type == 'Grid'"
+        :width="this.width"
+        :height="this.height"
+        :defaultEnableContext="true"
+        :x="this.x"
+        :y="this.y"
+      />
+      <SetsView
+        v-if="type == 'Sets'"
+        :width="this.width"
+        :height="this.height"
+        :x="this.x"
+        :y="this.y"
+      />
+      <ClusterView
+        v-if="type == 'Clusters'"
+        :width="this.width"
+        :height="this.height"
+        :defaultEnableContext="true"
+        :x="this.x"
+        :y="this.y"
+      />
+      <SPLOMView
+        v-if="type == 'SPLOM'"
+        :width="this.width"
+        :height="this.height"
+        :x="this.x"
+        :y="this.y"
+      />
+    
+    </vdr>
 </template>
 <style scoped>
+
+
+/* .v-tour--active .card-panel {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+} */
 .top-card {
   z-index: 25 !important;
 }
@@ -168,7 +179,7 @@ export default {
       }
     },
     onDragstop: function (x, y) {
-        this.assignTopCard(this.$el);
+      this.assignTopCard(this.$el);
     },
     onResizestop: function (x, y) {
       // this.$el.classList.remove("top-card");
@@ -180,13 +191,7 @@ export default {
     assignTopCard: function (el) {
       var currentTopCard = document.getElementsByClassName("top-card");
       if (currentTopCard.length > 0) {
-        console.log(
-          el.isEqualNode(currentTopCard[0]),
-          el.innerHTML === currentTopCard[0].innerHTML
-        );
-
         if (!el.isEqualNode(currentTopCard[0])) {
-          console.log(currentTopCard);
           currentTopCard[0].classList.remove("top-card");
         }
       }
