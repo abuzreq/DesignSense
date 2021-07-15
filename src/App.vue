@@ -319,6 +319,7 @@ export default {
   data: function () {
     return {
       onboardingCallbacks: {
+        onStart: () => (document.body.style.pointerEvents = "all"),
         onSkip: () => (document.body.style.pointerEvents = "all"),
         onFinish: () => (document.body.style.pointerEvents = "all"),
       },
@@ -356,9 +357,7 @@ export default {
             enableScrolling: false,
             placement: "top",
           },
-          before: () => {
-            document.body.style.pointerEvents = "all";
-          },
+      
         },
         {
           target: ".v-card[type='ScatterPlot']",
@@ -368,7 +367,6 @@ export default {
           content:
             "The scatterplot is a basic but very effective visualization of 2-dimensional data. It can be used to identify patterns like correlations, outliers, and clusters. You can drag and hold on the scatterplot to draw a selection box. All the options falling in this box are selected as a result. The scatterplot supports other operations too, feel free to place your cursor over any of the icons to get tooltips on what they can do. By default, any new selection will replace the current one. Let's see how to change that.",
           before: () => {
-            document.body.style.pointerEvents = "none";
             let selectedData = this.$store.state.data.filter(d => d['in:width'] > 3 && d['in:width'] <= 5 && d['in:length'] > 2 && d['in:length'] <= 4 );
 
             this.$store.dispatch("update", {
@@ -426,9 +424,7 @@ export default {
             enableScrolling: false,
             placement: "left",
           },
-          before: () => {
-            document.body.style.pointerEvents = "all";
-          },
+    
         },
 
         {
@@ -442,9 +438,7 @@ export default {
             enableScrolling: false,
             placement: "bottom",
           },
-          before: () => {
-            document.body.style.pointerEvents = "none";
-          },
+       
         },
         {
           target: "#sets-operations-bar",
@@ -490,9 +484,7 @@ export default {
             enableScrolling: false,
             placement: "bottom",
           },
-          before: () => {
-            document.body.style.pointerEvents = "all";
-          },
+       
         },
         {
           target: '.v-card[type="Grid"]',
