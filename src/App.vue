@@ -14,7 +14,10 @@
       height="50"
     >
       <v-toolbar-title id="designsense-title" style="width: 15vw"
-        >DesignSense <span style="font-size: 14px;color: deepskyblue">alpha</span></v-toolbar-title
+        >DesignSense
+        <span style="font-size: 14px; color: deepskyblue"
+          >alpha</span
+        ></v-toolbar-title
       >
 
       <v-divider vertical />
@@ -26,7 +29,10 @@
         </template>
         <span>{{ actions["help"].tooltip() }}</span>
       </v-tooltip>
-
+       <v-divider vertical />
+      <v-spacer></v-spacer>
+      <LoadDataModal id="loading-data-bar"> </LoadDataModal>
+      <v-spacer></v-spacer>
       <v-divider vertical />
 
       <v-tooltip bottom>
@@ -46,9 +52,7 @@
       <v-divider vertical />
       <SelectionOperationsBar id="selection-operations-bar" />
       <v-divider vertical />
-      <v-spacer></v-spacer>
-      <LoadDataModal id="loading-data-bar"> </LoadDataModal>
-      <v-spacer></v-spacer>
+
       <v-divider vertical />
       <ColorSelectionModal id="color-selection-bar"> </ColorSelectionModal>
 
@@ -357,7 +361,6 @@ export default {
             enableScrolling: false,
             placement: "top",
           },
-      
         },
         {
           target: ".v-card[type='ScatterPlot']",
@@ -367,7 +370,13 @@ export default {
           content:
             "The scatterplot is a basic but very effective visualization of 2-dimensional data. It can be used to identify patterns like correlations, outliers, and clusters. You can drag and hold on the scatterplot to draw a selection box. All the options falling in this box are selected as a result. The scatterplot supports other operations too, feel free to place your cursor over any of the icons to get tooltips on what they can do. By default, any new selection will replace the current one. Let's see how to change that.",
           before: () => {
-            let selectedData = this.$store.state.data.filter(d => d['in:width'] > 3 && d['in:width'] <= 5 && d['in:length'] > 2 && d['in:length'] <= 4 );
+            let selectedData = this.$store.state.data.filter(
+              (d) =>
+                d["in:width"] > 3 &&
+                d["in:width"] <= 5 &&
+                d["in:length"] > 2 &&
+                d["in:length"] <= 4
+            );
 
             this.$store.dispatch("update", {
               markingID: this.$store.state.defaultMarkingID,
@@ -400,7 +409,13 @@ export default {
           content:
             "The second data visualization is the parallel coordinates plot (PCP). In contrast to the scatterplot, this chart can be used to visualize more than 2 dimensions. Here each vertical axis is a different dimension. Each option is represented by a sequence of lines that touch those axes exactly at the value of the option for that axes. You can also select options on the PCP by dragging a rectangle along any of the axes. You may also re-order the axes or flip them vertically by dragging and double-clicking on their titles respectively. Finally, you can also change the dimensions visualized via the wrench icon.",
           before: () => {
-            let selectedData = this.$store.state.data.filter(d => d['in:width'] > 3 && d['in:width'] <= 5 && d['in:length'] > 2 && d['in:length'] <= 4 );
+            let selectedData = this.$store.state.data.filter(
+              (d) =>
+                d["in:width"] > 3 &&
+                d["in:width"] <= 5 &&
+                d["in:length"] > 2 &&
+                d["in:length"] <= 4
+            );
 
             this.$store.dispatch("update", {
               markingID: this.$store.state.defaultMarkingID,
@@ -424,7 +439,6 @@ export default {
             enableScrolling: false,
             placement: "left",
           },
-    
         },
 
         {
@@ -438,7 +452,6 @@ export default {
             enableScrolling: false,
             placement: "bottom",
           },
-       
         },
         {
           target: "#sets-operations-bar",
@@ -460,7 +473,9 @@ export default {
           content:
             "Sets are a great mechanism for storing the progress we make during navigation. You can restore a set at any time by incorporating its members into the current selection. This will be based on the current selection operation, for example, if you choose to restore a set while the ADD operation is on then the set will be added to the current selection. You can choose to create different sets and combine them or update any of the existing sets.",
           before: () => {
-            let selectedData = this.$store.state.data.filter(d => d['in:width'] <= 2);
+            let selectedData = this.$store.state.data.filter(
+              (d) => d["in:width"] <= 2
+            );
 
             this.$store.dispatch("createSet", {
               setName: "SetName",
@@ -484,7 +499,6 @@ export default {
             enableScrolling: false,
             placement: "bottom",
           },
-       
         },
         {
           target: '.v-card[type="Grid"]',
@@ -651,6 +665,7 @@ export default {
   computed: {},
   destroyed() {},
   created() {
+    document.title = "DesignSense";
     //To close the context menu when a click happens anywhere
     document.addEventListener("click", (e) => {
       //To prevent the context menu from closing when the click is on it

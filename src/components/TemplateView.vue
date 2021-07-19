@@ -83,17 +83,17 @@ export default {
     },
     chartData: {
       handler: function (newValue, oldValue) {
-        console.log('newData',newValue )
         this.refresh();
       },
     },
-  },
+ 
   colorColumn: function (newValue, oldValue) {
     this.refresh();
   },
   colorScale: function (newValue, oldValue) {
     this.refresh();
   },
+   },
 };
 </script>
 

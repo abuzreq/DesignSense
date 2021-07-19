@@ -226,8 +226,10 @@
                     v-for="item in items.items"
                     v-bind:key="cardSelector + item._id"
                     :cols="possibleColSpans[colSpan]"
-             
-                    :class="['thumbnail_container', possibleColSpans[colSpan] > 3 ? 'top-thumbnails': '']"
+                    :class="[
+                      'thumbnail_container',
+                      possibleColSpans[colSpan] > 3 ? 'top-thumbnails' : '',
+                    ]"
                   >
                     <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
                     <v-card
@@ -308,7 +310,6 @@
 .thumbnail_container.top-thumbnails {
   align-items: start;
 }
-
 
 .col > .thumbnail_card:not(.hovered) .v-image.under_drag_selection {
   border: 2px dashed rgb(33, 119, 180);
@@ -440,7 +441,8 @@ export default {
     this.isModelGLTF = this.chartData[0].gltf ? true : false;
     this.inspectedItem = this.chartData[0];
 
-    this.sortByVar = this.keys.find((k) => !isNaN(this.chartData[0][k])) || this.keys[0];
+    this.sortByVar =
+      this.keys.find((k) => !isNaN(this.chartData[0][k])) || this.keys[0];
 
     // console.log(this.chartData.filter((x) => x == null || !x.image));
   },
@@ -644,7 +646,7 @@ export default {
     load3DJSON(item) {
       console.log("loading 3D TODO: not implemented");
 
-   /*    if (this.inspecting3DView && !this.isModelGLTF) {
+      /*    if (this.inspecting3DView && !this.isModelGLTF) {
         d3.json(item.json).then((jsonModel) => {
           this.isLoading = false;
 
@@ -715,13 +717,13 @@ export default {
     },
     colorColumn: function (newValue, oldValue) {
       let cardNodes = d3.select("#" + this.viewID).selectAll(".thumbnail_card");
-      console.log(cardNodes);
+
       this.getAllCards().forEach((node, i) => {
         let id = node.id.substring(this.cardSelector.length);
         let datum = this.$store.getters.dataMap[id];
         d3.select(node.parentNode).style(
           "background-color",
-          this.colorize(datum) + "55"
+          newValue !== "" ? this.colorize(datum) + "55" : "white"
         );
       });
     },

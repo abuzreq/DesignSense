@@ -90,6 +90,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             changeColorColumn(state, newColorColumn) {
                 state.colorColumn = newColorColumn;
             },
+
             changeColorRange(state, newColorRange) {
                 state.colorRange = newColorRange;
             },

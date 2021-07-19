@@ -13,7 +13,7 @@
           class="operation-icon"
         />
       </template>
-      <span>Replace&emsp;[1]</span>
+      <span>Replace&emsp;[Num 1]</span>
     </v-tooltip>
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
@@ -27,37 +27,7 @@
           class="operation-icon"
         />
       </template>
-      <span>Add&emsp;[2]</span>
-    </v-tooltip>
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
-        <SubtractIcon
-          :class="{
-            selected:
-              operationsList &&
-              currentSelectionOperation == operationsList.SUBTRACT,
-          }"
-          v-on="on"
-          @click="onSubtract"
-          class="operation-icon"
-        />
-      </template>
-      <span>Subtract&emsp;[3]</span>
-    </v-tooltip>
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
-        <ToggleIcon
-          :class="{
-            selected:
-              operationsList &&
-              currentSelectionOperation == operationsList.TOGGLE,
-          }"
-          v-on="on"
-          @click="onToggle"
-          class="operation-icon"
-        />
-      </template>
-      <span>Toggle&emsp;[4]</span>
+      <span>Add&emsp;[Num 2]</span>
     </v-tooltip>
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
@@ -72,7 +42,37 @@
           class="operation-icon"
         />
       </template>
-      <span>Intersect&emsp;[5]</span>
+      <span>Intersect&emsp;[Num 5]</span>
+    </v-tooltip>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+        <SubtractIcon
+          :class="{
+            selected:
+              operationsList &&
+              currentSelectionOperation == operationsList.SUBTRACT,
+          }"
+          v-on="on"
+          @click="onSubtract"
+          class="operation-icon"
+        />
+      </template>
+      <span>Subtract&emsp;[Num 3]</span>
+    </v-tooltip>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+        <ToggleIcon
+          :class="{
+            selected:
+              operationsList &&
+              currentSelectionOperation == operationsList.TOGGLE,
+          }"
+          v-on="on"
+          @click="onToggle"
+          class="operation-icon"
+        />
+      </template>
+      <span>Toggle&emsp;[Num 4]</span>
     </v-tooltip>
   </v-container>
 </template>

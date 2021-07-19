@@ -136,7 +136,8 @@ function loadData(data) {
   var isNotFloat = function (n) { return Number.isNaN(Number.parseFloat(n)) };
 
   var dataTypesMap = {}
-  for (var column of Object.keys(data[0])) {
+  var columns = Object.keys(data[0]);
+  for (var column of columns) {
     if (isNaN(data[0][column]) || isNotFloat(data[0][column]) || column == '_id' || column == 'ID' || column == 'id') {
       dataTypesMap[column] = 'string'
     }
@@ -144,6 +145,16 @@ function loadData(data) {
       dataTypesMap[column] = 'Float'
     }
   }
+
+  //Casting numeric columns from string to numbers
+  data.forEach(function (d) {
+    for (var column of columns) {
+      if (dataTypesMap[column] === 'Float') {
+        d[column] = +d[column];
+      }
+    }
+  });
+
   console.log('Data types map:', dataTypesMap)
   console.log('First row in data:', data[0])
   app = new Vue({

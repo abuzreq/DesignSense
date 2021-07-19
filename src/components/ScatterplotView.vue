@@ -391,7 +391,7 @@ class ScatterPlot {
     function chart(selection) {
       var innerWidth = outerWidth - margin.left - margin.right;
       var innerHeight = outerHeight - margin.top - margin.bottom;
-
+ console.log("colorColumn",colorColumn)
       //colorScale.range();
       //[todo] externalize this offset parameter
       var offset = 15;
@@ -527,6 +527,7 @@ class ScatterPlot {
             return circlesRadius;
           })
           .attr("fill", function (d) {
+           
             return colorScale(d[colorColumn]);
           });
 

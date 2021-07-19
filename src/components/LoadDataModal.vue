@@ -126,20 +126,20 @@ export default {
       dialog: false,
       URLs: [
         {
-          name: "AIA Building",
-          url:
-            "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/AIA%20building.csv",
-          type: "csv",
-          info:
-            "The AIA building dataset (from https://tt-acm.github.io/DesignExplorer/)",
-        },
-        {
           name: "Simple Box",
           url:
             "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv",
           type: "csv",
           info:
             "A simple red box (from https://tt-acm.github.io/DesignExplorer/)",
+        },
+                {
+          name: "AIA Building",
+          url:
+            "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/AIA%20building.csv",
+          type: "csv",
+          info:
+            "The AIA building dataset (from https://tt-acm.github.io/DesignExplorer/)",
         },
         {
           name: "Windows Exploration",
