@@ -55,7 +55,7 @@
 
             <v-list-item-content>
               <v-list-item-title class="title"
-                >{{ setsMetadataMap[item].name }} &nbsp;&nbsp;&nbsp; (#{{
+                >{{ setsMetadataMap[item].name }} &nbsp;&nbsp;&nbsp; (count {{
                   setsMap[item].length
                 }})</v-list-item-title
               >

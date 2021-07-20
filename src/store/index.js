@@ -20,6 +20,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             view2markingIDs: new Map(),
             markingID2views: new Map(),
             markingsMap: {}, // markingID -> marking object. Marking object is {altID -> highlightState}
+            previousDefaultMarkingsMap: {},
             viewsMap: {},
 
             setsIDs: [],
@@ -94,8 +95,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             changeColorRange(state, newColorRange) {
                 state.colorRange = newColorRange;
             },
-            toggleEditingMode(state, payload) 
-            {
+            toggleEditingMode(state, payload) {
                 if (payload) {
                     state.isEditingMode = payload.value
                 }
@@ -167,18 +167,31 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 }
                 state.markingID2views.get(markingID).add(view)
             },
+            reverseUpdate(state) {
+
+                if (state.previousDefaultMarkingsMap !== {}) {
+                    var selection = getSelectedIDs(state.previousDefaultMarkingsMap);
+                    operate(state.markingsMap[state.defaultMarkingID], selection, operations.REPLACE);
+                }
+
+            },
             update(state, payload) {
                 let selection = payload.selection;
                 let operation = payload.operation;
                 if ((payload.hasOwnProperty("markingID"))) {
+                    if (payload.markingID === state.defaultMarkingID) {
+                        state.previousDefaultMarkingsMap = Object.assign(state.previousDefaultMarkingsMap, state.markingsMap[markingID]);
+                    }
                     operate(state.markingsMap[payload.markingID], selection, operation);
                 }
                 else {
                     let view = payload.view;
 
-                    //console.log("operation ", operation, view, state.viewsMap[view])
                     if (state.view2markingIDs.has(view)) {
                         state.view2markingIDs.get(view).forEach((markingID) => {
+                            if (markingID === state.defaultMarkingID) {
+                                state.previousDefaultMarkingsMap = Object.assign(state.previousDefaultMarkingsMap, state.markingsMap[markingID]);
+                            }
                             operate(state.markingsMap[markingID], selection, operation);
                         })
                     }
@@ -224,7 +237,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 }
                 state.setsIDs.push(ID)
                 state.setsMap[ID] = payload.members;
-                let comment = payload && payload.comment ?payload.comment: "Comment Here"
+                let comment = payload && payload.comment ? payload.comment : "Comment Here"
                 state.setsMetadataMap[ID] = { name: ID, comment: comment };
                 console.log(state.setsMetadataMap)
             },
@@ -258,25 +271,27 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             },
             updateAltKey(state, payload) {
                 state.isAltKey = payload.value;
-            },      
-            updateData(state, payload)
-            {
+            },
+            updateData(state, payload) {
                 state.rawData = payload.data;
                 state.data = payload.data;
 
                 state.dataTypesMap = payload.dataTypesMap;
                 state.numericDimensions = getNumericDimensions(payload.dataTypesMap),
-                state.nonNumericDimensions = getNonNumericDimensions(payload.dataTypesMap),
-                state.allDimensions=  Object.keys(payload.dataTypesMap)
+                    state.nonNumericDimensions = getNonNumericDimensions(payload.dataTypesMap),
+                    state.allDimensions = Object.keys(payload.dataTypesMap)
             }
         },
         actions: {
-
             update(context, payload) {
                 context.commit("update", payload);
             },
+            reverseUpdate(context) {
+                context.commit("reverseUpdate");
+            },
             clearInspection(context) {
                 context.commit("hover", { hovered: null });
+                context.commit('toggleInspectionMode', { value: false });
             },
             toggleInspectionMode(context, payload) {
                 context.commit('toggleInspectionMode');
@@ -368,7 +383,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 else {
                     members = Object.keys(context.getters.selectedInMarking(context.state.defaultMarkingID))
                 }
-                    console.log("members",members)
+                console.log("members", members)
                 context.commit('addSet', { members: members, setName: (payload ? payload.setName : null), comment: (payload ? payload.comment : null) })
             },
             restoreSet(context, payload) {

@@ -29,10 +29,6 @@
         </template>
         <span>{{ actions["help"].tooltip() }}</span>
       </v-tooltip>
-       <v-divider vertical />
-      <v-spacer></v-spacer>
-      <LoadDataModal id="loading-data-bar"> </LoadDataModal>
-      <v-spacer></v-spacer>
       <v-divider vertical />
 
       <v-tooltip bottom>
@@ -50,13 +46,16 @@
         <span>{{ actions["toggleEditingMode"].tooltip() }}</span>
       </v-tooltip>
       <v-divider vertical />
+
+      <v-spacer></v-spacer>
+      <LoadDataModal id="loading-data-bar"> </LoadDataModal>
+      <v-spacer></v-spacer>
+      <v-divider vertical />
       <SelectionOperationsBar id="selection-operations-bar" />
       <v-divider vertical />
 
       <v-divider vertical />
       <ColorSelectionModal id="color-selection-bar"> </ColorSelectionModal>
-
-      <v-spacer></v-spacer>
 
       <v-divider vertical />
       <span id="inspection-bar" style="box-shadow: none !important">
@@ -90,6 +89,14 @@
       </span>
       <v-divider vertical />
       <span id="sets-operations-bar">
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn v-on="on" icon @click="actions['reverseUpdate'].clickAction">
+              <v-icon>{{ actions["reverseUpdate"].icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ actions["reverseUpdate"].tooltip() }}</span>
+        </v-tooltip>
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
             <v-btn v-on="on" icon @click="actions['createSet'].clickAction">
@@ -568,6 +575,12 @@ export default {
       ],
       operationsList: operations,
       actions: {
+        reverseUpdate: {
+          clickAction: () => this.$store.dispatch("reverseUpdate"),
+          icon: "mdi-undo",
+          tooltip: () => "Reverse the last selection update",
+          type: "selection",
+        },
         createSet: {
           clickAction: () => this.$store.dispatch("createSet"),
           icon: "mdi-contain",
@@ -588,8 +601,8 @@ export default {
         },
         undoDataTransformation: {
           clickAction: () => this.$store.dispatch("undoDataTransformation"),
-          icon: "mdi-undo",
-          tooltip: () => "Undo",
+          icon: "mdi-magnify-minus-outline",
+          tooltip: () => "Undo zooming or filtering operations",
           type: "data",
         },
         zoomToSelection: {

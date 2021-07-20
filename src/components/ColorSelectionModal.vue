@@ -11,6 +11,14 @@
         <v-card height="350" style="overflow: hidden">
           <v-card-title class="headline grey lighten-2">
             Color Settings
+            <v-btn
+               class="close-button"
+              color="red"
+              text
+              @click="dialog = false"
+            >
+              <v-icon>mdi-close </v-icon>
+            </v-btn>
           </v-card-title>
           <v-row class="row-margins">
             <!-------------- Color Column ---------->
@@ -106,14 +114,6 @@
             >
               Reset Color
             </v-btn>
-            <v-btn
-              class="close-button"
-              color="red"
-              text
-              @click="dialog = false"
-            >
-              Close
-            </v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -128,17 +128,17 @@
 }
 .change-button {
   position: absolute;
-  left: 25px;
+  left: 50px;
   bottom: -100px;
 }
 .reset-button {
   position: absolute;
-  left: 225px;
+  right: 50px;
   bottom: -100px;
 }
 .close-button {
-  position: absolute;
-  bottom: -100px;
+  position: relative;
+  right: -250px;
 }
 </style>
 <script>

@@ -198,10 +198,10 @@ export default {
     // this.compute();
   },
   created() {
-    this.dimensions = this.numericDimensions;
+    this.dimensions = this.numericDimensions.length >= 2? [this.numericDimensions[0],this.numericDimensions[1]] : [this.numericDimensions[0]];
     this.viewID = "id" + this._uid;
     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "update" || mutation.type === "resetMarking") {
+      if (mutation.type === "update" || mutation.type === "reverseUpdate" || mutation.type === "resetMarking") {
         /*
         this.updateContext();
         this.selectionMap = this.$store.getters.getMarking(this.viewID);

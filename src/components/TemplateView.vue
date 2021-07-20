@@ -41,7 +41,7 @@ export default {
     this.viewID = "id" + this._uid;
 
     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "update" || mutation.type === "resetMarking") {
+      if (mutation.type === "update" || mutation.type === "reverseUpdate" || mutation.type === "resetMarking") {
         if (this.hasOwnProperty("markingChangeHandler"))
           this.markingChangeHandler(mutation.type === "resetMarking");
       }
@@ -66,7 +66,7 @@ export default {
       this.chart = this.createChart();
       var selection = this.$store.getters.selectedDataInView(this.viewID);
       this.highlight(selection);
-       this.hoverHandler();
+      this.hoverHandler();
     },
   },
   watch: {
@@ -86,14 +86,14 @@ export default {
         this.refresh();
       },
     },
- 
-  colorColumn: function (newValue, oldValue) {
-    this.refresh();
+
+    colorColumn: function (newValue, oldValue) {
+      this.refresh();
+    },
+    colorScale: function (newValue, oldValue) {
+      this.refresh();
+    },
   },
-  colorScale: function (newValue, oldValue) {
-    this.refresh();
-  },
-   },
 };
 </script>
 

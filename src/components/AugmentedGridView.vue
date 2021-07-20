@@ -67,8 +67,10 @@
                   :on-icon="onContextIcon"
                 />
               </template>
-              <span v-if="enableContext">Show only selection</span>
-              <span v-else>Show selection in context</span>
+              <span v-if="enableContext">Show only the selected options</span>
+              <span v-else
+                >Show all options while highlighting the selected options</span
+              >
             </v-tooltip>
             <v-spacer></v-spacer>
 
@@ -221,6 +223,13 @@
               }"
             >
               <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
+                <v-card
+                  color="primary"
+                  class="showing-selection-note"
+                  v-show="!enableContext"
+                >
+                  Note: the gallery now only shows the currently selected options.
+                </v-card>
                 <v-row dense>
                   <v-col
                     v-for="item in items.items"
@@ -292,6 +301,17 @@
 </template>
 
 <style scoped>
+.showing-selection-note {
+  position: relative;
+  transform: translateX(-50%);
+  left: 50%;
+  text-align: center;
+  margin-left: 0px;
+  margin-right: 32px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  color: white;
+}
 /** To show a crosshair when the curson is on the grid */
 .vue-drag-select {
   cursor: crosshair;
@@ -455,7 +475,7 @@ export default {
     this.viewID = "id" + this._uid;
 
     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "update" || mutation.type === "resetMarking") {
+      if (mutation.type === "update" || mutation.type === "reverseUpdate" || mutation.type === "resetMarking") {
         this.updateContext();
         this.selectionMap = this.$store.getters.getMarking(this.viewID);
         this.chartData.forEach((d) => {
