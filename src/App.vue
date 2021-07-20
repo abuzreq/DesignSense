@@ -466,7 +466,7 @@ export default {
             title: "Saving to Sets",
           },
           content:
-            "On this panel, you can also invert your current selection, unselect everything or save your selection as a Set.",
+            "On this panel, you can also invert your current selection, unselect everything or save your selection as a Set. You can also undo any selection operation (shortcut: Control-Z)",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -513,7 +513,7 @@ export default {
             title: "On-Demand Inspection",
           },
           content:
-            "The second way to inspect options happens by holding the Control button and releasing it once the target option is found. This way allows us to maintain that inspection even if we move the cursor around. For example, we may be interested in an alternative that is outlying in the scatterplot but then wish to examine its appearance in detail without losing focus.",
+            "The second way to inspect options happens by holding the Shift button and releasing it once the target option is found. This way allows us to maintain that inspection even if we move the cursor around. For example, we may be interested in an alternative that is outlying in the scatterplot but then wish to examine its appearance in detail without losing focus.",
           params: {
             enableScrolling: false,
             placement: "left",
@@ -628,8 +628,8 @@ export default {
           icon: "mdi-selection-ellipse-arrow-inside",
           tooltip: () =>
             this.isInspectionMode
-              ? "Disable inspection on hovering [CTRL to disable inspection]"
-              : "Enable continious inspection on hovering. [CTRL to enable on-spot inspection]",
+              ? "Disable inspection on hovering ['Shift' to disable inspection]"
+              : "Enable continious inspection on hovering. ['Shift' to enable on-spot inspection]",
           type: "inspecting",
         },
         clearInspection: {

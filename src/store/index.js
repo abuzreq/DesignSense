@@ -168,10 +168,11 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 state.markingID2views.get(markingID).add(view)
             },
             reverseUpdate(state) {
-
-                if (state.previousDefaultMarkingsMap !== {}) {
+                console.log('revresig', state.previousDefaultMarkingsMap)
+                if (Object.keys(state.previousDefaultMarkingsMap).length !== 0) {
                     var selection = getSelectedIDs(state.previousDefaultMarkingsMap);
                     operate(state.markingsMap[state.defaultMarkingID], selection, operations.REPLACE);
+                    state.previousDefaultMarkingsMap = {};
                 }
 
             },
@@ -180,7 +181,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 let operation = payload.operation;
                 if ((payload.hasOwnProperty("markingID"))) {
                     if (payload.markingID === state.defaultMarkingID) {
-                        state.previousDefaultMarkingsMap = Object.assign(state.previousDefaultMarkingsMap, state.markingsMap[markingID]);
+                        state.previousDefaultMarkingsMap = Object.assign(state.previousDefaultMarkingsMap, state.markingsMap[payload.markingID]);
                     }
                     operate(state.markingsMap[payload.markingID], selection, operation);
                 }

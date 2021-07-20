@@ -77,10 +77,16 @@ document.addEventListener('keydown', function (e) {
   if (e.key >= 1 && e.key <= Object.keys(operations).length) {
     app.$store.commit('changeSelectionOperation', getOperationFromKey(e.key - 1))
   }
-  if (e.ctrlKey) {
 
-    if (!app.$store.state.isCtrlKey) {
-      app.$store.dispatch('updateCtrlKey', { value: true })
+
+  if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
+    console.log('reverse')
+    app.$store.dispatch('reverseUpdate')
+  }
+
+  if (e.shiftKey) {
+    if (!app.$store.state.isShiftKey) {
+      app.$store.dispatch('updateShiftKey', { value: true })
       app.$store.commit('toggleInspectionMode', { value: true })
 
       /*
@@ -95,8 +101,8 @@ document.addEventListener('keydown', function (e) {
 
 })
 document.addEventListener('keyup', function (e) {
-  if (e.key === 'Control') {
-    app.$store.dispatch('updateCtrlKey', { value: false })
+  if (e.key === 'Shift') {
+    app.$store.dispatch('updateShiftKey', { value: false })
     app.$store.commit('toggleInspectionMode', { value: false })
 
   }
