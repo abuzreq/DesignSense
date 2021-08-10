@@ -10,7 +10,7 @@
 
         <v-card height="350" style="overflow: hidden">
           <v-card-title class="headline grey lighten-2">
-            Color Settings
+            Color Settings (experimental)
             <v-btn
                class="close-button"
               color="red"

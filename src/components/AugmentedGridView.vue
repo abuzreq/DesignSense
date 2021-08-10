@@ -36,6 +36,30 @@
               <span v-if="isSortDesc">change to ascending order</span>
               <span v-else>change to descending order</span>
             </v-tooltip>
+
+            <v-spacer></v-spacer>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-btn
+                  x-small
+                  icon
+                  v-on="on"
+                  @click="
+                    () => (isInspectionViewPinned = !isInspectionViewPinned)
+                  "
+                >
+                  <v-icon v-if="isInspectionViewPinned">mdi-pin-outline</v-icon>
+                  <v-icon v-else>mdi-pin-off-outline</v-icon>
+                </v-btn>
+              </template>
+              <span v-if="isInspectionViewPinned"
+                >Show the inspection view only if we are currently inspecting an option</span
+              >
+                   <span v-else
+                >Pin the inspection view even if no options are currently
+                inspected</span
+              >
+            </v-tooltip>
             <v-spacer></v-spacer>
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
@@ -51,7 +75,7 @@
                   >Selected
                 </v-chip>
               </template>
-              <span>Number of selected items</span>
+              <span>Number of selected options</span>
             </v-tooltip>
 
             <v-spacer></v-spacer>
@@ -114,39 +138,9 @@
               <span>Close inspection</span>
             </v-tooltip>
 
+            <!--
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
-                <v-btn
-                  x-small
-                  icon
-                  v-on="on"
-                  @click="
-                    () => (isInspectionViewPinned = !isInspectionViewPinned)
-                  "
-                >
-                  <v-icon v-if="isInspectionViewPinned">mdi-pin-outline</v-icon>
-                  <v-icon v-else>mdi-pin-off-outline</v-icon>
-                </v-btn>
-              </template>
-              <span
-                >Pin the inspection view even if no items are currently
-                inspected</span
-              >
-            </v-tooltip>
-
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <!--
-                          <v-checkbox
-                          v-on="on"
-                          dense
-                          align-center
-                          v-model="inspecting3DView"
-                          icon="large"
-                          :off-icon="inspected3DIcon"
-                          :on-icon="inspected2DIcon"
-                        />
-                -->
                 <v-btn
                   icon
                   v-on="on"
@@ -171,13 +165,24 @@
               :size="25"
               color="primary"
             ></v-progress-circular>
-
-            <v-btn icon @click="() => previousView(inspectedItem)">
-              <v-icon small>mdi-arrow-left</v-icon>
-            </v-btn>
-            <v-btn icon @click="() => nextView(inspectedItem)">
-              <v-icon small>mdi-arrow-right</v-icon>
-            </v-btn>
+-->
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+               
+                <v-btn v-on="on" v-show= "inspectedItem.images.length > 1" icon @click="() => previousView(inspectedItem)">
+                  <v-icon small>mdi-arrow-left</v-icon>
+                </v-btn>
+              </template>
+              <span>Previous image</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-btn    v-on="on" v-show= "inspectedItem.images.length > 1" icon @click="() => nextView(inspectedItem)">
+                  <v-icon small>mdi-arrow-right</v-icon>
+                </v-btn>
+              </template>
+              <span>Next image</span>
+            </v-tooltip>
 
             <v-img
               contain
@@ -228,7 +233,8 @@
                   class="showing-selection-note"
                   v-show="!enableContext"
                 >
-                  Note: the gallery now only shows the currently selected options.
+                  Note: the gallery now only shows the currently selected
+                  options.
                 </v-card>
                 <v-row dense>
                   <v-col
@@ -430,7 +436,7 @@ export default {
       inspectedItemViewIndex: 0,
       inspected3DIcon: "mdi-video-3d",
       inspected2DIcon: "mdi-file-image-outline",
-      isInspectionViewPinned: true,
+      isInspectionViewPinned: false,
       isSelectionDragOn: false,
       dragSelection: {},
     };
@@ -475,7 +481,11 @@ export default {
     this.viewID = "id" + this._uid;
 
     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "update" || mutation.type === "reverseUpdate" || mutation.type === "resetMarking") {
+      if (
+        mutation.type === "update" ||
+        mutation.type === "reverseUpdate" ||
+        mutation.type === "resetMarking"
+      ) {
         this.updateContext();
         this.selectionMap = this.$store.getters.getMarking(this.viewID);
         this.chartData.forEach((d) => {

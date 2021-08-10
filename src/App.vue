@@ -340,7 +340,7 @@ export default {
           header: {
             title: "Welcome to DesignSense!",
           },
-          content: `DesignSense is a shopping interface augmented with data visualizations and analysis! The interface was designed to allow users to navigate through a large number of options while considering both the visual appearance and the multidimensional metrics of those options.`,
+          content: "DesignSense is a shopping interface augmented with data visualizations and analysis! The interface was designed to allow users to navigate through a large number of options while considering both the visual appearance and the multidimensional metrics of those options. [Next: &rarr;, Previous: &larr; ]",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -441,7 +441,7 @@ export default {
             title: "The Augmented Gallery",
           },
           content:
-            "Many aspects of the options we navigate cannot be understood through data and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on inspection shortly). We can sort the images based on a data dimension. We can select options by dragging a rectangle that touches their images or by simply clicking on them. Clicking on the eye icon will show only the options currently selected.",
+            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on inspection shortly). We can sort the images based on a data dimension. We can select options by dragging a rectangle that touches their images or by simply clicking on them. Clicking on the eye icon will show only the options currently selected.",
           params: {
             enableScrolling: false,
             placement: "left",
@@ -528,7 +528,7 @@ export default {
             title: "Clusters",
           },
           content:
-            "DSense automatically clusters the current options we are considering to groups based on their similarity. We can choose the aspects to compare options on and the number of groups to form. This panel shows a representative sample from each of the formed groups. By examining those representatives we can gain a bird-view of the dataset. Finally, we can inspect any of the representatives.",
+            "DSense automatically clusters the current options we are considering to groups based on their similarity (i.e. it responds to zooming/filtering operations). We can choose the dimensions to group options based on and the number of groups to form. This panel shows a representative sample from each of the formed groups (i.e. it lies at the center of group). By examining those representatives we can gain a bird-view of the dataset. Finally, we can inspect any of the representatives.",
           params: {
             enableScrolling: false,
             placement: "top",
@@ -741,7 +741,7 @@ export default {
       }
     },
     handleContextMenuClick(item) {
-      console.log(item);
+     // console.log(item);
     },
   },
 };

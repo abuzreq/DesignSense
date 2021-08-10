@@ -16,19 +16,20 @@
       <template v-slot:header>
         <v-toolbar fixed dark color="blue darken-3" class="mb-1">
           <v-container fluid>
-            <v-row dense justify="center" style="margin-bottom: -10px">
-              <v-toolbar-title>Clusters Panel</v-toolbar-title>
+            <v-row dense justify="center" style="margin-bottom: -10px">           
+                  <v-toolbar-title>Clusters Panel</v-toolbar-title> 
             </v-row>
-            <v-row dense style="flex-wrap: nowrap;">
+            <v-row dense style="flex-wrap: nowrap">
               <v-slider
                 min="4"
-                max="16"
+                max="12"
                 step="4"
                 :tick-labels="numClustersLabels"
                 ticks="always"
                 tick-size="4"
                 v-model="numClusters"
               ></v-slider>
+
               <v-slider
                 min="0"
                 max="2"
@@ -67,7 +68,7 @@
                     contain
                     :src="item.image"
                     v-on:click="toggle(item, $event)"
-                    v-on:mouseover="hover(item)"     
+                    v-on:mouseover="hover(item)"
                   />
                 </v-card>
               </v-col>
@@ -92,6 +93,7 @@
         v-on:update="onDimensionChange($event)"
         initialOpenDirection="above"
       />
+
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" x-small icon @click="() => (dimensions = [])">
@@ -198,10 +200,17 @@ export default {
     // this.compute();
   },
   created() {
-    this.dimensions = this.numericDimensions.length >= 2? [this.numericDimensions[0],this.numericDimensions[1]] : [this.numericDimensions[0]];
+    this.dimensions =
+      this.numericDimensions.length >= 2
+        ? [this.numericDimensions[0], this.numericDimensions[1]]
+        : [this.numericDimensions[0]];
     this.viewID = "id" + this._uid;
     this.$store.subscribe((mutation, state) => {
-      if (mutation.type === "update" || mutation.type === "reverseUpdate" || mutation.type === "resetMarking") {
+      if (
+        mutation.type === "update" ||
+        mutation.type === "reverseUpdate" ||
+        mutation.type === "resetMarking"
+      ) {
         /*
         this.updateContext();
         this.selectionMap = this.$store.getters.getMarking(this.viewID);
@@ -215,11 +224,8 @@ export default {
     });
   },
   methods: {
-    compute()
-    {
-      
-      if (!this.areDimensionsValid()) 
-      {
+    compute() {
+      if (!this.areDimensionsValid()) {
         return;
       }
 
@@ -261,11 +267,10 @@ export default {
       /*Object.keys(this.chartData[0]).filter(
         d => !newDimensions.includes(d)
       );*/
-      this.compute();          
+      this.compute();
     },
-    areDimensionsValid()
-    {
-      return this.dimensions && this.dimensions.length > 0
+    areDimensionsValid() {
+      return this.dimensions && this.dimensions.length > 0;
     },
     hover(item, forced) {
       if (forced || this.isHoveringEnabled) {
