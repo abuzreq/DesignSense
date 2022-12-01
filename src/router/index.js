@@ -3,6 +3,7 @@ import VueRouter from "vue-router";
 import App from "@/App.vue"
 import Demo from "@/Demo.vue"
 import Info from "@/Info.vue"
+import VueAnalytics from 'vue-analytics';
 
 Vue.use(VueRouter);
 
@@ -23,10 +24,14 @@ const routes = [
         component: Demo
     }]
 
+
 const router = new VueRouter({
 routes
 });
 
-
+Vue.use(VueAnalytics, {
+    id: 'G-R9H6P1BD0H',
+    router
+});
 
 export default router;
