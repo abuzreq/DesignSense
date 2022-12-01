@@ -21,7 +21,7 @@
           >
         </div>
         <div class="figure">
-          <img src="src\assets\teaser_1.jpg" />
+          <img src="src/assets/design_sense_teaser.jpg" />
           <div class="caption">
             The interface of DesignSense.
           </div>
@@ -58,9 +58,7 @@
         <div class="materials">
           <div class="heading">Materials</div>
           <div class="links">
-            <a
-              href="src\assets\files\design-sense-case-study-massing.pdf"
-              class="link at"
+            <a href="./design-sense-case-study-massing.pdf" target="_blank"
               >Supplementary (Case Study)</a
             >
             | <router-link to="/demo">Demo</router-link> |

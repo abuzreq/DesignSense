@@ -23,6 +23,18 @@ const config = {
         loader: 'vue-loader'
       },
       {
+        test: /\.jpg$/,
+        use: [
+          {
+            loader: 'vue-loader',
+            options: {
+              mimetype: 'image/jpg',
+              esModule: false,
+            }
+          }
+        ]
+      },
+      {
         test: /\.svg$/,
         use: [
           'babel-loader',
@@ -31,13 +43,13 @@ const config = {
       },
       {
         test: /\.(png|jpe?g|gif|eot|ttf|woff|woff2)(\?.+)?$/,
-
         use: [
           {
             loader: 'url-loader',
             options: {
               limit: 10000,
             },
+            
           },
         ],
       },
@@ -71,7 +83,6 @@ const config = {
           },
         ],
       },
-
       {
         test: /\.png$/,
         use: [
@@ -82,7 +93,8 @@ const config = {
             }
           }
         ]
-      }
+      },
+
     ]
   },
   resolve: {
