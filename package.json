@@ -26,7 +26,7 @@
         "mathjs": "^6.6.1",
         "node-gyp": "^8.0.0",
         "node-kmeans": "^1.1.9",
-        "numjs": "^0.16.0",
+        "numjs": "^0.16.1",
         "papaparse": "^5.3.0",
         "parcoord-es": "github:abuzreq/parcoords-es",
         "pareto-frontier": "^1.1.1",
