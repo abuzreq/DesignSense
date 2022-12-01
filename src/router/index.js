@@ -22,7 +22,10 @@ const routes = [
         path: "/demo",
         name: "demo",
         component: Demo
-    }]
+    }, 
+    { path: '*', component: Info }
+    
+]
 
 
 const router = new VueRouter({
