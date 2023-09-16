@@ -4,24 +4,19 @@
       <div class="pub">
         <div class="title">
           <a href="" class="at"
-            >DesignSense: A Visual Analytics Interface for Navigating Generative
-            Design Datasets</a
+            >Designing with Sense: A Critical Review and Proposal for Enhanced
+            Design Space Exploration in Generative Design</a
           >
         </div>
         <div class="authors">
-          <span class="author"
-            ><a href="https://abuzreq.netlify.app/" class="at"
-              >Ahmed M. Abuzuraiq</a
-            ></span
+          <span class="author"><a href="" class="at">Anonymous 1</a></span
           >,
-          <span class="author"
-            ><a href="http://www.sfu.ca/~herhan/" class="at"
-              >Halil Erhan</a
-            ></span
-          >
+          <span class="author"><a href="" class="at">Anonymous 2</a></span>
         </div>
         <div class="figure">
-          <img src="src/assets/design_sense_teaser.jpg" />
+          <router-link to="/demo"> <img src="src/assets/design_sense_teaser.jpg" /></router-link>
+
+         
           <div class="caption">
             The interface of DesignSense.
           </div>
@@ -29,58 +24,61 @@
         <div class="abstract">
           <div class="heading">Abstract</div>
           <div class="text">
-            In the architectural design domain, designers are increasingly
-            solving problems with the aid of computational methods and
-            Generative Design (GD) is a notable example. Generative Design (GD)
-            refers to the computational generation of design alternatives aided
-            by performance simulations. GD promises novel and performant
-            solutions to architectural design problems but it produces a large
-            number of design alternatives that are challenging to select from
-            due to the overload of choice they create. Therefore, the success of
-            GD rests on the ability to navigate through and narrow the generated
-            alternatives to a smaller set, in a way that is unhindered by the
-            number of alternatives and in a manner that allows designers to
-            consider both the performance and the design form of their designs.
-            Several interactive data visualizations and analysis interfaces have
-            been proposed to support design space navigation (DSN). We identify
-            shortcomings in current DSN interfaces based on a domain
-            characterization which we developed in collaboration with domain
-            experts. Then we present DesignSense, visual analytics DSN interface
-            of coordinated and linked views, representing and coupling both the
-            performance data of alternatives along with visual displays of their
-            design forms. Aiding that are mechanisms for selecting from,
-            navigating through, clustering, and manually grouping design
-            alternatives. Finally, we evaluate the current iteration of
-            DesignSense through a formative focus group with domain
-            professionals and present realistic case studies of its utility.
+            Practitioners in the built environments disciplines are increasingly
+            solving problems with the aid of generative design methods.
+            Generative design refers to the computational generation of design
+            alternatives aided by optimization and building performance
+            simulations. Generative design promises novel and performant
+            solutions to design problems but the large size of the design spaces
+            it produces makes them challenging to explore. Design space
+            exploration (DSE) interfaces have been used to understand, refine
+            and narrow design spaces. Still, a critical analysis of current DSE
+            interfaces shows a gap between their features and the way designers
+            explore and make decisions. Specifically, we conducted a design
+            study with domain experts to develop a DSE interface (DesignSense)
+            that tightly integrates several features found separately in current
+            DSE systems and adds to them. We present a formative focus group
+            evaluation which suggested more areas for improvement, and a case
+            study to illustrate the utility of the interface.
           </div>
         </div>
         <div class="materials">
           <div class="heading">Materials</div>
           <div class="links">
-            <a href="./design-sense-case-study-massing.pdf" target="_blank"
+            <!--          <a
+              href="../assets/design-sense-case-study-massing-2.pdf"
+              target="_blank"
               >Supplementary (Case Study)</a
-            >
-            | <router-link to="/demo">Demo</router-link> |
+            >| -->
+            <router-link to="/demo">Demo</router-link> |
             <a href="" class="link at">PDF (To come)</a> |
-            <a class="link at" href="">Video (To come)</a> |
+            <!-- <a class="link at" href="">Video (To come)</a> | -->
             <a class="link at" href="">BibTeX (To come)</a>
           </div>
         </div>
         <hr />
-        <div>
+        <!--  <div>
           Last modified: Nov. 30, 2022.
         </div>
         <p>
           Click <a href="#" @click.prevent="disableTracking">here</a>, to
           disable the tracking through Google Analytics.
-        </p>
+        </p> -->
       </div>
     </div>
   </div>
 </template>
 <script>
+
 export default {
+  data() {
+    return {
+      publicPath: process.env.BASE_URL,
+    };
+  },
+  created() {
+    console.log(this.publicPath, process.env);
+  },
   methods: {
     disableTracking: function() {
       this.$ga.disable();
