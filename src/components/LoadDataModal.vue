@@ -152,6 +152,14 @@ export default {
           type: "csv",
           info: "Exploring impact of windows on lighting/heating (from https://tt-acm.github.io/DesignExplorer/)",
         },
+        {
+          name: "Massing Study",
+          url: "https://raw.githubusercontent.com/Zohrehhasanpur/GalleryDesignDataset/main/",
+          type: "csv",
+          info: "A generative design dataset exploring different massing for an arts gallery project.",
+        },
+
+
         /*{
           name: "Rezoning Project (unoptimized)",//P+W Crofton
           url:
