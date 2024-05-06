@@ -154,7 +154,7 @@ export default {
         },
         {
           name: "Massing Study",
-          url: "https://raw.githubusercontent.com/Zohrehhasanpur/GalleryDesignDataset/main/",
+          url: "https://raw.githubusercontent.com/Zohrehhasanpur/GalleryDesignDataset/main/data.csv",
           type: "csv",
           info: "A generative design dataset exploring different massing for an arts gallery project.",
         },
