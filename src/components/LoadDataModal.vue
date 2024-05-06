@@ -161,7 +161,7 @@ export default {
         },*/
         {
           name: "Rezoning Project",
-          url: "https://drive.google.com/drive/folders/1lH8DYa6y8sinaSDTohfjQ5apyIFFlxF4",
+          url: "https://1drv.ms/u/s!AsGWrbL1DmbagbZU9qBVr1RfDJeDQg", //https://drive.google.com/drive/folders/1lH8DYa6y8sinaSDTohfjQ5apyIFFlxF4
           type: "cloud",
           info: "Form exploration for a rezoning project",
         },
@@ -171,12 +171,12 @@ export default {
           type: "cloud",
           info: "Solar analysis for a tower placement",
         },
-        {
+        /*{
           name: "SmartGeometry",
           url: "http://142.58.183.69:5051",
           type: "server",
           info: "Results of a form exploration exercise during Smart Geometry 2018 by multiple designers",
-        },
+        },*/
         {
           name: "DreamLens",
           url: "https://drive.google.com/drive/folders/1L1cxJAXS6AJ0t1q9mIvvpfjC-PXITaw8",
