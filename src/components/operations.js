@@ -1,9 +1,9 @@
 const operations = {
     REPLACE: "Replace",
     ADD: "Add",
+    INTERSECT: "Intersect",
     SUBTRACT: "Subtract",
     TOGGLE: "Toggle",   
-    INTERSECT: "Intersect",
 };
 const operations_icons = {
     REPLACE: "Replace",
