@@ -1,7 +1,5 @@
-
-
 <template>
-  <v-container >
+  <v-container>
     <v-row no-gutters>
       <v-col
         style="position: relative; left: -12px; top: -12px"
@@ -72,7 +70,6 @@ export default {
     };
   },
   computed: {
-
     ...mapState({
       numericDimensions: (state) => state.numericDimensions,
       nonNumericDimensions: (state) => state.nonNumericDimensions,
@@ -102,7 +99,7 @@ export default {
   },
   watch: {
     isCustomizingDimensions: {
-      handler: function (newValue) {
+      handler: function(newValue) {
         this.refresh();
       },
       //deep: true
@@ -121,7 +118,10 @@ export default {
       var result = {};
       dimensions.forEach((dim) => {
         let extents = d3.extent(data, (d) => d[dim]);
-        let scale = d3.scaleLinear().domain(extents).range([range, 1]);
+        let scale = d3
+          .scaleLinear()
+          .domain(extents)
+          .range([range, 1]);
         result[dim] = {
           yscale: scale,
           title: dim,
@@ -145,16 +145,19 @@ export default {
       */
       this.refresh();
     },
-    markingChangeHandler: function (reset) {
+    markingChangeHandler: function(reset) {
+      console.log("resetting!!! PCP", reset);
       if (reset) {
-        this.chart.unhighlight();
+        //this.chart.unhighlight(this.$store.getters.data);
+        this.chart.highlight(this.$store.getters.data);
+        //this.chart.brushReset();
       } else {
         this.chart.unhighlight(this.$store.getters.data);
         var result = this.$store.getters.selectedDataInView(this.viewID);
         this.chart.highlight(result);
       }
     },
-    hoverHandler: function () {
+    hoverHandler: function() {
       this.cleanTooltip();
       this.chart.unmark();
 
@@ -231,10 +234,10 @@ export default {
         .data(specs)
         .enter()
         .append("rect")
-        .attr("x", function (d) {
+        .attr("x", function(d) {
           return d[0] - d[2].length * 5;
         })
-        .attr("y", function (d) {
+        .attr("y", function(d) {
           return d[1] - rectHeight + 2 * padding;
         })
         .attr("rx", "2")
@@ -242,7 +245,7 @@ export default {
         .attr("id", "tooltip")
         .attr("fill", "grey")
         .attr("opacity", 1)
-        .attr("width", function (d) {
+        .attr("width", function(d) {
           return d[2].length * 10;
         })
         .attr("height", rectHeight);
@@ -253,17 +256,17 @@ export default {
         .data(specs)
         .enter()
         .append("text")
-        .attr("x", function (d) {
+        .attr("x", function(d) {
           return d[0];
         })
-        .attr("y", function (d) {
+        .attr("y", function(d) {
           return d[1];
         })
         .attr("id", "tooltip")
         .attr("fill", "white")
         .attr("text-anchor", "middle")
         .attr("font-size", fontSize)
-        .text(function (d) {
+        .text(function(d) {
           return d[2];
         });
     },
@@ -319,7 +322,7 @@ export default {
         var initCenPts = this.chart.compute_real_centroids(d);
 
         // move points based on margins
-        var cenPts = initCenPts.map(function (d) {
+        var cenPts = initCenPts.map(function(d) {
           return [d[0] + margins["left"], d[1] + margins["top"]];
         });
 
@@ -347,23 +350,54 @@ export default {
       if (this.chart.brushed() != false) return this.chart.brushed();
       return this.chart.data();
     },
-    Chart: function () {
+    Chart: function() {
       //   nullValueSeparator: "bottom",
-var sampleDimensions={
-
-    "in:width":{"title":"Width", "orient":"left","type":"number", "yscale": d3.scaleLinear().range([0, this.height])},
-    "in:height":{"title":"Height", "orient":"left","type":"number", "yscale": d3.scaleLinear().range([0, this.height])},
-     "in:length":{"title":"Length", "orient":"left","type":"number", "yscale": d3.scaleLinear().range([0, this.height])},
-      "out:surfaceArea":{"title":"Surface Area", "orient":"left","type":"ynumber", "scale": d3.scaleLinear().range([0, this.height])},
-       "out:volume":{"title":"Volume", "orient":"left","type":"number", "yscale": d3.scaleLinear().range([0, this.height])},
-         "out:edgeLength":{"title":"Edge Length", "orient":"left","type":"number", "yscale": d3.scaleLinear().range([0, this.height])},
-};
-
+      var sampleDimensions = {
+        "in:width": {
+          title: "Width",
+          orient: "left",
+          type: "number",
+          yscale: d3.scaleLinear().range([0, this.height]),
+        },
+        "in:height": {
+          title: "Height",
+          orient: "left",
+          type: "number",
+          yscale: d3.scaleLinear().range([0, this.height]),
+        },
+        "in:length": {
+          title: "Length",
+          orient: "left",
+          type: "number",
+          yscale: d3.scaleLinear().range([0, this.height]),
+        },
+        "out:surfaceArea": {
+          title: "Surface Area",
+          orient: "left",
+          type: "ynumber",
+          scale: d3.scaleLinear().range([0, this.height]),
+        },
+        "out:volume": {
+          title: "Volume",
+          orient: "left",
+          type: "number",
+          yscale: d3.scaleLinear().range([0, this.height]),
+        },
+        "out:edgeLength": {
+          title: "Edge Length",
+          orient: "left",
+          type: "number",
+          yscale: d3.scaleLinear().range([0, this.height]),
+        },
+      };
 
       const chart = ParCoords({
-        markedLineWidth: 5,
+        markedLineWidth: 3,
         highlightedLineWidth: 3,
-        lineWidth: 1,
+        lineWidth: 1.4,
+        markedShadowColor: '#ff0000',
+        markedShadowBlur: 5,
+
       })("#" + this.viewID)
         .data(this.chartData)
         .width(
@@ -371,20 +405,21 @@ var sampleDimensions={
             20
         )
         .height(this.height - 25)
-    //    .dimensions(sampleDimensions)
-//chart.detectDimensions();
-        .hideAxis(this.excludedDimensions)
-        chart.createAxes()
+        //    .dimensions(sampleDimensions)
+        //chart.detectDimensions();
+        .hideAxis(this.excludedDimensions);
+      chart
+        .createAxes()
 
         .brushMode("1D-axes") //1D-axes-multi 2D-strums angular 1D-axes
         .reorderable()
         .mode("queue")
-        
+
         .render()
         .on("brushend", (brushed, args) => {
           if (d3.event.selection === null) return;
           //To clear the brush/strum once done
-          //d3.select("#"+this.viewID).selectAll('.selection').style("display", "none");
+          // d3.select("#"+this.viewID).selectAll('.selection').style("display", "none");
 
           if (chart.brushed().length == chart.data().length) {
             this.$store.commit("update", {
@@ -393,7 +428,6 @@ var sampleDimensions={
               operation: operations.REPLACE,
             });
           } else {
-
             this.chart.brushReset();
             this.$store.commit("update", {
               view: this.viewID,
@@ -419,14 +453,15 @@ var sampleDimensions={
           }
         })
         .on("highlight", (e) => {
-         //  console.log("highlighting")
+          console.log("highlighting");
         })
         .on("render", (e) => {
+          console.log("render");
           //[todo] this event is raised many time. Is there a better event to listen to or a more efficient implementation of code below?
           var selection = this.$store.getters.selectedDataInView(this.viewID);
           chart.highlight(selection);
           this.graphCentriodPoints = null;
-        })
+        });
       chart.color((d) => this.colorize(d)).render();
 
       //Source for the hover on mouse over is adopted from: http://bl.ocks.org/mostaphaRoudsari/b4e090bb50146d88aec4
@@ -434,7 +469,7 @@ var sampleDimensions={
       var vueThis = this;
       d3.select("#" + this.viewID)
         .select("svg")
-        .on("mousemove", function () {
+        .on("mousemove", function() {
           if (vueThis.isHoveringEnabled) {
             var mousePosition = d3.mouse(this);
             vueThis.markLineOnHover(mousePosition); //true will also add tooltip
@@ -474,7 +509,7 @@ var sampleDimensions={
           this.chart
         ).createAxes().render()
       );
-*/
+      */
 
       return chart;
     },

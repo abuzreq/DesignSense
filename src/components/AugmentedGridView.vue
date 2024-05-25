@@ -124,6 +124,7 @@
             cols="12"
             style="width: 100%"
           >
+          <div class= "inspected_item_top_bar" >            
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-btn
@@ -137,6 +138,8 @@
               </template>
               <span>Close inspection</span>
             </v-tooltip>
+
+            <StarRating :item="inspectedItem" @onRatingChanged="onRatingChanged" /></div>
 
             <!--
             <v-tooltip bottom>
@@ -307,6 +310,14 @@
 </template>
 
 <style scoped>
+
+.inspected_item_top_bar {
+  display: flex;
+    flex-direction: row;
+    position: relative;
+    justify-content: space-between;
+    width: 100%;
+}
 .showing-selection-note {
   position: relative;
   transform: translateX(-50%);
@@ -383,10 +394,11 @@ import { operations } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import DragSelect from "@/plugins/DragSelect.vue";
-
+import StarRating from "@/components/StarRating.vue"
 export default {
   name: "AugmentedGridCards",
   components: {
+    StarRating,
     ModelGltf,
     ModelThree,
     "drag-select-container": DragSelect,
@@ -499,6 +511,9 @@ export default {
     });
   },
   methods: {
+    onRatingChanged(newRating) {
+      this.$store.commit("rateAlt", { rating: newRating, item: this.inspectedItem});
+    },
     nextView(item) {
       this.inspectedItemViewIndex =
         (this.inspectedItemViewIndex + 1) % item.images.length;

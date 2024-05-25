@@ -23,6 +23,15 @@
       <v-divider vertical />
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="actions['saveToFile'].clickAction">
+            <v-icon>{{ actions["saveToFile"].icon }}</v-icon>
+          </v-btn>
+        </template>
+        <span>{{ actions["saveToFile"].tooltip() }}</span>
+      </v-tooltip>
+      <v-divider vertical />
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="actions['help'].clickAction">
             <v-icon>{{ actions["help"].icon }}</v-icon>
           </v-btn>
@@ -55,7 +64,7 @@
       <v-divider vertical />
 
       <v-divider vertical />
-      <ColorSelectionModal id="color-selection-bar"> </ColorSelectionModal>
+     <!--<ColorSelectionModal id="color-selection-bar"> </ColorSelectionModal>--> 
 
       <v-divider vertical />
       <span id="inspection-bar" style="box-shadow: none !important">
@@ -660,6 +669,13 @@ export default {
               : "Enable Editing Mode. (to resize and move the panels)   [`]",
           type: "editing",
         },
+        saveToFile:
+        {
+          clickAction: () => this.$store.dispatch("saveSelectedToFile"),
+          icon: 'mdi-download',
+          tooltip: () => "Save the selected options to file",
+          type: "misc"
+        }
       },
       contextMenuItems: [
         "toggleInspectionMode",

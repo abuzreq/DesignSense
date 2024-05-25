@@ -103,6 +103,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                     state.isEditingMode = !state.isEditingMode;
                 }
             },
+
             toggleInspectionMode(state, payload) {
                 if (payload) {
                     state.isInspectionMode = payload.value
@@ -204,6 +205,15 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             hover(state, payload) {
                 state.hovered = payload.hovered
             },
+            rateAlt(state, payload) {
+                var index = state.data.findIndex(x => x._id === payload.item._id)
+                console.log(state.data, index, payload.item, payload.rating)
+                var alt = state.data[index]
+                alt.Rating = payload.rating;
+
+                Vue.set(state.data, index, alt);
+                
+            },
             popDataStack(state, payload) {
                 payload.data = state.dataStack.pop();
             },
@@ -299,6 +309,32 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             },
             toggleEditingMode(context, payload) {
                 context.commit('toggleEditingMode');
+            },
+            saveSelectedToFile(context, payload) {
+                
+                let dataMapSubset = context.getters.selectedInMarking(context.state.defaultMarkingID);
+                let selection = map2Data(dataMapSubset)
+               
+                var data = selection.length > 0? selection: context.state.data;
+                var blacklist = ["_id", "images", "image", "json"]
+                var selectDims = context.state.allDimensions.filter(x => !blacklist.includes(x));
+                var csvContent = "data:attachment/csv;charset=utf-8,";
+    
+                csvContent += selectDims.join(",") + "\n"; //add first row
+                var dataString  = ""
+                data.forEach(function (infoArray, index) {
+                    dataString =   context.state.allDimensions.map(dim => infoArray[dim]).join(",");//Object.values(infoArray);
+                    csvContent += index < data.length ? dataString + "\n" : dataString;
+                });
+                csvContent = encodeURI(csvContent);
+    
+                var a = d3.select("body")
+                    .append("a")
+                    .attr("href", csvContent)
+                    .attr("target", '_blank')
+                    .attr("download", 'DSense_SelectedResults.csv');
+ 
+                a.node().click();
             },
             updateCtrlKey(context, payload) {
                 context.commit('updateCtrlKey', payload);

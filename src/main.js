@@ -123,6 +123,12 @@ function prepareData(data, imgFiles, jsonFiles) {
         x._id = generateID();
       }
     }
+    if(!x.Rating) {
+        x.Rating = 0;
+    }
+    if(!x.Tags) {
+      x.Tags = [];
+  }
     if (x.img) {
 
       x.image = (imgFiles == undefined || Object.keys(imgFiles).length === 0) ? x.img : imgFiles[x.img];

@@ -60,9 +60,12 @@ export default {
       }
     },
     highlight(selection) {
+      console.log("base highligh")
       this.chart.highlight(selection);
     },
     refresh: function () {
+      console.log(" refresh")
+
       this.chart = this.createChart();
       var selection = this.$store.getters.selectedDataInView(this.viewID);
       this.highlight(selection);
