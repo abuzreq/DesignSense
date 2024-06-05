@@ -84,6 +84,19 @@ const config = {
         ],
       },
       {
+        test: /\.(jpe?g|png|gif|svg)$/i,
+        use: [
+          {
+            loader: "file-loader",
+            options: {
+              name: "[name].[ext]",
+              outputPath: "assets/",
+              publicPath: "assets/"
+            }
+          }
+        ]
+      },
+      {
         test: /\.png$/,
         use: [
           {
@@ -94,7 +107,17 @@ const config = {
           }
         ]
       },
-
+      {
+        test: /\.jpg$/,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              mimetype: 'image/jpg'
+            }
+          }
+        ]
+      },
     ]
   },
   resolve: {

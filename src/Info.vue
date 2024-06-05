@@ -13,7 +13,8 @@
           <span class="author"><a href="https://www.sfu.ca/~herhan/" class="at">Halil Erhan</a></span>
         </div>
         <div class="figure">
-          <router-link to="/demo"> <img src="src/assets/design_sense_teaser.jpg" /></router-link>
+          
+          <router-link to="/demo"> <img src="./assets/design_sense_teaser.jpg" /></router-link>
 
          
           <div class="caption">
@@ -56,13 +57,19 @@
 </template>
 <script>
 
+import Teaser from "@/assets/design_sense_teaser.jpg";
+
 export default {
+  components: {
+    Teaser
+  },
   data() {
     return {
       publicPath: process.env.BASE_URL,
     };
   },
   created() {
+    console.log(Teaser)
     console.log(this.publicPath, process.env);
   },
   methods: {
