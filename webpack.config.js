@@ -37,12 +37,13 @@ const config = {
       {
         test: /\.svg$/,
         use: [
-          'babel-loader',
           'vue-svg-loader',
+
+          'babel-loader',
         ],
       },
       {
-        test: /\.(png|jpe?g|gif|eot|ttf|woff|woff2)(\?.+)?$/,
+        test: /\.(png|jpe?g|gif|eot|ttf|woff|woff2|svg)(\?.+)?$/,
         use: [
           {
             loader: 'url-loader',

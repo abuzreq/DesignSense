@@ -152,11 +152,11 @@
 import { operations } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 
-import ReplaceIcon from "@/assets/replace_icon.svg";
-import AddIcon from "@/assets/add_icon.svg";
-import SubtractIcon from "@/assets/subtract_icon.svg";
-import ToggleIcon from "@/assets/toggle_icon.svg";
-import IntersectIcon from "@/assets/intersect_icon.svg";
+import ReplaceIcon from "-!vue-svg-loader!/src/assets/replace_icon.svg";
+import AddIcon from "-!vue-svg-loader!/src/assets/add_icon.svg";
+import SubtractIcon from "-!vue-svg-loader!/src/assets/subtract_icon.svg";
+import ToggleIcon from "-!vue-svg-loader!/src/assets/toggle_icon.svg";
+import IntersectIcon from "-!vue-svg-loader!/src/assets/intersect_icon.svg";
 
 export default {
   name: "SelectionOperationsBar",
