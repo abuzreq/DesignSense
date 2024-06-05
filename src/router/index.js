@@ -11,11 +11,11 @@ const routes = [
     { 
         path: "/",
         name: "home",
-        component: Info
+        component: Demo
     }, 
     { 
-        path: "/info",
-        name: "info",
+        path: "/about",
+        name: "about",
         component: Info
     }, 
     {
@@ -23,7 +23,7 @@ const routes = [
         name: "demo",
         component: Demo
     }, 
-    { path: '*', component: Info }
+    { path: '*', component: Demo }
     
 ]
 

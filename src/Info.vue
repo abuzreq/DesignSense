@@ -4,14 +4,13 @@
       <div class="pub">
         <div class="title">
           <a href="" class="at"
-            >Designing with Sense: A Critical Review and Proposal for Enhanced
-            Design Space Exploration in Generative Design</a
+            >Designing with sense: A critical review and proposal for enhanced design space exploration in generative design</a
           >
         </div>
         <div class="authors">
-          <span class="author"><a href="" class="at">Anonymous 1</a></span
+          <span class="author"><a href="https://abuzreq.netlify.app/" class="at">Ahmed M. Abuzuraiq</a></span
           >,
-          <span class="author"><a href="" class="at">Anonymous 2</a></span>
+          <span class="author"><a href="https://www.sfu.ca/~herhan/" class="at">Halil Erhan</a></span>
         </div>
         <div class="figure">
           <router-link to="/demo"> <img src="src/assets/design_sense_teaser.jpg" /></router-link>
@@ -24,22 +23,7 @@
         <div class="abstract">
           <div class="heading">Abstract</div>
           <div class="text">
-            Practitioners in the built environments disciplines are increasingly
-            solving problems with the aid of generative design methods.
-            Generative design refers to the computational generation of design
-            alternatives aided by optimization and building performance
-            simulations. Generative design promises novel and performant
-            solutions to design problems but the large size of the design spaces
-            it produces makes them challenging to explore. Design space
-            exploration (DSE) interfaces have been used to understand, refine
-            and narrow design spaces. Still, a critical analysis of current DSE
-            interfaces shows a gap between their features and the way designers
-            explore and make decisions. Specifically, we conducted a design
-            study with domain experts to develop a DSE interface (DesignSense)
-            that tightly integrates several features found separately in current
-            DSE systems and adds to them. We present a formative focus group
-            evaluation which suggested more areas for improvement, and a case
-            study to illustrate the utility of the interface.
+            Designers in the built-environment disciplines increasingly solve problems using generative design methods, which promise novel and performant solutions to design problems but produce large design spaces that are challenging to explore. Design Space Exploration (DSE) interfaces have been used to understand, refine and narrow design spaces. Still, a critical analysis of current DSE interfaces shows a gap between their features and how designers explore and make decisions. We conducted a design study with domain experts to develop a DSE interface (DesignSense) that tightly integrates and adds to several features found separately in current DSE systems. We present a formative focus group evaluation, which suggested more areas for improvement and highlighted the need to distinguish designers from scientists as two user groups of DSE systems with varying needs, amongst other findings.
           </div>
         </div>
         <div class="materials">
@@ -51,9 +35,11 @@
               >Supplementary (Case Study)</a
             >| -->
             <router-link to="/demo">Demo</router-link> |
-            <a href="" class="link at">PDF (To come)</a> |
+            <a href="#/about" class="link at">Paper (To come)</a> |
+            <a class="link at" href="#/about">BibTeX (To come)</a> |
+            <a href="#/about" class="link at">Feedback and Community (To come)</a>
             <!-- <a class="link at" href="">Video (To come)</a> | -->
-            <a class="link at" href="">BibTeX (To come)</a>
+
           </div>
         </div>
         <hr />

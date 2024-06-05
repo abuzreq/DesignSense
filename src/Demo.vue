@@ -14,10 +14,10 @@
       height="50"
     >
       <v-toolbar-title id="designsense-title" style="width: 15vw"
-        >DesignSense
+        > <router-link to="/about">DesignSense
         <span style="font-size: 14px; color: deepskyblue"
           >alpha</span
-        ></v-toolbar-title
+        ></router-link> </v-toolbar-title
       >
 
       <v-divider vertical />
