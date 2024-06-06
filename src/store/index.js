@@ -6,10 +6,13 @@ import { generateID } from "@/components/utils.js";
 import * as d3 from "d3";
 import * as d3Chromatic from 'd3-scale-chromatic';
 
+import createLogger from './logger';
+
 Vue.use(Vuex);
 
 function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
     return new Vuex.Store({
+        plugins: [createLogger],
         state: {
             currentSelectionOperation: operations.REPLACE,
             layouts: new_layouts,

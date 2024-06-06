@@ -14,7 +14,7 @@
         </div>
         <div class="figure">
           
-          <router-link to="/demo"> <img src="./assets/design_sense_teaser.jpg" /></router-link>
+          <router-link to="/demo"> <img src="assets/design_sense_teaser.jpg" /></router-link>
 
          
           <div class="caption">
