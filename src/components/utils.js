@@ -1,3 +1,6 @@
+import seedrandom from "seedrandom";
+let rng = seedrandom('42');
+
 //Source: https://gist.github.com/gordonbrander/2230317
 // Generate unique IDs for use as pseudo-private/protected names.
 // Similar in concept to
@@ -20,7 +23,7 @@ function generateID () {
     // Math.random should be unique because of its seeding algorithm.
     // Convert it to base 36 (numbers + letters), and grab the first 9 characters
     // after the decimal.
-    return '_' + Math.random().toString(36).substr(2, 9);
+    return '_' + rng().toString(36).substr(2, 9);
   };
 
 
@@ -28,7 +31,9 @@ function generateID () {
 function round (number, places) {
     return +(Math.round(number + "e+" + places)  + "e-" + places);
   }
+var obj = {"generateID": generateID, "round": round };
 
+export default obj;
 
-exports.generateID = generateID;
-exports.round = round;
+//exports.generateID = generateID;
+//exports.round = round;

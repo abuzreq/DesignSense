@@ -198,8 +198,8 @@
         @contextmenu="showContextMenuHandler"
         style="height: 100%; width: 100%; border: 1px solid red"
       >
-        <template v-for="(item, index) in layouts">
           <Card
+             v-for="(item, index) in layouts"
             :key="index"
             :initX="item.x"
             :initY="item.y"
@@ -207,7 +207,6 @@
             :initH="item.h"
             :type="item.type"
           />
-        </template>
       </div>
     </v-main>
 

@@ -38,6 +38,7 @@
         :height="this.height"
         :x="this.x"
         :y="this.y"
+        :type="type"
       />
       <ParCoordsView
         v-if="type == 'ParallelCoordinatesPlot'"
@@ -45,6 +46,7 @@
         :height="this.height"
         :x="this.x"
         :y="this.y"
+        :type="type"
       />
       <AugmentedGridView
         v-if="type == 'Grid'"
@@ -53,6 +55,7 @@
         :defaultEnableContext="true"
         :x="this.x"
         :y="this.y"
+        :type="type"
       />
       <SetsView
         v-if="type == 'Sets'"
@@ -60,7 +63,7 @@
         :height="this.height"
         :x="this.x"
         :y="this.y"
-       
+        :type="type"
       />
       <ClusterView
         v-if="type == 'Clusters'"
@@ -69,6 +72,7 @@
         :defaultEnableContext="true"
         :x="this.x"
         :y="this.y"
+        :type="type"
       />
       <SPLOMView
         v-if="type == 'SPLOM'"
@@ -76,6 +80,7 @@
         :height="this.height"
         :x="this.x"
         :y="this.y"
+        :type="type"
       />
     
     </vdr>

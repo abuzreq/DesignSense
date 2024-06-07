@@ -2,7 +2,9 @@ import Vue from "vue";
 import Vuex from "vuex";
 import views from "@/components/constants.js";
 import { operations } from "@/components/operations.js";
-import { generateID } from "@/components/utils.js";
+import utils from  "@/components/utils.js";
+
+
 import * as d3 from "d3";
 import * as d3Chromatic from 'd3-scale-chromatic';
 
@@ -16,7 +18,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         state: {
             currentSelectionOperation: operations.REPLACE,
             layouts: new_layouts,
-            defaultMarkingID: generateID(), //"_lqpkb07gn"
+            defaultMarkingID: utils.generateID(), //"_lqpkb07gn"
             rawData: new_data,
             data: new_data,
             dataStack: [],
@@ -137,7 +139,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                     ID = state.defaultMarkingID;
                 }
                 else {
-                    ID = generateID();
+                    ID = utils.generateID();
                 }
 
                 //TODO Uses all the currently available data (i.e. raw data) 
@@ -247,7 +249,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 }
                 else {
                     state.setsCounter += 1
-                    ID = 'Set #' + state.setsCounter;//generateID();
+                    ID = 'Set #' + state.setsCounter;//utils.generateID();
                 }
                 state.setsIDs.push(ID)
                 state.setsMap[ID] = payload.members;

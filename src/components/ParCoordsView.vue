@@ -422,14 +422,15 @@ export default {
           // d3.select("#"+this.viewID).selectAll('.selection').style("display", "none");
 
           if (chart.brushed().length == chart.data().length) {
-            this.$store.commit("update", {
+            
+            this.$store.dispatch("update", {
               view: this.viewID,
               selection: [],
               operation: operations.REPLACE,
             });
           } else {
             this.chart.brushReset();
-            this.$store.commit("update", {
+            this.$store.dispatch("update", {
               view: this.viewID,
               selection: brushed.map((d) => d._id),
               operation: this.currentSelectionOperation,

@@ -9,7 +9,8 @@ import * as d3 from "d3";
 import vdr from "./plugins/vdr";
 import layouts from './layout.js'
 import Papa from 'papaparse'
-import { generateID } from "@/components/utils.js";
+import utils from  "@/components/utils.js";
+
 import { operations, getOperationFromKey } from '@/components/operations.js';
 import vuewheel from 'vuewheel'
 import VueTour from 'vue-tour'
@@ -20,6 +21,7 @@ Vue.use(VueTour)
 Vue.use(vuewheel)
 
 Vue.config.productionTip = false;
+
 
 function loadDataFromURL(url, request) {
   return d3.json(url + request,
@@ -120,7 +122,7 @@ function prepareData(data, imgFiles, jsonFiles) {
         x._id = x.ID;
       }
       else {
-        x._id = generateID();
+        x._id = utils.generateID();
       }
     }
     if(!x.Rating) {

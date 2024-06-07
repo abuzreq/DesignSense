@@ -46,7 +46,7 @@ export default {
     onBrushed: function(brushedIDs) {
       //TODO expose as a passable function (See onBrushed in ScaterplotView)
       if (brushedIDs.length > 0) {
-        this.$store.commit("update", {
+        this.$store.dispatch("update", {
           view: this.viewID,
           selection: brushedIDs,
           operation: this.$store.state.currentSelectionOperation

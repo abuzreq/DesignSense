@@ -3,8 +3,7 @@
     <v-card-title>Sets Panel</v-card-title>
     <v-divider></v-divider>
     <v-list two-line >
-      <template v-for="(item, index) in setsIDs">
-        <v-card outlined :key="index">
+        <v-card outlined v-for="(item, index) in setsIDs" :key="index">
           <v-list-item avatar>
             <v-list-item-action style="margin-right: 8px">
               <v-tooltip left>
@@ -75,7 +74,6 @@
             </v-list-item-content>
           </v-list-item>
         </v-card>
-      </template>
     </v-list>
   </v-container>
 </template>
@@ -102,7 +100,7 @@ import { mapState } from "vuex";
 
 export default {
   name: "SetsView",
-  props: ["width", "height", "x", "y"],
+  props: ["width", "height", "x", "y", "type"],
   data: function () {
     return {
       setNote: "Interesting",

@@ -1,11 +1,19 @@
 import axios from "axios";
 
+var isLogging = false;
+
 export default function createLogger(store) {
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === "development" && isLogging) {
     store.subscribeAction((action, state) => {
 
       var payloadClone = Object.assign({}, action.payload);
       delete payloadClone.vueComponent;
+
+      if(action.type == "update")
+        {
+            var viewType = store.state.viewsMap[action.payload.view]._props.type;
+            payloadClone.viewType = viewType;
+        }
 
       // Send action and state to the Node.js server
       axios

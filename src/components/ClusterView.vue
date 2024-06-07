@@ -151,7 +151,7 @@ const PNG = require("pngjs").PNG;
 export default {
   name: "AugmentedGridCards",
   components: { ModelGltf, MultiDimensionSelect },
-  props: ["defaultEnableContext", "width", "height", "x", "y"],
+  props: ["defaultEnableContext", "width", "height", "x", "y", "type"],
 
   data: function () {
     return {
@@ -281,7 +281,7 @@ export default {
       this.$store.commit("hover", { hovered: null });
     },
     toggle(item, event) {
-      this.$store.commit("update", {
+      this.$store.dispatch("update", {
         view: this.viewID,
         selection: this.clustersMap[item._id].map((d) => d._id),
         operation: this.$store.state.currentSelectionOperation,

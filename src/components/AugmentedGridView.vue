@@ -403,7 +403,7 @@ export default {
     ModelThree,
     "drag-select-container": DragSelect,
   },
-  props: ["defaultEnableContext", "width", "height", "x", "y"],
+  props: ["defaultEnableContext", "width", "height", "x", "y", "type"],
   data: function () {
     return {
       isLoading: false,
@@ -585,7 +585,7 @@ export default {
       });
 
       if (selectedIDs.length > 0) {
-        this.$store.commit("update", {
+        this.$store.dispatch("update", {
           view: this.viewID,
           selection: selectedIDs,
           operation: this.currentSelectionOperation,
@@ -623,7 +623,7 @@ export default {
     },
     toggle(item) {
       if (!this.isSelectionDragOn) {
-        this.$store.commit("update", {
+        this.$store.dispatch("update", {
           view: this.viewID,
           selection: [item._id],
           operation: operations.TOGGLE,

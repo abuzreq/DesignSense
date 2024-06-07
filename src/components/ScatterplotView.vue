@@ -282,7 +282,7 @@ export default {
       //https://github.com/justinormont/pareto-frontier/pull/2
       const out = pf.getParetoFrontier(graph, { optimize: "topRight" }); //topLeft topRight bottomRight bottomLeft
       console.log(out, this.$store);
-      this.$store.commit("update", {
+      this.$store.dispatch("update", {
         view: this.viewID,
         selection: out.map((d) => d[2]),
         operation: this.$store.state.currentSelectionOperation,
@@ -329,7 +329,7 @@ export default {
         .colorColumn(this.colorColumn)
         .colorScale(this.colorScale)
         .onBrushed((brushedIDs) => {
-          this.$store.commit("update", {
+          this.$store.dispatch("update", {
             view: this.viewID,
             selection: brushedIDs,
             operation: this.currentSelectionOperation,
