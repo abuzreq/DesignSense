@@ -2,458 +2,3895 @@
   {
     "action": "createDefaultView",
     "payload": {
-      "view": "id308"
-    },
-    "timestamp": "2024-06-07T10:12:35.313Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id318"
-    },
-    "timestamp": "2024-06-07T10:12:35.341Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id339"
-    },
-    "timestamp": "2024-06-07T10:12:35.347Z"
-  },
-  {
-    "action": "update",
-    "payload": {
-      "view": "id339",
-      "selection": [
-        "_nction() ",
-        "_nction() ",
-        "_nction() "
-      ],
-      "operation": "Replace",
-      "viewType": "Grid"
-    },
-    "timestamp": "2024-06-07T10:12:39.413Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
       "view": "id71"
     },
-    "timestamp": "2024-06-07T10:20:10.467Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id81"
-    },
-    "timestamp": "2024-06-07T10:20:10.480Z"
+    "timestamp": "2024-06-11T02:20:53.192Z"
   },
   {
     "action": "createDefaultView",
     "payload": {
       "view": "id102"
     },
-    "timestamp": "2024-06-07T10:20:10.484Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id71"
-    },
-    "timestamp": "2024-06-07T10:21:26.650Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id81"
-    },
-    "timestamp": "2024-06-07T10:21:26.662Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id102"
-    },
-    "timestamp": "2024-06-07T10:21:26.666Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id71"
-    },
-    "timestamp": "2024-06-07T10:21:40.506Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id102"
-    },
-    "timestamp": "2024-06-07T10:21:40.516Z"
+    "timestamp": "2024-06-11T02:20:53.201Z"
   },
   {
     "action": "createDefaultView",
     "payload": {
       "view": "id130"
     },
-    "timestamp": "2024-06-07T10:21:40.517Z"
+    "timestamp": "2024-06-11T02:20:53.202Z"
   },
   {
     "action": "createDefaultView",
     "payload": {
       "view": "id309"
     },
-    "timestamp": "2024-06-07T10:22:04.774Z"
+    "timestamp": "2024-06-11T02:20:59.332Z"
   },
   {
     "action": "createDefaultView",
     "payload": {
       "view": "id319"
     },
-    "timestamp": "2024-06-07T10:22:04.799Z"
+    "timestamp": "2024-06-11T02:20:59.354Z"
   },
   {
     "action": "createDefaultView",
     "payload": {
-      "view": "id340"
+      "view": "id368"
     },
-    "timestamp": "2024-06-07T10:22:04.807Z"
+    "timestamp": "2024-06-11T02:20:59.362Z"
+  },
+  {
+    "action": "createMarkingEntry",
+    "payload": {},
+    "timestamp": "2024-06-11T02:20:59.530Z"
   },
   {
     "action": "update",
     "payload": {
-      "view": "id340",
+      "view": "id20864",
       "selection": [
-        "_8krvmzcw3",
-        "_jz2su0mjf",
-        "_h2jehetcz",
-        "_1qirfy9y5"
+        "_5252dqxn6",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_rg6x7vhby",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_zqcajzjb6",
+        "_58rut07dz",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        null
       ],
       "operation": "Replace",
-      "viewType": "Grid"
+      "viewType": "ScatterPlot"
     },
-    "timestamp": "2024-06-07T10:22:09.864Z"
+    "timestamp": "2024-06-13T22:12:19.356Z"
   },
   {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id71"
-    },
-    "timestamp": "2024-06-07T10:22:29.153Z"
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T22:12:41.772Z"
   },
   {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id102"
-    },
-    "timestamp": "2024-06-07T10:22:29.165Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id130"
-    },
-    "timestamp": "2024-06-07T10:22:29.166Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id307"
-    },
-    "timestamp": "2024-06-07T10:22:33.347Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id317"
-    },
-    "timestamp": "2024-06-07T10:22:33.367Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id338"
-    },
-    "timestamp": "2024-06-07T10:22:33.373Z"
+    "action": "clearInspection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:13:00.230Z"
   },
   {
     "action": "update",
     "payload": {
-      "view": "id338",
+      "view": "id20885",
       "selection": [
-        "_fu0rbv8u9",
-        "_ysevvrhso",
-        "_5jvq16u7h",
-        "_mmcn3t60c"
+        "_xrsgu0ioh"
       ],
-      "operation": "Replace",
+      "operation": "Toggle",
       "viewType": "Grid"
     },
-    "timestamp": "2024-06-07T10:22:36.027Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id71"
-    },
-    "timestamp": "2024-06-07T10:23:30.514Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id102"
-    },
-    "timestamp": "2024-06-07T10:23:30.531Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id130"
-    },
-    "timestamp": "2024-06-07T10:23:30.533Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id71"
-    },
-    "timestamp": "2024-06-07T10:29:07.904Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id81"
-    },
-    "timestamp": "2024-06-07T10:29:07.968Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id130"
-    },
-    "timestamp": "2024-06-07T10:29:07.975Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id71"
-    },
-    "timestamp": "2024-06-07T10:30:00.606Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id102"
-    },
-    "timestamp": "2024-06-07T10:30:00.619Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id130"
-    },
-    "timestamp": "2024-06-07T10:30:00.621Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id71"
-    },
-    "timestamp": "2024-06-07T10:30:22.382Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id81"
-    },
-    "timestamp": "2024-06-07T10:30:22.429Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id130"
-    },
-    "timestamp": "2024-06-07T10:30:22.433Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id307"
-    },
-    "timestamp": "2024-06-07T10:30:29.419Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id317"
-    },
-    "timestamp": "2024-06-07T10:30:29.442Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id338"
-    },
-    "timestamp": "2024-06-07T10:30:29.448Z"
+    "timestamp": "2024-06-13T22:13:08.210Z"
   },
   {
     "action": "update",
     "payload": {
-      "view": "id338",
+      "view": "id20885",
       "selection": [
-        "_sbuxptspa",
-        "_fu0rbv8u9",
-        "_ysevvrhso"
+        "_hsrojsn74"
       ],
-      "operation": "Replace",
+      "operation": "Toggle",
       "viewType": "Grid"
     },
-    "timestamp": "2024-06-07T10:30:34.664Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id1774"
-    },
-    "timestamp": "2024-06-07T10:30:39.852Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id1784"
-    },
-    "timestamp": "2024-06-07T10:30:39.891Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id1833"
-    },
-    "timestamp": "2024-06-07T10:30:39.899Z"
+    "timestamp": "2024-06-13T22:13:09.536Z"
   },
   {
     "action": "update",
     "payload": {
-      "view": "id1805",
+      "view": "id20864",
       "selection": [
-        "_g3y3w4l5b",
-        "_rowjcdbwa",
-        "_7h4gavx0z"
+        "_5s8wfqbz3",
+        "_1iecz7ang",
+        "_gfdj5b1s4",
+        "_f7dchfu56",
+        "_0z0uuppcq",
+        null,
+        "_hsrojsn74",
+        "_xrsgu0ioh"
       ],
       "operation": "Replace",
-      "viewType": "Grid"
+      "viewType": "ScatterPlot"
     },
-    "timestamp": "2024-06-07T10:30:42.080Z"
+    "timestamp": "2024-06-13T22:13:14.885Z"
   },
   {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id71"
-    },
-    "timestamp": "2024-06-07T10:31:15.242Z"
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:13:36.973Z"
   },
   {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id81"
-    },
-    "timestamp": "2024-06-07T10:31:15.266Z"
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:13:42.057Z"
   },
   {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id102"
-    },
-    "timestamp": "2024-06-07T10:31:15.274Z"
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:13:43.961Z"
   },
   {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id307"
-    },
-    "timestamp": "2024-06-07T10:31:20.589Z"
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:13:45.137Z"
   },
   {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id317"
-    },
-    "timestamp": "2024-06-07T10:31:20.620Z"
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:13:48.733Z"
   },
   {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id366"
-    },
-    "timestamp": "2024-06-07T10:31:20.631Z"
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:13:53.933Z"
+  },
+  {
+    "action": "clearInspection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:14:02.126Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T22:14:10.143Z"
   },
   {
     "action": "update",
     "payload": {
-      "view": "id338",
+      "view": "id20864",
       "selection": [
-        "_sbuxptspa",
-        "_fu0rbv8u9",
-        "_ysevvrhso"
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_4lhcrv2d3",
+        "_euk6m3529",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_zf63sykkm",
+        "_j0c5vnm18",
+        "_rg6x7vhby",
+        "_s450hf6he",
+        "_alqzj9h3q",
+        "_3o985h8ml",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_t86mh0rgt",
+        "_zqcajzjb6",
+        "_58rut07dz",
+        "_h65bc4k33",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_g4rar8bpr",
+        "_lf2qj0os0",
+        "_twqvcxvnm",
+        "_1opmlfimb",
+        null,
+        "_5s8wfqbz3",
+        "_1iecz7ang",
+        "_gfdj5b1s4",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_0z0uuppcq"
       ],
       "operation": "Replace",
-      "viewType": "Grid"
+      "viewType": "ScatterPlot"
     },
-    "timestamp": "2024-06-07T10:31:23.422Z"
+    "timestamp": "2024-06-13T22:14:13.120Z"
   },
   {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id71"
-    },
-    "timestamp": "2024-06-07T10:32:00.943Z"
+    "action": "clearInspection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:14:15.578Z"
   },
   {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id102"
-    },
-    "timestamp": "2024-06-07T10:32:00.953Z"
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T22:14:17.800Z"
   },
   {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id130"
-    },
-    "timestamp": "2024-06-07T10:32:00.955Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id307"
-    },
-    "timestamp": "2024-06-07T10:32:04.153Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id317"
-    },
-    "timestamp": "2024-06-07T10:32:04.174Z"
-  },
-  {
-    "action": "createDefaultView",
-    "payload": {
-      "view": "id338"
-    },
-    "timestamp": "2024-06-07T10:32:04.181Z"
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T22:14:27.042Z"
   },
   {
     "action": "update",
     "payload": {
-      "view": "id338",
+      "view": "id20864",
       "selection": [
-        "_sbuxptspa",
-        "_fu0rbv8u9",
-        "_ysevvrhso"
+        null,
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_euk6m3529",
+        "_zf63sykkm",
+        "_rg6x7vhby",
+        "_s450hf6he",
+        "_alqzj9h3q",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_t86mh0rgt",
+        "_zqcajzjb6",
+        "_58rut07dz",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_lf2qj0os0"
       ],
       "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:14:40.135Z"
+  },
+  {
+    "action": "clearInspection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:14:49.103Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T22:14:50.808Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_euk6m3529",
+        "_zf63sykkm",
+        "_rg6x7vhby",
+        "_s450hf6he",
+        "_alqzj9h3q",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_t86mh0rgt",
+        "_zqcajzjb6",
+        "_58rut07dz",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_lf2qj0os0"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:14:56.201Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T22:15:22.085Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_nhbb76nee",
+        "_g4rar8bpr",
+        "_twqvcxvnm",
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_euk6m3529",
+        "_zf63sykkm",
+        "_rg6x7vhby",
+        "_s450hf6he",
+        "_alqzj9h3q",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_t86mh0rgt",
+        "_zqcajzjb6",
+        "_58rut07dz",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_lf2qj0os0"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:15:27.883Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T22:15:29.797Z"
+  },
+  {
+    "action": "clearInspection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:15:31.373Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        "_hccrs1z50",
+        null,
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:15:37.604Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        "_u4qew1f6o",
+        "_iaozdecpt",
+        "_3ohjtfael",
+        null
+      ],
+      "operation": "Add",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:15:43.237Z"
+  },
+  {
+    "action": "toggleInspectionMode",
+    "payload": {},
+    "timestamp": "2024-06-13T22:16:04.940Z"
+  },
+  {
+    "action": "toggleInspectionMode",
+    "payload": {},
+    "timestamp": "2024-06-13T22:16:12.596Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_2vpu2mynr"
+      ],
+      "operation": "Toggle",
       "viewType": "Grid"
     },
-    "timestamp": "2024-06-07T10:32:06.588Z"
+    "timestamp": "2024-06-13T22:16:14.354Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_o8085eb9g"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:16:15.952Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_hccrs1z50"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:16:17.167Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_iaozdecpt"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:16:18.413Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_l306vaqvu"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:16:57.942Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_l306vaqvu"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:16:58.381Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_l306vaqvu"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:16:58.787Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_l306vaqvu"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:16:59.177Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_l306vaqvu"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:16:59.627Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_l306vaqvu"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:17:00.047Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_l306vaqvu"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:17:00.505Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_l306vaqvu"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:17:06.851Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_l6bqzp3wm"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:17:39.464Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_nhbb76nee"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:17:40.317Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_3ohjtfael"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:18:45.173Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": true
+    },
+    "timestamp": "2024-06-13T22:18:49.820Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": false
+    },
+    "timestamp": "2024-06-13T22:18:49.829Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": true
+    },
+    "timestamp": "2024-06-13T22:18:49.837Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": false
+    },
+    "timestamp": "2024-06-13T22:18:49.873Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": true
+    },
+    "timestamp": "2024-06-13T22:18:50.577Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_u4qew1f6o"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:18:51.038Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": false
+    },
+    "timestamp": "2024-06-13T22:18:51.907Z"
+  },
+  {
+    "action": "reverseUpdate",
+    "payload": {},
+    "timestamp": "2024-06-13T22:18:58.047Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": true
+    },
+    "timestamp": "2024-06-13T22:19:00.913Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": false
+    },
+    "timestamp": "2024-06-13T22:19:17.784Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": true
+    },
+    "timestamp": "2024-06-13T22:19:20.049Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": false
+    },
+    "timestamp": "2024-06-13T22:19:27.193Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_7krcdwlkq"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:31.586Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_zf63sykkm",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_s450hf6he",
+        "_hccrs1z50",
+        "_alqzj9h3q",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:32.161Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_u4qew1f6o",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_nzurxsa9g",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_lf2qj0os0"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:32.729Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_euk6m3529",
+        "_rg6x7vhby",
+        "_t86mh0rgt",
+        "_58rut07dz",
+        "_g4rar8bpr",
+        "_twqvcxvnm",
+        "_3ohjtfael",
+        "_bbmd3a1kj"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:33.327Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_7krcdwlkq"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:33.994Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_zf63sykkm",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_s450hf6he",
+        "_hccrs1z50",
+        "_alqzj9h3q",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:40.138Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_u4qew1f6o",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_nzurxsa9g",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_lf2qj0os0"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:45.186Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_euk6m3529",
+        "_rg6x7vhby",
+        "_t86mh0rgt",
+        "_58rut07dz",
+        "_g4rar8bpr",
+        "_twqvcxvnm",
+        "_3ohjtfael",
+        "_bbmd3a1kj"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:45.766Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_u4qew1f6o",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_nzurxsa9g",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_lf2qj0os0"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:46.842Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_euk6m3529",
+        "_rg6x7vhby",
+        "_t86mh0rgt",
+        "_58rut07dz",
+        "_g4rar8bpr",
+        "_twqvcxvnm",
+        "_3ohjtfael",
+        "_bbmd3a1kj"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:47.231Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_u4qew1f6o",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_nzurxsa9g",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_lf2qj0os0"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:47.665Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_euk6m3529",
+        "_rg6x7vhby",
+        "_t86mh0rgt",
+        "_58rut07dz",
+        "_g4rar8bpr",
+        "_twqvcxvnm",
+        "_3ohjtfael",
+        "_bbmd3a1kj"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:48.078Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_u4qew1f6o",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_nzurxsa9g",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_lf2qj0os0"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:51.044Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_7krcdwlkq"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:53.228Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_zf63sykkm",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_s450hf6he",
+        "_hccrs1z50",
+        "_alqzj9h3q",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:53.735Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_euk6m3529",
+        "_rg6x7vhby",
+        "_t86mh0rgt",
+        "_58rut07dz",
+        "_g4rar8bpr",
+        "_twqvcxvnm",
+        "_3ohjtfael",
+        "_bbmd3a1kj"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:54.468Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_u4qew1f6o",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_nzurxsa9g",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_lf2qj0os0"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:21:55.157Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_zf63sykkm",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_s450hf6he",
+        "_hccrs1z50",
+        "_alqzj9h3q",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Add",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:02.371Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_7krcdwlkq"
+      ],
+      "operation": "Add",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:02.757Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_euk6m3529",
+        "_rg6x7vhby",
+        "_t86mh0rgt",
+        "_58rut07dz",
+        "_g4rar8bpr",
+        "_twqvcxvnm",
+        "_3ohjtfael",
+        "_bbmd3a1kj"
+      ],
+      "operation": "Add",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:03.170Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_u4qew1f6o",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_nzurxsa9g",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_lf2qj0os0"
+      ],
+      "operation": "Add",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:03.606Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_7krcdwlkq"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:05.856Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_euk6m3529",
+        "_rg6x7vhby",
+        "_t86mh0rgt",
+        "_58rut07dz",
+        "_g4rar8bpr",
+        "_twqvcxvnm",
+        "_3ohjtfael",
+        "_bbmd3a1kj"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:13.102Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_7krcdwlkq"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:14.098Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_zf63sykkm",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_s450hf6he",
+        "_hccrs1z50",
+        "_alqzj9h3q",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:14.962Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_zf63sykkm",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_s450hf6he",
+        "_hccrs1z50",
+        "_alqzj9h3q",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:29.071Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_u4qew1f6o",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_nzurxsa9g",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_lf2qj0os0"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:29.902Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_euk6m3529",
+        "_rg6x7vhby",
+        "_t86mh0rgt",
+        "_58rut07dz",
+        "_g4rar8bpr",
+        "_twqvcxvnm",
+        "_3ohjtfael",
+        "_bbmd3a1kj"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:30.648Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_7krcdwlkq"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:31.286Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_zf63sykkm",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_s450hf6he",
+        "_hccrs1z50",
+        "_alqzj9h3q",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:22:32.100Z"
+  },
+  {
+    "action": "resetData",
+    "payload": {},
+    "timestamp": "2024-06-13T22:23:08.247Z"
+  },
+  {
+    "action": "clearInspection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:23:09.418Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T22:23:10.970Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_rg6x7vhby"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:24:06.502Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_l306vaqvu"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:24:30.465Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_zqcajzjb6"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:24:35.603Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_fjz5fhgkd"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:24:39.650Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_yive4c1xb"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:24:53.109Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_h65bc4k33"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:24:59.768Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_xrsgu0ioh"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:25:07.555Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_nhbb76nee"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:25:09.863Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_tspppmmjz"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:25:11.866Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20885",
+      "selection": [
+        "_8xyh0yzxw"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T22:25:12.715Z"
+  },
+  {
+    "action": "toggleInspectionMode",
+    "payload": {},
+    "timestamp": "2024-06-13T22:25:30.397Z"
+  },
+  {
+    "action": "toggleInspectionMode",
+    "payload": {},
+    "timestamp": "2024-06-13T22:25:38.939Z"
+  },
+  {
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:25:45.541Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_nhbb76nee",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_fjz5fhgkd",
+        "_zqcajzjb6",
+        "_yive4c1xb"
+      ],
+      "operation": "Add",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:27:06.107Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_nhbb76nee",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_fjz5fhgkd",
+        "_zqcajzjb6",
+        "_yive4c1xb"
+      ],
+      "operation": "Add",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:27:42.815Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_nhbb76nee",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_fjz5fhgkd",
+        "_zqcajzjb6",
+        "_yive4c1xb"
+      ],
+      "operation": "Add",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:27:47.096Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_nhbb76nee",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_fjz5fhgkd",
+        "_zqcajzjb6",
+        "_yive4c1xb"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:28:23.367Z"
+  },
+  {
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:28:26.237Z"
+  },
+  {
+    "action": "clearInspection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:28:36.579Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20854",
+      "selection": [],
+      "operation": "Replace",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T22:28:59.020Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20854",
+      "selection": [
+        "_nhbb76nee",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_zqcajzjb6"
+      ],
+      "operation": "Replace",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T22:29:10.189Z"
+  },
+  {
+    "action": "createSet",
+    "payload": {},
+    "timestamp": "2024-06-13T22:29:20.433Z"
+  },
+  {
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:29:37.863Z"
+  },
+  {
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:29:40.833Z"
+  },
+  {
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:29:42.872Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        "_5252dqxn6",
+        "_u4qew1f6o",
+        "_l6bqzp3wm",
+        "_8xyh0yzxw",
+        "_huuf09fqk",
+        "_7krcdwlkq",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_euk6m3529",
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_zf63sykkm",
+        "_j0c5vnm18",
+        "_rg6x7vhby",
+        "_1iecz7ang",
+        "_s450hf6he",
+        "_hccrs1z50",
+        "_nzurxsa9g",
+        "_alqzj9h3q",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_t86mh0rgt",
+        "_iaozdecpt",
+        "_58rut07dz",
+        "_h65bc4k33",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_g4rar8bpr",
+        "_lf2qj0os0",
+        "_twqvcxvnm",
+        "_0z0uuppcq",
+        "_1opmlfimb",
+        null,
+        "_nhbb76nee",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_zqcajzjb6"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:30:42.020Z"
+  },
+  {
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:30:43.370Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_u4qew1f6o",
+        "_l6bqzp3wm",
+        "_7krcdwlkq",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_nzurxsa9g",
+        "_alqzj9h3q",
+        "_iaozdecpt",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:32:48.310Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_u4qew1f6o",
+        "_l6bqzp3wm",
+        "_7krcdwlkq",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_nzurxsa9g",
+        "_alqzj9h3q",
+        "_iaozdecpt",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:33:17.421Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_u4qew1f6o",
+        "_l6bqzp3wm",
+        "_7krcdwlkq",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_nzurxsa9g",
+        "_alqzj9h3q",
+        "_iaozdecpt",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:33:17.992Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_u4qew1f6o",
+        "_l6bqzp3wm",
+        "_7krcdwlkq",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_nzurxsa9g",
+        "_alqzj9h3q",
+        "_iaozdecpt",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:33:18.637Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_l6bqzp3wm",
+        "_7krcdwlkq",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_nzurxsa9g",
+        "_alqzj9h3q",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:33:22.852Z"
+  },
+  {
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:33:26.491Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:33:45.094Z"
+  },
+  {
+    "action": "toggleInspectionMode",
+    "payload": {},
+    "timestamp": "2024-06-13T22:33:58.000Z"
+  },
+  {
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:35:09.702Z"
+  },
+  {
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:35:11.170Z"
+  },
+  {
+    "action": "toggleInspectionMode",
+    "payload": {},
+    "timestamp": "2024-06-13T22:35:13.525Z"
+  },
+  {
+    "action": "clearInspection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:35:15.748Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        "_u4qew1f6o",
+        "_l6bqzp3wm",
+        "_7krcdwlkq",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_nzurxsa9g",
+        "_alqzj9h3q",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_bbmd3a1kj",
+        "_1opmlfimb",
+        null
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:35:22.313Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        "_8xyh0yzxw",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        null,
+        "_u4qew1f6o",
+        "_l6bqzp3wm",
+        "_7krcdwlkq",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_nzurxsa9g",
+        "_alqzj9h3q",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:35:28.206Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_lf2qj0os0",
+        null,
+        "_bbmd3a1kj",
+        "_8xyh0yzxw",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_u4qew1f6o",
+        "_l6bqzp3wm",
+        "_7krcdwlkq",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_nzurxsa9g",
+        "_alqzj9h3q",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:35:30.861Z"
+  },
+  {
+    "action": "createSet",
+    "payload": {},
+    "timestamp": "2024-06-13T22:35:39.203Z"
+  },
+  {
+    "action": "createSet",
+    "payload": {},
+    "timestamp": "2024-06-13T22:36:32.948Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20864",
+      "selection": [
+        null,
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_lf2qj0os0",
+        "_bbmd3a1kj",
+        "_8xyh0yzxw",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_u4qew1f6o",
+        "_l6bqzp3wm",
+        "_7krcdwlkq",
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_nzurxsa9g",
+        "_alqzj9h3q",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:36:46.693Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T22:37:15.812Z"
+  },
+  {
+    "action": "restoreSet",
+    "payload": {
+      "setID": "Set #1",
+      "operation": "Replace"
+    },
+    "timestamp": "2024-06-13T22:38:54.227Z"
+  },
+  {
+    "action": "resetData",
+    "payload": {},
+    "timestamp": "2024-06-13T22:39:33.592Z"
+  },
+  {
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:39:42.648Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": true
+    },
+    "timestamp": "2024-06-13T22:39:54.500Z"
+  },
+  {
+    "action": "updateShiftKey",
+    "payload": {
+      "value": false
+    },
+    "timestamp": "2024-06-13T22:39:57.957Z"
+  },
+  {
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T22:40:19.231Z"
+  },
+  {
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:40:19.744Z"
+  },
+  {
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:40:20.338Z"
+  },
+  {
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:40:20.780Z"
+  },
+  {
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T22:40:21.393Z"
+  },
+  {
+    "action": "toggleInspectionMode",
+    "payload": {},
+    "timestamp": "2024-06-13T22:41:03.807Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_euk6m3529",
+        "_zf63sykkm",
+        "_rg6x7vhby",
+        "_s450hf6he",
+        "_alqzj9h3q",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_t86mh0rgt",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_58rut07dz",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_g4rar8bpr",
+        "_lf2qj0os0",
+        "_twqvcxvnm"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:25.793Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_7krcdwlkq"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:26.750Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_hccrs1z50",
+        "_nzurxsa9g",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:27.890Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_u4qew1f6o",
+        "_3ohjtfael",
+        "_bbmd3a1kj"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:28.618Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_7krcdwlkq"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:29.256Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_euk6m3529",
+        "_zf63sykkm",
+        "_rg6x7vhby",
+        "_s450hf6he",
+        "_alqzj9h3q",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_t86mh0rgt",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_58rut07dz",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_g4rar8bpr",
+        "_lf2qj0os0",
+        "_twqvcxvnm"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:31.912Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_hccrs1z50",
+        "_nzurxsa9g",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:32.736Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_7krcdwlkq"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:34.648Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_u4qew1f6o",
+        "_3ohjtfael",
+        "_bbmd3a1kj"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:35.803Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_euk6m3529",
+        "_zf63sykkm",
+        "_rg6x7vhby",
+        "_s450hf6he",
+        "_alqzj9h3q",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_t86mh0rgt",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_58rut07dz",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_g4rar8bpr",
+        "_lf2qj0os0",
+        "_twqvcxvnm"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:41.804Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_hccrs1z50",
+        "_nzurxsa9g",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:43.551Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_hccrs1z50",
+        "_nzurxsa9g",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:52.508Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_u4qew1f6o",
+        "_3ohjtfael",
+        "_bbmd3a1kj"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:41:54.787Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_5252dqxn6",
+        "_l6bqzp3wm",
+        "_nhbb76nee",
+        "_8xyh0yzxw",
+        "_l306vaqvu",
+        "_tspppmmjz",
+        "_huuf09fqk",
+        "_euk6m3529",
+        "_zf63sykkm",
+        "_rg6x7vhby",
+        "_s450hf6he",
+        "_alqzj9h3q",
+        "_1icqxgje2",
+        "_xc5avyar1",
+        "_t86mh0rgt",
+        "_zqcajzjb6",
+        "_iaozdecpt",
+        "_58rut07dz",
+        "_fyir89rm9",
+        "_ofd2bista",
+        "_qn1kqkaz1",
+        "_yive4c1xb",
+        "_g4rar8bpr",
+        "_lf2qj0os0",
+        "_twqvcxvnm"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:42:37.734Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id20913",
+      "selection": [
+        "_4lhcrv2d3",
+        "_fjz5fhgkd",
+        "_5s8wfqbz3",
+        "_2vpu2mynr",
+        "_o8085eb9g",
+        "_j0c5vnm18",
+        "_1iecz7ang",
+        "_hccrs1z50",
+        "_nzurxsa9g",
+        "_gfdj5b1s4",
+        "_3o985h8ml",
+        "_hsrojsn74",
+        "_xrsgu0ioh",
+        "_f7dchfu56",
+        "_h65bc4k33",
+        "_0z0uuppcq",
+        "_1opmlfimb"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T22:42:43.376Z"
+  },
+  {
+    "action": "createMarkingEntry",
+    "payload": {},
+    "timestamp": "2024-06-13T22:43:40.266Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_ujtcccrcg",
+        "_w1meq424c",
+        "_7up1qqyc2",
+        "_sq0zrphuo",
+        "_zhpc6bt60",
+        "_iuluu0zq8",
+        "_5rhqk1vm4",
+        "_hd3qbkgkh",
+        "_iqj3gdhwx",
+        "_g5do4na5l",
+        "_oavzq5z76",
+        "_ul6cijxqf",
+        "_id3cfm999",
+        "_p1yy6zshf",
+        "_5cyn9y3ce",
+        "_8vbcsgoj0",
+        "_wvj4cn168",
+        "_i88s7vpf7",
+        "_qscp6t1mf",
+        "_9xuw63ho9",
+        "_p9afleusl",
+        "_o8offav05",
+        "_pto18ihys",
+        "_f9d36ryj0",
+        "_455s6qplu",
+        "_y33pc1em4",
+        "_mjmc9ajr4",
+        "_ich3awygb",
+        "_8x0r3b31p",
+        "_w2ucz5jxz",
+        "_1wqikehyp",
+        "_v4qt7n0s9"
+      ],
+      "operation": "Replace",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T22:52:45.584Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        null,
+        "_ujtcccrcg",
+        "_w1meq424c",
+        "_sq0zrphuo",
+        "_zhpc6bt60",
+        "_hd3qbkgkh",
+        "_g5do4na5l",
+        "_oavzq5z76",
+        "_ul6cijxqf",
+        "_id3cfm999",
+        "_p1yy6zshf",
+        "_5cyn9y3ce",
+        "_8vbcsgoj0",
+        "_wvj4cn168",
+        "_i88s7vpf7",
+        "_qscp6t1mf",
+        "_p9afleusl",
+        "_o8offav05",
+        "_pto18ihys",
+        "_f9d36ryj0",
+        "_455s6qplu",
+        "_y33pc1em4",
+        "_mjmc9ajr4",
+        "_ich3awygb",
+        "_w2ucz5jxz",
+        "_1wqikehyp",
+        "_v4qt7n0s9"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:53:14.898Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        null,
+        "_ujtcccrcg",
+        "_w1meq424c",
+        "_sq0zrphuo",
+        "_zhpc6bt60",
+        "_hd3qbkgkh",
+        "_g5do4na5l",
+        "_oavzq5z76",
+        "_ul6cijxqf",
+        "_id3cfm999",
+        "_p1yy6zshf",
+        "_5cyn9y3ce",
+        "_8vbcsgoj0",
+        "_wvj4cn168",
+        "_i88s7vpf7",
+        "_qscp6t1mf",
+        "_p9afleusl",
+        "_o8offav05",
+        "_pto18ihys",
+        "_f9d36ryj0",
+        "_455s6qplu",
+        "_y33pc1em4",
+        "_mjmc9ajr4",
+        "_ich3awygb",
+        "_w2ucz5jxz",
+        "_1wqikehyp",
+        "_v4qt7n0s9"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:53:19.238Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        null,
+        "_7up1qqyc2",
+        "_5rhqk1vm4",
+        "_9xuw63ho9",
+        "_ujtcccrcg",
+        "_w1meq424c",
+        "_sq0zrphuo",
+        "_zhpc6bt60",
+        "_hd3qbkgkh",
+        "_g5do4na5l",
+        "_oavzq5z76",
+        "_ul6cijxqf",
+        "_id3cfm999",
+        "_p1yy6zshf",
+        "_5cyn9y3ce",
+        "_8vbcsgoj0",
+        "_wvj4cn168",
+        "_i88s7vpf7",
+        "_qscp6t1mf",
+        "_p9afleusl",
+        "_o8offav05",
+        "_pto18ihys",
+        "_f9d36ryj0",
+        "_455s6qplu",
+        "_y33pc1em4",
+        "_mjmc9ajr4",
+        "_ich3awygb",
+        "_w2ucz5jxz",
+        "_1wqikehyp",
+        "_v4qt7n0s9"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:53:22.344Z"
+  },
+  {
+    "action": "toggleInspectionMode",
+    "payload": {},
+    "timestamp": "2024-06-13T22:54:03.578Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T22:56:16.775Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        null
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T22:57:07.667Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_ujtcccrcg",
+        "_fen3pypri",
+        "_6xchxdol6",
+        "_h2694oht6",
+        "_sq0zrphuo",
+        "_htvjlvyha",
+        "_v5dfd4hwe",
+        "_zhpc6bt60",
+        "_wpui90coj",
+        "_hd3qbkgkh",
+        "_iqj3gdhwx",
+        "_g5do4na5l",
+        "_b0onfk61g",
+        "_ih6hlmz42",
+        "_1d5hn6z7m",
+        "_oavzq5z76",
+        "_vh1m65a4l",
+        "_id3cfm999",
+        "_p1yy6zshf",
+        "_i88s7vpf7",
+        "_16451cj7q",
+        "_jfyob43aw",
+        "_yh6e59pb9",
+        "_b6vyrmcn1",
+        "_4o4bn51w6",
+        "_tg0l7yp1s",
+        "_g1e21wyoo",
+        "_5twndkr71",
+        "_z1pb09h4h",
+        "_1v86wh85s",
+        "_bkyeel5eh",
+        "_uqpfcq6am",
+        "_3nez5gcx2",
+        "_qebnoqo55",
+        "_vk4twwzw8",
+        "_fvmfe2snj",
+        "_fm7z5mndm",
+        "_164s2stif",
+        "_buv1e34z7",
+        "_w2ucz5jxz",
+        "_md7pghaxg",
+        "_qh7xkerky",
+        "_giwfemhw0",
+        "_c03y16y1c",
+        "_i531pidxu",
+        "_vg05yb6q8",
+        "_l6m8ijx2q",
+        "_fsye7o788",
+        "_l7z34bmd4"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:00:12.132Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_89jdct6d1",
+        "_w9tc0fo3f",
+        "_qzyd9w79y",
+        "_arifhczne",
+        "_306mbft96",
+        "_f1tvnjzby",
+        "_o8offav05",
+        "_pto18ihys",
+        "_y33pc1em4",
+        "_mjmc9ajr4",
+        "_ich3awygb",
+        "_fiubg1x6r",
+        "_5cpjuzqy5",
+        "_mm3nvf1tt",
+        "_q7h5x1331",
+        "_ttdves3io",
+        "_bcja5uxui",
+        "_8prls7vbt",
+        "_m4fh35tcd",
+        "_gpgs6y86n",
+        "_c810yqgyb",
+        "_2rng88i2e"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:01:03.464Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T23:01:18.977Z"
+  },
+  {
+    "action": "clearInspection",
+    "payload": {},
+    "timestamp": "2024-06-13T23:01:30.670Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_k0vks3hc3",
+        "_0yf9loj0s",
+        "_w4mji4z5l",
+        "_b72xybg19",
+        "_5n7rsvqxx",
+        "_b2h4hs5fs",
+        "_o302lizgi",
+        "_j8va0yf6m",
+        "_nmpjed1qu",
+        "_1243b82gu",
+        "_v61e5mli9",
+        "_f6g3oqlvq"
+      ],
+      "operation": "Replace",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:01:42.848Z"
+  },
+  {
+    "action": "clearInspection",
+    "payload": {},
+    "timestamp": "2024-06-13T23:01:50.508Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T23:01:52.288Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_k0vks3hc3",
+        "_0yf9loj0s",
+        "_w4mji4z5l",
+        "_b72xybg19",
+        "_b2h4hs5fs",
+        "_o302lizgi",
+        "_nmpjed1qu",
+        "_1243b82gu",
+        "_ynf0wu2o2",
+        "_ohwcd5yap",
+        "_v61e5mli9",
+        "_f6g3oqlvq"
+      ],
+      "operation": "Replace",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:02:03.969Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T23:03:14.044Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_6xchxdol6",
+        "_iuluu0zq8",
+        "_5rhqk1vm4",
+        "_8vbcsgoj0"
+      ],
+      "operation": "Add",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:04:08.716Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_kfs8h6s45",
+        "_ih6hlmz42",
+        "_yaub8iaus",
+        "_tvdxb2m67",
+        "_tasjt7xk5",
+        "_im5m4g3g0",
+        "_mm2os72k4",
+        "_b72xybg19",
+        "_qebnoqo55",
+        "_cbhct4xt7",
+        "_o302lizgi",
+        "_fm7z5mndm",
+        "_164s2stif",
+        "_zopkm2md5",
+        "_fndwtd422",
+        "_giwfemhw0",
+        "_kxkooykbq",
+        "_lcprkwiqm",
+        "_gpgs6y86n"
+      ],
+      "operation": "Add",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:04:15.949Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T23:04:41.617Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_kfs8h6s45",
+        "_yaub8iaus",
+        "_tasjt7xk5",
+        "_im5m4g3g0",
+        "_mm2os72k4",
+        "_qebnoqo55",
+        "_cbhct4xt7",
+        "_o302lizgi",
+        "_fm7z5mndm",
+        "_164s2stif",
+        "_zopkm2md5",
+        "_fndwtd422",
+        "_giwfemhw0",
+        "_kxkooykbq",
+        "_lcprkwiqm",
+        "_gpgs6y86n"
+      ],
+      "operation": "Add",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:04:50.112Z"
+  },
+  {
+    "action": "createSet",
+    "payload": {},
+    "timestamp": "2024-06-13T23:05:05.650Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T23:06:00.580Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        "_zx2eaebe2",
+        "_tasjt7xk5",
+        "_jt7234wzo",
+        "_zilhufsrs",
+        "_tkqs0mwv4",
+        "_ysrbap80g",
+        null
+      ],
+      "operation": "Add",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T23:07:35.265Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        "_ynf0wu2o2"
+      ],
+      "operation": "Add",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T23:08:08.718Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        "_ynf0wu2o2"
+      ],
+      "operation": "Add",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T23:08:15.200Z"
+  },
+  {
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T23:08:20.689Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        null,
+        "_ynf0wu2o2"
+      ],
+      "operation": "Subtract",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T23:08:45.128Z"
+  },
+  {
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T23:08:51.319Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30769",
+      "selection": [
+        "_tasjt7xk5"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T23:11:36.847Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30769",
+      "selection": [
+        "_ysrbap80g"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T23:11:37.940Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30769",
+      "selection": [
+        "_jt7234wzo"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T23:11:41.405Z"
+  },
+  {
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T23:11:45.204Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [],
+      "operation": "Subtract",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:12:17.759Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [],
+      "operation": "Subtract",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:12:29.031Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_tkqs0mwv4"
+      ],
+      "operation": "Subtract",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:12:31.490Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_zx2eaebe2"
+      ],
+      "operation": "Subtract",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:12:48.202Z"
+  },
+  {
+    "action": "reverseUpdate",
+    "payload": {},
+    "timestamp": "2024-06-13T23:12:51.294Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_zilhufsrs"
+      ],
+      "operation": "Subtract",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:12:58.395Z"
+  },
+  {
+    "action": "reverseUpdate",
+    "payload": {},
+    "timestamp": "2024-06-13T23:13:09.501Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_zilhufsrs"
+      ],
+      "operation": "Subtract",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:14:05.990Z"
+  },
+  {
+    "action": "createSet",
+    "payload": {},
+    "timestamp": "2024-06-13T23:14:22.966Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30769",
+      "selection": [
+        "_zilhufsrs"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T23:14:28.268Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30769",
+      "selection": [
+        "_tkqs0mwv4"
+      ],
+      "operation": "Toggle",
+      "viewType": "Grid"
+    },
+    "timestamp": "2024-06-13T23:14:28.800Z"
+  },
+  {
+    "action": "saveSelectedToFile",
+    "payload": {},
+    "timestamp": "2024-06-13T23:14:29.692Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T23:21:14.249Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T23:21:17.854Z"
+  },
+  {
+    "action": "resetData",
+    "payload": {},
+    "timestamp": "2024-06-13T23:21:20.321Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        "_zx2eaebe2",
+        "_zilhufsrs",
+        null
+      ],
+      "operation": "Subtract",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T23:23:09.339Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_cca7zowl8",
+        "_7zn1ntaep",
+        "_ul6cijxqf",
+        "_zg6baww53",
+        "_yaub8iaus",
+        "_zx2eaebe2",
+        "_tasjt7xk5",
+        "_q4m0yetnx",
+        "_im5m4g3g0",
+        "_mm2os72k4",
+        "_ca2uq2l7q",
+        "_k0txu2jeu",
+        "_jt7234wzo",
+        "_vebldfsja",
+        "_zilhufsrs",
+        "_7lyzvug2s",
+        "_p48nhb8hu",
+        "_jmqwg79bh",
+        "_tkqs0mwv4",
+        "_cbhct4xt7",
+        "_a2chu10zp",
+        "_a7e2txv9o",
+        "_itric5748",
+        "_bcja5uxui",
+        "_1wqikehyp",
+        "_ysrbap80g",
+        "_gxo2pb62f",
+        "_05h3635oz",
+        "_5rdm0nwxh",
+        "_wt9ufvfcb",
+        "_kxkooykbq",
+        "_lcprkwiqm",
+        "_xrialzcmy",
+        "_zp4ctcw1k",
+        "_sm3kadgd3",
+        "_3r8rc7k05"
+      ],
+      "operation": "Subtract",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:23:14.908Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_cca7zowl8",
+        "_7zn1ntaep",
+        "_ul6cijxqf",
+        "_zg6baww53",
+        "_yaub8iaus",
+        "_zx2eaebe2",
+        "_tasjt7xk5",
+        "_q4m0yetnx",
+        "_im5m4g3g0",
+        "_mm2os72k4",
+        "_ca2uq2l7q",
+        "_k0txu2jeu",
+        "_jt7234wzo",
+        "_vebldfsja",
+        "_zilhufsrs",
+        "_7lyzvug2s",
+        "_p48nhb8hu",
+        "_jmqwg79bh",
+        "_tkqs0mwv4",
+        "_cbhct4xt7",
+        "_a2chu10zp",
+        "_a7e2txv9o",
+        "_itric5748",
+        "_bcja5uxui",
+        "_1wqikehyp",
+        "_ysrbap80g",
+        "_gxo2pb62f",
+        "_05h3635oz",
+        "_5rdm0nwxh",
+        "_wt9ufvfcb",
+        "_kxkooykbq",
+        "_lcprkwiqm",
+        "_xrialzcmy",
+        "_zp4ctcw1k",
+        "_sm3kadgd3",
+        "_3r8rc7k05"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:23:17.738Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_kfs8h6s45",
+        "_h2694oht6",
+        "_pz2jtsli5",
+        "_zhpc6bt60",
+        "_wpui90coj",
+        "_89jdct6d1",
+        "_w9tc0fo3f",
+        "_g5do4na5l",
+        "_fy6uux23q",
+        "_439ol37in",
+        "_oavzq5z76",
+        "_lfhvp6nun",
+        "_tslu3k8hk",
+        "_vh1m65a4l",
+        "_vlqs99x3c",
+        "_0bgnn6ahh",
+        "_p1yy6zshf",
+        "_5cyn9y3ce",
+        "_qzyd9w79y",
+        "_wvj4cn168",
+        "_qscp6t1mf",
+        "_v8i0bd0sp",
+        "_l8g62g5do",
+        "_jfyob43aw",
+        "_arifhczne",
+        "_tg4lw9gig",
+        "_yh6e59pb9",
+        "_p9afleusl",
+        "_b6vyrmcn1",
+        "_306mbft96",
+        "_xbcszmwkj",
+        "_b3ideetpr",
+        "_ataxelwxi",
+        "_xr533bbc9",
+        "_n3benhiia",
+        "_ykoeywzdx",
+        "_f1tvnjzby",
+        "_xjz8mho05",
+        "_9qxwqd6ed",
+        "_o8offav05",
+        "_5twndkr71",
+        "_pto18ihys",
+        "_f9d36ryj0",
+        "_455s6qplu",
+        "_alu56qeg6",
+        "_y33pc1em4",
+        "_ljhpmmjr1",
+        "_mjmc9ajr4",
+        "_ich3awygb",
+        "_fiubg1x6r",
+        "_3nez5gcx2",
+        "_5cpjuzqy5",
+        "_mm3nvf1tt",
+        "_vk4twwzw8",
+        "_q7h5x1331",
+        "_fm7z5mndm",
+        "_ttdves3io",
+        "_1fgvwgm40",
+        "_164s2stif",
+        "_buv1e34z7",
+        "_8x0r3b31p",
+        "_w2ucz5jxz",
+        "_md7pghaxg",
+        "_qh7xkerky",
+        "_l9ojcrhbw",
+        "_fndwtd422",
+        "_giwfemhw0",
+        "_8prls7vbt",
+        "_i531pidxu",
+        "_c05vacm5f",
+        "_vg05yb6q8",
+        "_itn3f120h",
+        "_m4fh35tcd",
+        "_l4ilshp6z",
+        "_6tg0nekml",
+        "_l6m8ijx2q",
+        "_gpgs6y86n",
+        "_c810yqgyb",
+        "_2rng88i2e",
+        "_ms34rk2bq",
+        "_qrgeqzt7l",
+        "_och3o7xxn"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:23:18.488Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_ujtcccrcg",
+        "_w1meq424c",
+        "_e22stg1g3",
+        "_fen3pypri",
+        "_6xchxdol6",
+        "_7up1qqyc2",
+        "_sq0zrphuo",
+        "_htvjlvyha",
+        "_v5dfd4hwe",
+        "_3obzlahcj",
+        "_iuluu0zq8",
+        "_5rhqk1vm4",
+        "_mnvplwsh5",
+        "_hd3qbkgkh",
+        "_iqj3gdhwx",
+        "_zml300abg",
+        "_yop9j98ui",
+        "_b0onfk61g",
+        "_ieptraota",
+        "_ih6hlmz42",
+        "_1d5hn6z7m",
+        "_tok0w7xqg",
+        "_lmgwuarey",
+        "_ngqfqw17t",
+        "_w9flvcvql",
+        "_61fgi6g4n",
+        "_clksxaltv",
+        "_z8q297ki8",
+        "_id3cfm999",
+        "_8vbcsgoj0",
+        "_i88s7vpf7",
+        "_tvdxb2m67",
+        "_16451cj7q",
+        "_9xuw63ho9",
+        "_4o4bn51w6",
+        "_qo3yzj95r",
+        "_tg0l7yp1s",
+        "_g1e21wyoo",
+        "_1xtydro7m",
+        "_6kg6p6m4f",
+        "_2zl6w8jeb",
+        "_v3pnp2bv2",
+        "_58dgosd9x",
+        "_h2j1hasfn",
+        "_2s5arn84x",
+        "_tqsaqqzvs",
+        "_z1pb09h4h",
+        "_1v86wh85s",
+        "_giv1wa5os",
+        "_bkyeel5eh",
+        "_rsfc61wo4",
+        "_uqpfcq6am",
+        "_qebnoqo55",
+        "_fvmfe2snj",
+        "_ty6saam7j",
+        "_x5maxci0b",
+        "_njnvp1nd4",
+        "_589uqi04w",
+        "_c03y16y1c",
+        "_v4qt7n0s9",
+        "_mq7h5o9ve",
+        "_8o2hs7ift",
+        "_fsye7o788",
+        "_6drfwmg0k",
+        "_guwsqhcrg",
+        "_l7z34bmd4"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:23:19.141Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_k0vks3hc3",
+        "_0yf9loj0s",
+        "_w4mji4z5l",
+        "_b72xybg19",
+        "_5n7rsvqxx",
+        "_b2h4hs5fs",
+        "_o302lizgi",
+        "_j8va0yf6m",
+        "_nmpjed1qu",
+        "_zopkm2md5",
+        "_ir7ni1fwq",
+        "_1243b82gu",
+        "_ynf0wu2o2",
+        "_ohwcd5yap",
+        "_v61e5mli9",
+        "_f6g3oqlvq"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:23:19.906Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        "_ynf0wu2o2"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T23:23:29.062Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        "_ynf0wu2o2"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T23:23:30.249Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        "_pz2jtsli5",
+        "_w9tc0fo3f",
+        "_ngqfqw17t",
+        "_zx2eaebe2",
+        "_p9afleusl",
+        "_g1e21wyoo",
+        "_5twndkr71",
+        "_pto18ihys",
+        "_f9d36ryj0",
+        "_58dgosd9x",
+        "_h2j1hasfn",
+        "_zilhufsrs",
+        "_k0vks3hc3",
+        "_b72xybg19",
+        "_nmpjed1qu",
+        "_zopkm2md5",
+        "_bcja5uxui",
+        "_ir7ni1fwq",
+        "_1243b82gu",
+        "_ysrbap80g",
+        "_589uqi04w",
+        "_ynf0wu2o2",
+        "_qrgeqzt7l"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T23:23:44.155Z"
+  },
+  {
+    "action": "zoomToSelection",
+    "payload": {},
+    "timestamp": "2024-06-13T23:24:03.009Z"
+  },
+  {
+    "action": "reverseUpdate",
+    "payload": {},
+    "timestamp": "2024-06-13T23:24:23.685Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30748",
+      "selection": [
+        "_pz2jtsli5",
+        "_w9tc0fo3f",
+        "_zx2eaebe2",
+        "_p9afleusl",
+        "_g1e21wyoo",
+        "_5twndkr71",
+        "_pto18ihys",
+        "_f9d36ryj0",
+        "_58dgosd9x",
+        "_h2j1hasfn",
+        "_zilhufsrs",
+        "_k0vks3hc3",
+        "_b72xybg19",
+        "_nmpjed1qu",
+        "_zopkm2md5",
+        "_bcja5uxui",
+        "_ir7ni1fwq",
+        "_1243b82gu",
+        "_ysrbap80g",
+        "_589uqi04w",
+        "_qrgeqzt7l"
+      ],
+      "operation": "Replace",
+      "viewType": "ScatterPlot"
+    },
+    "timestamp": "2024-06-13T23:24:31.374Z"
+  },
+  {
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T23:24:38.102Z"
+  },
+  {
+    "action": "undoDataTransformation",
+    "payload": {},
+    "timestamp": "2024-06-13T23:34:27.788Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T23:34:31.295Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T23:34:31.972Z"
+  },
+  {
+    "action": "resetAllMarkings",
+    "payload": {},
+    "timestamp": "2024-06-13T23:34:32.455Z"
+  },
+  {
+    "action": "resetData",
+    "payload": {},
+    "timestamp": "2024-06-13T23:34:36.523Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_6xchxdol6",
+        "_iuluu0zq8",
+        "_5rhqk1vm4"
+      ],
+      "operation": "Add",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:34:52.637Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30738",
+      "selection": [
+        "_kfs8h6s45",
+        "_ih6hlmz42",
+        "_yaub8iaus",
+        "_tvdxb2m67",
+        "_tasjt7xk5",
+        "_im5m4g3g0",
+        "_mm2os72k4",
+        "_w4mji4z5l",
+        "_b72xybg19",
+        "_qebnoqo55",
+        "_cbhct4xt7",
+        "_o302lizgi",
+        "_fm7z5mndm",
+        "_j8va0yf6m",
+        "_nmpjed1qu",
+        "_164s2stif",
+        "_zopkm2md5",
+        "_fndwtd422",
+        "_1243b82gu",
+        "_giwfemhw0",
+        "_05h3635oz",
+        "_kxkooykbq",
+        "_lcprkwiqm",
+        "_gpgs6y86n",
+        "_3r8rc7k05"
+      ],
+      "operation": "Add",
+      "viewType": "ParallelCoordinatesPlot"
+    },
+    "timestamp": "2024-06-13T23:34:59.150Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_cca7zowl8",
+        "_ul6cijxqf",
+        "_yaub8iaus",
+        "_zx2eaebe2",
+        "_tasjt7xk5",
+        "_mm2os72k4",
+        "_jt7234wzo",
+        "_vebldfsja",
+        "_zilhufsrs",
+        "_p48nhb8hu",
+        "_jmqwg79bh",
+        "_5n7rsvqxx",
+        "_tkqs0mwv4",
+        "_cbhct4xt7",
+        "_o302lizgi",
+        "_j8va0yf6m",
+        "_a2chu10zp",
+        "_a7e2txv9o",
+        "_itric5748",
+        "_zopkm2md5",
+        "_1wqikehyp",
+        "_ir7ni1fwq",
+        "_ysrbap80g",
+        "_gxo2pb62f",
+        "_05h3635oz",
+        "_5rdm0nwxh",
+        "_wt9ufvfcb",
+        "_kxkooykbq",
+        "_xrialzcmy",
+        "_zp4ctcw1k",
+        "_f6g3oqlvq",
+        "_3r8rc7k05"
+      ],
+      "operation": "Add",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:40:25.999Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_k0vks3hc3",
+        "_0yf9loj0s",
+        "_w4mji4z5l",
+        "_b72xybg19",
+        "_b2h4hs5fs",
+        "_nmpjed1qu",
+        "_1243b82gu",
+        "_ynf0wu2o2",
+        "_ohwcd5yap",
+        "_v61e5mli9"
+      ],
+      "operation": "Add",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:40:26.835Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_cca7zowl8",
+        "_ul6cijxqf",
+        "_yaub8iaus",
+        "_zx2eaebe2",
+        "_tasjt7xk5",
+        "_mm2os72k4",
+        "_jt7234wzo",
+        "_vebldfsja",
+        "_zilhufsrs",
+        "_p48nhb8hu",
+        "_jmqwg79bh",
+        "_5n7rsvqxx",
+        "_tkqs0mwv4",
+        "_cbhct4xt7",
+        "_o302lizgi",
+        "_j8va0yf6m",
+        "_a2chu10zp",
+        "_a7e2txv9o",
+        "_itric5748",
+        "_zopkm2md5",
+        "_1wqikehyp",
+        "_ir7ni1fwq",
+        "_ysrbap80g",
+        "_gxo2pb62f",
+        "_05h3635oz",
+        "_5rdm0nwxh",
+        "_wt9ufvfcb",
+        "_kxkooykbq",
+        "_xrialzcmy",
+        "_zp4ctcw1k",
+        "_f6g3oqlvq",
+        "_3r8rc7k05"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:40:28.643Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_k0vks3hc3",
+        "_0yf9loj0s",
+        "_w4mji4z5l",
+        "_b72xybg19",
+        "_b2h4hs5fs",
+        "_nmpjed1qu",
+        "_1243b82gu",
+        "_ynf0wu2o2",
+        "_ohwcd5yap",
+        "_v61e5mli9"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:40:44.547Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_ujtcccrcg",
+        "_w1meq424c",
+        "_e22stg1g3",
+        "_fen3pypri",
+        "_6xchxdol6",
+        "_7up1qqyc2",
+        "_h2694oht6",
+        "_sq0zrphuo",
+        "_htvjlvyha",
+        "_pz2jtsli5",
+        "_v5dfd4hwe",
+        "_zhpc6bt60",
+        "_3obzlahcj",
+        "_iuluu0zq8",
+        "_5rhqk1vm4",
+        "_mnvplwsh5",
+        "_hd3qbkgkh",
+        "_iqj3gdhwx",
+        "_zml300abg",
+        "_yop9j98ui",
+        "_b0onfk61g",
+        "_ieptraota",
+        "_ih6hlmz42",
+        "_1d5hn6z7m",
+        "_tok0w7xqg",
+        "_tslu3k8hk",
+        "_vlqs99x3c",
+        "_lmgwuarey",
+        "_ngqfqw17t",
+        "_w9flvcvql",
+        "_61fgi6g4n",
+        "_clksxaltv",
+        "_0bgnn6ahh",
+        "_z8q297ki8",
+        "_id3cfm999",
+        "_p1yy6zshf",
+        "_5cyn9y3ce",
+        "_8vbcsgoj0",
+        "_wvj4cn168",
+        "_i88s7vpf7",
+        "_tvdxb2m67",
+        "_16451cj7q",
+        "_jfyob43aw",
+        "_tg4lw9gig",
+        "_yh6e59pb9",
+        "_9xuw63ho9",
+        "_4o4bn51w6",
+        "_qo3yzj95r",
+        "_b3ideetpr",
+        "_tg0l7yp1s",
+        "_xr533bbc9",
+        "_g1e21wyoo",
+        "_9qxwqd6ed",
+        "_1xtydro7m",
+        "_6kg6p6m4f",
+        "_2zl6w8jeb",
+        "_v3pnp2bv2",
+        "_58dgosd9x",
+        "_alu56qeg6",
+        "_h2j1hasfn",
+        "_2s5arn84x",
+        "_tqsaqqzvs",
+        "_z1pb09h4h",
+        "_1v86wh85s",
+        "_giv1wa5os",
+        "_bkyeel5eh",
+        "_rsfc61wo4",
+        "_uqpfcq6am",
+        "_3nez5gcx2",
+        "_qebnoqo55",
+        "_fvmfe2snj",
+        "_fm7z5mndm",
+        "_ty6saam7j",
+        "_164s2stif",
+        "_x5maxci0b",
+        "_buv1e34z7",
+        "_njnvp1nd4",
+        "_qh7xkerky",
+        "_fndwtd422",
+        "_589uqi04w",
+        "_c03y16y1c",
+        "_v4qt7n0s9",
+        "_vg05yb6q8",
+        "_mq7h5o9ve",
+        "_8o2hs7ift",
+        "_fsye7o788",
+        "_6drfwmg0k",
+        "_guwsqhcrg",
+        "_l7z34bmd4",
+        "_qrgeqzt7l"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:40:50.059Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_kfs8h6s45",
+        "_wpui90coj",
+        "_89jdct6d1",
+        "_w9tc0fo3f",
+        "_g5do4na5l",
+        "_fy6uux23q",
+        "_439ol37in",
+        "_oavzq5z76",
+        "_lfhvp6nun",
+        "_7zn1ntaep",
+        "_vh1m65a4l",
+        "_zg6baww53",
+        "_qzyd9w79y",
+        "_qscp6t1mf",
+        "_v8i0bd0sp",
+        "_l8g62g5do",
+        "_arifhczne",
+        "_q4m0yetnx",
+        "_p9afleusl",
+        "_b6vyrmcn1",
+        "_306mbft96",
+        "_im5m4g3g0",
+        "_xbcszmwkj",
+        "_ataxelwxi",
+        "_n3benhiia",
+        "_ykoeywzdx",
+        "_f1tvnjzby",
+        "_xjz8mho05",
+        "_o8offav05",
+        "_5twndkr71",
+        "_pto18ihys",
+        "_f9d36ryj0",
+        "_455s6qplu",
+        "_ca2uq2l7q",
+        "_k0txu2jeu",
+        "_y33pc1em4",
+        "_ljhpmmjr1",
+        "_mjmc9ajr4",
+        "_ich3awygb",
+        "_7lyzvug2s",
+        "_fiubg1x6r",
+        "_5cpjuzqy5",
+        "_mm3nvf1tt",
+        "_vk4twwzw8",
+        "_q7h5x1331",
+        "_ttdves3io",
+        "_1fgvwgm40",
+        "_bcja5uxui",
+        "_8x0r3b31p",
+        "_w2ucz5jxz",
+        "_md7pghaxg",
+        "_l9ojcrhbw",
+        "_giwfemhw0",
+        "_8prls7vbt",
+        "_i531pidxu",
+        "_c05vacm5f",
+        "_itn3f120h",
+        "_lcprkwiqm",
+        "_m4fh35tcd",
+        "_l4ilshp6z",
+        "_6tg0nekml",
+        "_l6m8ijx2q",
+        "_gpgs6y86n",
+        "_c810yqgyb",
+        "_2rng88i2e",
+        "_sm3kadgd3",
+        "_ms34rk2bq",
+        "_och3o7xxn"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:40:52.399Z"
+  },
+  {
+    "action": "update",
+    "payload": {
+      "view": "id30797",
+      "selection": [
+        "_cca7zowl8",
+        "_ul6cijxqf",
+        "_yaub8iaus",
+        "_zx2eaebe2",
+        "_tasjt7xk5",
+        "_mm2os72k4",
+        "_jt7234wzo",
+        "_vebldfsja",
+        "_zilhufsrs",
+        "_p48nhb8hu",
+        "_jmqwg79bh",
+        "_5n7rsvqxx",
+        "_tkqs0mwv4",
+        "_cbhct4xt7",
+        "_o302lizgi",
+        "_j8va0yf6m",
+        "_a2chu10zp",
+        "_a7e2txv9o",
+        "_itric5748",
+        "_zopkm2md5",
+        "_1wqikehyp",
+        "_ir7ni1fwq",
+        "_ysrbap80g",
+        "_gxo2pb62f",
+        "_05h3635oz",
+        "_5rdm0nwxh",
+        "_wt9ufvfcb",
+        "_kxkooykbq",
+        "_xrialzcmy",
+        "_zp4ctcw1k",
+        "_f6g3oqlvq",
+        "_3r8rc7k05"
+      ],
+      "operation": "Replace",
+      "viewType": "Clusters"
+    },
+    "timestamp": "2024-06-13T23:40:53.792Z"
   }
 ]

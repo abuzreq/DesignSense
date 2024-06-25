@@ -19,6 +19,7 @@
               prepend-inner-icon="search"
               :items="keys"
               label="Sort by"
+              @change="updateAuxiliaries()"
             ></v-select>
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
@@ -37,7 +38,7 @@
               <span v-else>change to descending order</span>
             </v-tooltip>
 
-            <v-spacer></v-spacer>
+            <!--
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-btn
@@ -53,13 +54,15 @@
                 </v-btn>
               </template>
               <span v-if="isInspectionViewPinned"
-                >Show the inspection view only if we are currently inspecting an option</span
+                >Show the inspection view only if we are currently inspecting an
+                option</span
               >
-                   <span v-else
+              <span v-else
                 >Pin the inspection view even if no options are currently
                 inspected</span
               >
             </v-tooltip>
+            -->
             <v-spacer></v-spacer>
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
@@ -78,7 +81,6 @@
               <span>Number of selected options</span>
             </v-tooltip>
 
-            <v-spacer></v-spacer>
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-simple-checkbox
@@ -97,16 +99,28 @@
               >
             </v-tooltip>
             <v-spacer></v-spacer>
+            <div
+              style="display: flex; flex-direction: column;     margin-top: 15px;"
+            >
+              <div
+                style="display: flex; flex-direction: row; justify-content: space-between; position: relative; top: 12px"
+              >
+                <span><SmallGridIcon /></span> <span><MediumGridIcon /></span>
+                <span><LargeGridIcon /></span> <span><DetailsGridIcon /></span>
+              </div>
+              <v-slider
+                id="size-slider"
+                min="0"
+                max="3"
+                step="1"
+                style="width: 150px;"
+                ticks="always"
+                tick-size="4"
+                v-model="colSpan"
+                @change="updateAuxiliaries()"
+              ></v-slider>
+            </div>
 
-            <v-slider
-              min="0"
-              max="3"
-              step="1"
-              :tick-labels="labels"
-              ticks="always"
-              tick-size="4"
-              v-model="colSpan"
-            ></v-slider>
             <!--
             <v-btn-toggle x-small dense v-model="isSortDesc" mandatory>
               <v-btn x-small depressed color="blue" :value="false">
@@ -124,22 +138,27 @@
             cols="12"
             style="width: 100%"
           >
-          <div class= "inspected_item_top_bar" >            
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <v-btn
-                  x-small
-                  icon
-                  v-on="on"
-                  @click="() => (inspectedItem = null)"
-                >
-                  <v-icon>mdi-close</v-icon>
-                </v-btn>
-              </template>
-              <span>Close inspection</span>
-            </v-tooltip>
+            <div class="inspected_item_top_bar">
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    x-small
+                    icon
+                    v-on="on"
+                    @click="() => (inspectedItem = null)"
+                  >
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                </template>
+                <span>Close inspection</span>
+              </v-tooltip>
 
-            <StarRating :item="inspectedItem" @onRatingChanged="onRatingChanged" /></div>
+              <StarRating
+                v-if="inspectedItem"
+                :item="inspectedItem"
+                @onRatingChanged="onRatingChanged"
+              />
+            </div>
 
             <!--
             <v-tooltip bottom>
@@ -171,8 +190,16 @@
 -->
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
-               
-                <v-btn v-on="on" v-show= "inspectedItem.images.length > 1" icon @click="() => previousView(inspectedItem)">
+                <v-btn
+                  v-on="on"
+                  v-show="
+                    inspectedItem &&
+                      inspectedItem.images &&
+                      inspectedItem.images.length > 1
+                  "
+                  icon
+                  @click="() => previousView(inspectedItem)"
+                >
                   <v-icon small>mdi-arrow-left</v-icon>
                 </v-btn>
               </template>
@@ -180,7 +207,16 @@
             </v-tooltip>
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
-                <v-btn    v-on="on" v-show= "inspectedItem.images.length > 1" icon @click="() => nextView(inspectedItem)">
+                <v-btn
+                  v-on="on"
+                  v-show="
+                    inspectedItem &&
+                      inspectedItem.images &&
+                      inspectedItem.images.length > 1
+                  "
+                  icon
+                  @click="() => nextView(inspectedItem)"
+                >
                   <v-icon small>mdi-arrow-right</v-icon>
                 </v-btn>
               </template>
@@ -218,10 +254,12 @@
           <drag-select-container
             selectorClass="thumbnail_card"
             :scrollAccessor="(el) => el.firstChild.firstChild"
+            :disabled="!enableContext"
             @onmouseup="onSelectionDragMouseUp($event)"
             @onmousemove="onSelectionDragMouseMove($event)"
           >
             <v-layout
+              id="scroll-flex-container"
               grid-list-sm
               column
               :style="{
@@ -230,76 +268,104 @@
                 }px -  100px)`,
               }"
             >
-              <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
+              <v-flex md6 style="overflow-y: scroll; overflow-x: visible">
                 <v-card
                   color="primary"
                   class="showing-selection-note"
                   v-show="!enableContext"
                 >
-                  Note: the gallery now only shows the currently selected
-                  options.
+                  Note: showing only the selected options.
                 </v-card>
-                <v-row dense>
-                  <v-col
-                    v-for="item in items.items"
-                    v-bind:key="cardSelector + item._id"
-                    :cols="possibleColSpans[colSpan]"
-                    :class="[
-                      'thumbnail_container',
-                      possibleColSpans[colSpan] > 3 ? 'top-thumbnails' : '',
-                    ]"
-                  >
-                    <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
-                    <v-card
-                      class="thumbnail_card"
-                      v-bind:id="cardSelector + item._id"
-                    >
-                      <v-img
-                        v-bind:class="{
-                          under_drag_selection:
-                            !enableContext &&
-                            isSelectionDragOn &&
-                            item._id in dragSelection,
-                          outlined:
-                            enableContext &&
-                            numSelected > 0 &&
-                            selectionMap[item._id],
-                          transparent:
-                            enableContext &&
-                            numSelected > 0 &&
-                            !selectionMap[item._id],
-                        }"
-                        v-if="item"
-                        :src="item.image"
-                        v-on:mouseup="toggle(item)"
-                        v-on:mouseover="hover(item)"
-                      />
-                      <v-expansion-panels
-                        v-show="possibleColSpans[colSpan] > 3"
-                      >
-                        <v-expansion-panel>
-                          <v-expansion-panel-header
-                            >{{ "ID:" }} &nbsp;&nbsp;&nbsp;&nbsp;
-                            {{ item["_id"] }}</v-expansion-panel-header
-                          >
 
-                          <v-expansion-panel-content>
-                            <v-list>
-                              <v-list-item v-for="(param, j) in keys" :key="j">
-                                <v-list-item-content>{{
-                                  param
-                                }}</v-list-item-content>
-                                <v-list-item-content class="justify-center">
-                                  {{ item[param] }}
-                                </v-list-item-content>
-                              </v-list-item>
-                            </v-list>
-                          </v-expansion-panel-content>
-                        </v-expansion-panel>
-                      </v-expansion-panels>
-                    </v-card>
-                  </v-col>
-                </v-row>
+                <div
+                  style="display: flex; flex-direction: row; height: 100%; margin-left: 10px;"
+                >
+                  <div id="gallery_axis"></div>
+                  <v-row dense class="images-container" id="images-container">
+                    <v-col
+                      v-for="item in items.items"
+                      v-bind:key="cardSelector + item._id"
+                      :cols="possibleColSpans[colSpan]"
+                      :class="[
+                        'thumbnail_container',
+                        possibleColSpans[colSpan] > 3 ? 'top-thumbnails' : '',
+                      ]"
+                    >
+                      <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
+                      <v-card
+                        class="thumbnail_card"
+                        v-bind:id="cardSelector + item._id"
+                      >
+                        <v-img
+                          v-bind:class="{
+                            outlined: numSelected > 0 && selectionMap[item._id],
+                            transparent:
+                              enableContext &&
+                              numSelected > 0 &&
+                              !selectionMap[item._id],
+                          }"
+                          v-if="item"
+                          :src="item.image"
+                          v-on:mouseover="hover(item)"
+                          @load="imageLoaded()"
+                        >
+                          <!--   v-on:mouseup="enableContext? toggle(item):null"-->
+                          <input
+                            v-if="enableContext"
+                            v-on:input="toggle(item)"
+                            class="image_checkbox"
+                            type="checkbox"
+                            :checked="selectionMap[item._id]"
+                          />
+                          <button
+                            class="xbtn"
+                            v-else
+                            v-on:click="toggle(item)"
+                          />
+                        </v-img>
+
+                        <v-expansion-panels
+                          v-show="possibleColSpans[colSpan] > 3"
+                        >
+                          <v-expansion-panel>
+                            <v-expansion-panel-header
+                              >{{ "ID:" }} &nbsp;&nbsp;&nbsp;&nbsp;
+                              {{ item["_id"] }}</v-expansion-panel-header
+                            >
+
+                            <v-expansion-panel-content>
+                              <v-list>
+                                <v-list-item
+                                  v-for="(param, j) in filteredKeys"
+                                  :key="j"
+                                >
+                                  <v-list-item-content>{{
+                                    param
+                                  }}</v-list-item-content>
+                                  <v-list-item-content class="justify-center">
+                                    {{ item[param] }}
+                                  </v-list-item-content>
+                                </v-list-item>
+                              </v-list>
+                            </v-expansion-panel-content>
+                          </v-expansion-panel>
+                        </v-expansion-panels>
+                      </v-card>
+                    </v-col>
+                  </v-row>
+                  <div class="scrollbar-container">
+                    <div
+                      v-show="enableContext"
+                      class="custom-scrollbar"
+                      id="custom-scrollbar"
+                    ></div>
+                    <div class="scroll-tooltip" id="scroll-tooltip"></div>
+                    <div
+                      class="scroll-value-label"
+                      id="scroll-value-label"
+                    ></div>
+                  </div>
+                </div>
               </v-flex>
             </v-layout>
           </drag-select-container>
@@ -310,13 +376,96 @@
 </template>
 
 <style scoped>
+::v-deep .scroll-value-label {
+  position: absolute;
+  background-color: black;
+  opacity: 0.7;
+  color: white;
+  padding: 5px;
+  border-radius: 3px;
+  z-index: 1000; /* Ensure it is above other elements */
+  left: -10px;
+}
+
+::v-deep #gallery_axis {
+  display: block;
+  position: relative;
+  height: 400px;
+  left: -5px;
+  top: 0px;
+  width: 40px;
+}
+::v-deep .axis-label {
+  position: absolute;
+  background-color: #0075ff;
+  color: white;
+  text-align: center;
+  min-width: 20px;
+}
+
+.xbtn {
+  position: relative;
+  top: -6%;
+  left: -4%;
+  height: 18px;
+  line-height: 18px;
+  width: 18px;
+  font-size: 0.85em;
+  font-weight: bold;
+  border-radius: 50%;
+  background-color: #ef0000;
+  color: white;
+  text-align: center;
+  cursor: pointer;
+}
+.xbtn::before {
+  content: "x";
+}
+.images-container {
+  width: 100%;
+}
+
+::v-deep .scroll-tooltip {
+  position: absolute;
+  width: auto;
+  padding: 5px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 3px;
+  transform: translateX(-100%);
+  white-space: nowrap;
+  display: none; /* Initially hidden */
+}
+
+::v-deep .scrollbar-container {
+  width: 10px;
+  height: 100%;
+  /* background-color: #f1f1f1;
+      margin-left: 10px;*/
+}
+
+::v-deep .custom-scrollbar {
+  position: absolute;
+  top: 4%;
+  right: 0.5%;
+  width: 10px;
+  height: 100%;
+  /* background-color: #888; */
+}
+
+::v-deep .scrollbar-marker {
+  position: absolute;
+  width: 10px;
+  height: 3px;
+  background-color: #1565c052;
+}
 
 .inspected_item_top_bar {
   display: flex;
-    flex-direction: row;
-    position: relative;
-    justify-content: space-between;
-    width: 100%;
+  flex-direction: row;
+  position: relative;
+  justify-content: space-between;
+  width: 100%;
 }
 .showing-selection-note {
   position: relative;
@@ -328,10 +477,6 @@
   margin-top: 4px;
   margin-bottom: 4px;
   color: white;
-}
-/** To show a crosshair when the curson is on the grid */
-.vue-drag-select {
-  cursor: crosshair;
 }
 
 ::v-deep div.v-expansion-panel-content__wrap {
@@ -354,6 +499,11 @@
 
 .col > .thumbnail_card:not(.hovered) .v-image.outlined {
   border: 3px solid rgb(33, 119, 180);
+  background-color: lightgray;
+}
+
+::v-deep .col > .thumbnail_card:not(.hovered) .v-image.outlined > div {
+  scale: 0.9;
 }
 
 .col > .thumbnail_card.hovered .v-image.outlined {
@@ -366,7 +516,21 @@
 }
 
 .col > .thumbnail_card .v-image.transparent {
-  opacity: 0.4;
+  opacity: 1;
+}
+
+.image_checkbox {
+  width: 15px;
+  height: 15px;
+  display: inline;
+  position: absolute;
+  top: 3%;
+  left: 3%;
+}
+
+.image_checkbox:checked {
+  top: -3%;
+  left: -3%;
 }
 
 ::v-deep .v-slider--horizontal {
@@ -374,6 +538,7 @@
 }
 
 .col > .thumbnail_card.hovered {
+  /* border: 3px solid #ff0000;*/
   border: 3px dashed rgb(33, 119, 180); /*#82b1ff;*/
 }
 
@@ -389,22 +554,34 @@
 //    "vue-drag-select": "git+https://github.com/JochenLutz/vue-drag-select.git",
 
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
+import Vue from "vue";
+
 import { ModelGltf, ModelThree } from "vue-3d-model";
 import { operations } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import DragSelect from "@/plugins/DragSelect.vue";
-import StarRating from "@/components/StarRating.vue"
+import StarRating from "@/components/StarRating.vue";
+
+import DetailsGridIcon from "-!vue-svg-loader!/src/assets/details_grid_icon.svg";
+import LargeGridIcon from "-!vue-svg-loader!/src/assets/large_grid_icon.svg";
+import MediumGridIcon from "-!vue-svg-loader!/src/assets/medium_grid_icon.svg";
+import SmallGridIcon from "-!vue-svg-loader!/src/assets/small_grid_icon.svg";
+
 export default {
   name: "AugmentedGridCards",
   components: {
+    DetailsGridIcon,
+    LargeGridIcon,
+    MediumGridIcon,
+    SmallGridIcon,
     StarRating,
     ModelGltf,
     ModelThree,
     "drag-select-container": DragSelect,
   },
   props: ["defaultEnableContext", "width", "height", "x", "y", "type"],
-  data: function () {
+  data: function() {
     return {
       isLoading: false,
       va3cViewer: null,
@@ -451,6 +628,24 @@ export default {
       isInspectionViewPinned: false,
       isSelectionDragOn: false,
       dragSelection: {},
+      numLoadedImages: 0,
+      scrollLabel: null,
+      keysBlackList: [
+        "index",
+        "selected",
+        "gltf",
+        "image",
+        "ID",
+        "id",
+        "_id",
+        "geometry",
+        "json",
+        "img",
+        "threeD",
+        "collection",
+        "images",
+        "description",
+      ],
     };
   },
   computed: {
@@ -461,28 +656,22 @@ export default {
       currentSelectionOperation: (state) => state.currentSelectionOperation,
       rawChartData: (state) => state.data,
       keys: (state) => state.allDimensions.concat(["selected"]),
+      numericDimensions: (state) => state.numericDimensions,
       hovered: (state) => state.hovered,
+      lastHovered: (state) => state.lastHovered,
+
       colorColumn: (state) => state.colorColumn,
     }),
     ...mapGetters(["colorScale", "colorize", "isHoveringEnabled"]),
     cardSelector() {
       return "card_" + this.viewID + "_";
     },
+    filteredKeys() {
+      return this.keys.filter((x) => !this.keysBlackList.includes(x));
+    },
   },
   mounted() {
-    this.$store.dispatch("createDefaultView", {
-      view: this.viewID,
-      vueComponent: this,
-    });
-    this.updateContext();
-    //Inspection setup
-    this.isModelGLTF = this.chartData[0].gltf ? true : false;
-    this.inspectedItem = this.chartData[0];
-
-    this.sortByVar =
-      this.keys.find((k) => !isNaN(this.chartData[0][k])) || this.keys[0];
-
-    // console.log(this.chartData.filter((x) => x == null || !x.image));
+    Vue.nextTick(() => this.updateAuxiliaries());
   },
 
   updated() {
@@ -500,6 +689,7 @@ export default {
       ) {
         this.updateContext();
         this.selectionMap = this.$store.getters.getMarking(this.viewID);
+
         this.chartData.forEach((d) => {
           d.selected = this.selectionMap[d._id];
         });
@@ -507,12 +697,108 @@ export default {
         if (mutation.type == "resetMarking") {
           this.enableContext = true;
         }
+        Vue.nextTick(() => {
+          this.updateAuxiliaries();
+        });
+      }
+    });
+
+    this.$store.dispatch("createDefaultView", {
+      view: this.viewID,
+      vueComponent: this,
+    });
+    this.updateContext();
+    //Inspection setup
+    this.isModelGLTF = this.chartData[0].gltf ? true : false;
+    this.inspectedItem = this.chartData[0];
+
+    this.sortByVar =
+      this.keys.find((k) => !isNaN(this.chartData[0][k])) || this.keys[0];
+
+    // To prevent the space key from scrolling down, which it does by default
+    window.addEventListener("keydown", function(e) {
+      if (e.key == " " && e.target == document.body) {
+        e.preventDefault();
       }
     });
   },
   methods: {
+    imageLoaded() {
+      this.numLoadedImages += 1;
+      if (this.numLoadedImages >= this.rawChartData.length) {
+        
+        const container = document.querySelector(".scroll-container");
+        const containerRect = container.getBoundingClientRect();
+
+        container.addEventListener("scroll", (e) => {
+          this.scrollLabel = document.querySelector("#scroll-value-label");
+          if (!this.scrollLabel) return;
+          if(!this.numericDimensions.includes(this.sortByVar))
+          {
+            this.scrollLabel.style.display = "none";
+            return;
+          }
+          this.scrollLabel.style.display = "block";
+        
+          var a = container.scrollTop;
+          var b = container.scrollHeight - container.clientHeight;
+          var c = a / b;
+
+          this.scrollLabel.style.top = ((c<0.5?c+0.05:c-0.1) * container.clientHeight) + "px";
+
+          const images = this.getAllCards();
+          if (images) {
+            let closestImage = null;
+            let closestDistance = Infinity;
+
+            images.forEach((img) => {
+              var imageRect = img.getBoundingClientRect();
+
+              const visibleHeight = container.clientHeight;
+              const scrollY = container.scrollTop; // Get the vertical scroll position
+
+              const imageTopRelative = imageRect.top - containerRect.top + scrollY;
+
+              if (imageTopRelative >= scrollY && imageTopRelative < scrollY + visibleHeight) {
+                const distance = Math.abs(imageTopRelative - scrollY);
+                if (distance < closestDistance) {
+                  closestDistance = distance;
+                  closestImage = img;
+                }
+              }
+            });
+
+            if (closestImage) {
+              const id =  this.getItemsIDs([closestImage])[0]
+              const datum =  this.chartData.filter(alt => alt._id === id)[0]
+              this.scrollLabel.textContent = Math.round(datum[this.sortByVar])
+            }
+          }
+        });
+        this.numLoadedImages = 0;
+      }
+    },
+    showTooltip(event) {
+      console.log("moving");
+      const scrollbar = document.getElementById("custom-scrollbar");
+      const tooltip = document.getElementById("scroll-tooltip");
+
+      tooltip.textContent = event.clientY;
+      tooltip.style.top = `${event.clientY -
+        scrollbar.getBoundingClientRect().top}px`;
+      tooltip.style.display = "block";
+    },
+    hideTooltip() {
+      console.log("leaving");
+      const tooltip = document.getElementById("scroll-tooltip");
+
+      tooltip.style.display = "none";
+    },
     onRatingChanged(newRating) {
-      this.$store.commit("rateAlt", { rating: newRating, item: this.inspectedItem});
+      this.$store.commit("rateAlt", {
+        rating: newRating,
+        item: this.inspectedItem,
+      });
     },
     nextView(item) {
       this.inspectedItemViewIndex =
@@ -535,14 +821,14 @@ export default {
         {
           let object = this.$refs.gltf.scene;
           object.traverse(function(child) {
-            
-              if (child.type ==  'Mesh') 
+
+              if (child.type ==  'Mesh')
               {
 
                   var materialColor = new THREE.Color();
                   materialColor.setRGB( 0.4, 0.0, 0.0 );
                   let material = new THREE.MeshPhongMaterial( { color: materialColor, side: THREE.DoubleSide } );
-                  
+
                   child.material = material;//new THREE.Color(0xffb830);
 
                 //console.log(child)
@@ -561,6 +847,9 @@ export default {
     getAllCards() {
       let cardNodes = d3.select("#" + this.viewID).selectAll(".thumbnail_card")
         ._groups[0]; //.select('.vue-drag-select')
+
+      if (!cardNodes) return null;
+
       let cards = Array.prototype.slice
         .call(cardNodes)
         .filter((d) => d.id != "");
@@ -574,15 +863,19 @@ export default {
 
       return cardsSelection;
     },
-    onSelectionDragMouseUp(selectedItems) {
-      this.isSelectionDragOn = false;
-      this.dragSelection = {};
-      let selectedIDs = selectedItems.map((s) => {
+    getItemsIDs(selectedItems) {
+      return selectedItems.map((s) => {
         let start = s.id.indexOf("_");
         let secondPart = s.id.substring(start + 1);
         let secondStart = secondPart.indexOf("_"); //finding the 2nd occurance of _ , accounting for ids that start with _
         return secondPart.substring(secondStart + 1);
       });
+    },
+
+    onSelectionDragMouseUp(selectedItems) {
+      this.isSelectionDragOn = false;
+      this.dragSelection = {};
+      let selectedIDs = this.getItemsIDs(selectedItems);
 
       if (selectedIDs.length > 0) {
         this.$store.dispatch("update", {
@@ -640,6 +933,94 @@ export default {
           .classed("outlined", true);
       }
     },
+
+    updateAxis() {
+      console.log("updateAxis");
+      const container = document.querySelector("#images-container");
+      const containerRect = container.getBoundingClientRect();
+
+      let axisDiv = document.querySelector("#gallery_axis");
+      axisDiv.innerHTML = "";
+
+      axisDiv.style.height = containerRect.height;
+
+      const images = this.getAllCards();
+      const displayedValues = new Set();
+      const valuePositions = {};
+
+      let IDs = this.getItemsIDs(images);
+      let altsData = this.chartData.filter((alt) => IDs.includes(alt._id));
+      // Sort images by their data values
+      const sortedData = Array.from(altsData).sort((a, b) => {
+        return (
+          (a[this.sortByVar] - b[this.sortByVar]) * (this.isSortDesc ? -1 : 1)
+        );
+      });
+
+      var i = 0;
+      //Assumes images are already sorted
+      images.forEach((image) => {
+        const imageRect = image.getBoundingClientRect();
+        const value = sortedData[i][this.sortByVar];
+        const top = imageRect.top - containerRect.top + container.scrollTop;
+
+        if (
+          imageRect.top >= containerRect.top &&
+          imageRect.bottom <= containerRect.bottom
+        ) {
+          if (!valuePositions[value] || top < valuePositions[value]) {
+            valuePositions[value] = top;
+          }
+        }
+        i++;
+      });
+
+      // Create labels for the values
+      for (const value in valuePositions) {
+        const label = document.createElement("div");
+        label.classList.add("axis-label");
+        label.style.top = `${valuePositions[value]}px`;
+        label.textContent = value;
+        axisDiv.appendChild(label);
+        displayedValues.add(value);
+      }
+    },
+    updateAuxiliaries() {
+      this.updateScrollbar();
+      //this.updateAxis();
+    },
+    updateScrollbar() {
+      const container = document.querySelector(".images-container");
+      const scrollbar = document.getElementById("custom-scrollbar");
+
+      // Clear existing markers
+      scrollbar.innerHTML = "";
+
+      const sel = d3
+        .select("#" + this.viewID)
+        .selectAll(".images-container > .thumbnail_container")
+        .select(".thumbnail_card")
+        .select(".v-image");
+      const selectedImages = sel
+        .nodes()
+        .filter((x) => x.className.includes("outlined"));
+      if (selectedImages.length == 0) return;
+
+      const contentHeight = container.scrollHeight;
+      selectedImages.forEach((image) => {
+        const rect = image.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const markerPosition =
+          ((rect.top - containerRect.top + container.scrollTop) /
+            contentHeight) *
+          100;
+
+        const marker = document.createElement("div");
+        marker.classList.add("scrollbar-marker");
+        marker.style.top = `${markerPosition}%`;
+        scrollbar.appendChild(marker);
+      });
+    },
     unhighlight(selection) {
       for (var s in selection) {
         d3.select("#" + this.cardSelector + s)
@@ -665,7 +1046,7 @@ export default {
       });
       return res;
     },
-    destroyChart: function () {
+    destroyChart: function() {
       let node = d3.select("#" + this.viewID)._groups[0][0]; //this.$refs["parcoords"];
       while (node.firstChild) {
         node.removeChild(node.firstChild);
@@ -714,19 +1095,26 @@ export default {
   },
 
   watch: {
+    isSortDesc: {
+      handler: function() {
+        Vue.nextTick(() => {
+          this.updateAuxiliaries();
+        });
+      },
+    },
     enableContext: {
-      handler: function (enableContextNewValue, oldValue) {
+      handler: function(enableContextNewValue, oldValue) {
         this.updateContext();
       },
       //deep: true
     },
     rawChartData: {
-      handler: function (newValue, oldValue) {
+      handler: function(newValue, oldValue) {
         this.updateContext();
       },
       //deep: true
     },
-    hovered: function (newValue, oldValue) {
+    hovered: function(newValue, oldValue) {
       if (oldValue) {
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + oldValue._id)
@@ -742,10 +1130,14 @@ export default {
           this.inspectedItem = newValue;
         }
       } else {
-        this.inspectedItem = null;
+        if (this.lastHovered) {
+          this.inspectedItem = this.lastHovered;
+        } else {
+          this.inspectedItem = null;
+        }
       }
     },
-    inspecting3DView: function (newValue) {
+    inspecting3DView: function(newValue) {
       if (this.inspectedItem && newValue == true) {
         this.isLoading = true;
         this.load3DJSON(this.inspectedItem);
@@ -753,14 +1145,14 @@ export default {
         this.va3cViewer = null;
       }
     },
-    inspectedItem: function (newItem) {
+    inspectedItem: function(newItem) {
       this.inspectedItemViewIndex = 0;
       if (newItem && this.inspecting3DView) {
         this.isLoading = true;
         this.load3DJSON(newItem);
       }
     },
-    colorColumn: function (newValue, oldValue) {
+    colorColumn: function(newValue, oldValue) {
       let cardNodes = d3.select("#" + this.viewID).selectAll(".thumbnail_card");
 
       this.getAllCards().forEach((node, i) => {
@@ -772,7 +1164,7 @@ export default {
         );
       });
     },
-    colorScale: function (newValue, oldValue) {
+    colorScale: function(newValue, oldValue) {
       this.refresh();
     },
   },

@@ -41,7 +41,8 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             isEditingMode: false,
 
             hovered: null,
-
+            lastHovered: null,
+            
             isCtrlKey: false,
             isShiftKey: false,
             isAltKey: false,
@@ -210,6 +211,10 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             hover(state, payload) {
                 state.hovered = payload.hovered
             },
+            setLastHovered(state, payload)
+            {
+                state.lastHovered = payload.lastHovered;
+            },
             rateAlt(state, payload) {
                 var index = state.data.findIndex(x => x._id === payload.item._id)
                 console.log(state.data, index, payload.item, payload.rating)
@@ -299,6 +304,9 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             }
         },
         actions: {
+            createMarkingEntry(context, payload) {
+                context.commit("createMarkingEntry", payload);
+            },
             update(context, payload) {
                 context.commit("update", payload);
             },
@@ -306,6 +314,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 context.commit("reverseUpdate");
             },
             clearInspection(context) {
+                context.commit("setLastHovered", { lastHovered: context.state.hovered });
                 context.commit("hover", { hovered: null });
                 context.commit('toggleInspectionMode', { value: false });
             },

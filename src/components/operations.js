@@ -1,18 +1,10 @@
 const operations = {
     REPLACE: "Replace",
     ADD: "Add",
-    INTERSECT: "Intersect",
-    SUBTRACT: "Subtract",
-    TOGGLE: "Toggle",   
-};
-const operations_icons = {
-    REPLACE: "Replace",
-    ADD: "Add",
     SUBTRACT: "Subtract",
     TOGGLE: "Toggle",   
     INTERSECT: "Intersect",
 };
-
 
 function getOperationFromKey(index)
 {

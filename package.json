@@ -18,7 +18,7 @@
         "axios": "^1.7.2",
         "cors": "^2.8.5",
         "d3": "^5.15.0",
-        "d3-lasso": "0.0.5",
+        "d3-lasso": "github:abuzreq/d3-lasso",
         "d3-scale-chromatic": "^2.0.0",
         "fibers": "^5.0.0",
         "is-valid-http-url": "^1.0.3",

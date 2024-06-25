@@ -1,79 +1,84 @@
 <template>
-  <v-container fluid  :style="{'overflow':'auto', 'height': `calc(${height}px)`,}">
-    <v-card-title>Sets Panel</v-card-title>
+  <v-container fluid :style="{ overflow: 'auto', height: `calc(${height}px)` }">
+    <div style="display: flex; flex-direction: row; justify-content: space-around; align-items: center;">
+      <v-card-title>Sets Panel</v-card-title>
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="createSet.clickAction">
+            <v-icon>{{ createSet.icon }}</v-icon>
+          </v-btn>
+        </template>
+        <span>{{ createSet.tooltip() }}</span>
+      </v-tooltip>
+    </div>
+
     <v-divider></v-divider>
-    <v-list two-line >
-        <v-card outlined v-for="(item, index) in setsIDs" :key="index">
-          <v-list-item avatar>
-            <v-list-item-action style="margin-right: 8px">
-              <v-tooltip left>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-on="on"
-                    icon
-                    ripple
-                    color="red"
-                    @click="remove(item)"
-                  >
-                    <v-icon>mdi-close</v-icon>
-                  </v-btn>
-                </template>
-                <span>Delete</span>
-              </v-tooltip>
 
-              <v-tooltip left>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-on="on"
-                    icon
-                    ripple
-                    color="blue"
-                    @click="restoreSet(item, $event)"
-                  >
-                    <v-icon>mdi-backup-restore</v-icon>
-                  </v-btn>
-                </template>
-                <span>Restore</span>
-              </v-tooltip>
+    <v-list two-line>
+      <v-card outlined v-for="(item, index) in setsIDs" :key="index">
+        <v-list-item avatar>
+          <v-list-item-action style="margin-right: 8px">
+            <v-tooltip left>
+              <template v-slot:activator="{ on }">
+                <v-btn v-on="on" icon ripple color="red" @click="remove(item)">
+                  <v-icon>mdi-close</v-icon>
+                </v-btn>
+              </template>
+              <span>Delete</span>
+            </v-tooltip>
 
-              <v-tooltip left>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-on="on"
-                    icon
-                    ripple
-                    color="blue"
-                    @click="updateSet(item, $event)"
-                  >
-                    <v-icon>mdi-find-replace</v-icon>
-                  </v-btn>
-                </template>
-                <span>Update</span>
-              </v-tooltip>
-            </v-list-item-action>
+            <v-tooltip left>
+              <template v-slot:activator="{ on }">
+                <v-btn
+                  v-on="on"
+                  icon
+                  ripple
+                  color="blue"
+                  @click="restoreSet(item, $event)"
+                >
+                  <v-icon>mdi-backup-restore</v-icon>
+                </v-btn>
+              </template>
+              <span>Restore</span>
+            </v-tooltip>
 
-            <v-list-item-content>
-              <v-list-item-title class="title"
-                >{{ setsMetadataMap[item].name }} &nbsp;&nbsp;&nbsp; (count {{
-                  setsMap[item].length
-                }})</v-list-item-title
-              >
-              <v-textarea
-                class="comment-text-area"
-                height="70px"
-                style="margin-bottom: -15px"
-                multiple
-                solo
-                full-width
-                outlined
-                dense
-                :value="setsMetadataMap[item].comment"
-                label="add notes here"
-                @input="changeComment($event, item)"
-              />
-            </v-list-item-content>
-          </v-list-item>
-        </v-card>
+            <v-tooltip left>
+              <template v-slot:activator="{ on }">
+                <v-btn
+                  v-on="on"
+                  icon
+                  ripple
+                  color="blue"
+                  @click="updateSet(item, $event)"
+                >
+                  <v-icon>mdi-find-replace</v-icon>
+                </v-btn>
+              </template>
+              <span>Update</span>
+            </v-tooltip>
+          </v-list-item-action>
+
+          <v-list-item-content>
+            <v-list-item-title class="title"
+              >{{ setsMetadataMap[item].name }} &nbsp;&nbsp;&nbsp; (count
+              {{ setsMap[item].length }})</v-list-item-title
+            >
+            <v-textarea
+              class="comment-text-area"
+              height="70px"
+              style="margin-bottom: -15px"
+              multiple
+              solo
+              full-width
+              outlined
+              dense
+              :value="setsMetadataMap[item].comment"
+              label="add notes here"
+              @input="changeComment($event, item)"
+            />
+          </v-list-item-content>
+        </v-list-item>
+      </v-card>
     </v-list>
   </v-container>
 </template>
@@ -101,9 +106,15 @@ import { mapState } from "vuex";
 export default {
   name: "SetsView",
   props: ["width", "height", "x", "y", "type"],
-  data: function () {
+  data: function() {
     return {
       setNote: "Interesting",
+      createSet: {
+        clickAction: () => this.$store.dispatch("createSet"),
+        icon: "mdi-contain",
+        tooltip: () => "Create Set",
+        type: "selection",
+      },
     };
   },
   computed: {
@@ -116,10 +127,10 @@ export default {
   },
   mounted() {},
   watch: {
-    width: function (newValue, oldValue) {},
-    height: function (newValue, oldValue) {},
+    width: function(newValue, oldValue) {},
+    height: function(newValue, oldValue) {},
     chartData: {
-      handler: function (newValue, oldValue) {},
+      handler: function(newValue, oldValue) {},
     },
   },
   created() {},
@@ -140,7 +151,12 @@ export default {
       });
     },
     updateSet(ID, event) {
-      console.log('updateSet',ID, event, this.$store.state.currentSelectionOperation)
+      console.log(
+        "updateSet",
+        ID,
+        event,
+        this.$store.state.currentSelectionOperation
+      );
       this.$store.dispatch("updateSet", {
         setID: ID,
         operation: this.$store.state.currentSelectionOperation,

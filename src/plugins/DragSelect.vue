@@ -18,6 +18,7 @@ export default {
     },
     scrollAccessor: null,
     selectorClass: '',
+    disabled: false,
   },
   data() {
     return {
@@ -83,6 +84,17 @@ export default {
     }
   },
   watch: {
+    disabled(val) {
+      if(!val)
+      {
+        this.scrollContainer.classList.add("scroll-container")
+      }
+      else 
+      {
+        this.scrollContainer.classList.remove("scroll-container")
+      }
+      console.log(this.scrollContainer)
+    },
     selectedItems(val) {
       this.$emit("change", val);
     }
@@ -108,6 +120,8 @@ export default {
       };
     },
     onMouseDown(event) {
+
+      if(this.disabled) return;
       // Ignore right clicks
       if (event.button === 2) return;
       // Register begin point
@@ -214,6 +228,7 @@ export default {
     });
 */
     this.scrollContainer = this.scrollAccessor(this.$el);
+    this.scrollContainer.classList.add("scroll-container")
   },
   beforeDestroy() {
     // Remove event listeners
@@ -227,6 +242,12 @@ export default {
 </script>
 
 <style>
+
+.scroll-container
+{
+  cursor: crosshair;
+}
+
 .vue-drag-select {
   position: relative;
   user-select: none;

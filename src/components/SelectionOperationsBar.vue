@@ -36,28 +36,7 @@
           </div>
         </div>
       </template>
-      <span>Add&emsp;[Num 2]</span>
-    </v-tooltip>
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
-        <div
-          :class="{'operation-container': true, 
-            selected:
-              operationsList &&
-              currentSelectionOperation == operationsList.INTERSECT,
-          }"
-        >
-        <IntersectIcon
-          v-on="on"
-          @click="onIntersect"
-          class="operation-icon"
-        />
-          <div v-show="currentSelectionOperation == operationsList.INTERSECT">
-            Intersect
-          </div>
-        </div>
-      </template>
-      <span>Intersect&emsp;[Num 5]</span>
+      <span>Add&emsp;[hold Shift or press Num 2]</span>
     </v-tooltip>
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
@@ -78,7 +57,7 @@
           </div>
         </div>
       </template>
-      <span>Subtract&emsp;[Num 3]</span>
+      <span>Subtract&emsp;[hold Ctrl or press Num 3]</span>
     </v-tooltip>
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
@@ -100,6 +79,27 @@
         </div>
       </template>
       <span>Toggle&emsp;[Num 4]</span>
+    </v-tooltip>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
+        <div
+          :class="{'operation-container': true, 
+            selected:
+              operationsList &&
+              currentSelectionOperation == operationsList.INTERSECT,
+          }"
+        >
+        <IntersectIcon
+          v-on="on"
+          @click="onIntersect"
+          class="operation-icon"
+        />
+          <div v-show="currentSelectionOperation == operationsList.INTERSECT">
+            Intersect
+          </div>
+        </div>
+      </template>
+      <span>Intersect&emsp;[Num 5]</span>
     </v-tooltip>
   </v-container>
 </template>

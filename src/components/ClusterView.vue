@@ -16,8 +16,8 @@
       <template v-slot:header>
         <v-toolbar fixed dark color="blue darken-3" class="mb-1">
           <v-container fluid>
-            <v-row dense justify="center" style="margin-bottom: -10px">           
-                  <v-toolbar-title>Clusters Panel</v-toolbar-title> 
+            <v-row dense justify="center" style="margin-bottom: -10px">
+              <v-toolbar-title>Clusters Panel</v-toolbar-title>
             </v-row>
             <v-row dense style="flex-wrap: nowrap">
               <v-slider
@@ -48,7 +48,7 @@
           <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
             <v-row dense>
               <v-col
-                v-for="item in items.items"
+                v-for="(item, index) in items.items"
                 v-bind:key="cardSelector + item._id"
                 :cols="possibleColSpans[colSpan]"
               >
@@ -63,6 +63,10 @@
                   }"
                   v-bind:id="cardSelector + item._id"
                 >
+                  <span
+                    style="background: gold; padding: 2px; position: relative; left: 3%;"
+                    >{{ clustersSize[index] }}
+                  </span>
                   <v-img
                     v-if="true"
                     contain
@@ -118,7 +122,8 @@
 }
 
 .col > .v-card.hovered {
-  border: 4px solid rgb(33, 119, 180); /*#82b1ff;*/
+  border: 3px dashed rgb(33, 119, 180); /*#82b1ff;*/
+
 }
 
 ::v-deep .multiselect__tag {
@@ -153,7 +158,7 @@ export default {
   components: { ModelGltf, MultiDimensionSelect },
   props: ["defaultEnableContext", "width", "height", "x", "y", "type"],
 
-  data: function () {
+  data: function() {
     return {
       chartData: [],
       selectionMap: {},
@@ -172,6 +177,7 @@ export default {
       numSelected: 0,
       clustersMap: {},
       clusterReps: [],
+      clustersSize: [],
       dimensions: [],
       numClusters: 3,
       isComputingVisualSimilarity: false,
@@ -250,6 +256,8 @@ export default {
             );
             return c.clusterInd[smallestInClusterIndex];
           });
+
+          this.clustersSize = res.map((c) => c.cluster.length);
 
           this.clusterReps.splice(0, this.clusterReps.length);
 
@@ -331,7 +339,7 @@ export default {
       });
       return res;
     },
-    destroyChart: function () {
+    destroyChart: function() {
       let node = d3.select("#" + this.viewID)._groups[0][0];
       while (node.firstChild) {
         node.removeChild(node.firstChild);
@@ -356,25 +364,25 @@ export default {
   },
   watch: {
     enableContext: {
-      handler: function (enableContextNewValue, oldValue) {
+      handler: function(enableContextNewValue, oldValue) {
         this.updateContext();
         this.compute();
       },
       //deep: true
     },
     rawChartData: {
-      handler: function (newValue, oldValue) {
+      handler: function(newValue, oldValue) {
         this.updateContext();
         this.compute();
       },
       //deep: true
     },
     numClusters: {
-      handler: function (newValue, oldValue) {
+      handler: function(newValue, oldValue) {
         this.compute();
       },
     },
-    hovered: function (newValue, oldValue) {
+    hovered: function(newValue, oldValue) {
       if (oldValue) {
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + oldValue._id)
@@ -386,7 +394,7 @@ export default {
           .classed("hovered", true);
       }
     },
-    isComputingVisualSimilarity: function (newValue, oldValue) {
+    isComputingVisualSimilarity: function(newValue, oldValue) {
       if (newValue) {
         this.compute();
       }
@@ -454,7 +462,7 @@ function to2DMatrix(data, keys, normalize) {
       scales[key] = d3
         .scaleLinear()
         .domain(
-          d3.extent(data, function (d) {
+          d3.extent(data, function(d) {
             return d[key];
           })
         )

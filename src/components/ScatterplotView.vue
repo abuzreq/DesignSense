@@ -88,7 +88,7 @@
             </template>
           </SingleDimensionSelect>
         </v-col>
-        <v-col :cols="2">
+        <v-col :cols="2" style="align-content: center;">
           <v-row no-gutters>
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
@@ -107,7 +107,14 @@
               <span v-if="useLassoBrush">Switch to the rectangular brush</span>
               <span v-else>Switch to the Lasso brush</span>
             </v-tooltip>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+              <ClusterIcon :v-on="on" @click="toggleClustering" class="clustering-icon"/> 
+              </template>
+              <span>Clustering!</span>
+            </v-tooltip>
 
+            <!--
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-btn
@@ -123,6 +130,7 @@
                 >Compute the Pareto-Frontier for the chosen dimensions.</span
               >
             </v-tooltip>
+            -->
           </v-row>
         </v-col>
       </v-row>
@@ -138,7 +146,10 @@
 </template>
 
 <style scoped>
+.clustering-icon {
+  cursor: pointer;
 
+}
 ::v-deep .x.axis .tick text
 {
   transform: rotate(35deg);
@@ -210,11 +221,12 @@ d3.lasso = lasso;
 import { mapGetters } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import SingleDimensionSelect from "@/components/SingleDimensionSelect.vue";
+import ClusterIcon from "-!vue-svg-loader!/src/assets/cluster_icon.svg";
 
 export default {
   mixins: [TemplateView],
   name: "ScatterplotView",
-  components: { SingleDimensionSelect },
+  components: { SingleDimensionSelect, ClusterIcon},
   data: function () {
     return {
       xColumn: "",
@@ -272,6 +284,9 @@ export default {
     this.yColumn = this.numericDimensions[1];
   },
   methods: {
+    toggleClustering: function(){
+      console.log("clustering")
+    },
     calculateParetoFrontier: function (event) {
       this.isShowingParetoFrontier = true;
       let graph = this.chartData.map((d) => [
@@ -460,11 +475,13 @@ class ScatterPlot {
             ])
             .on("start", brushstart)
             .on("brush", brushmove)
-            .on("end", brushend);
+            .on("end", brushend)
+            .filter(x => {return !d3.event.button});
+
           //ref: https://github.com/d3/d3-brush/issues/20
           rectBrush.keyModifiers(false);
-          //brush.keyModifiers(d3.brushFixSize, null)
-          //brush.keyModifiers(d3.brushFixCenter , null)
+         
+
         } else {
           var lasso_area = g
             .insert("rect", ":first-child")
@@ -472,6 +489,8 @@ class ScatterPlot {
             .attr("height", innerHeight)
             .style("opacity", 0);
 
+
+       
           // Define the lasso
           lassoBrush = d3
             .lasso()
@@ -481,8 +500,9 @@ class ScatterPlot {
             .targetArea(lasso_area) // area where the lasso can be started
             .on("start", brushstart)
             .on("brush", brushmove)
-            .on("end", brushend);
-
+            .on("end", brushend)
+         
+          console.log(lassoBrush)
           lassoBrush.items(circles);
         }
 

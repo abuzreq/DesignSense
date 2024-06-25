@@ -19,7 +19,18 @@
           >alpha</span
         ></router-link> </v-toolbar-title
       >
-
+      <v-divider vertical />
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon @click="actions['help'].clickAction">
+            <v-icon>{{ actions["help"].icon }}</v-icon>
+          </v-btn>
+        </template>
+        <span>{{ actions["help"].tooltip() }}</span>
+      </v-tooltip>
+     
+      <v-divider vertical />
+      <LoadDataModal id="loading-data-bar"> </LoadDataModal>
       <v-divider vertical />
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
@@ -30,15 +41,7 @@
         <span>{{ actions["saveToFile"].tooltip() }}</span>
       </v-tooltip>
       <v-divider vertical />
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="actions['help'].clickAction">
-            <v-icon>{{ actions["help"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["help"].tooltip() }}</span>
-      </v-tooltip>
-      <v-divider vertical />
+
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
@@ -56,11 +59,13 @@
       </v-tooltip>
       <v-divider vertical />
 
-      <v-spacer></v-spacer>
-      <LoadDataModal id="loading-data-bar"> </LoadDataModal>
-      <v-spacer></v-spacer>
+     
+
+  
       <v-divider vertical />
+      <v-spacer></v-spacer>
       <SelectionOperationsBar id="selection-operations-bar" />
+      <v-spacer></v-spacer>
       <v-divider vertical />
 
       <v-divider vertical />
@@ -106,14 +111,7 @@
           </template>
           <span>{{ actions["reverseUpdate"].tooltip() }}</span>
         </v-tooltip>
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn v-on="on" icon @click="actions['createSet'].clickAction">
-              <v-icon>{{ actions["createSet"].icon }}</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ actions["createSet"].tooltip() }}</span>
-        </v-tooltip>
+
 
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
@@ -383,7 +381,7 @@ export default {
             title: "2D Scatterplot",
           },
           content:
-            "The scatterplot is a basic but very effective visualization of 2-dimensional data. It can be used to identify patterns like correlations, outliers, and clusters. You can drag and hold on the scatterplot to draw a selection box. All the options falling in this box are selected as a result. The scatterplot supports other operations too, feel free to place your cursor over any of the icons to get tooltips on what they can do. By default, any new selection will replace the current one. Let's see how to change that.",
+            "The scatterplot is a simple but very effective visualization of 2-dimensional data. It can be used to identify patterns like correlations, outliers, and clusters. You can drag and hold on the scatterplot to draw a selection box. All the options falling in this box are selected as a result. The scatterplot supports other operations too, feel free to place your cursor over any of the icons to get tooltips on what they can do. By default, any new selection will replace the current one. Let's see how to change that.",
           before: () => {
             let selectedData = this.$store.state.data.filter(
               (d) =>
@@ -586,7 +584,7 @@ export default {
         reverseUpdate: {
           clickAction: () => this.$store.dispatch("reverseUpdate"),
           icon: "mdi-undo",
-          tooltip: () => "Reverse the last selection update",
+          tooltip: () => "Reverse the last selection update [ctrl-z]",
           type: "selection",
         },
         createSet: {
@@ -598,7 +596,7 @@ export default {
         resetAllMarkings: {
           clickAction: () => this.$store.dispatch("resetAllMarkings"),
           icon: "mdi-select-off",
-          tooltip: () => "Reset Selection",
+          tooltip: () => "Reset Selection [ESC]",
           type: "selection",
         },
         invertSelection: {
@@ -616,13 +614,13 @@ export default {
         zoomToSelection: {
           clickAction: () => this.$store.dispatch("zoomToSelection"),
           icon: "mdi-selection-search",
-          tooltip: () => "Zoom on the Selected",
+          tooltip: () => "Zoom on the selected",
           type: "data",
         },
         excludeSelection: {
           clickAction: () => this.$store.dispatch("excludeSelection"),
           icon: "mdi-filter-remove-outline",
-          tooltip: () => "Exclude the Selected",
+          tooltip: () => "Filter out the selected",
           type: "data",
         },
         resetData: {
@@ -643,7 +641,7 @@ export default {
         clearInspection: {
           clickAction: () => this.$store.dispatch("clearInspection"),
           icon: "mdi-cancel",
-          tooltip: () => "Clear the current inspection",
+          tooltip: () => "Clear the current inspection [ESC]",
           type: "inspecting",
         },
         help: {
@@ -703,6 +701,8 @@ export default {
         this.showContextMenu = false;
       }
     });
+
+
   },
   mounted() {
     let contextMenuCenter = this.$el.getElementsByClassName(
@@ -712,6 +712,8 @@ export default {
     contextMenuCenter.addEventListener("wheel", () => {
       this.moveToNextOperation();
     });
+
+
   },
   computed: {
     ...mapState({

@@ -1,5 +1,5 @@
 <template>
-  <v-container style="width: 200px">
+  <v-container style="width: 300px">
     <div class="text-center">
       <v-dialog v-model="dialog" width="800" overlay-opacity="0.5">
         <template v-slot:activator="{ on, attrs }">

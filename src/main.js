@@ -64,7 +64,7 @@ function loadDataFromURL(url, request) {
 
       let args = {}
       //Creates the default marking
-      app.$store.commit('createMarkingEntry', args)
+      app.$store.dispatch('createMarkingEntry', args)
     })
 
 }
@@ -77,38 +77,71 @@ var app = new Vue({
   render: h => h(App),
 });
 
+
+// Default settings
+readyToLoad(
+  "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv"
+)
+
+
 document.addEventListener('keydown', function (e) {
+  // To change the selection operation through numbers 1-5
   if (e.key >= 1 && e.key <= Object.keys(operations).length) {
     app.$store.commit('changeSelectionOperation', getOperationFromKey(e.key - 1))
   }
-
+ 
 
   if (e.ctrlKey && (e.key === 'z' || e.key === 'Z')) {
     console.log('reverse')
     app.$store.dispatch('reverseUpdate')
   }
 
-  if (e.shiftKey) {
-    if (!app.$store.state.isShiftKey) {
-      app.$store.dispatch('updateShiftKey', { value: true })
-      app.$store.commit('toggleInspectionMode', { value: true })
+  if (e.key === 'Escape') {
+    if(app.$store.state.hovered != null)
+      {
+        app.$store.dispatch("clearInspection");
+      }
+      else 
+      {
+        app.$store.dispatch('resetAllMarkings');
 
-      /*
-        //console.log(app.$store.state)
-        let views = Object.keys(app.$store.state.viewsMap)
-        console.log(views, app.$store.state.viewsMap)
-        //console.log("views ", views)
-        app.$store.dispatch('createDetailsView',{master_view: views[0], details_view: views[1]})
-      */
-    }
+      }
+   
   }
-
+  
+  if (e.shiftKey && !app.$store.state.isShiftKey) {
+      app.$store.dispatch('updateShiftKey', { value: true })
+      app.$store.commit("changeSelectionOperation", operations.ADD);
+  }
+  else if (e.ctrlKey && !app.$store.state.isCtrlKey) {
+    app.$store.dispatch('updateCtrlKey', { value: true })
+    app.$store.commit("changeSelectionOperation", operations.SUBTRACT);
+  }
+  else if (e.key === " " && !app.$store.state.isAltKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      app.$store.dispatch('updateAltKey', { value: true })
+      app.$store.commit('toggleInspectionMode', { value: true })
+  }
 })
-document.addEventListener('keyup', function (e) {
-  if (e.key === 'Shift') {
-    app.$store.dispatch('updateShiftKey', { value: false })
-    app.$store.commit('toggleInspectionMode', { value: false })
 
+document.addEventListener('keyup', function (e) {
+
+  if (e.key === ' ') {
+    e.preventDefault();
+    e.stopPropagation();
+    app.$store.dispatch('updateAltKey', { value: false })
+    app.$store.commit('toggleInspectionMode', { value: false })
+    app.$store.dispatch("clearInspection");
+  
+  }
+  else if (e.key === 'Shift') {
+    app.$store.dispatch('updateShiftKey', { value: false })
+    app.$store.commit("changeSelectionOperation", operations.REPLACE);
+  }
+  else if (e.key === 'Control') {
+    app.$store.dispatch('updateCtrlKey', { value: false })
+    app.$store.commit("changeSelectionOperation", operations.REPLACE);
   }
   if (e.key === '`') {
     app.$store.commit('toggleEditingMode');
@@ -184,7 +217,7 @@ function loadData(data) {
 
   let args = {}
   //Creates the default marking
-  app.$store.commit('createMarkingEntry', args)
+  app.$store.dispatch('createMarkingEntry', args)
 }
 
 

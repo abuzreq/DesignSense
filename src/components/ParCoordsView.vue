@@ -146,17 +146,21 @@ export default {
       this.refresh();
     },
     markingChangeHandler: function(reset) {
-      console.log("resetting!!! PCP", reset);
       if (reset) {
-        //this.chart.unhighlight(this.$store.getters.data);
-        this.chart.highlight(this.$store.getters.data);
-        //this.chart.brushReset();
+        this.chart.brushReset();
+        this.chart.unhighlight();
+        //this.chart.highlight(this.$store.getters.data);
+        
       } else {
-        this.chart.unhighlight(this.$store.getters.data);
+        //this.chart.brushReset();
+        //this.chart.unhighlight();
         var result = this.$store.getters.selectedDataInView(this.viewID);
         this.chart.highlight(result);
       }
+      let hovered = this.$store.getters.getHovered;
+      this.updateStyleGivenHovered(hovered);
     },
+
     hoverHandler: function() {
       this.cleanTooltip();
       this.chart.unmark();
@@ -170,22 +174,43 @@ export default {
       this.updateStyleGivenHovered(hovered);
     },
     updateStyleGivenHovered(hovered) {
+      let dict = {}
       d3.select("#" + this.viewID)
-        .selectAll("canvas")
-        .nodes()
-        .forEach((d, i) => {
-          let canvas = d3.select(d);
-          if (canvas.attr("class").includes("foreground")) {
-            canvas.style("opacity", 0.35);
-          } else if (canvas.attr("class").includes("highlight")) {
-            if (hovered) {
-              canvas.style("opacity", 0.5);
-            } else {
-              canvas.style("opacity", 1);
+        .selectAll("canvas").nodes().map(canvas => dict[canvas.getAttribute("class").split(' ')[0]] = canvas)
+          var selection = this.$store.getters.selectedDataInView(this.viewID);
+          if(Object.keys(dict).length == 0)
+              return;
+          
+          if(selection.length > 0)
+          {
+            if(hovered)
+            {
+              dict["foreground"].style.opacity = 0.25;
+              dict["brushed"].style.opacity = 0.25;
+              dict["highlight"].style.opacity = 0.5;
             }
-          } else if (canvas.attr("class").includes("marked")) {
+            else 
+            {
+              dict["foreground"].style.opacity = 0.35;
+              dict["brushed"].style.opacity = 0.35;
+              dict["highlight"].style.opacity = 1;
+            }
           }
-        });
+          else 
+          {
+            dict["highlight"].style.opacity = 0.0;
+
+            if(hovered)
+            {
+              dict["foreground"].style.opacity = 0.5;
+              dict["brushed"].style.opacity = 0.5;
+            }
+            else 
+            {
+              dict["foreground"].style.opacity = 1;
+              dict["brushed"].style.opacity = 0.0;
+            }
+          }
     },
     markLineOnHover(mousePosition) {
       let hoveredData = this.getHoveredLines(mousePosition);
@@ -392,12 +417,12 @@ export default {
       };
 
       const chart = ParCoords({
-        markedLineWidth: 3,
-        highlightedLineWidth: 3,
+        markedLineWidth: 2.5,
+        highlightedLineWidth: 1.4,
         lineWidth: 1.4,
-        markedShadowColor: '#ff0000',
-        markedShadowBlur: 5,
-
+        markedShadowColor: "#ff0000",
+        markedShadowBlur: 4,
+  
       })("#" + this.viewID)
         .data(this.chartData)
         .width(
@@ -408,12 +433,13 @@ export default {
         //    .dimensions(sampleDimensions)
         //chart.detectDimensions();
         .hideAxis(this.excludedDimensions);
+
       chart
         .createAxes()
 
         .brushMode("1D-axes") //1D-axes-multi 2D-strums angular 1D-axes
         .reorderable()
-        .mode("queue")
+        .mode("default")
 
         .render()
         .on("brushend", (brushed, args) => {
@@ -422,7 +448,6 @@ export default {
           // d3.select("#"+this.viewID).selectAll('.selection').style("display", "none");
 
           if (chart.brushed().length == chart.data().length) {
-            
             this.$store.dispatch("update", {
               view: this.viewID,
               selection: [],
@@ -446,6 +471,7 @@ export default {
               let x = d3.event.sourceEvent.clientX - this.x;
               let rawY = sel.raw;
               let scaledY = sel.scaled;
+              // console.log(sel, sel.scaled);
               this.createTooltip([
                 [x, rawY[0], round(scaledY[0], 4) + ""],
                 [x, rawY[1], round(scaledY[1], 4) + ""],
@@ -454,15 +480,16 @@ export default {
           }
         })
         .on("highlight", (e) => {
-          console.log("highlighting");
+          //console.log("highlighting");
         })
         .on("render", (e) => {
-          console.log("render");
+          //console.log("render");
           //[todo] this event is raised many time. Is there a better event to listen to or a more efficient implementation of code below?
-          var selection = this.$store.getters.selectedDataInView(this.viewID);
-          chart.highlight(selection);
+          /// var selection = this.$store.getters.selectedDataInView(this.viewID);
+          // chart.highlight(selection);
           this.graphCentriodPoints = null;
         });
+
       chart.color((d) => this.colorize(d)).render();
 
       //Source for the hover on mouse over is adopted from: http://bl.ocks.org/mostaphaRoudsari/b4e090bb50146d88aec4
@@ -484,6 +511,24 @@ export default {
           //    var mousePosition = d3.mouse(this);
           //    highlightLineOnClick(mousePosition, true); //true will also add tooltip
         });
+
+      let outputLabelColor = "steelblue";
+      let inputLabelColor = "black";
+      let colorSet = [];
+      // Coloring axes titles and lines based on whether dimensions were inputs (prefixed with "in:") or outputs (prefixed with "out:")
+      d3.selectAll(".parcoords text.label").style("fill", function(d) {
+        // change colors for inputs vs outputs
+        if (d.toUpperCase().startsWith("OUT:")) {
+          colorSet.push(outputLabelColor);
+          return outputLabelColor;
+        } else {
+          colorSet.push(inputLabelColor);
+          return inputLabelColor;
+        }
+      });
+      d3.selectAll(".parcoords path.domain").style("stroke", function(d, i) {
+        return colorSet[i];
+      });
 
       //Resetting the centroids data used for faster hovering via memoization.
       this.graphCentriodPoints = null;
@@ -520,8 +565,17 @@ export default {
 
 <style scoped>
 .parcoords {
-  cursor: crosshair;
+  /* cursor: crosshair;*/
 }
+
+::v-deep .parcoords rect.overlay {
+  fill: transparent;
+}
+
+::v-deep .parcoords rect.overlay:hover {
+  fill: rgba(120, 120, 120, 0.2);
+}
+
 #tooltip {
   font-family: sans-serif;
   font-size: 14px;
@@ -542,4 +596,5 @@ export default {
 .parcoords /deep/ .label {
   transform: rotate(10deg) translate(0px, -10px);
 }
+
 </style>
