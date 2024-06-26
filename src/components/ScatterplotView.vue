@@ -1,18 +1,94 @@
-
-
 <template>
-  <v-container style="width: 100%; height: 100%" fluid class="pa-1">
-    <v-toolbar dense dark color="blue darken-3" class="mb-1">
-      <v-row no-gutters style="height: 100%">
-        <v-col :cols="5">
-          <SingleDimensionSelect
-            :initialValue="this.xColumn"
-            v-on:update="onXChange($event)"
-            :width="this.singleDimensionWidth"
-            :prefixWidth="this.prefixWidth"
-            :dimensionsType="0"
-          >
-            <template v-slot:prefix>
+  <div style="display: flex; align-items: end;">
+    <v-container style="width: 60%; height: 100%" fluid class="pa-0">
+      <v-toolbar dense dark color="blue darken-3" class="mb-0" elevation="0">
+        <v-row no-gutters style="height: 100%">
+          <v-col :cols="5">
+            <SingleDimensionSelect
+              :initialValue="this.xColumn"
+              v-on:update="onXChange($event)"
+              :width="this.singleDimensionWidth"
+              :prefixWidth="this.prefixWidth"
+              :dimensionsType="0"
+            >
+              <template v-slot:prefix>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-simple-checkbox
+                      :ripple="false"
+                      style="float: left"
+                      v-on="on"
+                      v-bind="attrs"
+                      dense
+                      v-model="isXAxisIncremental"
+                      icon="x-small"
+                      :off-icon="arrowRightIcon"
+                      :on-icon="arrowLeftIcon"
+                    />
+                  </template>
+                  <span v-if="isXAxisIncremental"
+                    >Press to change to Ascending from right to left</span
+                  >
+                  <span v-else
+                    >Press to change to Descending from right to left</span
+                  >
+                </v-tooltip>
+                <div
+                  :style="{
+                    float: 'left',
+                    height: '100%',
+                    width: `${prefixWidth}px`,
+                  }"
+                >
+                  X:
+                </div>
+              </template>
+            </SingleDimensionSelect>
+          </v-col>
+          <v-col :cols="5">
+            <SingleDimensionSelect
+              :initialValue="this.yColumn"
+              v-on:update="onYChange($event)"
+              :width="this.singleDimensionWidth"
+              :prefixWidth="this.prefixWidth"
+              :dimensionsType="0"
+            >
+              <template v-slot:prefix>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-simple-checkbox
+                      :ripple="false"
+                      style="float: left"
+                      v-on="on"
+                      v-bind="attrs"
+                      dense
+                      v-model="isYAxisIncremental"
+                      icon="x-small"
+                      :off-icon="arrowUpIcon"
+                      :on-icon="arrowDownIcon"
+                    />
+                  </template>
+                  <span v-if="isYAxisIncremental"
+                    >Press to change to Ascending from bottom to top</span
+                  >
+                  <span v-else
+                    >Press to change to Descending from bottom to top</span
+                  >
+                </v-tooltip>
+                <div
+                  :style="{
+                    float: 'left',
+                    height: '100%',
+                    width: `${prefixWidth}px`,
+                  }"
+                >
+                  Y:
+                </div>
+              </template>
+            </SingleDimensionSelect>
+          </v-col>
+          <v-col :cols="2" style="align-content: center;">
+            <v-row no-gutters>
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
                   <v-simple-checkbox
@@ -21,100 +97,34 @@
                     v-on="on"
                     v-bind="attrs"
                     dense
-                    v-model="isXAxisIncremental"
+                    v-model="useLassoBrush"
                     icon="x-small"
-                    :off-icon="arrowRightIcon"
-                    :on-icon="arrowLeftIcon"
+                    :off-icon="lassoBrushIcon"
+                    :on-icon="rectBrushIcon"
                   />
                 </template>
-                <span v-if="isXAxisIncremental"
-                  >Press to change to Ascending from right to left</span
+                <span v-if="useLassoBrush"
+                  >Switch to the rectangular brush</span
                 >
-                <span v-else
-                  >Press to change to Descending from right to left</span
-                >
+                <span v-else>Switch to the Lasso brush</span>
               </v-tooltip>
-              <div
-                :style="{
-                  float: 'left',
-                  height: '100%',
-                  width: `${prefixWidth}px`,
-                }"
-              >
-                X:
-              </div>
-            </template>
-          </SingleDimensionSelect>
-        </v-col>
-        <v-col :cols="5">
-          <SingleDimensionSelect
-            :initialValue="this.yColumn"
-            v-on:update="onYChange($event)"
-            :width="this.singleDimensionWidth"
-            :prefixWidth="this.prefixWidth"
-            :dimensionsType="0"
-          >
-            <template v-slot:prefix>
               <v-tooltip bottom>
                 <template v-slot:activator="{ on, attrs }">
-                  <v-simple-checkbox
-                    :ripple="false"
-                    style="float: left"
+                  <ClusterIcon
                     v-on="on"
                     v-bind="attrs"
-                    dense
-                    v-model="isYAxisIncremental"
-                    icon="x-small"
-                    :off-icon="arrowUpIcon"
-                    :on-icon="arrowDownIcon"
-                  />
-                </template>
-                <span v-if="isYAxisIncremental"
-                  >Press to change to Ascending from bottom to top</span
-                >
-                <span v-else
-                  >Press to change to Descending from bottom to top</span
-                >
-              </v-tooltip>
-              <div
-                :style="{
-                  float: 'left',
-                  height: '100%',
-                  width: `${prefixWidth}px`,
-                }"
-              >
-                Y:
-              </div>
-            </template>
-          </SingleDimensionSelect>
-        </v-col>
-        <v-col :cols="2" style="align-content: center;">
-          <v-row no-gutters>
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
-                <v-simple-checkbox
-                  :ripple="false"
-                  style="float: left"
-                  v-on="on"
-                  v-bind="attrs"
-                  dense
-                  v-model="useLassoBrush"
-                  icon="x-small"
-                  :off-icon="lassoBrushIcon"
-                  :on-icon="rectBrushIcon"
-                />
-              </template>
-              <span v-if="useLassoBrush">Switch to the rectangular brush</span>
-              <span v-else>Switch to the Lasso brush</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-              <ClusterIcon :v-on="on" @click="toggleClustering" class="clustering-icon"/> 
-              </template>
-              <span>Clustering!</span>
-            </v-tooltip>
 
-            <!--
+                    @click="toggleClustering"
+                    class="clustering-icon"
+                    :style="{
+                      fill: `${showClustering ? 'gold' : 'white'}`,
+                    }"
+                  />
+                </template>
+                <span>Toggle to start clustering. Clustering puts items into groups based on their similarity with respect to the dimensions chosen here ont he scatterplot.</span>
+              </v-tooltip>
+
+              <!--
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-btn
@@ -131,27 +141,44 @@
               >
             </v-tooltip>
             -->
-          </v-row>
-        </v-col>
-      </v-row>
-    </v-toolbar>
-    <div
-      :id="viewID"
-      ref="scatter"
-      :style="{
-        height: `${this.height - this.toolbarHeight}px`,
-      }"
-    />
-  </v-container>
+            </v-row>
+          </v-col>
+        </v-row>
+      </v-toolbar>
+      <div
+        :id="viewID"
+        ref="scatter"
+        :style="{
+          height: `${this.height - this.toolbarHeight}px`,
+        }"
+      />
+    </v-container>
+    <v-container
+      style="width:40%; height:100%;"
+      fluid
+      class="pa-0 blue darken-3"
+    >
+      <ClusterView
+        v-show="showClustering"
+        :width="this.width * 0.4"
+        :height="this.height"
+        :defaultEnableContext="true"
+        :x="this.x"
+        :y="this.y"
+        :type="type"
+        :showMultiselect="false"
+        :parentDimensions="[xColumn, yColumn]"
+        :sortByVar="xColumn"
+      />
+    </v-container>
+  </div>
 </template>
 
 <style scoped>
 .clustering-icon {
   cursor: pointer;
-
 }
-::v-deep .x.axis .tick text
-{
+::v-deep .x.axis .tick text {
   transform: rotate(35deg);
 }
 
@@ -222,12 +249,13 @@ import { mapGetters } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import SingleDimensionSelect from "@/components/SingleDimensionSelect.vue";
 import ClusterIcon from "-!vue-svg-loader!/src/assets/cluster_icon.svg";
+import ClusterView from "@/components/ClusterView.vue";
 
 export default {
   mixins: [TemplateView],
   name: "ScatterplotView",
-  components: { SingleDimensionSelect, ClusterIcon},
-  data: function () {
+  components: { SingleDimensionSelect, ClusterIcon, ClusterView },
+  data: function() {
     return {
       xColumn: "",
       yColumn: "",
@@ -242,35 +270,36 @@ export default {
       arrowLeftIcon: "mdi-arrow-left",
       lassoBrushIcon: "mdi-lasso",
       rectBrushIcon: "mdi-select-drag",
-      prefixWidth: 20,
-      numTicks: 20
+      prefixWidth: 15,
+      numTicks: 20,
+      showClustering: false,
     };
   },
   computed: {
     singleDimensionWidth() {
-      if (this.width <= 400) {
-        `1`;
-        return Math.min(110, (4 * this.width) / 12);
+      console.log(this.width);
+      if (this.width * 0.6 <= 400) {
+        return Math.min(110, (4 * this.width * 0.6) / 12);
       } else {
-        return Math.min(180, (4 * this.width) / 12);
+        return Math.min(180, (4 * this.width * 0.6) / 12);
       }
     },
   },
   watch: {
     useLassoBrush: {
-      handler: function (newValue) {
+      handler: function(newValue) {
         this.useLassoBrush = newValue;
         this.refresh();
       },
     },
     isXAxisIncremental: {
-      handler: function (newValue) {
+      handler: function(newValue) {
         this.isXAxisIncremental = newValue;
         this.refresh();
       },
     },
     isYAxisIncremental: {
-      handler: function (newValue) {
+      handler: function(newValue) {
         this.isYAxisIncremental = newValue;
         this.refresh();
       },
@@ -284,10 +313,11 @@ export default {
     this.yColumn = this.numericDimensions[1];
   },
   methods: {
-    toggleClustering: function(){
-      console.log("clustering")
+    toggleClustering: function() {
+      this.showClustering = !this.showClustering;
+      console.log("clustering");
     },
-    calculateParetoFrontier: function (event) {
+    calculateParetoFrontier: function(event) {
       this.isShowingParetoFrontier = true;
       let graph = this.chartData.map((d) => [
         d[this.xColumn],
@@ -303,15 +333,15 @@ export default {
         operation: this.$store.state.currentSelectionOperation,
       });
     },
-    onXChange: function (newXColumn) {
+    onXChange: function(newXColumn) {
       this.xColumn = newXColumn;
       this.refresh();
     },
-    onYChange: function (newYColumn) {
+    onYChange: function(newYColumn) {
       this.yColumn = newYColumn;
       this.refresh();
     },
-    markingChangeHandler: function (reset) {
+    markingChangeHandler: function(reset) {
       if (reset) {
         this.chart.unhighlightAll();
       } else {
@@ -320,14 +350,14 @@ export default {
         this.chart.highlight(result);
       }
     },
-    hoverHandler: function () {
+    hoverHandler: function() {
       let hovered = this.$store.getters.getHovered;
       this.chart.mark(hovered);
     },
-    Chart: function () {
+    Chart: function() {
       var scatterPlot = new ScatterPlot();
       scatterPlot
-        .outerWidth(this.width)
+        .outerWidth(this.width * 0.6)
         .outerHeight(this.height - this.toolbarHeight)
         .margin({ left: 45, top: 10, right: 10, bottom: 50 })
         .xColumn(this.xColumn)
@@ -391,10 +421,16 @@ class ScatterPlot {
     var yScale = d3.scaleLinear();
     var colorScale = d3.scaleOrdinal();
 
-    var xAxis = d3.axisBottom().ticks(6).tickFormat(d3.format("s"));
+    var xAxis = d3
+      .axisBottom()
+      .ticks(6)
+      .tickFormat(d3.format("s"));
     var xTicks = 6;
 
-    var yAxis = d3.axisLeft().ticks(6).tickFormat(d3.format("s"));
+    var yAxis = d3
+      .axisLeft()
+      .ticks(6)
+      .tickFormat(d3.format("s"));
     var yTicks = 6;
     let thisG = null;
 
@@ -406,7 +442,7 @@ class ScatterPlot {
     function chart(selection) {
       var innerWidth = outerWidth - margin.left - margin.right;
       var innerHeight = outerHeight - margin.top - margin.bottom;
- console.log("colorColumn",colorColumn)
+      console.log("colorColumn", colorColumn);
       //colorScale.range();
       //[todo] externalize this offset parameter
       var offset = 15;
@@ -421,7 +457,7 @@ class ScatterPlot {
           : [innerHeight - offset, offset]
       );
 
-      selection.each(function (data) {
+      selection.each(function(data) {
         var div = d3.select(this);
         var svg = div.select("svg").empty()
           ? div.select("svg").append("svg")
@@ -455,12 +491,12 @@ class ScatterPlot {
           .style("text-anchor", "middle");
 
         xScale.domain(
-          d3.extent(data, function (d) {
+          d3.extent(data, function(d) {
             return d[xColumn];
           })
         );
         yScale.domain(
-          d3.extent(data, function (d) {
+          d3.extent(data, function(d) {
             return d[yColumn];
           })
         );
@@ -476,12 +512,12 @@ class ScatterPlot {
             .on("start", brushstart)
             .on("brush", brushmove)
             .on("end", brushend)
-            .filter(x => {return !d3.event.button});
+            .filter((x) => {
+              return !d3.event.button;
+            });
 
           //ref: https://github.com/d3/d3-brush/issues/20
           rectBrush.keyModifiers(false);
-         
-
         } else {
           var lasso_area = g
             .insert("rect", ":first-child")
@@ -489,8 +525,6 @@ class ScatterPlot {
             .attr("height", innerHeight)
             .style("opacity", 0);
 
-
-       
           // Define the lasso
           lassoBrush = d3
             .lasso()
@@ -500,9 +534,9 @@ class ScatterPlot {
             .targetArea(lasso_area) // area where the lasso can be started
             .on("start", brushstart)
             .on("brush", brushmove)
-            .on("end", brushend)
-         
-          console.log(lassoBrush)
+            .on("end", brushend);
+
+          console.log(lassoBrush);
           lassoBrush.items(circles);
         }
 
@@ -513,13 +547,13 @@ class ScatterPlot {
 
         g.select(".x.axis")
           .attr("transform", "translate(0," + innerHeight + ")")
-          .call(d3.axisBottom(xScale).ticks(xTicks))//.tickFormat(d3.format("s"))
+          .call(d3.axisBottom(xScale).ticks(xTicks)) //.tickFormat(d3.format("s"))
           .select("text")
           .attr("x", innerWidth / 2)
           .attr("y", xAxisLabelOffset)
           .attr("fill", "black")
           .text(xAxisLabel)
-          .style("font-size", "12px")   
+          .style("font-size", "12px");
         //console.log(g.select(".x.axis").select("text"));
         g.select(".y.axis")
           .call(d3.axisLeft(yScale).ticks(yTicks))
@@ -537,17 +571,16 @@ class ScatterPlot {
           .style("font-size", "12px");
 
         circles
-          .attr("cx", function (d) {
+          .attr("cx", function(d) {
             return xScale(d[xColumn]);
           })
-          .attr("cy", function (d) {
+          .attr("cy", function(d) {
             return yScale(d[yColumn]);
           })
-          .attr("r", function (d) {
+          .attr("r", function(d) {
             return circlesRadius;
           })
-          .attr("fill", function (d) {
-           
+          .attr("fill", function(d) {
             return colorScale(d[colorColumn]);
           });
 
@@ -612,7 +645,7 @@ class ScatterPlot {
 
         function brushmove() {}
 
-        var highlight = function (selection) {
+        var highlight = function(selection) {
           selection = selection.map(keyFunc);
 
           thisG
@@ -643,12 +676,12 @@ class ScatterPlot {
             );
         };
 
-        var unhighlightAll = function () {
+        var unhighlightAll = function() {
           thisG.selectAll("circle").classed("hidden", false);
           markCircle.attr("opacity", 0);
         };
 
-        var mark = function (item) {
+        var mark = function(item) {
           if (item) {
             markCircle
               .attr("stroke", colorScale(item[colorColumn]))
@@ -691,7 +724,7 @@ class ScatterPlot {
           .size([innerWidth, innerHeight])(data);
         const voronoiRadius = innerWidth / 10;
 
-        g.on("mousemove", function () {
+        g.on("mousemove", function() {
           const [mx, my] = d3.mouse(this);
           const site = voronoiDiagram.find(mx, my, voronoiRadius);
           onHovered(site && site.data);
@@ -710,111 +743,111 @@ class ScatterPlot {
       });
     }
 
-    chart.onBrushed = function (_) {
+    chart.onBrushed = function(_) {
       if (!arguments.length) return onBrushed;
       onBrushed = _;
       return chart;
     };
-    chart.onHovered = function (_) {
+    chart.onHovered = function(_) {
       if (!arguments.length) return onHovered;
       onHovered = _;
       return chart;
     };
 
-    chart.keyFunc = function (_) {
+    chart.keyFunc = function(_) {
       if (!arguments.length) return keyFunc;
       keyFunc = _;
       return chart;
     };
-    chart.outerWidth = function (_) {
+    chart.outerWidth = function(_) {
       if (!arguments.length) return outerWidth;
       outerWidth = _;
       return chart;
     };
 
-    chart.outerHeight = function (_) {
+    chart.outerHeight = function(_) {
       if (!arguments.length) return outerHeight;
       outerHeight = _;
       return chart;
     };
 
-    chart.xColumn = function (_) {
+    chart.xColumn = function(_) {
       if (!arguments.length) return xColumn;
       xColumn = _;
       return chart;
     };
 
-    chart.yColumn = function (_) {
+    chart.yColumn = function(_) {
       if (!arguments.length) return yColumn;
       yColumn = _;
       return chart;
     };
 
-    chart.colorScale = function (_) {
+    chart.colorScale = function(_) {
       if (!arguments.length) return colorScale;
       colorScale = _;
       return chart;
     };
 
-    chart.colorColumn = function (_) {
+    chart.colorColumn = function(_) {
       if (!arguments.length) return colorColumn;
       colorColumn = _;
       return chart;
     };
 
-    chart.xAxisLabel = function (_) {
+    chart.xAxisLabel = function(_) {
       if (!arguments.length) return xAxisLabel;
       xAxisLabel = _;
       return chart;
     };
 
-    chart.yAxisLabel = function (_) {
+    chart.yAxisLabel = function(_) {
       if (!arguments.length) return yAxisLabel;
       yAxisLabel = _;
       return chart;
     };
 
-    chart.isXAxisIncremental = function (_) {
+    chart.isXAxisIncremental = function(_) {
       if (!arguments.length) return isXAxisIncremental;
       isXAxisIncremental = _;
       return chart;
     };
-    chart.isYAxisIncremental = function (_) {
+    chart.isYAxisIncremental = function(_) {
       if (!arguments.length) return isYAxisIncremental;
       isYAxisIncremental = _;
       return chart;
     };
 
-    chart.xAxisLabelOffset = function (_) {
+    chart.xAxisLabelOffset = function(_) {
       if (!arguments.length) return xAxisLabelOffset;
       xAxisLabelOffset = _;
       return chart;
     };
 
-    chart.yAxisLabelOffset = function (_) {
+    chart.yAxisLabelOffset = function(_) {
       if (!arguments.length) return yAxisLabelOffset;
       yAxisLabelOffset = _;
       return chart;
     };
 
-    chart.xTicks = function (_) {
+    chart.xTicks = function(_) {
       if (!arguments.length) return xTicks;
       xTicks = _;
       return chart;
     };
 
-    chart.yTicks = function (_) {
+    chart.yTicks = function(_) {
       if (!arguments.length) return yTicks;
       yTicks = _;
       return chart;
     };
 
-    chart.margin = function (_) {
+    chart.margin = function(_) {
       if (!arguments.length) return margin;
       margin = _;
       return chart;
     };
-    chart.useLassoBrush = function (_) {
+    chart.useLassoBrush = function(_) {
       if (!arguments.length) return useLassoBrush;
       useLassoBrush = _;
       return chart;
@@ -824,4 +857,3 @@ class ScatterPlot {
   }
 }
 </script>
-

@@ -65,15 +65,6 @@
         :y="this.y"
         :type="type"
       />
-      <ClusterView
-        v-if="type == 'Clusters'"
-        :width="this.width"
-        :height="this.height"
-        :defaultEnableContext="true"
-        :x="this.x"
-        :y="this.y"
-        :type="type"
-      />
       <SPLOMView
         v-if="type == 'SPLOM'"
         :width="this.width"
@@ -112,7 +103,6 @@ import ScatterplotView from "@/components/ScatterplotView.vue";
 import TSNEView from "@/components/TSNEView.vue";
 
 import SetsView from "@/components/SetsView.vue";
-import ClusterView from "@/components/ClusterView.vue";
 
 export default {
   components: {
@@ -124,7 +114,6 @@ export default {
     ScatterplotView,
     TSNEView,
     SetsView,
-    ClusterView,
   },
   props: ["initX", "initY", "initW", "initH", "type"],
   data: function () {

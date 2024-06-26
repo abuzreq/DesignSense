@@ -296,7 +296,6 @@ import ScatterplotView from "@/components/ScatterplotView.vue";
 import TSNEView from "@/components/TSNEView.vue";
 
 import SetsView from "@/components/SetsView.vue";
-import ClusterView from "@/components/ClusterView.vue";
 
 import Card from "@/components/Card.vue";
 
@@ -324,7 +323,6 @@ export default {
     ScatterplotView,
     TSNEView,
     SetsView,
-    ClusterView,
     Card,
     RadialMenu,
     RadialMenuItem,
