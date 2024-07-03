@@ -6,21 +6,30 @@
     ></span>
 
     <v-main id="designsense-workspace" style="padding: 0">
-          <router-view></router-view>
+      <router-view></router-view>
     </v-main>
   </v-app>
 </template>
 
 <script>
+import Vue from "vue";
+
 export default {
   name: "App",
   components: {},
+  data: function() {
+    return {
+    };
+  },
+  created() {
+    
+
+  },
 };
 </script>
 <style>
 body {
   font-family: Avenir, Helvetica Neue, Helvetica, Arial;
-
 }
 
 a {

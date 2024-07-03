@@ -121,7 +121,7 @@
                     }"
                   />
                 </template>
-                <span>Toggle to start clustering. Clustering puts items into groups based on their similarity with respect to the dimensions chosen here ont he scatterplot.</span>
+                <span>Toggle to start clustering. Clustering puts items into groups based on their similarity with respect to the dimensions chosen here on the scatterplot.</span>
               </v-tooltip>
 
               <!--
@@ -166,7 +166,7 @@
         :x="this.x"
         :y="this.y"
         :type="type"
-        :showMultiselect="false"
+        :showMultiselect="true"
         :parentDimensions="[xColumn, yColumn]"
         :sortByVar="xColumn"
       />

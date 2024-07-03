@@ -4,7 +4,7 @@
     justify-start
     align-start
     class="pt-0"
-    :style="{ height: `${height}px`}"
+    :style="{ height: `${height}px` }"
   >
     <v-data-iterator
       style="height: 100%"
@@ -15,50 +15,52 @@
       :sort-desc="isSortDesc"
     >
       <template v-slot:header>
-       
-          <v-container  class="pa-0" fluid >
-              <div style="display: flex">
-              <v-select
-                id="num_clusters_select"
-                density="compact"
-                style="margin-top: 15px;"
-                label="Num of Clusters"
-                :items="[2, 3, 4, 5, 6, 7, 8, 9]"
-                v-model="numClusters"
-                hide-details
-              ></v-select>
+        <v-container class="pa-0" fluid>
+          <div style="display: flex">
+            <v-select
+              id="num_clusters_select"
+              density="compact"
+              style="margin-top: 15px;"
+              label="Num of Clusters"
+              :items="[2, 3, 4, 5, 6, 7, 8, 9]"
+              v-model="numClusters"
+              hide-details
+            ></v-select>
 
+            <div style="display: flex; flex-direction: column;">
               <div
-                style="display: flex; flex-direction: column;"
+                style="display: flex; flex-direction: row; justify-content: space-between; position: relative; top: 12px"
               >
-                <div
-                  style="display: flex; flex-direction: row; justify-content: space-between; position: relative; top: 12px"
-                >
-                  <span><SmallGridIcon /></span>
-                  <span><MediumGridIcon /></span>
-                  <span><LargeGridIcon /></span>
-                </div>
-                <v-slider
-                  id="size-slider"
-                  min="0"
-                  max="2"
-                  step="1"
-                  style="width: 150px;"
-                  ticks="always"
-                  tick-size="4"
-                  v-model="colSpan"
-                  hide-details
-                ></v-slider>
+                <span><SmallGridIcon /></span>
+                <span><MediumGridIcon /></span>
+                <span><LargeGridIcon /></span>
               </div>
+              <v-slider
+                id="size-slider"
+                min="0"
+                max="2"
+                step="1"
+                style="width: 150px;"
+                ticks="always"
+                tick-size="4"
+                v-model="colSpan"
+                hide-details
+              ></v-slider>
             </div>
-          </v-container>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-btn size="x-small" v-on="on" icon color="white" style="align-items: flex-end;"
+                  ><v-icon  style="border: 2px solid currentColor; border-radius:50%;">{{ "mdi-exclamation" }}</v-icon></v-btn
+                >
+              </template>
+              <span>This shows clusters in the design space. Each cluster represents a group of items that are similar to each other with respect to chosen data dimensions. You can choose the clustering dimensions from the dropdown at the bottom, we recommend using the same dimensions used in the scatterplot as a start.</span>
+            </v-tooltip>
+          </div>
+        </v-container>
       </template>
       <template v-slot:default="items">
         <v-layout grid-list-sm column style="height: 75vh">
-          <v-card
-                  color="primary"
-                  class="clusters-note"
-                >
+          <v-card color="primary" class="clusters-note">
             Click to select clusters.
           </v-card>
           <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
@@ -79,12 +81,10 @@
                   }"
                   v-bind:id="cardSelector + item._id"
                 >
-                <span
-                    style="padding: 2px; position: relative; left: 3%;"
+                  <span style="padding: 2px; position: relative; left: 3%;"
                     >{{ "0" + (index + 1) }}
-                  </span> 
-                  <span
-                    style="padding: 2px; position: absolute; right: 3%;"
+                  </span>
+                  <span style="padding: 2px; position: absolute; right: 3%;"
                     >{{ "#" + clustersSize[index] }}
                   </span>
                   <v-img
@@ -114,7 +114,7 @@
       <MultiDimensionSelect
         :initialValue="dimensions"
         :keys="numericDimensions"
-        :width="(3 / 4) * width"
+        :width="(4 / 5) * width"
         v-on:update="onDimensionChange($event)"
         initialOpenDirection="above"
       />
@@ -132,23 +132,19 @@
 </template>
 
 <style scoped>
-
 body {
   user-select: none; /* Standard syntax */
-
 }
 
-::v-deep  label.v-label {
-  color: white;
-  
-}
-
-::v-deep div.v-select__selections
-{
+::v-deep label.v-label {
   color: white;
 }
-::v-deep .v-list .v-list-item--active { 
-  background-color: white!important; 
+
+::v-deep div.v-select__selections {
+  color: white;
+}
+::v-deep .v-list .v-list-item--active {
+  background-color: white !important;
 }
 ::v-deep .v-list .v-list-item--active .v-list-item__title {
   color: white !important;
@@ -199,6 +195,7 @@ import { ModelGltf } from "vue-3d-model";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import * as kmeans from "node-kmeans";
+
 import * as nj from "numjs";
 import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
 
@@ -228,7 +225,7 @@ export default {
     "type",
     "showMultiselect",
     "parentDimensions",
-    "sortByVar"
+    "sortByVar",
   ],
 
   data: function() {
@@ -277,7 +274,7 @@ export default {
     });
     this.chartData = this.rawChartData;
 
-    // this.compute();
+    this.compute();
   },
   created() {
     this.dimensions =
@@ -310,6 +307,14 @@ export default {
       }
 
       var matrix = to2DMatrix(this.chartData, this.dimensions, true); //['TotalFlrArea']
+
+      /*
+      var clustering = require('density-clustering');
+      var dbscan = new clustering.DBSCAN();
+      // parameters: 5 - neighborhood radius, 2 - number of points in neighborhood to form a cluster
+      var clusters = dbscan.run(matrix, 5, 5);
+      console.log(clusters, dbscan.noise);
+      */
 
       /*
       if(this.isComputingVisualSimilarity)
@@ -442,7 +447,7 @@ export default {
       deep: true,
       handler: function(newValue) {
         console.log("dims parent");
-        this.onDimensionChange(newValue);
+        //this.onDimensionChange(newValue);
       },
     },
     enableContext: {

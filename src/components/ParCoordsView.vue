@@ -422,7 +422,7 @@ export default {
         lineWidth: 1.4,
         markedShadowColor: "#ff0000",
         markedShadowBlur: 4,
-  
+
       })("#" + this.viewID)
         .data(this.chartData)
         .width(

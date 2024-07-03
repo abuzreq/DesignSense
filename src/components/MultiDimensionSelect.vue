@@ -13,6 +13,7 @@
       :clear-on-select="false"
       :preserve-search="true"
       :showLabels="false"
+      placeholder="pick/search item(s) here"
       searchable
       :openDirection="initialOpenDirection?initialOpenDirection:'down'"
    

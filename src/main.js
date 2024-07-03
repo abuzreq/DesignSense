@@ -79,9 +79,13 @@ var app = new Vue({
 
 
 // Default settings
-readyToLoad(
-  "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv"
-)
+readyToLoad("https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv").then(() => {
+  //app.$store.commit('changeSelectionOperation', getOperationFromKey(e.key - 1))
+  console.log("loading box data")
+  sessionStorage.clear();
+
+  app.$store.commit('setIsOpeningDialogOn', {'value': true})
+})
 
 
 document.addEventListener('keydown', function (e) {

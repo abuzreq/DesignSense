@@ -36,8 +36,8 @@
               >Supplementary (Case Study)</a
             >| -->
             <router-link to="/demo">Demo</router-link> |
-            <a href="#/about" class="link at">Paper (To come)</a> |
-            <a class="link at" href="#/about">BibTeX (To come)</a> |
+            <a target="_blank"  href="https://journals.sagepub.com/doi/10.1177/14780771241260854" class="link at">Paper</a> |
+            
             <a href="#/about" class="link at">Feedback and Community (To come)</a>
             <!-- <a class="link at" href="">Video (To come)</a> | -->
 

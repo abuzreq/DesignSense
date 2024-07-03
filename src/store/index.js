@@ -50,6 +50,8 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
 
             colorRange: d3Chromatic.schemeTableau10,
             colorColumn: "year",
+            
+            isOpeningDialogOn: true,
         },
         getters: {
             colorScale: state => d3.scaleOrdinal(state.colorRange),
@@ -118,8 +120,12 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                     state.isInspectionMode = !state.isInspectionMode;
                 }
             },
-
-
+            setIsOpeningDialogOn(state, payload)  {
+                if (payload) {
+                    state.isOpeningDialogOn = payload.value
+                }
+            },
+            
             setData(state, payload) {
                 state.data = payload.newData;
             },

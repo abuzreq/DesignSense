@@ -13,12 +13,14 @@
       color=" white--text text--lighten-1"
       height="50"
     >
-      <v-toolbar-title id="designsense-title" style="width: 15vw"
-        > <router-link to="/about">DesignSense
-        <span style="font-size: 14px; color: deepskyblue"
-          >alpha</span
-        ></router-link> </v-toolbar-title
-      >
+      <v-toolbar-title id="designsense-title" style="width: 15vw">
+        <router-link to="/about"
+          >DesignSense
+          <span style="font-size: 14px; color: deepskyblue"
+            >alpha</span
+          ></router-link
+        >
+      </v-toolbar-title>
       <v-divider vertical />
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
@@ -28,7 +30,7 @@
         </template>
         <span>{{ actions["help"].tooltip() }}</span>
       </v-tooltip>
-     
+
       <v-divider vertical />
       <LoadDataModal id="loading-data-bar"> </LoadDataModal>
       <v-divider vertical />
@@ -41,7 +43,6 @@
         <span>{{ actions["saveToFile"].tooltip() }}</span>
       </v-tooltip>
       <v-divider vertical />
-
 
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
@@ -59,9 +60,6 @@
       </v-tooltip>
       <v-divider vertical />
 
-     
-
-  
       <v-divider vertical />
       <v-spacer></v-spacer>
       <SelectionOperationsBar id="selection-operations-bar" />
@@ -69,7 +67,7 @@
       <v-divider vertical />
 
       <v-divider vertical />
-     <!--<ColorSelectionModal id="color-selection-bar"> </ColorSelectionModal>--> 
+      <!--<ColorSelectionModal id="color-selection-bar"> </ColorSelectionModal>-->
 
       <v-divider vertical />
       <span id="inspection-bar" style="box-shadow: none !important">
@@ -111,7 +109,6 @@
           </template>
           <span>{{ actions["reverseUpdate"].tooltip() }}</span>
         </v-tooltip>
-
 
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
@@ -190,21 +187,84 @@
         </v-tooltip>
       </span>
     </v-app-bar>
+    <v-dialog :key="123" v-model="isOpeningDialogOn" width="650px">
+      <template>
+        <v-card
+          style="z-index: 300; padding: 15px"
+          height="400px"
+          max-width="650"
+        >
+          <v-card-title style="font-size: xx-large;">
+            Welcome to DesignSense!
+          </v-card-title>
+          <div style="position: absolute; top: 5%;right: 5%;">
+            <v-btn icon @click="$store.commit('setIsOpeningDialogOn', {'value': false})">
+              <v-icon>{{ "mdi-close" }}</v-icon></v-btn
+            >
+          </div>
+          <div
+            style="font-size: large; display: flex; flex-direction: column; padding: 20px;"
+          >
+            <p>
+              DesignSense is a tool for navigating and making sense of
+              parametric design spaces.
+            </p>
+            <div style="display: flex; flex-direction: column;">
+              <p>
+                If this is your first time, we suggest starting with the
+                onboarding tour.
+              </p>
 
+              <v-btn
+                color="red lighten-2"
+                dark
+                style="align-self: center;"
+                @click="
+                  $store.commit('setIsOpeningDialogOn', {'value': false})
+                  $tours['onboardingTour'].start();
+                "
+              >
+                Start On-boarding</v-btn
+              >
+            </div>
+          </div>
+
+          <div
+            style="display: flex; flex-direction: row;   justify-content: center; padding: 20px;"
+          >
+            <div><router-link to="/about">About </router-link></div>
+            &nbsp;&nbsp;|&nbsp;&nbsp;
+            <div><a href="mailto:aabuzura@sfu.ca">Feedback</a></div>
+          </div>
+          <div
+            style="width: 600px;
+    border-top: 1px solid #00000057; font-size: small; position: absolute; bottom: 2%;left: 5%;text-align: left;"
+          >
+            <p style="margin-bottom: 0px;">
+              Built by
+              <a href="https://abuzreq.netlify.app/" target="_blank"
+                >Ahmed Abuzuraiq</a
+              >
+            </p>
+            <div>v1.1.0</div>
+          </div>
+        </v-card>
+      </template>
+    </v-dialog>
     <v-main id="designsense-workspace" style="padding: 50px 0px 0px">
       <div
         @contextmenu="showContextMenuHandler"
         style="height: 100%; width: 100%; border: 1px solid red"
       >
-          <Card
-             v-for="(item, index) in layouts"
-            :key="index"
-            :initX="item.x"
-            :initY="item.y"
-            :initW="item.w"
-            :initH="item.h"
-            :type="item.type"
-          />
+        <Card
+          v-for="(item, index) in layouts"
+          :key="index"
+          :initX="item.x"
+          :initY="item.y"
+          :initW="item.w"
+          :initH="item.h"
+          :type="item.type"
+        />
       </div>
     </v-main>
 
@@ -255,7 +315,6 @@
   </v-app>
 </template>
 
-
 <style>
 .v-tour {
   z-index: 8000;
@@ -285,6 +344,8 @@ body {
 }
 </style>
 <script>
+import Vue from "vue";
+
 import ParCoordsView from "@/components/ParCoordsView.vue";
 import GridView from "@/components/GridView.vue";
 import AugmentedGridView from "@/components/AugmentedGridView.vue";
@@ -331,7 +392,7 @@ export default {
     SelectionOperationsBar,
   },
 
-  data: function () {
+  data: function() {
     return {
       onboardingCallbacks: {
         onStart: () => (document.body.style.pointerEvents = "all"),
@@ -344,7 +405,8 @@ export default {
           header: {
             title: "Welcome to DesignSense!",
           },
-          content: "DesignSense is a shopping interface augmented with data visualizations and analysis! The interface was designed to allow users to navigate through a large number of options while considering both the visual appearance and the multidimensional metrics of those options. [Next: &rarr;, Previous: &larr; ]",
+          content:
+            "DesignSense is a shopping interface augmented with data visualizations and analysis! The interface was designed to allow users to navigate through a large number of options while considering both the visual appearance and the multidimensional metrics of those options. [Next: &rarr;, Previous: &larr; ]",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -517,7 +579,7 @@ export default {
             title: "On-Demand Inspection",
           },
           content:
-            "The second way to inspect options happens by holding the Shift button and releasing it once the target option is found. This way allows us to maintain that inspection even if we move the cursor around. For example, we may be interested in an alternative that is outlying in the scatterplot but then wish to examine its appearance in detail without losing focus.",
+            "The second way to inspect options happens by holding the SPACE button and releasing it once the target option is found. This way allows us to maintain that inspection even if we move the cursor around. For example, we may be interested in an alternative that is outlying in the scatterplot but then wish to examine its appearance in detail without losing focus.",
           params: {
             enableScrolling: false,
             placement: "left",
@@ -567,7 +629,7 @@ export default {
           header: {
             title: "Thanks!!",
           },
-          content: `This marks the end of our tour of DesignSense! Feel free to reach us on TODO or read more on TODO`,
+          content: `This marks the end of our tour of DesignSense! Feel free to reach us on aabuzura@sfu.ca`,
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -632,8 +694,8 @@ export default {
           icon: "mdi-selection-ellipse-arrow-inside",
           tooltip: () =>
             this.isInspectionMode
-              ? "Disable inspection on hovering ['Shift' to disable inspection]"
-              : "Enable continious inspection on hovering. ['Shift' to enable on-spot inspection]",
+              ? "Disable inspection on hovering ['Space' to disable inspection]"
+              : "Enable continious inspection on hovering. ['Space' to enable on-spot inspection]",
           type: "inspecting",
         },
         clearInspection: {
@@ -664,13 +726,12 @@ export default {
               : "Enable Editing Mode. (to resize and move the panels)   [`]",
           type: "editing",
         },
-        saveToFile:
-        {
+        saveToFile: {
           clickAction: () => this.$store.dispatch("saveSelectedToFile"),
-          icon: 'mdi-download',
+          icon: "mdi-download",
           tooltip: () => "Save the selected options to file",
-          type: "misc"
-        }
+          type: "misc",
+        },
       },
       contextMenuItems: [
         "toggleInspectionMode",
@@ -686,7 +747,6 @@ export default {
       rightClickPos: { x: 0, y: 0 },
     };
   },
-  computed: {},
   destroyed() {},
   created() {
     document.title = "DesignSense";
@@ -700,7 +760,18 @@ export default {
       }
     });
 
+    this.track();
+    let shown = localStorage.getItem("wasOpeningDialogShown");
+    console.log("SHOWN", shown, typeof(shown));
+    if (shown !== "true") {
+      this.$store.commit('setIsOpeningDialogOn', {'value': true})
 
+      localStorage.setItem("wasOpeningDialogShown", "true");
+    }
+    else {
+      this.$store.commit('setIsOpeningDialogOn', {'value': false})
+
+    }
   },
   mounted() {
     let contextMenuCenter = this.$el.getElementsByClassName(
@@ -711,7 +782,23 @@ export default {
       this.moveToNextOperation();
     });
 
+    Vue.nextTick(() => {
+      let dialogs = document.getElementsByClassName("v-dialog");
+      if (dialogs.length > 1) {
+        dialogs[1].parentElement.remove();
+      }
 
+      let overlays = document.getElementsByClassName("v-overlay");
+      console.log("overlays", overlays);
+      if (overlays) {
+        Array.from(overlays).sort((a, b) => a.style.zIndex - b.style.zIndex);
+
+        if (overlays.length > 1) {
+          overlays[0].remove();
+          console.log("over over", overlays);
+        }
+      }
+    });
   },
   computed: {
     ...mapState({
@@ -719,9 +806,14 @@ export default {
       layouts: (state) => state.layouts,
       isEditingMode: (state) => state.isEditingMode,
       isInspectionMode: (state) => state.isInspectionMode,
+      isOpeningDialogOn: (state) => state.isOpeningDialogOn,
     }),
   },
   methods: {
+    track() {
+      console.log("tracking", this.$gtag);
+      this.$gtag.pageview("/");
+    },
     moveToNextOperation() {
       console.log("move");
       let current = this.$store.state.currentSelectionOperation;
@@ -731,7 +823,7 @@ export default {
         allOperationsValues[(index + 1) % allOperationsValues.length];
       this.$store.commit("changeSelectionOperation", newOperation);
     },
-    actionType2Color: function (type) {
+    actionType2Color: function(type) {
       return {
         data: "red",
         selection: "blue",
@@ -756,7 +848,7 @@ export default {
       }
     },
     handleContextMenuClick(item) {
-     // console.log(item);
+      // console.log(item);
     },
   },
 };
@@ -765,4 +857,3 @@ export default {
 // Or have a method in parent called highlight() which is invoked from charts to which the parent App then responds by highlighting the other charts accordingly..
 //This could take into account
 </script>
-
