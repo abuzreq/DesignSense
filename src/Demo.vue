@@ -239,7 +239,7 @@
             >
           </div>
           <div
-            style="font-size: large; display: flex; flex-direction: column; padding: 20px;"
+            style="font-size: large; display: flex; flex-direction: column; padding: 10px 20px;"
           >
             <p>
               DesignSense is a tool for navigating and making sense of
@@ -281,18 +281,19 @@
               >
             </div>
           </div>
-          </div>
-
+          <p style="margin-top:20px; font-size: medium;"><em> This is an ongoing research project, so we would appreciate your feedback!</em></p>
           <div
-            style="display: flex; flex-direction: row;   justify-content: center; padding: 20px;"
+            style="display: flex; flex-direction: row;   justify-content: center; border-bottom: 1px solid #00000057;  "
           >
             <div><router-link to="/about">About </router-link></div>
             &nbsp;&nbsp;|&nbsp;&nbsp;
-            <div><a href="mailto:aabuzura@sfu.ca">Feedback</a></div>
+            <div><a href="mailto:aabuzura@sfu.ca">Contact</a></div>
           </div>
+          </div>
+
+
           <div
-            style="width: 600px;
-    border-top: 1px solid #00000057; font-size: small; position: absolute; bottom: 2%;left: 5%;text-align: left;"
+            style="width: 600px; font-size: small; position: absolute; bottom: 2%;left: 5%;text-align: left;"
           >
             <p style="margin-bottom: 0px;">
               Built by
@@ -300,7 +301,7 @@
                 >Ahmed Abuzuraiq</a
               >
             </p>
-            <div>v1.1.0</div>
+            <div>v1.1.1</div>
           </div>
         </v-card>
       </template>

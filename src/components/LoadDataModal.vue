@@ -158,7 +158,11 @@ export default {
           type: "csv",
           info: "A generative design dataset exploring different massing for an arts gallery project.",
         },
-
+        {
+          name: "Craiglist - Used Cars",
+          url: "https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA",
+          type: "cloud",
+        },
 
         /*{
           name: "Rezoning Project (unoptimized)",//P+W Crofton
@@ -185,7 +189,7 @@ export default {
           type: "server",
           info: "Results of a form exploration exercise during Smart Geometry 2018 by multiple designers",
         },*/
-        {
+        /*{
           name: "DreamLens",
           url: "https://drive.google.com/drive/folders/1L1cxJAXS6AJ0t1q9mIvvpfjC-PXITaw8",
           type: "cloud",
@@ -196,7 +200,7 @@ export default {
           url: "https://drive.google.com/drive/folders/1tXPQpiF3nLAfM7v4tDeG1w2hMAogsuJa?usp=sharing",
           type: "cloud",
           info: "Performance exploration for facade structures by johnmsloane (big dataset!)",
-        },
+        },*/
         {
           name: "Malaeeb",
           url: "https://drive.google.com/open?id=1LNFH92UGzsLbP07JJJ3fvwMAKlf6FE2h",
@@ -209,23 +213,19 @@ export default {
           type: "server",
           info: "",
         },*/
-        {
-          name: "Craiglist - Used Cars",
-          url: "https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA",
-          type: "cloud",
-        },
+
         {
           name: "Covid",
           url: "https://drive.google.com/drive/folders/1FtHuhukPhaD8Fk9o8cjUH65Pr8ryBmcY?usp=sharing",
           type: "cloud",
           info: "Molecular designs from the Postera.ai crowdsourcing project",
         },
-        {
+        /*{
           name: "Local Host",
           url: "http://localhost:5050",
           type: "server",
           info: "",
-        },
+        },*/
       ],
       url: "",
       cloudURL: "",
