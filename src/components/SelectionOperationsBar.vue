@@ -9,7 +9,8 @@
               currentSelectionOperation == operationsList.REPLACE,
           }"
         >
-          <ReplaceIcon v-on="on" @click="onReplace" class="operation-icon" />
+        <v-btn icon v-on="on" @click="onReplace" > <v-icon class="operation-icon">mdi-vector-arrange-above</v-icon></v-btn>
+        <!-- <ReplaceIcon v-on="on" @click="onReplace" class="operation-icon" />-->
           <div v-show="currentSelectionOperation == operationsList.REPLACE">
             Replace
           </div>
@@ -26,11 +27,12 @@
               currentSelectionOperation == operationsList.ADD,
           }"
         >
-        <AddIcon
+        <v-btn icon v-on="on" @click="onAdd" > <v-icon class="operation-icon">mdi-vector-union</v-icon></v-btn>
+        <!-- <AddIcon
           v-on="on"
           @click="onAdd"
           class="operation-icon"
-        />
+        />-->
           <div v-show="currentSelectionOperation == operationsList.ADD">
             Add
           </div>
@@ -47,11 +49,12 @@
               currentSelectionOperation == operationsList.SUBTRACT,
           }"
         >
-        <SubtractIcon
+        <!-- <SubtractIcon
           v-on="on"
           @click="onSubtract"
           class="operation-icon"
-        />
+        />-->
+        <v-btn icon v-on="on" @click="onSubtract" > <v-icon class="operation-icon">mdi-vector-difference-ba</v-icon></v-btn>
           <div v-show="currentSelectionOperation == operationsList.SUBTRACT">
             Substract
           </div>
@@ -68,11 +71,14 @@
               currentSelectionOperation == operationsList.TOGGLE,
           }"
         >
-        <ToggleIcon
+        <v-btn icon v-on="on" @click="onToggle" > <v-icon  class="operation-icon">mdi-select-compare</v-icon></v-btn>
+        
+
+        <!--<ToggleIcon
           v-on="on"
           @click="onToggle"
           class="operation-icon"
-        />
+        />-->
           <div v-show="currentSelectionOperation == operationsList.TOGGLE">
             Toggle
           </div>
@@ -89,11 +95,12 @@
               currentSelectionOperation == operationsList.INTERSECT,
           }"
         >
-        <IntersectIcon
+        <v-btn icon v-on="on" @click="onIntersect" > <v-icon class="operation-icon">mdi-vector-intersection</v-icon></v-btn>
+        <!-- <IntersectIcon
           v-on="on"
           @click="onIntersect"
           class="operation-icon"
-        />
+        />-->
           <div v-show="currentSelectionOperation == operationsList.INTERSECT">
             Intersect
           </div>
@@ -111,16 +118,14 @@
   justify-content: space-between;
 }
 .operation-icon {
-  width: 10mm;
-  height: 10mm;
-  filter: grayscale(85%);
+  color: grey !important;
 }
 .operation-icon:focus{
     outline: none;
 }
 
 .selected .operation-icon{
-  filter: grayscale(0%);
+  color: white !important;
   pointer-events: none;
 
 }

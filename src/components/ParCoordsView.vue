@@ -417,11 +417,11 @@ export default {
       };
 
       const chart = ParCoords({
-        markedLineWidth: 2.5,
+        markedLineWidth: 4,
         highlightedLineWidth: 1.4,
         lineWidth: 1.4,
-        markedShadowColor: "#ff0000",
-        markedShadowBlur: 4,
+       // markedShadowColor: "#ff0000",
+       // markedShadowBlur: 4,
 
       })("#" + this.viewID)
         .data(this.chartData)

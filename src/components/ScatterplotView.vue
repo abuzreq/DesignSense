@@ -108,7 +108,7 @@
                 >
                 <span v-else>Switch to the Lasso brush</span>
               </v-tooltip>
-              <v-tooltip bottom>
+              <v-tooltip :max-width="300" bottom>
                 <template v-slot:activator="{ on, attrs }">
                   <ClusterIcon
                     v-on="on"

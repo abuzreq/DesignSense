@@ -60,8 +60,25 @@
 
           <v-list-item-content>
             <v-list-item-title class="title"
-              >{{ setsMetadataMap[item].name }} &nbsp;&nbsp;&nbsp; (count
-              {{ setsMap[item].length }})</v-list-item-title
+              >{{ setsMetadataMap[item].name }} &nbsp;&nbsp;&nbsp;
+              
+              
+              <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-chip
+                  v-on="on"
+                  class="ma-0 pr-0 ml-5"
+                  color="blue darken-2"
+                  text-color="white"
+                >
+                  <v-avatar left class="blue darken-3">{{
+                     setsMap[item].length
+                  }}</v-avatar
+                  >
+                </v-chip>
+              </template>
+              <span>Number of items in the set</span>
+            </v-tooltip></v-list-item-title
             >
             <v-textarea
               class="comment-text-area"

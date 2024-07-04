@@ -136,8 +136,14 @@ document.addEventListener('keyup', function (e) {
     e.stopPropagation();
     app.$store.dispatch('updateAltKey', { value: false })
     app.$store.commit('toggleInspectionMode', { value: false })
-    app.$store.dispatch("clearInspection");
-  
+    if(!app.$store.state.isInspectionPinned)
+    {
+      app.$store.dispatch("clearInspection");
+    }
+  }
+  else if (e.key === 'p' || e.key === 'P') {
+    console.log(e.key)
+    app.$store.dispatch("togglePinInspection");
   }
   else if (e.key === 'Shift') {
     app.$store.dispatch('updateShiftKey', { value: false })

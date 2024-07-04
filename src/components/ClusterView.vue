@@ -47,7 +47,7 @@
                 hide-details
               ></v-slider>
             </div>
-            <v-tooltip bottom>
+            <v-tooltip :max-width="300" bottom>
               <template v-slot:activator="{ on }">
                 <v-btn size="x-small" v-on="on" icon color="white" style="align-items: flex-end;"
                   ><v-icon  style="border: 2px solid currentColor; border-radius:50%;">{{ "mdi-exclamation" }}</v-icon></v-btn

@@ -47,6 +47,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             isShiftKey: false,
             isAltKey: false,
             isInspectionMode: false,
+            isInspectionPinned: false,
 
             colorRange: d3Chromatic.schemeTableau10,
             colorColumn: "year",
@@ -120,6 +121,15 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                     state.isInspectionMode = !state.isInspectionMode;
                 }
             },
+            togglePinInspection(state, payload) {
+                if (payload) {
+                    state.isInspectionPinned = payload.value
+                }
+                else {
+                    state.isInspectionPinned = !state.isInspectionPinned;
+                }
+            },
+
             setIsOpeningDialogOn(state, payload)  {
                 if (payload) {
                     state.isOpeningDialogOn = payload.value
@@ -324,6 +334,15 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
                 context.commit("hover", { hovered: null });
                 context.commit('toggleInspectionMode', { value: false });
             },
+            togglePinInspection(context, payload) {
+                context.commit('togglePinInspection');
+                console.log(context.state.isInspectionPinned)
+                if(!context.state.isInspectionPinned)
+                {
+                    context.dispatch('clearInspection');
+                }
+            },
+
             toggleInspectionMode(context, payload) {
                 context.commit('toggleInspectionMode');
             },

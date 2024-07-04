@@ -11,7 +11,7 @@
       flat
       short
       color=" white--text text--lighten-1"
-      height="50"
+      height="60"
     >
       <v-toolbar-title id="designsense-title" style="width: 15vw">
         <router-link to="/about"
@@ -70,37 +70,64 @@
       <!--<ColorSelectionModal id="color-selection-bar"> </ColorSelectionModal>-->
 
       <v-divider vertical />
-      <span id="inspection-bar" style="box-shadow: none !important">
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              v-on="on"
-              :color="actionType2Color(actions['clearInspection'].type)"
-              icon
-              @click="actions['clearInspection'].clickAction"
-            >
-              <v-icon>{{ actions["clearInspection"].icon }}</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ actions["clearInspection"].tooltip() }}</span>
-        </v-tooltip>
 
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              v-on="on"
-              :color="actionType2Color(actions['toggleInspectionMode'].type)"
-              icon
-              @click="actions['toggleInspectionMode'].clickAction"
-            >
-              <v-icon>{{ actions["toggleInspectionMode"].icon }}</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ actions["toggleInspectionMode"].tooltip() }}</span>
-        </v-tooltip>
-      </span>
+      <div
+        id="inspection-bar"
+        style="box-shadow: none !important; display: flex;  flex-direction: column;"
+      >
+        <div style="align-self: center; margin-top: 5px; font-size: small;">
+          Inspection
+        </div>
+        <div style="margin-top: -5px;">
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-on="on"
+                :color="actionType2Color(actions['togglePinInspection'].type)"
+                icon
+                @click="actions['togglePinInspection'].clickAction"
+              >
+                <v-icon>{{ actions["togglePinInspection"].icon }}</v-icon>
+              </v-btn>
+            </template>
+            <span>{{ actions["togglePinInspection"].tooltip() }}</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-on="on"
+                :color="actionType2Color(actions['clearInspection'].type)"
+                icon
+                @click="actions['clearInspection'].clickAction"
+              >
+                <v-icon>{{ actions["clearInspection"].icon }}</v-icon>
+              </v-btn>
+            </template>
+            <span>{{ actions["clearInspection"].tooltip() }}</span>
+          </v-tooltip>
+
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-on="on"
+                :color="actionType2Color(actions['toggleInspectionMode'].type)"
+                icon
+                @click="actions['toggleInspectionMode'].clickAction"
+              >
+                <v-icon>{{ actions["toggleInspectionMode"].icon }}</v-icon>
+              </v-btn>
+            </template>
+            <span>{{ actions["toggleInspectionMode"].tooltip() }}</span>
+          </v-tooltip>
+        </div>
+      </div>
       <v-divider vertical />
-      <span id="sets-operations-bar">
+
+        <div id="sets-operations-bar" style="box-shadow: none !important; display: flex;  flex-direction: column;">
+        <div style="align-self: center; margin-top: 5px; font-size: small;">
+           Selection
+        </div>
+        <div style="margin-top: -5px;">
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
             <v-btn v-on="on" icon @click="actions['reverseUpdate'].clickAction">
@@ -135,9 +162,14 @@
           </template>
           <span>{{ actions["invertSelection"].tooltip() }}</span>
         </v-tooltip>
-      </span>
+      </div>
+    </div>
       <v-divider vertical />
-      <span id="data-operations-bar">
+      <div id="data-operations-bar" style="box-shadow: none !important; display: flex;  flex-direction: column;">
+        <div style="align-self: center; margin-top: 5px; font-size: small;">
+        Zoom/Filter
+        </div>
+        <div style="margin-top: -5px;">
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
             <v-btn
@@ -185,7 +217,8 @@
           </template>
           <span>{{ actions["resetData"].tooltip() }}</span>
         </v-tooltip>
-      </span>
+      </div>
+    </div>
     </v-app-bar>
     <v-dialog :key="123" v-model="isOpeningDialogOn" width="650px">
       <template>
@@ -198,7 +231,10 @@
             Welcome to DesignSense!
           </v-card-title>
           <div style="position: absolute; top: 5%;right: 5%;">
-            <v-btn icon @click="$store.commit('setIsOpeningDialogOn', {'value': false})">
+            <v-btn
+              icon
+              @click="$store.commit('setIsOpeningDialogOn', { value: false })"
+            >
               <v-icon>{{ "mdi-close" }}</v-icon></v-btn
             >
           </div>
@@ -209,7 +245,8 @@
               DesignSense is a tool for navigating and making sense of
               parametric design spaces.
             </p>
-            <div style="display: flex; flex-direction: column;">
+            <div style="display: flex; flex-direction: row;">
+            <div style="display: flex; flex-direction: column; width: 300px; align-items: center;justify-content: space-between;">
               <p>
                 If this is your first time, we suggest starting with the
                 onboarding tour.
@@ -220,13 +257,30 @@
                 dark
                 style="align-self: center;"
                 @click="
-                  $store.commit('setIsOpeningDialogOn', {'value': false})
+                  $store.commit('setIsOpeningDialogOn', { value: false });
                   $tours['onboardingTour'].start();
                 "
               >
                 Start On-boarding</v-btn
               >
             </div>
+            <div style="display: flex; flex-direction: column; width: 300px; align-items: center;justify-content: space-between;">
+              <p>
+                Otherwise, go ahead and start!
+              </p>
+
+              <v-btn
+                color="blue lighten-2"
+                dark
+                style="align-self: center;"
+                @click="
+                  $store.commit('setIsOpeningDialogOn', { value: false });
+                "
+              >
+                Explore</v-btn
+              >
+            </div>
+          </div>
           </div>
 
           <div
@@ -251,7 +305,7 @@
         </v-card>
       </template>
     </v-dialog>
-    <v-main id="designsense-workspace" style="padding: 50px 0px 0px">
+    <v-main id="designsense-workspace" style="padding: 55px 0px 0px">
       <div
         @contextmenu="showContextMenuHandler"
         style="height: 100%; width: 100%; border: 1px solid red"
@@ -644,7 +698,7 @@ export default {
         reverseUpdate: {
           clickAction: () => this.$store.dispatch("reverseUpdate"),
           icon: "mdi-undo",
-          tooltip: () => "Reverse the last selection update [ctrl-z]",
+          tooltip: () => "Reverse the last selection update [Ctrl-z]",
           type: "selection",
         },
         createSet: {
@@ -661,7 +715,7 @@ export default {
         },
         invertSelection: {
           clickAction: () => this.$store.dispatch("invertSelection"),
-          icon: "mdi-select-compare",
+          icon: "mdi-select-inverse",
           tooltip: () => "Invert Selection",
           type: "selection",
         },
@@ -673,7 +727,7 @@ export default {
         },
         zoomToSelection: {
           clickAction: () => this.$store.dispatch("zoomToSelection"),
-          icon: "mdi-selection-search",
+          icon: "mdi-magnify-plus-outline",
           tooltip: () => "Zoom on the selected",
           type: "data",
         },
@@ -685,7 +739,7 @@ export default {
         },
         resetData: {
           clickAction: () => this.$store.dispatch("resetData"),
-          icon: "mdi-cached",
+          icon: "mdi-restart",
           tooltip: () => "Reset Data",
           type: "data",
         },
@@ -695,14 +749,23 @@ export default {
           tooltip: () =>
             this.isInspectionMode
               ? "Disable inspection on hovering ['Space' to disable inspection]"
-              : "Enable continious inspection on hovering. ['Space' to enable on-spot inspection]",
+              : "Enable continuous inspection on hovering. ['Space' to enable on-spot inspection]",
           type: "inspecting",
         },
         clearInspection: {
           clickAction: () => this.$store.dispatch("clearInspection"),
           icon: "mdi-cancel",
-          tooltip: () => "Clear the current inspection [ESC]",
+          tooltip: () => "Clear the currently inspected item [ESC]",
           type: "inspecting",
+        },
+        togglePinInspection: {
+          clickAction: () => this.$store.dispatch("togglePinInspection"),
+          icon: "mdi-pin",
+          tooltip: () =>
+            this.isInspectionPinned
+              ? "Unpin the currently inspected item [P]"
+              : "Pin the currently inspected item [P]",
+          type: "inspectionPin",
         },
         help: {
           clickAction: () => {
@@ -729,12 +792,12 @@ export default {
         saveToFile: {
           clickAction: () => this.$store.dispatch("saveSelectedToFile"),
           icon: "mdi-download",
-          tooltip: () => "Save the selected options to file",
+          tooltip: () => "Download the selected options to file (.csv)",
           type: "misc",
         },
       },
       contextMenuItems: [
-        "toggleInspectionMode",
+        "togglePinInspection",
         "clearInspection",
         "resetAllMarkings",
         "createSet",
@@ -762,15 +825,13 @@ export default {
 
     this.track();
     let shown = localStorage.getItem("wasOpeningDialogShown");
-    console.log("SHOWN", shown, typeof(shown));
+    console.log("SHOWN", shown, typeof shown);
     if (shown !== "true") {
-      this.$store.commit('setIsOpeningDialogOn', {'value': true})
+      this.$store.commit("setIsOpeningDialogOn", { value: true });
 
       localStorage.setItem("wasOpeningDialogShown", "true");
-    }
-    else {
-      this.$store.commit('setIsOpeningDialogOn', {'value': false})
-
+    } else {
+      this.$store.commit("setIsOpeningDialogOn", { value: false });
     }
   },
   mounted() {
@@ -806,6 +867,7 @@ export default {
       layouts: (state) => state.layouts,
       isEditingMode: (state) => state.isEditingMode,
       isInspectionMode: (state) => state.isInspectionMode,
+      isInspectionPinned: (state) => state.isInspectionPinned,
       isOpeningDialogOn: (state) => state.isOpeningDialogOn,
     }),
   },
@@ -829,6 +891,7 @@ export default {
         selection: "blue",
         misc: "black",
         inspecting: this.isInspectionMode ? "green accent-4" : "grey",
+        inspectionPin: this.isInspectionPinned ? "green accent-4" : "grey",
         editing: this.isEditingMode ? "green accent-4" : "grey",
       }[type];
     },

@@ -222,31 +222,47 @@
               </template>
               <span>Next image</span>
             </v-tooltip>
+            <div style="display: flex; flex-direction: row; justify-content: space-between;">
+              <div class="params_panel">
+                <v-list>
+                  <v-list-item style="min-height: 28px;" v-for="(param, j) in filteredKeys" :key="j">
+                    <v-list-item-content style="font-weight: bold; padding: 4px 0;">{{
+                      param
+                    }}</v-list-item-content>
+                    <v-list-item-content style="padding: 4px 0;" class="justify-center">
+                      {{ inspectedItem[param] }}
+                    </v-list-item-content>
+                  </v-list-item>
+                </v-list>
+              </div>
 
-            <v-img
-              contain
-              width="100%"
-              height="40vh"
-              v-if="inspectedItem && !inspecting3DView"
-              :src="inspectedItem.image"
-            />
-
-            <model-gltf
-              ref="gltf"
-              v-else-if="inspectedItem && inspecting3DView && isModelGLTF"
-              :src="inspectedItem.gltf"
-              :on-load="onGLTFLoaded(this)"
-              :rotation="modelRotation"
-              :position="modelPosition"
-              :lights="modelLights"
-            />
-            <v-card
-              v-else
-              width="100%"
-              height="400px"
-              id="inspector"
-              name="inspector"
-            ></v-card>
+              <imageZoom
+                v-if="inspectedItem && !inspecting3DView"
+                style="display: flex; justify-content: center;"
+                :regular="inspectedItem.image"
+                :zoom-amount="2"
+                :click-zoom="true"
+                img-class="inspected_image"
+                :alt="inspectedItem.image"
+                :show-message="false"
+              />
+              <model-gltf
+                ref="gltf"
+                v-else-if="inspectedItem && inspecting3DView && isModelGLTF"
+                :src="inspectedItem.gltf"
+                :on-load="onGLTFLoaded(this)"
+                :rotation="modelRotation"
+                :position="modelPosition"
+                :lights="modelLights"
+              />
+              <v-card
+                v-else
+                width="100%"
+                height="400px"
+                id="inspector"
+                name="inspector"
+              ></v-card>
+            </div>
           </v-card>
         </template>
 
@@ -339,9 +355,10 @@
                                   v-for="(param, j) in filteredKeys"
                                   :key="j"
                                 >
-                                  <v-list-item-content>{{
-                                    param
-                                  }}</v-list-item-content>
+                                  <v-list-item-content
+                                    style="font-weight: bold;"
+                                    >{{ param }}</v-list-item-content
+                                  >
                                   <v-list-item-content class="justify-center">
                                     {{ item[param] }}
                                   </v-list-item-content>
@@ -376,6 +393,33 @@
 </template>
 
 <style scoped>
+::v-deep .params_panel {
+  margin-left: 5px;
+  display: block;
+  border: 1px solid rgb(0, 0, 0, 0.2);
+  border-radius: 4px;
+  overflow-y: scroll;
+  z-index: 100;
+  min-width: 260px;
+  height: 38vh;
+  width: auto;
+  font-size: small;
+}
+::v-deep .inspected_image {
+  height: 40vh;
+  width: 100%;
+  object-fit: contain;
+}
+
+::v-deep .vh--message-bottom {
+  transition: opacity 0.2s linear;
+
+  left: 20px;
+}
+::v-deep .vh--message-bottom:hover {
+  opacity: 0;
+}
+
 ::v-deep .scroll-value-label {
   position: absolute;
   background-color: black;
@@ -556,6 +600,8 @@
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
 import Vue from "vue";
 
+import imageZoom from "vue-image-zoomer";
+
 import { ModelGltf, ModelThree } from "vue-3d-model";
 import { operations } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
@@ -579,6 +625,7 @@ export default {
     ModelGltf,
     ModelThree,
     "drag-select-container": DragSelect,
+    imageZoom,
   },
   props: ["defaultEnableContext", "width", "height", "x", "y", "type"],
   data: function() {
@@ -726,25 +773,24 @@ export default {
     imageLoaded() {
       this.numLoadedImages += 1;
       if (this.numLoadedImages >= this.rawChartData.length) {
-        
         const container = document.querySelector(".scroll-container");
         const containerRect = container.getBoundingClientRect();
 
         container.addEventListener("scroll", (e) => {
           this.scrollLabel = document.querySelector("#scroll-value-label");
           if (!this.scrollLabel) return;
-          if(!this.numericDimensions.includes(this.sortByVar))
-          {
+          if (!this.numericDimensions.includes(this.sortByVar)) {
             this.scrollLabel.style.display = "none";
             return;
           }
           this.scrollLabel.style.display = "block";
-        
+
           var a = container.scrollTop;
           var b = container.scrollHeight - container.clientHeight;
           var c = a / b;
 
-          this.scrollLabel.style.top = ((c<0.5?c+0.05:c-0.1) * container.clientHeight) + "px";
+          this.scrollLabel.style.top =
+            (c < 0.5 ? c + 0.05 : c - 0.1) * container.clientHeight + "px";
 
           const images = this.getAllCards();
           if (images) {
@@ -757,9 +803,13 @@ export default {
               const visibleHeight = container.clientHeight;
               const scrollY = container.scrollTop; // Get the vertical scroll position
 
-              const imageTopRelative = imageRect.top - containerRect.top + scrollY;
+              const imageTopRelative =
+                imageRect.top - containerRect.top + scrollY;
 
-              if (imageTopRelative >= scrollY && imageTopRelative < scrollY + visibleHeight) {
+              if (
+                imageTopRelative >= scrollY &&
+                imageTopRelative < scrollY + visibleHeight
+              ) {
                 const distance = Math.abs(imageTopRelative - scrollY);
                 if (distance < closestDistance) {
                   closestDistance = distance;
@@ -769,9 +819,9 @@ export default {
             });
 
             if (closestImage) {
-              const id =  this.getItemsIDs([closestImage])[0]
-              const datum =  this.chartData.filter(alt => alt._id === id)[0]
-              this.scrollLabel.textContent = Math.round(datum[this.sortByVar])
+              const id = this.getItemsIDs([closestImage])[0];
+              const datum = this.chartData.filter((alt) => alt._id === id)[0];
+              this.scrollLabel.textContent = Math.round(datum[this.sortByVar]);
             }
           }
         });
