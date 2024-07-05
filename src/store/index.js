@@ -47,7 +47,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             isShiftKey: false,
             isAltKey: false,
             isInspectionMode: false,
-            isInspectionPinned: false,
+            isInspectionPinned: true,
 
             colorRange: d3Chromatic.schemeTableau10,
             colorColumn: "year",
@@ -283,10 +283,9 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
 
                 let setMarking = setToMarking(state.setsMap[ID], state.rawData)
                 console.log(ID, state.setsMap[ID], setMarking)
-                operate(setMarking, payload.members, payload.operation);
+                setMarking = operate(setMarking, payload.members, payload.operation);
                 console.log(getSelectedIDs(setMarking))
                 state.setsMap[ID] = getSelectedIDs(setMarking); //Object.keys(setMarking)
-
 
             },
             removeSet(state, payload) {

@@ -2,7 +2,7 @@
     <vdr
       :type="type"
       class="v-card v-card--outlined v-sheet theme--light"
-      
+      style="border: 1px #80808047 solid;"
       :minWidth="
         type == 'Grid'
           ? 500

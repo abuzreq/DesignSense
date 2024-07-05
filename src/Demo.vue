@@ -75,10 +75,8 @@
         id="inspection-bar"
         style="box-shadow: none !important; display: flex;  flex-direction: column;"
       >
-        <div style="align-self: center; margin-top: 5px; font-size: small;">
-          Inspection
-        </div>
-        <div style="margin-top: -5px;">
+
+        <div style="margin-top: 0px;">
           <v-tooltip bottom>
             <template v-slot:activator="{ on }">
               <v-btn
@@ -120,14 +118,14 @@
             <span>{{ actions["toggleInspectionMode"].tooltip() }}</span>
           </v-tooltip>
         </div>
+        <div style="align-self: center; margin-bottom: 5px;  margin-top: -5px; font-size: small;">
+          Inspection
+        </div>
       </div>
       <v-divider vertical />
 
         <div id="sets-operations-bar" style="box-shadow: none !important; display: flex;  flex-direction: column;">
-        <div style="align-self: center; margin-top: 5px; font-size: small;">
-           Selection
-        </div>
-        <div style="margin-top: -5px;">
+        <div style="margin-top: 0px;">
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
             <v-btn v-on="on" icon @click="actions['reverseUpdate'].clickAction">
@@ -163,13 +161,14 @@
           <span>{{ actions["invertSelection"].tooltip() }}</span>
         </v-tooltip>
       </div>
+      <div style="align-self: center; margin-bottom: 5px;  margin-top: -5px; font-size: small;">
+           Selection
+        </div>
     </div>
       <v-divider vertical />
       <div id="data-operations-bar" style="box-shadow: none !important; display: flex;  flex-direction: column;">
-        <div style="align-self: center; margin-top: 5px; font-size: small;">
-        Zoom/Filter
-        </div>
-        <div style="margin-top: -5px;">
+
+        <div style="margin-top: 0px;">
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
             <v-btn
@@ -217,6 +216,9 @@
           </template>
           <span>{{ actions["resetData"].tooltip() }}</span>
         </v-tooltip>
+      </div>
+      <div style="align-self: center; margin-bottom: 5px;  margin-top: -5px; font-size: small;">
+        Zoom/Filter
       </div>
     </div>
     </v-app-bar>
@@ -306,7 +308,7 @@
         </v-card>
       </template>
     </v-dialog>
-    <v-main id="designsense-workspace" style="padding: 55px 0px 0px">
+    <v-main id="designsense-workspace" style="padding: 60px 0px 0px">
       <div
         @contextmenu="showContextMenuHandler"
         style="height: 100%; width: 100%; border: 1px solid red"

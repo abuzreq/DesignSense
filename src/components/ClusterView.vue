@@ -49,11 +49,25 @@
             </div>
             <v-tooltip :max-width="300" bottom>
               <template v-slot:activator="{ on }">
-                <v-btn size="x-small" v-on="on" icon color="white" style="align-items: flex-end;"
-                  ><v-icon  style="border: 2px solid currentColor; border-radius:50%;">{{ "mdi-exclamation" }}</v-icon></v-btn
+                <v-btn
+                  size="x-small"
+                  v-on="on"
+                  icon
+                  color="white"
+                  style="align-items: flex-end;"
+                  ><v-icon
+                    style="border: 1px solid currentColor; border-radius:50%;"
+                    >{{ "mdi-exclamation" }}</v-icon
+                  ></v-btn
                 >
               </template>
-              <span>This shows clusters in the design space. Each cluster represents a group of items that are similar to each other with respect to chosen data dimensions. You can choose the clustering dimensions from the dropdown at the bottom, we recommend using the same dimensions used in the scatterplot as a start.</span>
+              <span
+                >This shows clusters in the design space. Each cluster
+                represents a group of items that are similar to each other with
+                respect to chosen data dimensions. You can choose the clustering
+                dimensions from the dropdown at the bottom, we recommend using
+                the same dimensions used in the scatterplot as a start.</span
+              >
             </v-tooltip>
           </div>
         </v-container>
@@ -82,11 +96,24 @@
                   v-bind:id="cardSelector + item._id"
                 >
                   <span style="padding: 2px; position: relative; left: 3%;"
-                    >{{ "0" + (index + 1) }}
+                    >{{ "#" + (index + 1) }}
                   </span>
-                  <span style="padding: 2px; position: absolute; right: 3%;"
-                    >{{ "#" + clustersSize[index] }}
-                  </span>
+
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <v-chip
+                      small
+                        style="position: absolute; right: 3%;padding: 8px;"
+                        v-on="on"
+                        color="blue darken-3"
+                        text-color="white"
+                      >
+                        {{ clustersSize[index] }}
+                      </v-chip>
+                    </template>
+                    <span>Number of items in the cluster</span>
+                  </v-tooltip>
+
                   <v-img
                     v-if="true"
                     contain

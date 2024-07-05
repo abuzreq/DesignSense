@@ -139,28 +139,8 @@
             style="width: 100%"
           >
             <div class="inspected_item_top_bar">
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    x-small
-                    icon
-                    v-on="on"
-                    @click="() => (inspectedItem = null)"
-                  >
-                    <v-icon>mdi-close</v-icon>
-                  </v-btn>
-                </template>
-                <span>Close inspection</span>
-              </v-tooltip>
-
-              <StarRating
-                v-if="inspectedItem"
-                :item="inspectedItem"
-                @onRatingChanged="onRatingChanged"
-              />
-            </div>
-
-            <!--
+              <div style="display: flex;">
+                <!--
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-btn
@@ -188,54 +168,117 @@
               color="primary"
             ></v-progress-circular>
 -->
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <v-btn
-                  v-on="on"
-                  v-show="
-                    inspectedItem &&
-                      inspectedItem.images &&
-                      inspectedItem.images.length > 1
-                  "
-                  icon
-                  @click="() => previousView(inspectedItem)"
-                >
-                  <v-icon small>mdi-arrow-left</v-icon>
-                </v-btn>
-              </template>
-              <span>Previous image</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <v-btn
-                  v-on="on"
-                  v-show="
-                    inspectedItem &&
-                      inspectedItem.images &&
-                      inspectedItem.images.length > 1
-                  "
-                  icon
-                  @click="() => nextView(inspectedItem)"
-                >
-                  <v-icon small>mdi-arrow-right</v-icon>
-                </v-btn>
-              </template>
-              <span>Next image</span>
-            </v-tooltip>
-            <div style="display: flex; flex-direction: row; justify-content: space-between;">
-              <div class="params_panel">
-                <v-list>
-                  <v-list-item style="min-height: 28px;" v-for="(param, j) in filteredKeys" :key="j">
-                    <v-list-item-content style="font-weight: bold; padding: 4px 0;">{{
-                      param
-                    }}</v-list-item-content>
-                    <v-list-item-content style="padding: 4px 0;" class="justify-center">
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-btn
+                      v-on="on"
+                      icon
+                      small
+                      @click="isParamsPanelOpen = !isParamsPanelOpen"
+                    >
+                      <v-icon
+                        :color="isParamsPanelOpen ? 'primary' : 'secondary'"
+                        >mdi-list-box</v-icon
+                      >
+                    </v-btn>
+                  </template>
+                  <span>
+                    <span v-if="isParamsPanelOpen">Hide details</span>
+                    <span v-else>Show details</span>
+                  </span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-btn
+                      v-on="on"
+                      v-show="
+                        inspectedItem &&
+                          inspectedItem.images &&
+                          inspectedItem.images.length > 1
+                      "
+                      icon
+                      @click="() => previousView(inspectedItem)"
+                    >
+                      <v-icon small>mdi-arrow-left</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Previous image</span>
+                </v-tooltip>
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-btn
+                      v-on="on"
+                      v-show="
+                        inspectedItem &&
+                          inspectedItem.images &&
+                          inspectedItem.images.length > 1
+                      "
+                      icon
+                      @click="() => nextView(inspectedItem)"
+                    >
+                      <v-icon small>mdi-arrow-right</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Next image</span>
+                </v-tooltip>
+              </div>
+              <div style="display: flex;">
+                <StarRating
+                  v-if="inspectedItem"
+                  :item="inspectedItem"
+                  @onRatingChanged="onRatingChanged"
+                />
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-btn
+                      small
+                      icon
+                      v-on="on"
+                      @click="() => (inspectedItem = null)"
+                    >
+                      <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Close inspection</span>
+                </v-tooltip>
+              </div>
+            </div>
+
+            <div class="params_panel_parent">
+              <div
+                class="params_panel"
+                :style="{ display: isParamsPanelOpen ? 'block' : 'none' }"
+              >
+                <v-list plain>
+                  <v-list-item
+                    plain
+                    style="min-height: 28px; padding: 0 8px;"
+                    v-for="(param, j) in filteredKeys"
+                    :key="j"
+                  >
+                    <v-list-item-content
+                      plain
+                      style="font-weight: bold; padding: 4px 0;"
+                      >{{ param }}</v-list-item-content
+                    >
+                    <v-list-item-content
+                      plain
+                      style="padding: 4px 0;"
+                      class="justify-center"
+                    >
                       {{ inspectedItem[param] }}
                     </v-list-item-content>
                   </v-list-item>
                 </v-list>
               </div>
-
+            </div>
+            <div
+              :style="{
+                display: 'flex',
+                'flex-direction': 'row',
+                'justify-content': isParamsPanelOpen ? 'end' : 'center',
+              }"
+            >
               <imageZoom
                 v-if="inspectedItem && !inspecting3DView"
                 style="display: flex; justify-content: center;"
@@ -290,7 +333,8 @@
                   class="showing-selection-note"
                   v-show="!enableContext"
                 >
-                  Note: showing only the selected options.
+                  Note: showing only the selected options. Unselect with the x
+                  button.
                 </v-card>
 
                 <div
@@ -352,14 +396,18 @@
                             <v-expansion-panel-content>
                               <v-list>
                                 <v-list-item
+                                  style="min-height: 28px;"
                                   v-for="(param, j) in filteredKeys"
                                   :key="j"
                                 >
                                   <v-list-item-content
-                                    style="font-weight: bold;"
+                                    style="font-weight: bold; padding: 6px 0;"
                                     >{{ param }}</v-list-item-content
                                   >
-                                  <v-list-item-content class="justify-center">
+                                  <v-list-item-content
+                                    style="padding: 6px 0;"
+                                    class="justify-center"
+                                  >
                                     {{ item[param] }}
                                   </v-list-item-content>
                                 </v-list-item>
@@ -393,17 +441,23 @@
 </template>
 
 <style scoped>
-::v-deep .params_panel {
-  margin-left: 5px;
-  display: block;
-  border: 1px solid rgb(0, 0, 0, 0.2);
+::v-deep .params_panel_parent {
+  position: relative;
+  top: 0px;
+  border: 1px solid rgb(0, 0, 0, 0.1);
   border-radius: 4px;
-  overflow-y: scroll;
+}
+::v-deep .params_panel {
+  margin-left: 0px;
+  position: absolute;
+  left: 0px;
   z-index: 100;
-  min-width: 260px;
+  overflow-y: scroll;
+  min-width: 240px;
   height: 38vh;
   width: auto;
   font-size: small;
+  opacity: 0.8;
 }
 ::v-deep .inspected_image {
   height: 40vh;
@@ -466,6 +520,7 @@
   content: "x";
 }
 .images-container {
+  margin-top: 5px;
   width: 100%;
 }
 
@@ -630,6 +685,7 @@ export default {
   props: ["defaultEnableContext", "width", "height", "x", "y", "type"],
   data: function() {
     return {
+      isParamsPanelOpen: false,
       isLoading: false,
       va3cViewer: null,
       isModelGLTF: false,
@@ -1215,7 +1271,7 @@ export default {
       });
     },
     colorScale: function(newValue, oldValue) {
-      this.refresh();
+      // this.refresh();
     },
   },
 };
