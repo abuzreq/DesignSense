@@ -338,7 +338,7 @@ function getUrlVars(rawUrl) {
   return vars;
 }
 
-function prepareGFolder(folderLink) {
+function  prepareGFolder(folderLink) {
 
   console.trace()
   var folder = {
@@ -368,7 +368,9 @@ function prepareGFolder(folderLink) {
           csvFiles[item.name] = GLink;
 
         } else if (item.mimeType.startsWith("image")) {
-          GLink = "https://docs.google.com/uc?id=" + item.id + "&export=download";
+          GLink = "https://drive.google.com/thumbnail?id=" + item.id +"&sz=w1000";
+
+          // GLink = "https://docs.google.com/uc?id=" + item.id + "&export=download";
           //this item is a image file
           imgFiles[item.name] = GLink;
 
