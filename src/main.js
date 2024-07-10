@@ -15,6 +15,10 @@ import { operations, getOperationFromKey } from '@/components/operations.js';
 import vuewheel from 'vuewheel'
 import VueTour from 'vue-tour'
 
+import { Buffer } from 'buffer';
+
+window.Gkey = "AIzaSyCSrF08UMawxKIb0m4JsA1mYE5NMmP36bY";
+
 require('vue-tour/dist/vue-tour.css')
 
 Vue.use(VueTour)
@@ -317,7 +321,6 @@ function loadDataFromCloudURL(rawUrl) {
   })
 }
 
-var Gkey = "AIzaSyCSrF08UMawxKIb0m4JsA1mYE5NMmP36bY";
 
 let _googleReturnObj = { //{"fileName":Google Drive ID}
   csvFiles: {},
@@ -337,6 +340,7 @@ function getUrlVars(rawUrl) {
 
 function prepareGFolder(folderLink) {
 
+  console.trace()
   var folder = {
     "DE_PW": "", // short code from google or base64 coded inLink
     "inLink": "", //raw url
@@ -359,7 +363,7 @@ function prepareGFolder(folderLink) {
         //googleReturnObj[item.name]=item.id
 
         if (item.mimeType === "text/csv") {
-          GLink = "https://www.googleapis.com/drive/v3/files/" + item.id + "?alt=media&key=" + Gkey;
+          GLink = "https://www.googleapis.com/drive/v3/files/" + item.id + "?alt=media&key=" + window.Gkey;
           //this item is a data csv file
           csvFiles[item.name] = GLink;
 
@@ -369,7 +373,7 @@ function prepareGFolder(folderLink) {
           imgFiles[item.name] = GLink;
 
         } else if (item.mimeType === "application/json") {
-          GLink = "https://www.googleapis.com/drive/v3/files/" + item.id + "?alt=media&key=" + Gkey;
+          GLink = "https://www.googleapis.com/drive/v3/files/" + item.id + "?alt=media&key=" + window.Gkey;
 
           if (item.name.startsWith("setting")) {
             //this item is a Design Explore's setting file 
@@ -487,11 +491,12 @@ function checkInputLink(link, callback) {
     "type": ""
   };
 
+  console.log("check", link, window.Gkey)
   if (link.includes("google.com")) {
 
     var GFolderID = getGFolderID(link);
     //folderLinkObj.DE_PW = "DE_G"; 
-    folderLinkObj.url = "https://www.googleapis.com/drive/v3/files?q=%27" + GFolderID + "%27+in+parents&key=" + Gkey;
+    folderLinkObj.url = "https://www.googleapis.com/drive/v3/files?q=%27" + GFolderID + "%27+in+parents&key=" + window.Gkey;
     folderLinkObj.type = "GoogleDrive";
 
   } else if (link.includes("1drv.ms")) {
@@ -516,24 +521,49 @@ function checkInputLink(link, callback) {
   folderLinkObj.inLink = link;
   // console.log(folderLinkObj);
   callback(folderLinkObj);
-
 }
 
 
 function encodeUrl(url) {
-  // var link = btoa(url).slice(0, -1).replace('/','_').replace('+','-');
-  var link = window.btoa(url);
-  return link;
+   //var link = window.btoa(url).slice(0, -1).replace('/','_').replace('+','-');
+  //var link = window.btoa(url);
+
+  ///var link = encodeBase64(url)
+  console.log(url, b64EncodeUnicode(url))
+  return b64EncodeUnicode(url);
 }
 
+function b64EncodeUnicode(str) {
+  // first we use encodeURIComponent to get percent-encoded Unicode,
+  // then we convert the percent encodings into raw bytes which
+  // can be fed into btoa.
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+      function toSolidBytes(match, p1) {
+          return String.fromCharCode('0x' + p1);
+  }));
+}
+
+function b64DecodeUnicode(str) {
+  // Going backwards: from bytestream, to percent-encoding, to original string.
+  return decodeURIComponent(atob(str).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+}
 function decodeUrl(encodedString) {
-  // var url = atob(encodedString.replace('_','/').replace('-','+')+"=");
+  let hashIndex = encodedString.lastIndexOf('#/')
+  encodedString = encodedString.substring(0, hashIndex>0?hashIndex:encodedString.length)
+
+  // var url = window.atob(encodedString.replace('_','/').replace('-','+')+"=");
   var url = "";
-  try {
-    url = window.atob(encodedString);
+  try {  
+   // console.log("decode",url, decodeURIComponent(window.atob(encodedString)))
+
+    url = b64DecodeUnicode(encodedString); 
+    //url = decodeBase64(encodedString);
+    //url = window.atob(encodedString);
   } catch (err) {
     console.log(err.message + " But fixed:>");
-    url = encodedString; //atob(encodedString.replace('_', '/').replace('-', '+') + "=");
+    //url = atob(encodedString.replace('_', '/').replace('-', '+') + "=");
   }
 
   return url;
@@ -649,7 +679,7 @@ function decodeUrlID(rawUrl, callback) {
     //console.log(linkID)
 
     if (linkID.length === 6) {
-      d3.json("https://www.googleapis.com/urlshortener/v1/url?key=" + Gkey + "&shortUrl=http://goo.gl/" + linkID,
+      d3.json("https://www.googleapis.com/urlshortener/v1/url?key=" + window.Gkey + "&shortUrl=http://goo.gl/" + linkID,
         function (d) {
           var GID = (getUrlVars(d.longUrl).ID);
           serverFolderLink = decodeUrl(GID);

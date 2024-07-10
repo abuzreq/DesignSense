@@ -230,7 +230,7 @@
       </div>
     </div>
     </v-app-bar>
-    <v-dialog :key="456" v-model="isShareLinkModalOn" width="650px">
+    <v-dialog :key="456" v-model="isShareLinkModalOn" width="750px">
       <template>
         <v-card
         style="z-index: 300; padding: 15px"
@@ -914,7 +914,6 @@ export default {
       isInspectionMode: (state) => state.isInspectionMode,
       isInspectionPinned: (state) => state.isInspectionPinned,
       isOpeningDialogOn: (state) => state.isOpeningDialogOn,
-      isShareLinkModalOn: (state) => state.isShareLinkModalOn,
       shareLink:  (state) => state.shareLink,
       isStudySharable: (state) => state.isStudySharable,
     }),

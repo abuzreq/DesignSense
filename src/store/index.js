@@ -8,6 +8,7 @@ import * as d3 from "d3";
 import * as d3Chromatic from "d3-scale-chromatic";
 
 import createLogger from "./logger";
+import { encodeUrl } from "@/main.js";
 
 Vue.use(Vuex);
 
@@ -559,7 +560,7 @@ function processShareLinkSup() {
   if(_folderInfo === null || _folderInfo === undefined || !_folderInfo.inLink )
         return null;
   console.log(_folderInfo);
-  var studyCaseLink = encodeURI(_folderInfo.inLink);
+  var studyCaseLink = encodeUrl(_folderInfo.inLink);
   var studyEncodedUrl = "";
 
   if (studyCaseLink.length === 0) {
