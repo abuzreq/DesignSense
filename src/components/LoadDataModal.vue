@@ -75,14 +75,6 @@
                 <v-icon>mdi-cloud-upload-outline</v-icon>
               </v-btn>
             </v-col>
-            <h5 style="color: #9d9d9d; text-align: center">
-              Please put data.csv, images, and 3D-json files into the same
-              folder. (<a
-                href="https://tt-acm.github.io/DesignExplorer/design_explorer_data/example/LocalCSV_example.csv"
-                target="_blank"
-                >data.csv</a
-              >)
-            </h5>
           </v-row>
 
           <v-divider></v-divider>
@@ -100,7 +92,11 @@
             </v-col>
             <h5 style="color: #9d9d9d; text-align: center">
               Make sure that the images column in the csv file you upload
-              contains public URLs (i.e. images are hosted somewhere)
+              contains public URLs (<a
+                href="https://tt-acm.github.io/DesignExplorer/design_explorer_data/example/LocalCSV_example.csv"
+                target="_blank"
+                >data.csv</a
+              >)
             </h5>
           </v-row>
 

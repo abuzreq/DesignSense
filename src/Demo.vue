@@ -42,6 +42,14 @@
         </template>
         <span>{{ actions["saveToFile"].tooltip() }}</span>
       </v-tooltip>
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn :disabled="!isStudySharable" v-on="on" icon @click="actions['shareStaticLink'].clickAction">
+            <v-icon>{{ actions["shareStaticLink"].icon }}</v-icon>
+          </v-btn>
+        </template>
+        <span>{{ actions["shareStaticLink"].tooltip() }}</span>
+      </v-tooltip>
       <v-divider vertical />
 
       <v-tooltip bottom>
@@ -222,6 +230,33 @@
       </div>
     </div>
     </v-app-bar>
+    <v-dialog :key="456" v-model="isShareLinkModalOn" width="650px">
+      <template>
+        <v-card
+        style="z-index: 300; padding: 15px"
+          height="200px"
+          max-width="650">
+          <v-card-title style="font-size: xx-large;">
+            Share Link
+          </v-card-title>
+          <v-row no-gutters style="padding: 25px;" >
+            <div v-if="shareLink">
+            {{shareLink}}
+          </div>
+          <div v-else>There is no static link for you if you are not using online shared folder. </div>
+          </v-row>
+          <div style="position: absolute; top: 5%;right: 5%;">
+            <v-btn
+              icon
+              @click="isShareLinkModalOn = false"
+            >
+              <v-icon>{{ "mdi-close" }}</v-icon></v-btn
+            >
+          </div>
+      </v-card>
+      </template>
+    </v-dialog>
+
     <v-dialog :key="123" v-model="isOpeningDialogOn" width="650px">
       <template>
         <v-card
@@ -303,7 +338,7 @@
                 >Ahmed Abuzuraiq</a
               >
             </p>
-            <div>v1.1.1</div>
+            <div>v1.1.2</div>
           </div>
         </v-card>
       </template>
@@ -798,6 +833,12 @@ export default {
           tooltip: () => "Download the selected options to file (.csv)",
           type: "misc",
         },
+        shareStaticLink: {
+          clickAction: () => this.isShareLinkModalOn = true,
+          icon: "mdi-share-variant-outline",
+          tooltip: () => "Creates a static link to share this session if the data was hosted on a cloud service.",
+          type: "misc",
+        },
       },
       contextMenuItems: [
         "togglePinInspection",
@@ -811,6 +852,7 @@ export default {
 
       showContextMenu: false,
       rightClickPos: { x: 0, y: 0 },
+      isShareLinkModalOn: false,
     };
   },
   destroyed() {},
@@ -872,6 +914,9 @@ export default {
       isInspectionMode: (state) => state.isInspectionMode,
       isInspectionPinned: (state) => state.isInspectionPinned,
       isOpeningDialogOn: (state) => state.isOpeningDialogOn,
+      isShareLinkModalOn: (state) => state.isShareLinkModalOn,
+      shareLink:  (state) => state.shareLink,
+      isStudySharable: (state) => state.isStudySharable,
     }),
   },
   methods: {

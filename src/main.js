@@ -78,6 +78,36 @@ var app = new Vue({
 });
 
 
+
+function MP_getGoogleIDandLoad(dataMethod) {
+  var serverFolderLink;
+  
+  //document.getElementById('csv-file').value = "";
+
+  if (dataMethod === "URL") {
+      
+      //document.getElementById("folderLink").value = "";
+
+      var inUrl = window.location.href;
+      decodeUrlID(
+          inUrl, 
+          function(d){
+            loadDataFromCloudURL(d);
+          }
+      );
+
+
+  } else {
+      //serverFolderLink = document.getElementById("folderLink").value;
+      loadDataFromCloudURL(serverFolderLink);
+  }
+}
+
+if (window.location.href.toUpperCase().search("GFOLDER") > 0 || window.location.href.toUpperCase().search("ID=") > 0) {
+    // this is old user with google drive files.
+    MP_getGoogleIDandLoad("URL"); 
+}
+else {
 // Default settings
 readyToLoad("https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv").then(() => {
   //app.$store.commit('changeSelectionOperation', getOperationFromKey(e.key - 1))
@@ -86,6 +116,8 @@ readyToLoad("https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/de
 
   app.$store.commit('setIsOpeningDialogOn', {'value': true})
 })
+}
+
 
 
 document.addEventListener('keydown', function (e) {
@@ -228,6 +260,7 @@ function loadData(data) {
   let args = {}
   //Creates the default marking
   app.$store.dispatch('createMarkingEntry', args)
+  app.$store.dispatch("processShareLink")
 }
 
 
@@ -265,13 +298,14 @@ function getParallelDataFromAlternatives(url, altsInCollection) {
   return parallelData;
 }
 
-export { loadDataFromURL, loadDataFromCloudURL, loadData, prepareData, readyToLoad }
+export { loadDataFromURL, loadDataFromCloudURL, loadData, prepareData, readyToLoad, encodeUrl, decodeUrl, makeUrlId }
 
 /*******************        Design Explorer ********************** */
 
 function loadDataFromCloudURL(rawUrl) {
   checkInputLink(rawUrl, function (d) {
-    // _folderInfo = d; //set global fodler obj
+    window._folderInfo = d; //set global fodler obj
+    console.log("LOADING", window._folderInfo);
     console.log("url, ", d)
     if (d.type === "userServerLink") {
       //this is a user's server link, and load csv directly
@@ -292,9 +326,16 @@ let _googleReturnObj = { //{"fileName":Google Drive ID}
   settingFiles: {}
 };
 
+
+function getUrlVars(rawUrl) {
+  var vars = {};
+  var parts = rawUrl.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+      vars[key] = value;
+  });
+  return vars;
+}
+
 function prepareGFolder(folderLink) {
-
-
 
   var folder = {
     "DE_PW": "", // short code from google or base64 coded inLink
@@ -302,8 +343,8 @@ function prepareGFolder(folderLink) {
     "url": "",  //url to load the list item inside the folder
     "type": "" //folder type : GoogleDrive, OneDrive, or userServerLink
   }
-  //_folderInfo = folderLink;
-
+  window._folderInfo = folderLink;
+  console.log("LOADING", folderLink);
   folder = folderLink;
 
   d3.json(folder.url).then(function (data) {
@@ -481,7 +522,7 @@ function checkInputLink(link, callback) {
 
 function encodeUrl(url) {
   // var link = btoa(url).slice(0, -1).replace('/','_').replace('+','-');
-  var link = btoa(url);
+  var link = window.btoa(url);
   return link;
 }
 
@@ -489,10 +530,10 @@ function decodeUrl(encodedString) {
   // var url = atob(encodedString.replace('_','/').replace('-','+')+"=");
   var url = "";
   try {
-    url = atob(encodedString);
+    url = window.atob(encodedString);
   } catch (err) {
     console.log(err.message + " But fixed:>");
-    url = atob(encodedString.replace('_', '/').replace('-', '+') + "=");
+    url = encodedString; //atob(encodedString.replace('_', '/').replace('-', '+') + "=");
   }
 
   return url;
@@ -604,7 +645,7 @@ function decodeUrlID(rawUrl, callback) {
 
     //linkID = rawUrl.split("/");
     //linkID = linkID[linkID.length - 1];
-    linkID = DEID;
+    let linkID = DEID;
     //console.log(linkID)
 
     if (linkID.length === 6) {
@@ -622,6 +663,7 @@ function decodeUrlID(rawUrl, callback) {
         callback(serverFolderLink);
       })
     } else {
+      console.log(linkID)
       serverFolderLink = decodeUrl(linkID);
       callback(serverFolderLink);
     }

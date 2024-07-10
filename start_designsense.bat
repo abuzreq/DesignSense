@@ -1,2 +1,2 @@
-nvm use 15.14.0
+nvm use 15.14.0 ^
 npm run start
