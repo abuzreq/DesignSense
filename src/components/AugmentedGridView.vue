@@ -234,7 +234,12 @@
                       small
                       icon
                       v-on="on"
-                      @click="() => (inspectedItem = null)"
+                      @click="
+                        () => {
+                          inspectedItem = null;
+                          unhover();
+                        }
+                      "
                     >
                       <v-icon>mdi-close</v-icon>
                     </v-btn>
@@ -289,6 +294,7 @@
                 :alt="inspectedItem.image"
                 :show-message="false"
               />
+              <!--
               <model-gltf
                 ref="gltf"
                 v-else-if="inspectedItem && inspecting3DView && isModelGLTF"
@@ -297,7 +303,7 @@
                 :rotation="modelRotation"
                 :position="modelPosition"
                 :lights="modelLights"
-              />
+              />-->
               <v-card
                 v-else
                 width="100%"
@@ -366,13 +372,16 @@
                           }"
                           v-if="item"
                           :src="item.image"
-                          v-on:mouseover="hover(item)"
+                           :lazy-src="lazyImageSrc"
+                          v-on:mouseover="isHoveringEnabled?hover(item):null"
+                          v-on:click="hover(item)"
                           @load="imageLoaded()"
                         >
+                         
                           <!--   v-on:mouseup="enableContext? toggle(item):null"-->
                           <input
                             v-if="enableContext"
-                            v-on:input="toggle(item)"
+                            v-on:click="toggle(item, $event)"
                             class="image_checkbox"
                             type="checkbox"
                             :checked="selectionMap[item._id]"
@@ -388,10 +397,15 @@
                           v-show="possibleColSpans[colSpan] > 3"
                         >
                           <v-expansion-panel>
-                            <v-expansion-panel-header
-                              >{{ "ID:" }} &nbsp;&nbsp;&nbsp;&nbsp;
-                              {{ item["_id"] }}</v-expansion-panel-header
-                            >
+                            <v-expansion-panel-header>
+                              <template v-slot:default="{ open  }">
+                              <span v-if="!open"
+                                style="text-align: center;font-size: smaller;"
+                              >
+                                Expand for Details
+                              </span>
+                              </template>
+                            </v-expansion-panel-header>
 
                             <v-expansion-panel-content>
                               <v-list>
@@ -578,6 +592,14 @@
   color: white;
 }
 
+::v-deep .v-expansion-panel--active > .v-expansion-panel-header {
+  min-height: 24px;
+}
+
+::v-deep .v-expansion-panel-header {
+  padding: 0px;
+  min-height: 24px;
+}
 ::v-deep div.v-expansion-panel-content__wrap {
   padding-left: 0px;
   padding-right: 0px;
@@ -619,8 +641,8 @@
 }
 
 .image_checkbox {
-  width: 15px;
-  height: 15px;
+  width: 18px;
+  height: 18px;
   display: inline;
   position: absolute;
   top: 3%;
@@ -677,8 +699,6 @@ export default {
     MediumGridIcon,
     SmallGridIcon,
     StarRating,
-    ModelGltf,
-    ModelThree,
     "drag-select-container": DragSelect,
     imageZoom,
   },
@@ -733,6 +753,7 @@ export default {
       dragSelection: {},
       numLoadedImages: 0,
       scrollLabel: null,
+      lazyImageSrc: undefined,
       keysBlackList: [
         "index",
         "selected",
@@ -814,6 +835,7 @@ export default {
     //Inspection setup
     this.isModelGLTF = this.chartData[0].gltf ? true : false;
     this.inspectedItem = this.chartData[0];
+    this.lazyImageSrc =  this.chartData[0].image;
 
     this.sortByVar =
       this.keys.find((k) => !isNaN(this.chartData[0][k])) || this.keys[0];
@@ -1012,15 +1034,14 @@ export default {
         });
       }
     },
-    hover(item, forced) {
-      if (forced || this.isHoveringEnabled) {
-        this.$store.commit("hover", { hovered: item });
-      }
+    hover(item) {
+      this.$store.commit("hover", { hovered: item });
     },
     unhover(item) {
       this.$store.commit("hover", { hovered: null });
     },
-    toggle(item) {
+    toggle(item, event) {
+      event.stopPropagation();
       if (!this.isSelectionDragOn) {
         this.$store.dispatch("update", {
           view: this.viewID,

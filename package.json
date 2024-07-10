@@ -14,6 +14,7 @@
         "build-prod": "webpack -p --mode production"
     },
     "dependencies": {
+        "@cdxoo/dbscan": "^1.1.1",
         "@jwalsh/tsnejs": "^0.1.3",
         "axios": "^1.7.2",
         "cors": "^2.8.5",

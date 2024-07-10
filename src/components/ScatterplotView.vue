@@ -169,6 +169,7 @@
         :showMultiselect="true"
         :parentDimensions="[xColumn, yColumn]"
         :sortByVar="xColumn"
+        :sort-desc="isXAxisIncremental"
       />
     </v-container>
   </div>

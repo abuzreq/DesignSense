@@ -21,10 +21,11 @@
               id="num_clusters_select"
               density="compact"
               style="margin-top: 15px;"
-              label="Num of Clusters"
-              :items="[2, 3, 4, 5, 6, 7, 8, 9]"
-              v-model="numClusters"
+              label="Clusters Granularity"
+            
+              v-model="epsilon"
               hide-details
+              :items="epsilonValues"
             ></v-select>
 
             <div style="display: flex; flex-direction: column;">
@@ -33,12 +34,11 @@
               >
                 <span><SmallGridIcon /></span>
                 <span><MediumGridIcon /></span>
-                <span><LargeGridIcon /></span>
               </div>
               <v-slider
                 id="size-slider"
                 min="0"
-                max="2"
+                max="1"
                 step="1"
                 style="width: 150px;"
                 ticks="always"
@@ -66,7 +66,7 @@
                 represents a group of items that are similar to each other with
                 respect to chosen data dimensions. You can choose the clustering
                 dimensions from the dropdown at the bottom, we recommend using
-                the same dimensions used in the scatterplot as a start.</span
+                the same dimensions used in the scatterplot as a start. The clusters granularity decides how fine (small value) or course (large value) the clusters will be.</span
               >
             </v-tooltip>
           </div>
@@ -81,7 +81,7 @@
             <v-row dense>
               <v-col
                 v-for="(item, index) in items.items"
-                v-bind:key="cardSelector + item._id"
+                v-bind:key="cardSelector + index"
                 :cols="possibleColSpans[colSpan]"
               >
                 <v-card
@@ -93,7 +93,7 @@
                       numSelected > 0 &&
                       !selectionMap[item._id],
                   }"
-                  v-bind:id="cardSelector + item._id"
+                  v-bind:id="cardSelector + index"
                 >
                   <span style="padding: 2px; position: relative; left: 3%;"
                     >{{ "#" + (index + 1) }}
@@ -102,7 +102,7 @@
                   <v-tooltip bottom>
                     <template v-slot:activator="{ on }">
                       <v-chip
-                      small
+                        small
                         style="position: absolute; right: 3%;padding: 8px;"
                         v-on="on"
                         color="blue darken-3"
@@ -263,9 +263,10 @@ export default {
       onContextIcon: "mdi-eye",
       viewID: null,
       colSpan: 1,
-      possibleColSpans: [4, 6, 8],
-      labels: ["S", "M", "XL"],
+      possibleColSpans: [4, 6],
+      labels: ["M", "XL"],
       numClustersLabels: ["4", "8", "12", "16"],
+      epsilonValues: [0.05, 0.1, 0.2, 0.4],
       maxPerPage: 10000,
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
       isSortDesc: false,
@@ -275,6 +276,7 @@ export default {
       clusterReps: [],
       clustersSize: [],
       dimensions: this.parentDimensions,
+      epsilon: 0.1,
       numClusters: 3,
       isComputingVisualSimilarity: false,
     };
@@ -332,16 +334,46 @@ export default {
       if (!this.areDimensionsValid()) {
         return;
       }
-
+      console.log("clustering dimensions", this.dimensions);
       var matrix = to2DMatrix(this.chartData, this.dimensions, true); //['TotalFlrArea']
 
       /*
-      var clustering = require('density-clustering');
-      var dbscan = new clustering.DBSCAN();
+      var clustering = require("density-clustering");
+      var dbscanAlgo1 = new clustering.OPTICS();
       // parameters: 5 - neighborhood radius, 2 - number of points in neighborhood to form a cluster
-      var clusters = dbscan.run(matrix, 5, 5);
-      console.log(clusters, dbscan.noise);
+      var clusters1 = dbscanAlgo1.run(matrix, 0.1, 3);
+      console.log("density", clusters1, dbscanAlgo1.noise);
+
+
+      var dbscanAlgo2 = new clustering.DBSCAN();
+      // parameters: 5 - neighborhood radius, 2 - number of points in neighborhood to form a cluster
+      var clusters2 = dbscanAlgo2.run(matrix, this.numClusters, 5);
+      console.log("density2", clusters2, dbscanAlgo2.noise);
       */
+
+      const dbscan = require("@cdxoo/dbscan");
+
+      let clustersRes = dbscan({
+        dataset: matrix,
+        epsilon: this.epsilon,
+        distanceFunction: this.euclideanDistance,
+      });
+
+      let clusters = clustersRes.clusters;
+
+      this.clustersSize = clusters.map(c => c.length)
+      this.clusterReps.splice(0, this.clusterReps.length);
+
+      clusters.forEach((clusterIndices) => {
+        const clusterData = clusterIndices.map((i) => matrix[i]);
+
+        const centroidRes = this.findClosestVector(clusterData, clusterIndices);
+        const centroidIndex = centroidRes.closestIndex;
+        this.clusterReps.push(this.chartData[centroidIndex]);
+        this.clustersMap[
+          this.chartData[centroidIndex]._id
+        ] = clusterIndices.map((idx) => this.chartData[idx]);
+      });
 
       /*
       if(this.isComputingVisualSimilarity)
@@ -351,8 +383,9 @@ export default {
             //need to compute  to2DVisualSimilarityMatrix in a sync way or async with promise
       }
       */
-
+      /*
       kmeans.clusterize(matrix, { k: this.numClusters }, (err, res) => {
+        console.log(res);
         if (err) console.error(err);
         else {
           var centroids = res.map((c) => c.centroid);
@@ -374,7 +407,62 @@ export default {
             ].clusterInd.map((idx) => this.chartData[idx]);
           }
         }
+      }); */
+    },
+    calculateCentroid(vectors) {
+      if (vectors.length === 0) {
+        throw new Error("The array of vectors is empty");
+      }
+
+      const numVectors = vectors.length;
+      const vectorLength = vectors[0].length;
+
+      const centroid = new Array(vectorLength).fill(0);
+
+      vectors.forEach((vector) => {
+        if (vector.length !== vectorLength) {
+          throw new Error("All vectors must have the same length");
+        }
+        for (let i = 0; i < vectorLength; i++) {
+          centroid[i] += vector[i];
+        }
       });
+
+      for (let i = 0; i < vectorLength; i++) {
+        centroid[i] /= numVectors;
+      }
+
+      return centroid;
+    },
+    findClosestVector(vectors, indices) {
+      const centroid = this.calculateCentroid(vectors);
+      let closestVector = null;
+      let closestIndex = -1;
+      let closestDistance = Infinity;
+
+      vectors.forEach((vector, index) => {
+        const distance = this.euclideanDistance(vector, centroid);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestVector = vector;
+          closestIndex = indices[index];
+        }
+      });
+
+      return { closestVector, closestIndex };
+    },
+    euclideanDistance(arr1, arr2) {
+      if (arr1.length !== arr2.length) {
+        return Infinity;
+      }
+
+      let sum = 0;
+
+      for (let i = 0; i < arr1.length; i++) {
+        sum += Math.pow(arr1[i] - arr2[i], 2);
+      }
+
+      return Math.sqrt(sum);
     },
     onDimensionChange(newDimensions) {
       this.dimensions = newDimensions;
@@ -474,7 +562,7 @@ export default {
       deep: true,
       handler: function(newValue) {
         console.log("dims parent");
-        //this.onDimensionChange(newValue);
+        this.onDimensionChange(newValue);
       },
     },
     enableContext: {
@@ -492,6 +580,11 @@ export default {
       //deep: true
     },
     numClusters: {
+      handler: function(newValue, oldValue) {
+        this.compute();
+      },
+    },
+    epsilon: {
       handler: function(newValue, oldValue) {
         this.compute();
       },
