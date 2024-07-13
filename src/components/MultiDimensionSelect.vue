@@ -2,7 +2,7 @@
 <template>
   <div>
     <multiselect
-      :style="{'height':'30px;','width': `${width}px`}"
+      :style="{ height: '30px;', width: `${width}px` }"
       collapse
       @input="onChange"
       dense
@@ -15,9 +15,8 @@
       :showLabels="false"
       placeholder="pick/search item(s) here"
       searchable
-      :openDirection="initialOpenDirection?initialOpenDirection:'down'"
-   
-    ></multiselect>
+      :openDirection="initialOpenDirection ? initialOpenDirection : 'down'"
+    />
   </div>
 </template>
 
@@ -31,30 +30,26 @@ import { mapState, mapGetters } from "vuex";
 export default {
   // OR register locally
   components: { Multiselect },
-  props: ["initialValue","keys", "width", "initialOpenDirection"],
+  props: ["initialValue", "keys", "width", "initialOpenDirection"],
   data() {
     return {
-     
       value: this.initialValue,
-     // keys: this.initialValue,
+      // keys: this.initialValue,
     };
   },
-  mounted()
-  {
-    console.log("dims", this.value, this.initialValue)
+  mounted() {
+    console.log("dims", this.value, this.initialValue);
   },
   methods: {
     onChange: function(value, id) {
       this.$emit("update", value);
-    }
+    },
   },
-   watch: 
-  {
-    initialValue:  function(val)
-    {
+  watch: {
+    initialValue: function(val) {
       this.value = val;
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -62,7 +57,8 @@ export default {
      Add Multiselect CSS. Can be added as a static asset or inside a component. -->
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 
-<style > 
-
-
+<style scoped>
+::v-deep .multiselect__content-wrapper {
+  width: fit-content;
+}
 </style>

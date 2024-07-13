@@ -60,6 +60,12 @@ export default {
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 
 <style scoped>
+
+::v-deep .multiselect__content-wrapper {
+    width: fit-content;
+}
+
+
 ::v-deep .multiselect__tags > .multiselect__single,
 ::v-deep .multiselect__tags > .multiselect__placeholder {
   overflow: hidden;
