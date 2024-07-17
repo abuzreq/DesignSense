@@ -33,7 +33,7 @@
               density="compact"
               style="margin-top: 15px;"
               label="Clusters Granularity"
-            
+              :value="epsilonValues[1]"
               hide-details
               :items="epsilonValues"
               @change="onEpsilonChange"
@@ -94,7 +94,7 @@
             <v-row dense>
               <v-col
                 v-for="(item, index) in items.items"
-                v-bind:key="cardSelector + index"
+                v-bind:key="cardSelector + item._id"
                 :cols="possibleColSpans[colSpan]"
               >
                 <v-card
@@ -106,7 +106,7 @@
                       numSelected > 0 &&
                       !selectionMap[item._id],
                   }"
-                  v-bind:id="cardSelector + index"
+                  v-bind:id="cardSelector + item._id"
                 >
                   <span style="padding: 2px; position: relative; left: 3%;"
                     >{{ "#" + (index + 1) }}
@@ -121,18 +121,18 @@
                         color="blue darken-3"
                         text-color="white"
                       >
-                        {{ clustersSize[index] }}
+                        {{ clustersSize[item._id] }}
                       </v-chip>
                     </template>
                     <span>Number of items in the cluster</span>
                   </v-tooltip>
 
                   <v-img
-                    v-if="true"
                     contain
                     :src="item.image"
                     v-on:click="toggle(item, $event)"
                     v-on:mouseover="hover(item)"
+                    style="min-height: 120px;"
                   />
                 </v-card>
               </v-col>
@@ -297,7 +297,7 @@ export default {
       possibleColSpans: [4, 6],
       labels: ["M", "XL"],
       numClustersLabels: [3, 4, 5, 6, 7, 8],
-      epsilonValues: ["very granular", "somewhat granular", "somewhat coarse", "very coarse"],
+      epsilonValues: ["2 x granular", " granular", "coarse", "2 x coarse"],
       maxPerPage: 10000,
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
       isSortDesc: false,
@@ -305,7 +305,7 @@ export default {
       numSelected: 0,
       clustersMap: {},
       clusterReps: [],
-      clustersSize: [],
+      clustersSize: {},
       dimensions: this.parentDimensions,
       epsilon: 0.1,
       numClusters: 4,
@@ -323,7 +323,7 @@ export default {
     }),
     ...mapGetters(["isHoveringEnabled"]),
     cardSelector() {
-      return "card_" + this.viewID + "_";
+      return "cluster_card_" + this.viewID + "_";
     },
   },
   mounted() {
@@ -380,6 +380,9 @@ export default {
       var clusters2 = dbscanAlgo2.run(matrix, this.numClusters, 5);
       console.log("density2", clusters2, dbscanAlgo2.noise);
       */
+      this.clusterReps.splice(0, this.clusterReps.length);
+      this.clustersMap = {};
+      this.clustersSize = {};
 
       if (!this.useKMeans) {
         const dbscan = require("@cdxoo/dbscan");
@@ -393,9 +396,6 @@ export default {
 
         let clusters = clustersRes.clusters;
 
-        this.clustersSize = clusters.map((c) => c.length);
-        this.clusterReps.splice(0, this.clusterReps.length);
-
         clusters.forEach((clusterIndices) => {
           const clusterData = clusterIndices.map((i) => matrix[i]);
 
@@ -405,13 +405,12 @@ export default {
           );
           const centroidIndex = centroidRes.closestIndex;
           this.clusterReps.push(this.chartData[centroidIndex]);
-          this.clustersMap[
-            this.chartData[centroidIndex]._id
-          ] = clusterIndices.map((idx) => this.chartData[idx]);
+          const id = this.chartData[centroidIndex]._id;
+          this.clustersMap[id] = clusterIndices.map((idx) => this.chartData[idx]);
+          this.clustersSize[id] = this.clustersMap[id].length;
         });
       } else {
         kmeans.clusterize(matrix, { k: this.numClusters }, (err, res) => {
-          console.log(res);
           if (err) console.error(err);
           else {
             var centroids = res.map((c) => c.centroid);
@@ -422,20 +421,20 @@ export default {
               return c.clusterInd[smallestInClusterIndex];
             });
 
-            this.clustersSize = res.map((c) => c.cluster.length);
-
-            this.clusterReps.splice(0, this.clusterReps.length);
-
             for (var i = 0; i < closest.length; i++) {
               this.clusterReps.push(this.chartData[closest[i]]);
-              this.clustersMap[this.chartData[closest[i]]._id] = res[
+              const id = this.chartData[closest[i]]._id;
+              this.clustersMap[id] = res[
                 i
               ].clusterInd.map((idx) => this.chartData[idx]);
+              this.clustersSize[id] = this.clustersMap[id].length;
             }
           }
         });
       }
-
+    
+      this.clusterReps.sort((x,y) => (x[this.sortByVar] - y[this.sortByVar]) * (this.isSortDesc?1:-1))
+      
       /*
       if(this.isComputingVisualSimilarity)
       {
@@ -450,7 +449,6 @@ export default {
       let index = this.epsilonValues.indexOf(x)
       const epsilonNumericValues = [0.05, 0.1, 0.2, 0.4]
       this.epsilon = epsilonNumericValues[index];
-      console.log("epsilon", this.epsilon)
     },
     calculateCentroid(vectors) {
       if (vectors.length === 0) {

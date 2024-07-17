@@ -149,13 +149,12 @@ document.addEventListener('keydown', function (e) {
    
   }
   
+  
   if (e.shiftKey && !app.$store.state.isShiftKey) {
-      app.$store.dispatch('updateShiftKey', { value: true })
-      app.$store.commit("changeSelectionOperation", operations.ADD);
+      app.$store.dispatch('updateShiftKey', { value: true }) 
   }
   else if (e.ctrlKey && !app.$store.state.isCtrlKey) {
     app.$store.dispatch('updateCtrlKey', { value: true })
-    app.$store.commit("changeSelectionOperation", operations.SUBTRACT);
   }
   else if (e.key === " " && !app.$store.state.isAltKey) {
       e.preventDefault();
@@ -163,6 +162,22 @@ document.addEventListener('keydown', function (e) {
       app.$store.dispatch('updateAltKey', { value: true })
       app.$store.commit('toggleInspectionMode', { value: true })
   }
+
+
+  if (app.$store.state.isShiftKey && app.$store.state.isCtrlKey)
+  {
+    app.$store.commit("changeSelectionOperation", operations.INTERSECT);
+  }
+  else if(app.$store.state.isShiftKey)
+  {
+    app.$store.commit("changeSelectionOperation", operations.ADD);
+  }
+  else if (app.$store.state.isCtrlKey)
+  {
+    app.$store.commit("changeSelectionOperation", operations.SUBTRACT);
+  }
+  
+
 })
 
 document.addEventListener('keyup', function (e) {

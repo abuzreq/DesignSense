@@ -285,12 +285,12 @@
             <div style="display: flex; flex-direction: row;">
             <div style="display: flex; flex-direction: column; width: 300px; align-items: center;justify-content: space-between;">
               <p>
-                If this is your first time, we suggest starting with the
+                First time here? we suggest starting with the
                 onboarding tour.
               </p>
 
               <v-btn
-                color="red lighten-2"
+                color="blue lighten-2"
                 dark
                 style="align-self: center;"
                 @click="
@@ -303,19 +303,9 @@
             </div>
             <div style="display: flex; flex-direction: column; width: 300px; align-items: center;justify-content: space-between;">
               <p>
-                Otherwise, go ahead and start!
+                Been here before?
               </p>
-
-              <v-btn
-                color="blue lighten-2"
-                dark
-                style="align-self: center;"
-                @click="
-                  $store.commit('setIsOpeningDialogOn', { value: false });
-                "
-              >
-                Explore</v-btn
-              >
+              <LoadDataModal> </LoadDataModal>
             </div>
           </div>
           <p style="margin-top:20px; font-size: medium;"><em> This is an ongoing research project, so we would appreciate your feedback!</em></p>
@@ -498,7 +488,7 @@ export default {
             title: "Welcome to DesignSense!",
           },
           content:
-            "DesignSense is a shopping interface augmented with data visualizations and analysis! The interface was designed to allow users to navigate through a large number of options while considering both the visual appearance and the multidimensional metrics of those options. [Next: &rarr;, Previous: &larr; ]",
+            "In short, <em>DesignSense </em> is a shopping interface that is augmented with advanced data visualizations and analysis! The interface was designed to allow users to navigate through a large number of options while considering both the visual appearance and the data associated with those options. [Next: &rarr;, Previous: &larr; ]",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -509,7 +499,7 @@ export default {
           header: {
             title: "Let's Get Started!",
           },
-          content: `First, we need to load a dataset. DSense supports loading data by uploading local files or by loading them from a cloud folder. For now, we will use a simple dataset of boxes.`,
+          content: `First, we need to load a dataset. <em>DesignSense</em> supports loading data by uploading local files or by loading them from a cloud folder. For now, we will use a simple dataset of boxes.`,
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -533,7 +523,7 @@ export default {
             title: "2D Scatterplot",
           },
           content:
-            "The scatterplot is a simple but very effective visualization of 2-dimensional data. It can be used to identify patterns like correlations, outliers, and clusters. You can drag and hold on the scatterplot to draw a selection box. All the options falling in this box are selected as a result. The scatterplot supports other operations too, feel free to place your cursor over any of the icons to get tooltips on what they can do. By default, any new selection will replace the current one. Let's see how to change that.",
+            "The scatterplot is a simple but very effective visualization of 2-dimensional data. It can be used to identify patterns like correlations, outliers, and clusters. You can drag and hold on the scatterplot to draw a selection box. All the options falling in this box are selected as a result. The scatterplot supports other operations too, feel free to place your cursor over any of the icons here or all over the interface to get tips on what they can do. By default, any new selection will replace the current one. Let's see how to change that.",
           before: () => {
             let selectedData = this.$store.state.data.filter(
               (d) =>
@@ -560,7 +550,7 @@ export default {
             title: "Selection Operations",
           },
           content:
-            "DSense supports 5 different selection operations (i.e. how a newly made selection relates to the current one). You can press on the buttons here to change the operation or press on the numbers from 1 to 5 to easily change it. </br> You will also notice that when you make a selection on any component in the workspace then other components will respond by highlighting the same options. This coordination allows us to combine the best that each component offers.",
+            "<em>DesignSense</em> supports 5 different selection operations (i.e. how the newly selected options will relate to the currently selected ones). You may click on those icons or use shortcuts: hold Shift for addition, hold Ctrl for subtraction, hold both for intersection. </br> You will also notice that when you make a selection on any component in the workspace then other components will respond by highlighting the same selected options. This coordination allows us to combine the best of what each component offers.",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -572,7 +562,7 @@ export default {
             title: "The Multidimentional Detective",
           },
           content:
-            "The second data visualization is the parallel coordinates plot (PCP). In contrast to the scatterplot, this chart can be used to visualize more than 2 dimensions. Here each vertical axis is a different dimension. Each option is represented by a sequence of lines that touch those axes exactly at the value of the option for that axes. You can also select options on the PCP by dragging a rectangle along any of the axes. You may also re-order the axes or flip them vertically by dragging and double-clicking on their titles respectively. Finally, you can also change the dimensions visualized via the wrench icon.",
+            "The second data visualization is the parallel coordinates plot (PCP). In contrast to the scatterplot, this chart can be used to visualize more than 2 dimensions. Here each vertical axis is a different dimension. Each option is represented by a string of lines that touch those axes exactly at the value of the option for that axes. You can also select options on the PCP by dragging a rectangle along any of the axes. You may also re-order the axes or flip them vertically by dragging and double-clicking on their titles respectively. Finally, you can also change the data dimensions shown using the wrench icon.",
           before: () => {
             let selectedData = this.$store.state.data.filter(
               (d) =>
@@ -599,7 +589,7 @@ export default {
             title: "The Augmented Gallery",
           },
           content:
-            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on inspection shortly). We can sort the images based on a data dimension. We can select options by dragging a rectangle that touches their images or by simply clicking on them. Clicking on the eye icon will show only the options currently selected.",
+            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on <i>inspection</i> shortly). We can sort the images based on a data dimension. We can select options by dragging a rectangle that touches their images or by simply clicking the checkbox to the top left. Clicking on the eye icon will show only the options currently selected. Finally, you can also show more details about an option through the details button to the left.",
           params: {
             enableScrolling: false,
             placement: "left",
@@ -659,7 +649,7 @@ export default {
             title: "Continuous Inspection",
           },
           content:
-            "Sometimes we will want to examine a single option in detail instead of sifting through options. This can be done in two ways, the first is by enabling the Continuous Inspection mode which allows us to examine any option the cursor passes by through any of its representations (e.g. its image in the gallery, dot in the scatterplot or line in the parallel coordinates plot). Once we do that the option is highlighted in special ways. Notably, a large image of it is shown on the Augmented Gallery (3D views of the inspected option are also supported if DSense can find 3D files in the dataset with the right formats).",
+            "Sometimes we will want to examine a single option in detail instead of sifting through options. This can be done in two ways, the first is by enabling the Continuous Inspection mode which allows us to examine any option the cursor passes by through any of its representations (e.g. its image in the gallery, dot in the scatterplot or line in the parallel coordinates plot). Once we do that the option is highlighted in special ways. Notably, a large image of it is shown on the Augmented Gallery (3D views of the inspected option are also supported if <em>DesignSense</em> can find 3D files in the dataset with the right formats).",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -686,7 +676,7 @@ export default {
             title: "Clusters",
           },
           content:
-            "DSense automatically clusters the current options we are considering to groups based on their similarity (i.e. it responds to zooming/filtering operations). We can choose the dimensions to group options based on and the number of groups to form. This panel shows a representative sample from each of the formed groups (i.e. it lies at the center of group). By examining those representatives we can gain a bird-view of the dataset. Finally, we can inspect any of the representatives.",
+            "<em>DesignSense</em> automatically clusters the current options we are considering to groups based on their similarity (i.e. it responds to zooming/filtering operations). We can choose the dimensions to group options based on and the number of groups to form. This panel shows a representative sample from each of the formed groups (i.e. it lies at the center of group). By examining those representatives we can gain a bird-view of the dataset. Finally, we can inspect any of the representatives.",
           params: {
             enableScrolling: false,
             placement: "top",
@@ -698,7 +688,7 @@ export default {
             title: "At Your Fingertips!",
           },
           content:
-            "By right-clicking anywhere we can summon a fast-access menu that has some of the operations we mentioned earlier. This is especially effective when using DSense across multiple screens.",
+            "By right-clicking anywhere we can summon a fast-access menu that has some of the operations we mentioned earlier. This is especially effective when using <em>DesignSense</em> across multiple screens.",
           params: {
             enableScrolling: false,
             placement: "top",
@@ -721,7 +711,7 @@ export default {
           header: {
             title: "Thanks!!",
           },
-          content: `This marks the end of our tour of DesignSense! Feel free to reach us on aabuzura@sfu.ca`,
+          content: `This marks the end of our tour of <em>DesignSense</em>! Feel free to reach us on aabuzura@sfu.ca`,
           params: {
             enableScrolling: false,
             placement: "bottom",

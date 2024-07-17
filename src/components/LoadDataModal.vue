@@ -4,7 +4,7 @@
       <v-dialog v-model="dialog" width="800" overlay-opacity="0.5">
         <template v-slot:activator="{ on, attrs }">
           <v-btn color="red lighten-2" dark v-bind="attrs" v-on="on">
-            Load Data (Start Here!)
+            Load Data
           </v-btn>
         </template>
 

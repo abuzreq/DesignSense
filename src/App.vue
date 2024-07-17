@@ -28,9 +28,7 @@ export default {
 };
 </script>
 <style>
-body {
-  font-family: Avenir, Helvetica Neue, Helvetica, Arial;
-}
+
 
 a {
   color: #000;
@@ -398,12 +396,7 @@ div.lead {
   font-weight: 500;
 }
 
-pre.bibtex {
-  font-family: Courier New, monospace;
-  font-size: 16px;
-  line-height: 22px;
-  white-space: pre-wrap;
-}
+
 
 .project .teaser-img {
   position: relative;

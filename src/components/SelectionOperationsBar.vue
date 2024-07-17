@@ -106,7 +106,7 @@
           </div>
         </div>
       </template>
-      <span>Intersect&emsp;[Num 5]</span>
+      <span>Intersect&emsp;[hold Shift & Ctrl or press Num 5]</span>
     </v-tooltip>
   </v-container>
 </template>

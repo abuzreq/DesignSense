@@ -96,8 +96,7 @@ export default {
 
     this.excludedDimensions = this.nonNumericDimensions;
     this.excludedDimensions.push("selected");
-    const floorAreaDims = ["in:ZoneRed total floor number","in:ZoneGreen total floor number","in:ZoneGrey total floor number"];//for the study purposes
-    this.excludedDimensions = [...this.excludedDimensions, ...floorAreaDims]
+    this.excludedDimensions.push("Rating");
   },
   watch: {
     isCustomizingDimensions: {
