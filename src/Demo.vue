@@ -391,7 +391,7 @@
     </radial-menu>
     <v-tour
       name="onboardingTour"
-      :steps="onboardingTourSteps"
+      :steps="onboardingStudyTourSteps"
       :options="{ highlight: true }"
       :callbacks="onboardingCallbacks"
     ></v-tour>
@@ -485,6 +485,253 @@ export default {
         onSkip: () => (document.body.style.pointerEvents = "all"),
         onFinish: () => (document.body.style.pointerEvents = "all"),
       },
+      onboardingStudyTourSteps: [
+        {
+          target: "#designsense-title", // We're using document.querySelector() under the hood
+          header: {
+            title: "Welcome to DesignSense!",
+          },
+          content:
+            "A tool for exploring, narrowing and understanding design spaces. DesignSense is designed to allow users to navigate through a large number of options while considering both the visual appearance and the data associated with those options. In short, <em>DesignSense </em> is a shopping interface that is augmented with advanced data visualizations and analysis! [Next: &rarr;, Previous: &larr; ]",
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+        {
+          target: "#loading-data-bar",
+          header: {
+            title: "Let's Get Started!",
+          },
+          content: `First, we need to load a dataset. <em>DesignSense</em> supports loading data by uploading local files or by loading them from a cloud folder. For now, we will use a simple dataset of used cars. `,
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+        {
+          target: "#designsense-center",
+          header: {
+            title: "Your Workspace",
+          },
+          content:
+            "This is your workspace. Each component plays a different role in the process of navigation as we will see. As a general tip, if you hover your mouse over any of the icons in the interface you will be presented with information on what these icons do.",
+          params: {
+            enableScrolling: false,
+            placement: "top",
+          },
+        },
+        {
+          target: '.v-card[type="Grid"]',
+          header: {
+            title: "Images Gallery",
+          },
+          content:
+            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on <i>inspection</i> shortly), whbile the grid of images below show all the options we are exploring. We can sort the images based on a data dimension (top left). We can select options by dragging a rectangle that touches their images or by simply clicking the checkbox to the top left of an option's image. Clicking on the eye icon (top-center) switch the grid to show only the currently selected options. You can change the size of the images on the grid using the size slider (top-right). If you pick the largest size, you become able to expand on the details of each option which makes it easier to compare them side-by-side",
+          params: {
+            enableScrolling: false,
+            placement: "left",
+          },
+        },
+        {
+          target: ".v-card[type='ScatterPlot']",
+          header: {
+            title: "2D Scatterplot",
+          },
+          content:
+            "The scatter plot is a simple but very effective visualization of 2-dimensional data. For example you can plot the price vs. year of manufacturing for each car. The scatterplot can be used to visually identify patterns like correlations, outliers, and clusters. By clicking then dragging on the scatterplot you create a selection box. All the options falling in this box are selected as a result. By default, any new selection will replace the current one. Let's see how to change that.",
+          before: () => {
+            console.log(this.$store.state.data)
+            let selectedData = this.$store.state.data.filter(
+              (d) =>
+                d["year"] > 2005 &&
+                d["year"] <= 2015 &&
+                d["price"] > 4000 &&
+                d["price"] <= 12000
+            );
+
+            this.$store.dispatch("update", {
+              markingID: this.$store.state.defaultMarkingID,
+              selection: selectedData.map((x) => x._id),
+              operation: operations.REPLACE,
+            });
+          },
+          params: {
+            enableScrolling: false,
+            placement: "left",
+          },
+        },
+       
+        {
+          target: '.v-card[type="ParallelCoordinatesPlot"]',
+          header: {
+            title: "The Parallel Coordinates Plot (PCP)",
+          },
+          content:
+            "The second data visualization is the parallel coordinates plot (PCP). In contrast to the scatterplot, this chart can be used to visualize more than 2 dimensions. Here each vertical axis is a different data dimension. Each option is represented by a string of lines that touch those axes exactly at the value of that the option for that axis/dimension. You can select options on the PCP by dragging a rectangle along any of the axes. You may also re-order the axes or flip them vertically by dragging and double-clicking on their titles respectively. Finally, you can also change the data dimensions shown using the wrench icon.",
+          before: () => {
+            console.log(this.$store.state.data)
+            let selectedData = this.$store.state.data.filter(
+              (d) =>
+                d["year"] > 2005 &&
+                d["year"] <= 2015 &&
+                d["price"] > 4000 &&
+                d["price"] <= 12000
+            );
+           
+            this.$store.dispatch("update", {
+              markingID: this.$store.state.defaultMarkingID,
+              selection: selectedData.map((x) => x._id),
+              operation: operations.REPLACE,
+            });
+          },
+          params: {
+            enableScrolling: false,
+            placement: "left",
+          },
+        },
+        {
+          target: "#selection-operations-bar",
+          header: {
+            title: "Selection Operations",
+          },
+          content:
+            "<em>DesignSense</em> supports 5 different selection operations (i.e. how the newly selected options will relate to the currently selected ones). You may click on those icons or use shortcuts: hold Shift for addition, hold Ctrl for subtraction, hold both for intersection. </br> You will also notice that when you make a selection on any component in the workspace then other components will respond by highlighting the same selected options. This coordination allows us to combine the best of what each component offers.",
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+
+        {
+          target: "#data-operations-bar",
+          header: {
+            title: "Zooming/Filtering",
+          },
+          content:
+            "Once you have selected a set of options there are few things you can do. You can choose to zoom on that set to examine it closely or exclude that set from your consideration. Both zooming and exclusion operations can be reverted back or reset completely.",
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+
+        {
+          target: "#sets-operations-bar",
+          header: {
+            title: "Selection",
+          },
+          content:
+            "On this panel, you can unselect everthing (shortcut: ESC), or invert your current selection. You may also revert the last selection operation you made (shortcut: Ctrl-Z)",
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+        {
+          target: '.v-card[type="Sets"]',
+          header: {
+            title: "The Sets Panel",
+          },
+          content:
+            "Sets are a great mechanism for storing the progress we make during navigation. To create a set, click on 'New Set'. Once you create a set, you can bring it back it back by simplying clicking on it. Note that the current selection operation will apply when you do, e.g. if you had Add on then the set will be added to your current selection. Finally, you can add/remove from a set using the +/- icons.",
+          before: () => {
+            let selectedData = this.$store.state.data.filter(
+              (d) => d["year"] > 2015
+            );
+
+            this.$store.dispatch("createSet", {
+              setName: "Set #1",
+              members: selectedData.map((x) => x._id),
+              comment: "Recent cars",
+            });
+          },
+          params: {
+            enableScrolling: false,
+            placement: "right",
+          },
+        },
+        {
+          target: '.v-card[type="Grid"]',
+          header: {
+            title: "Inspection: A Closer Look (hold Space)",
+          },
+          content:
+            "Sometimes we want to examine a single option in detail. This can be done by holding the Space button and moving the mouse over an option through any of its graphical representations, e.g. through its image in the gallery, its dot on the scatterplot, or its line on PCP. Doing so highlights that item everywhere and shows a large image of it on the Augmented Gallery. By clicking on the details button (top-left of the large image in the Gallery), you can find a data breakdown of the inspected option",
+          params: {
+            enableScrolling: false,
+            placement: "left-end",
+          },
+        },
+        {
+          target: '#inspection-bar',
+          header: {
+            title: "Pinning/Unpinning Inspection (P)",
+          },
+          content:
+            "By default, the inspected option remains highlighted unless it was canceled through the Cancel button or pressing ESC. Alternativly, you can choose to unpin (shortcut: P) the inspection which makes it go away once you release the Space keyboard button. The Continuous Inspection mode allows us to examine any option the mouse cursor passes by without holding Space.",
+          params: {
+            enableScrolling: false,
+            placement: "left",
+          },
+          before: () => {
+            this.$store.commit("toggleInspectionMode", { value: false });
+          },
+        },
+        {
+          target: ".v-card[type='ScatterPlot'] div.cluster-view",
+          header: {
+            title: "Clusters",
+          },
+          content:
+            "On the scatterplot, you can enable the advanced feature of automated clustering (by clicking on the icon at the top-right). <em>DesignSense</em> automatically clusters the current options into to groups based on their similarity. We can choose any number of dimensions to group options based on through the pull down at the bottom. We can also control the number of cluster/groups to find. Each image here shows a representative sample from each of the formed groups (i.e. the option closest to the center of the cluster). By examining those representatives we can gain a bird-view of the data. To get a better grasp of this feature we suggest setting the clustering dimensions to be the same as those you have on the scatterplot. Finally, clustering responds to zooming and filtering operations, meaning you can cluster-->zoom-->cluster as a way to drill down into the dataset.",
+          params: {
+            enableScrolling: false,
+            placement: "left",
+          },
+          before: () => {
+            this.$store.commit("setClusteringPanelOpen", { value: true });
+          },
+        },
+        {
+          target: "#designsense-center",
+          header: {
+            title: "At Your Fingertips!",
+          },
+          content:
+            "By right-clicking anywhere we can summon a fast-access menu that has some of the operations we mentioned earlier. This is especially effective when using <em>DesignSense</em> across multiple screens.",
+          params: {
+            enableScrolling: false,
+            placement: "top",
+          },
+        },
+        {
+          target: "#editing-mode",
+          header: {
+            title: "Your Workspace, Your Process",
+          },
+          content:
+            "We can adjust the workspace to suit our needs through the Editing mode. This mode allows us to move or resize any of the panels in our workspace. </br>[Pro Tip]: zoom out in your browser before moving panels around.",
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+        },
+        {
+          target: "#designsense-title",
+          header: {
+            title: "Thanks!!",
+          },
+          content: `This marks the end of our tour of <em>DesignSense</em>! Feel free to reach us on aabuzura@sfu.ca`,
+          params: {
+            enableScrolling: false,
+            placement: "bottom",
+          },
+          before: () => {
+            this.$store.commit("toggleEditingMode", { value: false });
+          },
+        },
+      ],
       onboardingTourSteps: [
         {
           target: "#designsense-title", // We're using document.querySelector() under the hood
@@ -685,7 +932,7 @@ export default {
             "On the scatterplot, you can enable the advanced feature of automated clustering (by clicking on the icon at the top-right). <em>DesignSense</em> automatically clusters the current options into to groups based on their similarity. We can choose any number of dimensions to group options based on through the pull down at the bottom. We can also control the number of cluster/groups to find. Each image here shows a representative sample from each of the formed groups (i.e. the option closest to the center of the cluster). By examining those representatives we can gain a bird-view of the data. To get a better grasp of this feature we suggest setting the clustering dimensions to be the same as those you have on the scatterplot. Finally, clustering responds to zooming and filtering operations, meaning you can cluster-->zoom-->cluster as a way to drill down into the dataset.",
           params: {
             enableScrolling: false,
-            placement: "top",
+            placement: "left",
           },
           before: () => {
             this.$store.commit("setClusteringPanelOpen", { value: true });

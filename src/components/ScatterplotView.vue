@@ -318,7 +318,7 @@ export default {
     window["d3"] = d3;
 
     this.xColumn = this.numericDimensions[0];
-    this.yColumn = this.numericDimensions[1];
+    this.yColumn = this.numericDimensions.includes("out:Percent Planar")?"out:Percent Planar": this.numericDimensions[1];
   },
   methods: {
     toggleClustering: function() {

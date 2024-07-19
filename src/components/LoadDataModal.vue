@@ -137,6 +137,16 @@ export default {
           info: "A simple red box (from https://tt-acm.github.io/DesignExplorer/)",
         },
         {
+          name: "Craiglist - Used Cars",
+          url: "https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA",
+          type: "cloud",
+        },
+        {
+          name: "Façade Design",
+          url: "https://1drv.ms/f/s!AsGWrbL1DmbagbsK1Pls-zNFE8-46g",
+          type: "cloud",
+        },
+        {
           name: "AIA Building",
           url: "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/AIA%20building.csv",
           type: "csv",
@@ -154,16 +164,7 @@ export default {
           type: "csv",
           info: "A generative design dataset exploring different massing for an arts gallery project.",
         },
-        {
-          name: "Craiglist - Used Cars",
-          url: "https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA",
-          type: "cloud",
-        },
-        {
-          name: "Façade Design",
-          url: "https://1drv.ms/f/s!AsGWrbL1DmbagbsK1Pls-zNFE8-46g",
-          type: "cloud",
-        },
+
 
         /*{
           name: "Rezoning Project (unoptimized)",//P+W Crofton
