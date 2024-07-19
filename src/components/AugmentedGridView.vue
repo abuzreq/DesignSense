@@ -784,6 +784,7 @@ export default {
       rawChartData: (state) => state.data,
       keys: (state) => state.allDimensions.concat(["selected"]),
       numericDimensions: (state) => state.numericDimensions,
+      nonNumericDimensions: (state) => state.nonNumericDimensions,
       hovered: (state) => state.hovered,
       lastHovered: (state) => state.lastHovered,
 
@@ -794,7 +795,8 @@ export default {
       return "card_" + this.viewID + "_";
     },
     filteredKeys() {
-      return this.keys.filter((x) => !this.keysBlackList.includes(x));
+      return [...this.numericDimensions, ...this.nonNumericDimensions].filter((x) => !this.keysBlackList.includes(x)) ;
+   
     },
   },
   mounted() {

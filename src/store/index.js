@@ -50,11 +50,13 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       isInspectionPinned: true,
 
       colorRange: d3Chromatic.schemeTableau10,
-      colorColumn: "year",
+      colorColumn: "",
 
       isOpeningDialogOn: true,
       isStudySharable: false,
       shareLink: null,
+
+      isClusteringPanelOpen: true
     },
     getters: {
       colorScale: (state) => d3.scaleOrdinal(state.colorRange),
@@ -72,6 +74,20 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       data: (state) => {
         return state.data;
       },
+      inputDimensions: (state) => {
+          if(state.data && state.data[0])
+          {
+              return Object.keys(state.data[0]).filter(x => x.toUpperCase().includes("IN:")).map(x => x.toUpperCase())
+          }
+          else {return []}
+      },
+      outputDimensions: (state) => {
+        if(state.data && state.data[0])
+        {
+          return Object.keys(state.data[0]).filter(x => x.toUpperCase().includes("OUT:")).map(x => x.toUpperCase())
+        }
+        else {return []}
+    },
       dataMap: (state) => {
         return createDataMap(state.data);
       },
@@ -142,7 +158,12 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
           state.isEditingMode = !state.isEditingMode;
         }
       },
-
+      setClusteringPanelOpen(state, payload)
+      {
+        if (payload) {
+          state.isClusteringPanelOpen = payload.value;
+        }
+      },
       toggleInspectionMode(state, payload) {
         if (payload) {
           state.isInspectionMode = payload.value;

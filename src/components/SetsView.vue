@@ -18,7 +18,7 @@
           >
         </template>
         <span
-          >When you click on a set, the current boolean operation will
+          >You can retieve a set by clicking on it. Note that the current selection operation will
           apply.</span
         >
       </v-tooltip>
@@ -27,7 +27,7 @@
 
       <v-btn
       
-        min-width="100"
+        min-width="80"
         color="primary"
         @click="createSet.clickAction"
       >

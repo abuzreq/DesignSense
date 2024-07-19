@@ -113,13 +113,15 @@ if (window.location.href.toUpperCase().search("GFOLDER") > 0 || window.location.
 }
 else {
 // Default settings
-readyToLoad("https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv").then(() => {
+loadDataFromCloudURL("https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA", function() {
   //app.$store.commit('changeSelectionOperation', getOperationFromKey(e.key - 1))
   console.log("loading box data")
   sessionStorage.clear();
 
   app.$store.commit('setIsOpeningDialogOn', {'value': true})
 })
+
+ //readyToLoad("https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv").then(() => {})
 }
 
 
@@ -321,17 +323,17 @@ export { loadDataFromURL, loadDataFromCloudURL, loadData, prepareData, readyToLo
 
 /*******************        Design Explorer ********************** */
 
-function loadDataFromCloudURL(rawUrl) {
-  checkInputLink(rawUrl, function (d) {
+function loadDataFromCloudURL(rawUrl, callback) {
+   checkInputLink(rawUrl, function (d) {
     window._folderInfo = d; //set global fodler obj
     console.log("LOADING", window._folderInfo);
     console.log("url, ", d)
     if (d.type === "userServerLink") {
       //this is a user's server link, and load csv directly
-      readyToLoad(d.url + "data.csv");
+      return readyToLoad(d.url + "data.csv").then(callback);
     } else {
       //this is from Google or MS
-      prepareGFolder(d);
+      return prepareGFolder(d).then(callback);
     }
   })
 }
@@ -366,8 +368,8 @@ function  prepareGFolder(folderLink) {
   console.log("LOADING", folderLink);
   folder = folderLink;
 
-  d3.json(folder.url).then(function (data) {
-
+  
+  return d3.json(folder.url).then(function (data) {
     var csvFiles = {};
     var imgFiles = {};
     var jsonFiles = {};
@@ -480,7 +482,7 @@ function  prepareGFolder(folderLink) {
       if (csvFile === undefined) {
         alert("Could not find the data.csv file in this folder, please double check!");
       } else {
-        readyToLoad(csvFile, _googleReturnObj.imgFiles, _googleReturnObj.jsonFiles);
+        return readyToLoad(csvFile, _googleReturnObj.imgFiles, _googleReturnObj.jsonFiles);
       }
 
     }
@@ -501,43 +503,47 @@ function readyToLoad(csvFilePathLink, imgFiles, jsonFiles) {
 
 }
 function checkInputLink(link, callback) {
-  var folderLinkObj = {
-    "DE_PW": "",
-    "inLink": "",
-    "url": "",
-    "type": ""
-  };
 
-  console.log("check", link, window.Gkey)
-  if (link.includes("google.com")) {
-
-    var GFolderID = getGFolderID(link);
-    //folderLinkObj.DE_PW = "DE_G"; 
-    folderLinkObj.url = "https://www.googleapis.com/drive/v3/files?q=%27" + GFolderID + "%27+in+parents&key=" + window.Gkey;
-    folderLinkObj.type = "GoogleDrive";
-
-  } else if (link.includes("1drv.ms")) {
-
-    //"https://1drv.ms/f/s!Avr4WH-N5Us-hNEf3V-AWTUuvsVZBQ"; 
-    //document.getElementById("folderLinkID").value = serverFolderLink;
-    //folderLinkObj.DE_PW = "DE_O";
-    folderLinkObj.url = "https://api.onedrive.com/v1.0/shares/u!" + encodeUrl(link) + "/root?expand=children";
-    folderLinkObj.type = "OneDrive";
-
-  } else {
-    //folderLinkObj.DE_PW = "DE_S";
-    if (link.slice(-1) !== "/") {
-      link += "/";
+  return new Promise(() => {
+    var folderLinkObj = {
+      "DE_PW": "",
+      "inLink": "",
+      "url": "",
+      "type": ""
+    };
+  
+    console.log("check", link, window.Gkey)
+    if (link.includes("google.com")) {
+  
+      var GFolderID = getGFolderID(link);
+      //folderLinkObj.DE_PW = "DE_G"; 
+      folderLinkObj.url = "https://www.googleapis.com/drive/v3/files?q=%27" + GFolderID + "%27+in+parents&key=" + window.Gkey;
+      folderLinkObj.type = "GoogleDrive";
+  
+    } else if (link.includes("1drv.ms")) {
+  
+      //"https://1drv.ms/f/s!Avr4WH-N5Us-hNEf3V-AWTUuvsVZBQ"; 
+      //document.getElementById("folderLinkID").value = serverFolderLink;
+      //folderLinkObj.DE_PW = "DE_O";
+      folderLinkObj.url = "https://api.onedrive.com/v1.0/shares/u!" + encodeUrl(link) + "/root?expand=children";
+      folderLinkObj.type = "OneDrive";
+  
+    } else {
+      //folderLinkObj.DE_PW = "DE_S";
+      if (link.slice(-1) !== "/") {
+        link += "/";
+      }
+  
+      folderLinkObj.url = link;
+      folderLinkObj.type = "userServerLink";
     }
-
-    folderLinkObj.url = link;
-    folderLinkObj.type = "userServerLink";
-  }
-
-
-  folderLinkObj.inLink = link;
-  // console.log(folderLinkObj);
-  callback(folderLinkObj);
+  
+  
+    folderLinkObj.inLink = link;
+    // console.log(folderLinkObj);
+    return callback(folderLinkObj);
+  })
+  
 }
 
 

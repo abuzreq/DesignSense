@@ -1,5 +1,5 @@
 <template>
-  <v-container style="width: 300px">
+  <v-container style="width: 200px">
     <div class="text-center">
       <v-dialog v-model="dialog" width="800" overlay-opacity="0.5">
         <template v-slot:activator="{ on, attrs }">
@@ -157,6 +157,11 @@ export default {
         {
           name: "Craiglist - Used Cars",
           url: "https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA",
+          type: "cloud",
+        },
+        {
+          name: "Façade Design",
+          url: "https://1drv.ms/f/s!AsGWrbL1DmbagbsK1Pls-zNFE8-46g",
           type: "cloud",
         },
 

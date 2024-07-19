@@ -323,7 +323,7 @@ export default {
     }),
     ...mapGetters(["isHoveringEnabled"]),
     cardSelector() {
-      return "cluster_card_" + this.viewID + "_";
+      return "cluster_card_" + this.viewID + "_" + this.useKMeans + "_";
     },
   },
   mounted() {
@@ -333,8 +333,6 @@ export default {
       vueComponent: this,
     });
     this.chartData = this.rawChartData;
-
-    this.compute();
   },
   created() {
     this.dimensions =
@@ -410,6 +408,9 @@ export default {
           this.clustersSize[id] = this.clustersMap[id].length;
         });
       } else {
+        if(matrix.length < this.numClusters || matrix[0] === NaN || matrix[0] === null) return;
+        console.log(matrix)
+
         kmeans.clusterize(matrix, { k: this.numClusters }, (err, res) => {
           if (err) console.error(err);
           else {
@@ -513,7 +514,7 @@ export default {
       this.compute();
     },
     areDimensionsValid() {
-      return this.dimensions && this.dimensions.length > 0;
+      return this.dimensions && this.dimensions.length > 0 && !this.dimensions.includes(undefined);
     },
     hover(item, forced) {
       if (forced || this.isHoveringEnabled) {

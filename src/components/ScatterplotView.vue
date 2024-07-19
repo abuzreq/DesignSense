@@ -1,6 +1,6 @@
 <template>
   <div style="display: flex; align-items: end;">
-    <v-container style="width: 60%; height: 100%" fluid class="pa-0">
+    <v-container style="width: 60%; height: 100%  z-index: 121;" fluid class="pa-0">
       <v-toolbar dense dark color="blue darken-3" class="mb-0" elevation="0">
         <v-row no-gutters style="height: 100%">
           <v-col :cols="5">
@@ -104,24 +104,27 @@
                   />
                 </template>
                 <span v-if="useLassoBrush"
-                  >Switch to the rectangular brush</span
+                  >Switch to rectangular selection</span
                 >
-                <span v-else>Switch to the Lasso brush</span>
+                <span v-else>Switch to free-form selection</span>
               </v-tooltip>
               <v-tooltip :max-width="300" bottom>
                 <template v-slot:activator="{ on, attrs }">
                   <ClusterIcon
                     v-on="on"
                     v-bind="attrs"
-
                     @click="toggleClustering"
                     class="clustering-icon"
                     :style="{
-                      fill: `${showClustering ? 'gold' : 'white'}`,
+                      fill: `${isClusteringPanelOpen ? 'gold' : 'white'}`,
                     }"
                   />
                 </template>
-                <span>Toggle to start clustering. Clustering puts items into groups based on their similarity with respect to the dimensions chosen here on the scatterplot.</span>
+                <span
+                  >Toggle to start clustering. Clustering puts items into groups
+                  based on their similarity with respect to the dimensions
+                  chosen here on the scatterplot.</span
+                >
               </v-tooltip>
 
               <!--
@@ -154,12 +157,13 @@
       />
     </v-container>
     <v-container
-      style="width:40%; height:100%;"
+      
+      style="width:40%; height:100%; z-index: 120;"
       fluid
-      class="pa-0 blue darken-3"
+      class="cluster-view pa-0 blue darken-3"
     >
       <ClusterView
-        v-show="showClustering"
+        v-show="isClusteringPanelOpen"
         :width="this.width * 0.4"
         :height="this.height"
         :defaultEnableContext="true"
@@ -176,6 +180,7 @@
 </template>
 
 <style scoped>
+
 .clustering-icon {
   cursor: pointer;
 }
@@ -246,7 +251,7 @@ import { lasso } from "d3-lasso";
 d3.lasso = lasso;
 
 //import ScatterPlot from "@/components/Scatterplot.js";
-import { mapGetters } from "vuex";
+import { mapState } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import SingleDimensionSelect from "@/components/SingleDimensionSelect.vue";
 import ClusterIcon from "-!vue-svg-loader!/src/assets/cluster_icon.svg";
@@ -273,7 +278,6 @@ export default {
       rectBrushIcon: "mdi-select-drag",
       prefixWidth: 15,
       numTicks: 20,
-      showClustering: false,
     };
   },
   computed: {
@@ -285,6 +289,9 @@ export default {
         return Math.min(180, (4 * this.width * 0.6) / 12);
       }
     },
+    ...mapState({
+      isClusteringPanelOpen: (state) => state.isClusteringPanelOpen,
+    }),
   },
   watch: {
     useLassoBrush: {
@@ -315,8 +322,9 @@ export default {
   },
   methods: {
     toggleClustering: function() {
-      this.showClustering = !this.showClustering;
-      console.log("clustering");
+      this.$store.commit("setClusteringPanelOpen", {
+        value: !this.isClusteringPanelOpen,
+      });
     },
     calculateParetoFrontier: function(event) {
       this.isShowingParetoFrontier = true;
@@ -334,6 +342,7 @@ export default {
         operation: this.$store.state.currentSelectionOperation,
       });
     },
+
     onXChange: function(newXColumn) {
       this.xColumn = newXColumn;
       this.refresh();
@@ -352,8 +361,12 @@ export default {
       }
     },
     hoverHandler: function() {
+      //this.chart.cleanTooltip();
+
       let hovered = this.$store.getters.getHovered;
       this.chart.mark(hovered);
+
+      //this.chart.createTooltip(hovered);
     },
     Chart: function() {
       var scatterPlot = new ScatterPlot();
@@ -682,6 +695,66 @@ class ScatterPlot {
           markCircle.attr("opacity", 0);
         };
 
+        var cleanTooltip = () => {
+          svg.selectAll(".tooltip").remove();
+        };
+
+        //array of tuples where each is [x,y,text]  for the tooltip
+        var createTooltip = (item) => {
+          if (!item) return;
+
+          const specs = [
+            xScale(item[xColumn]),
+            yScale(item[yColumn]),
+            "(" + item[xColumn] + "," + item[yColumn] + ")",
+          ];
+          // add rectangles
+          var fontSize = 14;
+          var padding = 2;
+          var rectHeight = fontSize + 2 * padding; //based on font size
+          var rectWidth = specs[2].length * 10;
+          svg
+            .selectAll("rect[class='tooltip']")
+            .data([specs])
+            .enter()
+            .append("rect")
+            .attr("x", function() {
+              return specs[0] + specs[2].length * 5;
+            })
+            .attr("y", function() {
+              return specs[1] - rectHeight + 2 * padding;
+            })
+            .attr("rx", "2")
+            .attr("ry", "2")
+            .attr("class", "tooltip")
+            .attr("fill", "grey")
+            .attr("opacity", 1)
+            .attr("width", function() {
+              return rectWidth;
+            })
+            .attr("height", rectHeight);
+
+          // add text on top of rectangle
+          svg
+            .selectAll("text[class='tooltip']")
+            .data([specs])
+            .enter()
+            .append("text")
+            .attr("x", function() {
+              return specs[0] + rectWidth;
+            })
+            .attr("y", function() {
+              return specs[1];
+            })
+            .attr("class", "tooltip")
+            .attr("fill", "white")
+            .attr("text-anchor", "middle")
+            .attr("font-size", fontSize)
+            .text(function() {
+              return specs[2];
+            });
+        };
+
         var mark = function(item) {
           if (item) {
             markCircle
@@ -709,6 +782,9 @@ class ScatterPlot {
         chart.highlight = highlight;
         chart.unhighlightAll = unhighlightAll;
         chart.mark = mark;
+        chart.createTooltip = createTooltip;
+        chart.cleanTooltip = cleanTooltip;
+
         if (rectBrush) {
           g.call(rectBrush);
         }
@@ -781,6 +857,18 @@ class ScatterPlot {
     chart.yColumn = function(_) {
       if (!arguments.length) return yColumn;
       yColumn = _;
+      return chart;
+    };
+
+    chart.xScale = function(_) {
+      if (!arguments.length) return xScale;
+      xScale = _;
+      return chart;
+    };
+
+    chart.yScale = function(_) {
+      if (!arguments.length) return yScale;
+      yScale = _;
       return chart;
     };
 

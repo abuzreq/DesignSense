@@ -13,7 +13,7 @@
       color=" white--text text--lighten-1"
       height="60"
     >
-      <v-toolbar-title id="designsense-title" style="width: 15vw">
+      <v-toolbar-title id="designsense-title" style="width: 10vw">
         <router-link to="/about"
           >DesignSense
           <span style="font-size: 14px; color: deepskyblue"
@@ -68,17 +68,14 @@
       </v-tooltip>
       <v-divider vertical />
 
-      <v-divider vertical />
+ 
       <v-spacer></v-spacer>
       <SelectionOperationsBar id="selection-operations-bar" />
       <v-spacer></v-spacer>
-      <v-divider vertical />
-
-      <v-divider vertical />
       <!--<ColorSelectionModal id="color-selection-bar"> </ColorSelectionModal>-->
 
       <v-divider vertical />
-
+      <v-spacer></v-spacer>
       <div
         id="inspection-bar"
         style="box-shadow: none !important; display: flex;  flex-direction: column;"
@@ -130,8 +127,9 @@
           Inspection
         </div>
       </div>
+      <v-spacer></v-spacer>
       <v-divider vertical />
-
+      <v-spacer></v-spacer>
         <div id="sets-operations-bar" style="box-shadow: none !important; display: flex;  flex-direction: column;">
         <div style="margin-top: 0px;">
         <v-tooltip bottom>
@@ -173,7 +171,9 @@
            Selection
         </div>
     </div>
+    <v-spacer></v-spacer>
       <v-divider vertical />
+      <v-spacer></v-spacer>
       <div id="data-operations-bar" style="box-shadow: none !important; display: flex;  flex-direction: column;">
 
         <div style="margin-top: 0px;">
@@ -229,6 +229,7 @@
         Zoom/Filter
       </div>
     </div>
+    <v-spacer></v-spacer>
     </v-app-bar>
     <v-dialog :key="456" v-model="isShareLinkModalOn" width="750px">
       <template>
@@ -401,14 +402,17 @@
 .v-tour {
   z-index: 8000;
 }
+
 .v-tour .v-step__header {
   color: deepskyblue;
 }
+
 .v-tour__target--highlighted {
   box-shadow: 0 0 0 99999px rgba(0, 0, 0, 0.4) !important;
   z-index: 30 !important;
   /*   z-index: 8000 !important;  */
 }
+
 .v-tour--active .v-card.vdr.v-tour__target--relative {
   position: absolute !important;
 }
@@ -453,7 +457,7 @@ import { operations } from "@/components/operations.js";
 
 import SelectionOperationsBar from "@/components/SelectionOperationsBar.vue";
 
-import { readyToLoad } from "./main.js";
+import { readyToLoad, loadDataFromCloudURL} from "./main.js";
 
 export default {
   name: "Demo",
@@ -488,7 +492,7 @@ export default {
             title: "Welcome to DesignSense!",
           },
           content:
-            "In short, <em>DesignSense </em> is a shopping interface that is augmented with advanced data visualizations and analysis! The interface was designed to allow users to navigate through a large number of options while considering both the visual appearance and the data associated with those options. [Next: &rarr;, Previous: &larr; ]",
+            "A tool for exploring, narrowing and understanding design spaces. DesignSense is designed to allow users to navigate through a large number of options while considering both the visual appearance and the data associated with those options. In short, <em>DesignSense </em> is a shopping interface that is augmented with advanced data visualizations and analysis! [Next: &rarr;, Previous: &larr; ]",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -499,7 +503,7 @@ export default {
           header: {
             title: "Let's Get Started!",
           },
-          content: `First, we need to load a dataset. <em>DesignSense</em> supports loading data by uploading local files or by loading them from a cloud folder. For now, we will use a simple dataset of boxes.`,
+          content: `First, we need to load a dataset. <em>DesignSense</em> supports loading data by uploading local files or by loading them from a cloud folder. For now, we will use a simple dataset of used cars. `,
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -511,7 +515,7 @@ export default {
             title: "Your Workspace",
           },
           content:
-            "This is your workspace. Each component plays a different role in the process of navigation as we will see. We will learn later how to configure this workspace to suit our needs.",
+            "This is your workspace. Each component plays a different role in the process of navigation as we will see. As a general tip, if you hover your mouse over any of the icons in the interface you will be presented with information on what these icons do.",
           params: {
             enableScrolling: false,
             placement: "top",
@@ -523,14 +527,15 @@ export default {
             title: "2D Scatterplot",
           },
           content:
-            "The scatterplot is a simple but very effective visualization of 2-dimensional data. It can be used to identify patterns like correlations, outliers, and clusters. You can drag and hold on the scatterplot to draw a selection box. All the options falling in this box are selected as a result. The scatterplot supports other operations too, feel free to place your cursor over any of the icons here or all over the interface to get tips on what they can do. By default, any new selection will replace the current one. Let's see how to change that.",
+            "The scatter plot is a simple but very effective visualization of 2-dimensional data. For example you can plot the price vs. year of manufacturing for each car. The scatterplot can be used to visually identify patterns like correlations, outliers, and clusters. By clicking then dragging on the scatterplot you create a selection box. All the options falling in this box are selected as a result. By default, any new selection will replace the current one. Let's see how to change that.",
           before: () => {
+            console.log(this.$store.state.data)
             let selectedData = this.$store.state.data.filter(
               (d) =>
-                d["in:width"] > 3 &&
-                d["in:width"] <= 5 &&
-                d["in:length"] > 2 &&
-                d["in:length"] <= 4
+                d["year"] > 2005 &&
+                d["year"] <= 2015 &&
+                d["price"] > 4000 &&
+                d["price"] <= 12000
             );
 
             this.$store.dispatch("update", {
@@ -559,19 +564,20 @@ export default {
         {
           target: '.v-card[type="ParallelCoordinatesPlot"]',
           header: {
-            title: "The Multidimentional Detective",
+            title: "The Parallel Coordinates Plot (PCP)",
           },
           content:
-            "The second data visualization is the parallel coordinates plot (PCP). In contrast to the scatterplot, this chart can be used to visualize more than 2 dimensions. Here each vertical axis is a different dimension. Each option is represented by a string of lines that touch those axes exactly at the value of the option for that axes. You can also select options on the PCP by dragging a rectangle along any of the axes. You may also re-order the axes or flip them vertically by dragging and double-clicking on their titles respectively. Finally, you can also change the data dimensions shown using the wrench icon.",
+            "The second data visualization is the parallel coordinates plot (PCP). In contrast to the scatterplot, this chart can be used to visualize more than 2 dimensions. Here each vertical axis is a different data dimension. Each option is represented by a string of lines that touch those axes exactly at the value of that the option for that axis/dimension. You can select options on the PCP by dragging a rectangle along any of the axes. You may also re-order the axes or flip them vertically by dragging and double-clicking on their titles respectively. Finally, you can also change the data dimensions shown using the wrench icon.",
           before: () => {
+            console.log(this.$store.state.data)
             let selectedData = this.$store.state.data.filter(
               (d) =>
-                d["in:width"] > 3 &&
-                d["in:width"] <= 5 &&
-                d["in:length"] > 2 &&
-                d["in:length"] <= 4
+                d["year"] > 2005 &&
+                d["year"] <= 2015 &&
+                d["price"] > 4000 &&
+                d["price"] <= 12000
             );
-
+           
             this.$store.dispatch("update", {
               markingID: this.$store.state.defaultMarkingID,
               selection: selectedData.map((x) => x._id),
@@ -589,7 +595,7 @@ export default {
             title: "The Augmented Gallery",
           },
           content:
-            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on <i>inspection</i> shortly). We can sort the images based on a data dimension. We can select options by dragging a rectangle that touches their images or by simply clicking the checkbox to the top left. Clicking on the eye icon will show only the options currently selected. Finally, you can also show more details about an option through the details button to the left.",
+            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on <i>inspection</i> shortly), whbile the grid of images below show all the options we are exploring. We can sort the images based on a data dimension (top left). We can select options by dragging a rectangle that touches their images or by simply clicking the checkbox to the top left of an option's image. Clicking on the eye icon (top-center) switch the grid to show only the currently selected options. You can change the size of the images on the grid using the size slider (top-right). If you pick the largest size, you become able to expand on the details of each option which makes it easier to compare them side-by-side",
           params: {
             enableScrolling: false,
             placement: "left",
@@ -602,7 +608,7 @@ export default {
             title: "Zooming/Filtering",
           },
           content:
-            "Once you have selected a set of options there are few things you can do. You can choose to zoom on that set to examine it closely or exclude that set from your consideration. Both zooming and exclusion operations can be reverted.",
+            "Once you have selected a set of options there are few things you can do. You can choose to zoom on that set to examine it closely or exclude that set from your consideration. Both zooming and exclusion operations can be reverted back or reset completely.",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -611,10 +617,10 @@ export default {
         {
           target: "#sets-operations-bar",
           header: {
-            title: "Saving to Sets",
+            title: "Selection",
           },
           content:
-            "On this panel, you can also invert your current selection, unselect everything or save your selection as a Set. You can also undo any selection operation (shortcut: Control-Z)",
+            "On this panel, you can unselect everthing (shortcut: ESC), or invert your current selection. You may also revert the last selection operation you made (shortcut: Ctrl-Z)",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -626,16 +632,16 @@ export default {
             title: "The Sets Panel",
           },
           content:
-            "Sets are a great mechanism for storing the progress we make during navigation. You can restore a set at any time by incorporating its members into the current selection. This will be based on the current selection operation, for example, if you choose to restore a set while the ADD operation is on then the set will be added to the current selection. You can choose to create different sets and combine them or update any of the existing sets.",
+            "Sets are a great mechanism for storing the progress we make during navigation. To create a set, click on 'New Set'. Once you create a set, you can bring it back it back by simplying clicking on it. Note that the current selection operation will apply when you do, e.g. if you had Add on then the set will be added to your current selection. Finally, you can add/remove from a set using the +/- icons.",
           before: () => {
             let selectedData = this.$store.state.data.filter(
-              (d) => d["in:width"] <= 2
+              (d) => d["year"] > 2015
             );
 
             this.$store.dispatch("createSet", {
-              setName: "SetName",
+              setName: "Set #1",
               members: selectedData.map((x) => x._id),
-              comment: "Skinny boxes",
+              comment: "Recent cars",
             });
           },
           params: {
@@ -644,24 +650,24 @@ export default {
           },
         },
         {
-          target: "#inspection-bar",
+          target: '.v-card[type="Grid"]',
           header: {
-            title: "Continuous Inspection",
+            title: "Inspection: A Closer Look (hold Space)",
           },
           content:
-            "Sometimes we will want to examine a single option in detail instead of sifting through options. This can be done in two ways, the first is by enabling the Continuous Inspection mode which allows us to examine any option the cursor passes by through any of its representations (e.g. its image in the gallery, dot in the scatterplot or line in the parallel coordinates plot). Once we do that the option is highlighted in special ways. Notably, a large image of it is shown on the Augmented Gallery (3D views of the inspected option are also supported if <em>DesignSense</em> can find 3D files in the dataset with the right formats).",
+            "Sometimes we want to examine a single option in detail. This can be done by holding the Space button and moving the mouse over an option through any of its graphical representations, e.g. through its image in the gallery, its dot on the scatterplot, or its line on PCP. Doing so highlights that item everywhere and shows a large image of it on the Augmented Gallery. By clicking on the details button (top-left of the large image in the Gallery), you can find a data breakdown of the inspected option",
           params: {
             enableScrolling: false,
-            placement: "bottom",
+            placement: "left-end",
           },
         },
         {
-          target: '.v-card[type="Grid"]',
+          target: '#inspection-bar',
           header: {
-            title: "On-Demand Inspection",
+            title: "Pinning/Unpinning Inspection (P)",
           },
           content:
-            "The second way to inspect options happens by holding the SPACE button and releasing it once the target option is found. This way allows us to maintain that inspection even if we move the cursor around. For example, we may be interested in an alternative that is outlying in the scatterplot but then wish to examine its appearance in detail without losing focus.",
+            "By default, the inspected option remains highlighted unless it was canceled through the Cancel button or pressing ESC. Alternativly, you can choose to unpin (shortcut: P) the inspection which makes it go away once you release the Space keyboard button. The Continuous Inspection mode allows us to examine any option the mouse cursor passes by without holding Space.",
           params: {
             enableScrolling: false,
             placement: "left",
@@ -671,15 +677,18 @@ export default {
           },
         },
         {
-          target: '.v-card[type="Clusters"]',
+          target: ".v-card[type='ScatterPlot'] div.cluster-view",
           header: {
             title: "Clusters",
           },
           content:
-            "<em>DesignSense</em> automatically clusters the current options we are considering to groups based on their similarity (i.e. it responds to zooming/filtering operations). We can choose the dimensions to group options based on and the number of groups to form. This panel shows a representative sample from each of the formed groups (i.e. it lies at the center of group). By examining those representatives we can gain a bird-view of the dataset. Finally, we can inspect any of the representatives.",
+            "On the scatterplot, you can enable the advanced feature of automated clustering (by clicking on the icon at the top-right). <em>DesignSense</em> automatically clusters the current options into to groups based on their similarity. We can choose any number of dimensions to group options based on through the pull down at the bottom. We can also control the number of cluster/groups to find. Each image here shows a representative sample from each of the formed groups (i.e. the option closest to the center of the cluster). By examining those representatives we can gain a bird-view of the data. To get a better grasp of this feature we suggest setting the clustering dimensions to be the same as those you have on the scatterplot. Finally, clustering responds to zooming and filtering operations, meaning you can cluster-->zoom-->cluster as a way to drill down into the dataset.",
           params: {
             enableScrolling: false,
             placement: "top",
+          },
+          before: () => {
+            this.$store.commit("setClusteringPanelOpen", { value: true });
           },
         },
         {
@@ -700,7 +709,7 @@ export default {
             title: "Your Workspace, Your Process",
           },
           content:
-            "We can adjust the workspace to suit our needs through the inspection mode. This mode allows us to move or resize any of the panels in our workspace. </br>[Pro Tip]: zoom out in your browser before moving panels around.",
+            "We can adjust the workspace to suit our needs through the Editing mode. This mode allows us to move or resize any of the panels in our workspace. </br>[Pro Tip]: zoom out in your browser before moving panels around.",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -783,7 +792,7 @@ export default {
         clearInspection: {
           clickAction: () => this.$store.dispatch("clearInspection"),
           icon: "mdi-cancel",
-          tooltip: () => "Clear the currently inspected item [ESC]",
+          tooltip: () => "Cancel the currently inspected item [ESC]",
           type: "inspecting",
         },
         togglePinInspection: {
@@ -797,12 +806,15 @@ export default {
         },
         help: {
           clickAction: () => {
-            readyToLoad(
-              "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv"
-            ).then((data) => {
-              //TODO get skinny boxes then create a set from them + debug this
+            loadDataFromCloudURL("https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA", () => {
               this.$tours["onboardingTour"].start();
-            });
+            })
+            
+            //loadDataFromCloudURL("https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv"
+            //).then((data) => {
+            //TODO get skinny boxes then create a set from them + debug this
+            //   this.$tours["onboardingTour"].start();
+            // });
           },
           icon: "mdi-help-circle-outline",
           tooltip: () => "Start the on-boarding tour!",
@@ -885,7 +897,6 @@ export default {
       }
 
       let overlays = document.getElementsByClassName("v-overlay");
-      console.log("overlays", overlays);
       if (overlays) {
         Array.from(overlays).sort((a, b) => a.style.zIndex - b.style.zIndex);
 
