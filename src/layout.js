@@ -11,14 +11,14 @@ if (screen.width < 1600) {
 }
 else {
     grid = [
-        { type: "ParallelCoordinatesPlot", x: 22, y: 0, w: 16, h: 9 },
-        { type: "ScatterPlot", x: 22, y: 9, w: 16, h: 9 },
+        { type: "ParallelCoordinatesPlot", x: 20, y: 0, w: 18, h: 9 },
+        { type: "ScatterPlot", x: 20, y: 9, w: 18, h: 9 },
         //   {type:"ScatterPlot", x: 12, y: 9, w: 12, h: 9},
         //   {type:"ScatterPlot", x: 12, y: 9, w: 12, h: 9},
 
         // {type:"SPLOM", x: 38, y: 0, w: 16, h: 18},
-        { type: "Grid", x: 5, y: 0, w: 17, h: 18 },
-        { type: "Sets", x: 0, y: 0, w: 5, h: 18 },
+        { type: "Grid", x: 4, y: 0, w: 16, h: 18 },
+        { type: "Sets", x: 0, y: 0, w: 4, h: 18 },
         // { type: "Clusters", x: 22, y: 9, w: 6, h: 9 }
     ]
 }

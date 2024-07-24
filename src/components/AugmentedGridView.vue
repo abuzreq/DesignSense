@@ -375,12 +375,11 @@
                           :lazy-src="lazyImageSrc"
                           :ref="'img_' + cardSelector + item._id"
                           alt="item.image"
-                          @mouseover="isHoveringEnabled?hover(item):null"
+                          @mouseover="isHoveringEnabled ? hover(item) : null"
                           @click="hover(item)"
                           @load="imageLoaded()"
-                          @error="imageLoadingError(item)" 
+                          @error="imageLoadingError(item)"
                         >
-                         
                           <!--   v-on:mouseup="enableContext? toggle(item):null"-->
                           <input
                             v-if="enableContext"
@@ -392,7 +391,7 @@
                           <button
                             class="xbtn"
                             v-else
-                            v-on:click="toggle(item)"
+                            v-on:click="toggle(item, $event)"
                           />
                         </v-img>
 
@@ -401,12 +400,13 @@
                         >
                           <v-expansion-panel>
                             <v-expansion-panel-header>
-                              <template v-slot:default="{ open  }">
-                              <span v-if="!open"
-                                style="text-align: center;font-size: smaller;"
-                              >
-                                Expand for Details
-                              </span>
+                              <template v-slot:default="{ open }">
+                                <span
+                                  v-if="!open"
+                                  style="text-align: center;font-size: smaller;"
+                                >
+                                  Expand for Details
+                                </span>
                               </template>
                             </v-expansion-panel-header>
 
@@ -795,8 +795,9 @@ export default {
       return "card_" + this.viewID + "_";
     },
     filteredKeys() {
-      return [...this.numericDimensions, ...this.nonNumericDimensions].filter((x) => !this.keysBlackList.includes(x)) ;
-   
+      return [...this.numericDimensions, ...this.nonNumericDimensions].filter(
+        (x) => !this.keysBlackList.includes(x)
+      );
     },
   },
   mounted() {
@@ -840,7 +841,7 @@ export default {
     //Inspection setup
     this.isModelGLTF = this.chartData[0].gltf ? true : false;
     this.inspectedItem = this.chartData[0];
-    this.lazyImageSrc =  this.chartData[0].image;
+    this.lazyImageSrc = this.chartData[0].image;
 
     this.sortByVar =
       this.keys.find((k) => !isNaN(this.chartData[0][k])) || this.keys[0];
@@ -853,9 +854,9 @@ export default {
     });
   },
   methods: {
-    imageLoadingError(item)
-    {   
-      this.$refs['img_' + this.cardSelector + item._id][0].src =  "data:image/webp;base64,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"
+    imageLoadingError(item) {
+      this.$refs["img_" + this.cardSelector + item._id][0].src =
+        "data:image/webp;base64,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";
     },
     imageLoaded() {
       this.numLoadedImages += 1;

@@ -3,36 +3,23 @@
     <div
       style="display: flex; flex-direction: row; justify-content: space-around; align-items: center;"
     >
+      <v-card-title>Sets</v-card-title>
       <v-tooltip :max-width="300" bottom>
         <template v-slot:activator="{ on }">
           <v-btn
-            size="x-small"
             v-on="on"
-            icon
-          
-            style="align-items: flex-end;"
-            ><v-icon
-              style="border: 1px solid currentColor; border-radius:50%;"
-              >{{ "mdi-exclamation" }}</v-icon
-            ></v-btn
+            min-width="80"
+            color="primary"
+            @click="createSet.clickAction"
           >
+            New Set
+          </v-btn>
         </template>
         <span
-          >You can retieve a set by clicking on it. Note that the current selection operation will
-          apply.</span
+          >You can retieve a set by clicking on it. Note that the current
+          selection operation will apply.</span
         >
       </v-tooltip>
-      
-      <v-card-title >Sets</v-card-title>
-
-      <v-btn
-      
-        min-width="80"
-        color="primary"
-        @click="createSet.clickAction"
-      >
-        New Set
-      </v-btn>
     </div>
     <!-- <v-icon> {{ createSet.icon }}</v-icon>-->
     <v-divider></v-divider>
@@ -41,13 +28,12 @@
       <v-card
         style="margin-bottom: 5px;"
         ripple
-        outlined
+        
         class="blue-lighten-3"
         hover
         v-for="(item, index) in setsIDs"
         :key="index"
         @click="restoreSet(item, $event)"
-     
       >
         <v-list-item avatar>
           <v-list-item-action style="margin-right: 8px">
@@ -106,27 +92,26 @@
           </v-list-item-action>
 
           <v-list-item-content>
-            <v-list-item-title class="title" style="display: flex; justify-content: space-between;"
+            <v-list-item-title
+              class="title"
+              style="display: flex; justify-content: space-between;"
               >{{ setsMetadataMap[item].name }} &nbsp;&nbsp;&nbsp;
 
               <v-tooltip right>
                 <template v-slot:activator="{ on }">
                   <v-chip
-                  style="padding: 8px;"
+                    style="padding: 5px;"
                     small
-                    v-on="on" 
+                    v-on="on"
                     color="blue darken-3"
                     text-color="white"
                   >
-                   {{
-                      setsMap[item].length
-                    }}
+                    {{ setsMap[item].length }}
                   </v-chip>
                 </template>
                 <span>Number of items in the set</span>
               </v-tooltip>
-              </v-list-item-title
-            >
+            </v-list-item-title>
             <v-textarea
               class="comment-text-area"
               height="70px"
@@ -139,9 +124,18 @@
               :value="setsMetadataMap[item].comment"
               label="add notes here"
               @input="changeComment($event, item)"
-              @click="(e) => {e.stopPropagation(); e.preventDefault()}"
-              @mousedown="(e) => {e.stopPropagation(); }"
-                 @keydown="onCardKeydown($event)"
+              @click="
+                (e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }
+              "
+              @mousedown="
+                (e) => {
+                  e.stopPropagation();
+                }
+              "
+              @keydown="onCardKeydown($event)"
             />
           </v-list-item-content>
         </v-list-item>
@@ -156,7 +150,7 @@
 }
 
 .v-list-item {
-  height: 120px;
+  height: 130px;
   margin-right: 8px;
   margin-left: -4px;
 }
@@ -203,19 +197,17 @@ export default {
   },
   created() {},
   methods: {
-    onCardKeydown(e){
-      console.log('keydown', e); 
-      if(e.key == ' ')
-      {
+    onCardKeydown(e) {
+      console.log("keydown", e);
+      if (e.key == " ") {
         e.stopPropagation();
       }
-    
     },
     remove(ID) {
       this.$store.commit("removeSet", { setID: ID });
     },
     changeComment(comment, itemID, e) {
-      console.log(comment, itemID, this, e)
+      console.log(comment, itemID, this, e);
       this.$store.commit("setSetMetadata", { setID: itemID, comment: comment });
     },
     changeName(name, itemID) {
