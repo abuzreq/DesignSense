@@ -138,13 +138,13 @@ export default {
         },
         {
           name: "Craiglist - Used Cars",
-          url: "https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA",
-          type: "cloud",
-        },
+          url: "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv",
+          type: "csv",
+        }, 
         {
           name: "Façade Design",
-          url: "https://1drv.ms/f/s!AsGWrbL1DmbagbsK1Pls-zNFE8-46g",
-          type: "cloud",
+          url: "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/facade/data.csv",
+          type: "csv",
         },
         {
           name: "AIA Building",
@@ -175,14 +175,14 @@ export default {
         },*/
         {
           name: "Rezoning Project",
-          url: "https://1drv.ms/u/s!AsGWrbL1DmbagbZU9qBVr1RfDJeDQg", //https://drive.google.com/drive/folders/1lH8DYa6y8sinaSDTohfjQ5apyIFFlxF4
-          type: "cloud",
+          url: "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/rezoning/data.csv", //https://drive.google.com/drive/folders/1lH8DYa6y8sinaSDTohfjQ5apyIFFlxF4
+          type: "csv",
           info: "Form exploration for a rezoning project",
         },
         {
           name: "Solar",
-          url: "https://1drv.ms/u/s!AsGWrbL1DmbagakFTScT6VocK9ELbw",
-          type: "cloud",
+          url: "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/solar/data.csv",
+          type: "csv",
           info: "Solar analysis for a tower placement",
         },
         /*{
