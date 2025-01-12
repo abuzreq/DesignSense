@@ -1053,15 +1053,17 @@ export default {
         },
         help: {
           clickAction: () => {
-            loadDataFromCloudURL("https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA", () => {
-              this.$tours["onboardingTour"].start();
-            })
+            //loadDataFromCloudURL("https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA", () => {
+            //  this.$tours["onboardingTour"].start();
+            //})
             
-            //loadDataFromCloudURL("https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv"
-            //).then((data) => {
+           
+            
+            loadDataFromCloudURL("https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv"
+            ).then((data) => {
             //TODO get skinny boxes then create a set from them + debug this
-            //   this.$tours["onboardingTour"].start();
-            // });
+               this.$tours["onboardingTour"].start();
+             });
           },
           icon: "mdi-help-circle-outline",
           tooltip: () => "Start the on-boarding tour!",
