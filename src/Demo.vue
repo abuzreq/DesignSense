@@ -1059,7 +1059,7 @@ export default {
             
            
             
-            loadDataFromCloudURL("https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv"
+            readyToLoad("https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv"
             ).then((data) => {
             //TODO get skinny boxes then create a set from them + debug this
                this.$tours["onboardingTour"].start();

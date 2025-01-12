@@ -113,9 +113,8 @@ if (window.location.href.toUpperCase().search("GFOLDER") > 0 || window.location.
 }
 else {
 // Default settings
-loadDataFromCloudURL("https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA", function() {
+readyToLoad("https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv", function() {
   //app.$store.commit('changeSelectionOperation', getOperationFromKey(e.key - 1))
-  console.log("loading box data")
   sessionStorage.clear();
 
   app.$store.commit('setIsOpeningDialogOn', {'value': true})
