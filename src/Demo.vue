@@ -1053,12 +1053,6 @@ export default {
         },
         help: {
           clickAction: () => {
-            //loadDataFromCloudURL("https://1drv.ms/u/s!AsGWrbL1DmbagbBL3fsvmKxlMU4TwA", () => {
-            //  this.$tours["onboardingTour"].start();
-            //})
-            
-           
-            
             readyToLoad("https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv"
             ).then((data) => {
             //TODO get skinny boxes then create a set from them + debug this
