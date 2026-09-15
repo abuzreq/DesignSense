@@ -122,7 +122,25 @@ if (
   });
 }
 
+/**
+ * Global shortcuts must not fire while the user is typing, otherwise a digit in
+ * a comment or URL silently changes the selection operation.
+ */
+function isTypingTarget(e) {
+  let el = e.target;
+  if (!el || !el.tagName) return false;
+  let tag = el.tagName.toUpperCase();
+  return (
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    tag === "SELECT" ||
+    el.isContentEditable === true
+  );
+}
+
 document.addEventListener("keydown", function(e) {
+  if (isTypingTarget(e)) return;
+
   // To change the selection operation through numbers 1-5
   if (e.key >= 1 && e.key <= Object.keys(operations).length) {
     app.$store.commit(
@@ -165,6 +183,8 @@ document.addEventListener("keydown", function(e) {
 });
 
 document.addEventListener("keyup", function(e) {
+  if (isTypingTarget(e)) return;
+
   if (e.key === " ") {
     e.preventDefault();
     e.stopPropagation();

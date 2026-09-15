@@ -527,7 +527,7 @@ export default {
             title: "Images Gallery",
           },
           content:
-            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on <i>inspection</i> shortly), whbile the grid of images below show all the options we are exploring. We can sort the images based on a data dimension (top left). We can select options by dragging a rectangle that touches their images or by simply clicking the checkbox to the top left of an option's image. Clicking on the eye icon (top-center) switch the grid to show only the currently selected options. You can change the size of the images on the grid using the size slider (top-right). If you pick the largest size, you become able to expand on the details of each option which makes it easier to compare them side-by-side",
+            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on <i>inspection</i> shortly), while the grid of images below show all the options we are exploring. We can sort the images based on a data dimension (top left). We can select options by dragging a rectangle that touches their images or by simply clicking the checkbox to the top left of an option's image. Clicking on the eye icon (top-center) switch the grid to show only the currently selected options. You can change the size of the images on the grid using the size slider (top-right). If you pick the largest size, you become able to expand on the details of each option which makes it easier to compare them side-by-side",
           params: {
             enableScrolling: false,
             placement: "left",
@@ -622,7 +622,7 @@ export default {
             title: "Selection",
           },
           content:
-            "On this panel, you can unselect everthing (shortcut: ESC), or invert your current selection. You may also revert the last selection operation you made (shortcut: Ctrl-Z)",
+            "On this panel, you can unselect everything (shortcut: ESC), or invert your current selection. You may also revert the last selection operation you made (shortcut: Ctrl-Z)",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -634,7 +634,7 @@ export default {
             title: "The Sets Panel",
           },
           content:
-            "Sets are a great mechanism for storing the progress we make during navigation. To create a set, click on 'New Set'. Once you create a set, you can bring it back it back by simplying clicking on it. Note that the current selection operation will apply when you do, e.g. if you had Add on then the set will be added to your current selection. Finally, you can add/remove from a set using the +/- icons.",
+            "Sets are a great mechanism for storing the progress we make during navigation. To create a set, click on 'New Set'. Once you create a set, you can bring it back by simply clicking on it. Note that the current selection operation will apply when you do, e.g. if you had Add on then the set will be added to your current selection. Finally, you can add/remove from a set using the +/- icons.",
           before: () => {
             let selectedData = this.$store.state.data.filter(
               (d) => d["year"] > 2015
@@ -669,7 +669,7 @@ export default {
             title: "Pinning/Unpinning Inspection (P)",
           },
           content:
-            "By default, the inspected option remains highlighted unless it was canceled through the Cancel button or pressing ESC. Alternativly, you can choose to unpin (shortcut: P) the inspection which makes it go away once you release the Space keyboard button. The Continuous Inspection mode allows us to examine any option the mouse cursor passes by without holding Space.",
+            "By default, the inspected option remains highlighted unless it was canceled through the Cancel button or pressing ESC. Alternatively, you can choose to unpin (shortcut: P) the inspection which makes it go away once you release the Space keyboard button. The Continuous Inspection mode allows us to examine any option the mouse cursor passes by without holding Space.",
           params: {
             enableScrolling: false,
             placement: "left",
@@ -684,7 +684,7 @@ export default {
             title: "Clusters",
           },
           content:
-            "On the scatterplot, you can enable the advanced feature of automated clustering (by clicking on the icon at the top-right). <em>DesignSense</em> automatically clusters the current options into to groups based on their similarity. We can choose any number of dimensions to group options based on through the pull down at the bottom. We can also control the number of cluster/groups to find. Each image here shows a representative sample from each of the formed groups (i.e. the option closest to the center of the cluster). By examining those representatives we can gain a bird-view of the data. To get a better grasp of this feature we suggest setting the clustering dimensions to be the same as those you have on the scatterplot. Finally, clustering responds to zooming and filtering operations, meaning you can cluster-->zoom-->cluster as a way to drill down into the dataset.",
+            "On the scatterplot, you can enable the advanced feature of automated clustering (by clicking on the icon at the top-right). <em>DesignSense</em> automatically clusters the current options into groups based on their similarity. We can choose any number of dimensions to group options based on through the pull down at the bottom. We can also control the number of cluster/groups to find. Each image here shows a representative sample from each of the formed groups (i.e. the option closest to the center of the cluster). By examining those representatives we can gain a bird-view of the data. To get a better grasp of this feature we suggest setting the clustering dimensions to be the same as those you have on the scatterplot. Finally, clustering responds to zooming and filtering operations, meaning you can cluster-->zoom-->cluster as a way to drill down into the dataset.",
           params: {
             enableScrolling: false,
             placement: "left",
@@ -842,7 +842,7 @@ export default {
             title: "The Augmented Gallery",
           },
           content:
-            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on <i>inspection</i> shortly), whbile the grid of images below show all the options we are exploring. We can sort the images based on a data dimension (top left). We can select options by dragging a rectangle that touches their images or by simply clicking the checkbox to the top left of an option's image. Clicking on the eye icon (top-center) switch the grid to show only the currently selected options. You can change the size of the images on the grid using the size slider (top-right). If you pick the largest size, you become able to expand on the details of each option which makes it easier to compare them side-by-side",
+            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on <i>inspection</i> shortly), while the grid of images below show all the options we are exploring. We can sort the images based on a data dimension (top left). We can select options by dragging a rectangle that touches their images or by simply clicking the checkbox to the top left of an option's image. Clicking on the eye icon (top-center) switch the grid to show only the currently selected options. You can change the size of the images on the grid using the size slider (top-right). If you pick the largest size, you become able to expand on the details of each option which makes it easier to compare them side-by-side",
           params: {
             enableScrolling: false,
             placement: "left",
@@ -867,7 +867,7 @@ export default {
             title: "Selection",
           },
           content:
-            "On this panel, you can unselect everthing (shortcut: ESC), or invert your current selection. You may also revert the last selection operation you made (shortcut: Ctrl-Z)",
+            "On this panel, you can unselect everything (shortcut: ESC), or invert your current selection. You may also revert the last selection operation you made (shortcut: Ctrl-Z)",
           params: {
             enableScrolling: false,
             placement: "bottom",
@@ -879,7 +879,7 @@ export default {
             title: "The Sets Panel",
           },
           content:
-            "Sets are a great mechanism for storing the progress we make during navigation. To create a set, click on 'New Set'. Once you create a set, you can bring it back it back by simplying clicking on it. Note that the current selection operation will apply when you do, e.g. if you had Add on then the set will be added to your current selection. Finally, you can add/remove from a set using the +/- icons.",
+            "Sets are a great mechanism for storing the progress we make during navigation. To create a set, click on 'New Set'. Once you create a set, you can bring it back by simply clicking on it. Note that the current selection operation will apply when you do, e.g. if you had Add on then the set will be added to your current selection. Finally, you can add/remove from a set using the +/- icons.",
           before: () => {
             let selectedData = this.$store.state.data.filter(
               (d) => d["year"] > 2015
@@ -914,7 +914,7 @@ export default {
             title: "Pinning/Unpinning Inspection (P)",
           },
           content:
-            "By default, the inspected option remains highlighted unless it was canceled through the Cancel button or pressing ESC. Alternativly, you can choose to unpin (shortcut: P) the inspection which makes it go away once you release the Space keyboard button. The Continuous Inspection mode allows us to examine any option the mouse cursor passes by without holding Space.",
+            "By default, the inspected option remains highlighted unless it was canceled through the Cancel button or pressing ESC. Alternatively, you can choose to unpin (shortcut: P) the inspection which makes it go away once you release the Space keyboard button. The Continuous Inspection mode allows us to examine any option the mouse cursor passes by without holding Space.",
           params: {
             enableScrolling: false,
             placement: "left",
@@ -929,7 +929,7 @@ export default {
             title: "Clusters",
           },
           content:
-            "On the scatterplot, you can enable the advanced feature of automated clustering (by clicking on the icon at the top-right). <em>DesignSense</em> automatically clusters the current options into to groups based on their similarity. We can choose any number of dimensions to group options based on through the pull down at the bottom. We can also control the number of cluster/groups to find. Each image here shows a representative sample from each of the formed groups (i.e. the option closest to the center of the cluster). By examining those representatives we can gain a bird-view of the data. To get a better grasp of this feature we suggest setting the clustering dimensions to be the same as those you have on the scatterplot. Finally, clustering responds to zooming and filtering operations, meaning you can cluster-->zoom-->cluster as a way to drill down into the dataset.",
+            "On the scatterplot, you can enable the advanced feature of automated clustering (by clicking on the icon at the top-right). <em>DesignSense</em> automatically clusters the current options into groups based on their similarity. We can choose any number of dimensions to group options based on through the pull down at the bottom. We can also control the number of cluster/groups to find. Each image here shows a representative sample from each of the formed groups (i.e. the option closest to the center of the cluster). By examining those representatives we can gain a bird-view of the data. To get a better grasp of this feature we suggest setting the clustering dimensions to be the same as those you have on the scatterplot. Finally, clustering responds to zooming and filtering operations, meaning you can cluster-->zoom-->cluster as a way to drill down into the dataset.",
           params: {
             enableScrolling: false,
             placement: "left",

@@ -640,7 +640,7 @@
 }
 
 .col > .thumbnail_card .v-image.transparent {
-  opacity: 1;
+  opacity: 0.35;
 }
 
 .image_checkbox {
@@ -1015,13 +1015,19 @@ export default {
       this.dragSelection = {};
       let selectedIDs = this.getItemsIDs(selectedItems);
 
-      if (selectedIDs.length > 0) {
-        this.$store.dispatch("update", {
-          view: this.viewID,
-          selection: selectedIDs,
-          operation: this.currentSelectionOperation,
-        });
+      // A drag that touches nothing clears the selection, but only under
+      // Replace -- see the matching guard in ScatterplotView.
+      if (
+        selectedIDs.length === 0 &&
+        this.currentSelectionOperation !== operations.REPLACE
+      ) {
+        return;
       }
+      this.$store.dispatch("update", {
+        view: this.viewID,
+        selection: selectedIDs,
+        operation: this.currentSelectionOperation,
+      });
     },
     onSelectionDragMouseMove(selectedItems) {
       this.isSelectionDragOn = true;

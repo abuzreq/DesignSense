@@ -252,6 +252,7 @@ d3.lasso = lasso;
 
 //import ScatterPlot from "@/components/Scatterplot.js";
 import { mapState } from "vuex";
+import { operations } from "@/components/operations.js";
 import TemplateView from "@/components/TemplateView.vue";
 import SingleDimensionSelect from "@/components/SingleDimensionSelect.vue";
 import ClusterIcon from "-!vue-svg-loader!/src/assets/cluster_icon.svg";
@@ -388,6 +389,15 @@ export default {
         .colorColumn(this.colorColumn)
         .colorScale(this.colorScale)
         .onBrushed((brushedIDs) => {
+          // An empty brush (clicking empty space, or clearing the brush) clears
+          // the selection. Only under Replace though -- emptying the selection
+          // while Add/Subtract/Intersect is active would be destructive.
+          if (
+            brushedIDs.length === 0 &&
+            this.currentSelectionOperation !== operations.REPLACE
+          ) {
+            return;
+          }
           this.$store.dispatch("update", {
             view: this.viewID,
             selection: brushedIDs,
@@ -652,9 +662,7 @@ class ScatterPlot {
             });
           }
 
-          if (brushedIDs.length > 0) {
-            onBrushed(brushedIDs);
-          }
+          onBrushed(brushedIDs);
         }
 
         function brushmove() {}

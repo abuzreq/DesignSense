@@ -137,7 +137,7 @@ export default {
           info: "A simple red box (from https://tt-acm.github.io/DesignExplorer/)",
         },
         {
-          name: "Craiglist - Used Cars",
+          name: "Craigslist - Used Cars",
           url: "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv",
           type: "csv",
         }, 

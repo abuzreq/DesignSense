@@ -10,6 +10,7 @@
 
 <script>
 import * as d3 from "d3";
+import { operations } from "@/components/operations.js";
 import TemplateView from "@/components/TemplateView.vue";
 
 export default {
@@ -45,13 +46,16 @@ export default {
     },
     onBrushed: function(brushedIDs) {
       //TODO expose as a passable function (See onBrushed in ScaterplotView)
-      if (brushedIDs.length > 0) {
-        this.$store.dispatch("update", {
-          view: this.viewID,
-          selection: brushedIDs,
-          operation: this.$store.state.currentSelectionOperation
-        });
+      let operation = this.$store.state.currentSelectionOperation;
+      // An empty brush clears the selection, but only under Replace.
+      if (brushedIDs.length === 0 && operation !== operations.REPLACE) {
+        return;
       }
+      this.$store.dispatch("update", {
+        view: this.viewID,
+        selection: brushedIDs,
+        operation: operation
+      });
     },
     Chart: function() {
       let colorColumn = this.colorColumn;
@@ -173,7 +177,11 @@ export default {
 
         // Highlight the selected circles.
         var brushed = ([j, i]) => {
-          if (d3.event.selection === null) return;
+          if (d3.event.selection === null) {
+            // Brush cleared -- report an empty selection so it can clear.
+            this.onBrushed([]);
+            return;
+          }
           const [[x0, y0], [x1, y1]] = d3.event.selection;
 
           let brushedIDs = [];

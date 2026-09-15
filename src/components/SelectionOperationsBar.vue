@@ -56,7 +56,7 @@
         />-->
         <v-btn icon v-on="on" @click="onSubtract" > <v-icon class="operation-icon">mdi-vector-difference-ba</v-icon></v-btn>
           <div v-show="currentSelectionOperation == operationsList.SUBTRACT">
-            Substract
+            Subtract
           </div>
         </div>
       </template>
