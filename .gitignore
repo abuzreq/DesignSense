@@ -15,3 +15,9 @@ node_modules/
 ehthumbs.db
 Thumbs.db
 eval/.cache/
+
+# Editor and tool state, local to one machine
+.vs/
+.vscode/
+.idea/
+.claude/
