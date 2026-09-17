@@ -239,9 +239,8 @@ export default {
       svg
         .append("style")
         .text(
-          "circle.hidden { fill: #000; fill-opacity: 1; r: " +
-            markSize / 2 +
-            "px; }"
+          "circle.hidden { opacity: 0.35; } " +
+            "g.has-selection circle:not(.hidden) { stroke: rgb(33, 119, 180); stroke-width: 1px; }"
         );
 
       const cells = svg
@@ -307,10 +306,10 @@ export default {
               .selectAll("circle");
 
             circles.classed("hidden", (d, i) => {
-              //console.log(d, i);
               return selection.includes(d._id) ? false : true;
             });
           });
+          cells.classed("has-selection", selection.length > 0);
         },
         unhighlight: selection => {
           selection = selection.map(d => d._id);

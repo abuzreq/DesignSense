@@ -1,168 +1,161 @@
 <template>
-  <v-container fluid :style="{ overflow: 'auto', height: `calc(${height}px)` }">
-    <div
-      style="display: flex; flex-direction: row; justify-content: space-around; align-items: center;"
-    >
-      <v-card-title>Sets</v-card-title>
-      <v-tooltip :max-width="300" bottom>
+  <div class="sets-view" :style="{ height: height + 'px' }">
+    <div class="sets-header">
+      <div class="sets-title">{{ isLite ? "Saved sets" : "Sets" }}</div>
+      <v-tooltip bottom max-width="300">
         <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            min-width="80"
-            color="primary"
-            @click="createSet.clickAction"
-          >
-            New Set
-          </v-btn>
+          <span v-on="on">
+            <v-btn small depressed color="primary" @click="save">
+              <v-icon left small>{{
+                isLite ? "mdi-bookmark-plus-outline" : "mdi-plus"
+              }}</v-icon>
+              {{ isLite ? "Save" : "New set" }}
+            </v-btn>
+          </span>
         </template>
-        <span
-          >You can retieve a set by clicking on it. Note that the current
-          selection operation will apply.</span
-        >
+        <span>{{ saveTooltip }}</span>
       </v-tooltip>
     </div>
-    <!-- <v-icon> {{ createSet.icon }}</v-icon>-->
-    <v-divider></v-divider>
 
-    <v-list two-line>
-      <v-card
-        style="margin-bottom: 5px;"
-        ripple
-        
-        class="blue-lighten-3"
-        hover
-        v-for="(item, index) in setsIDs"
-        :key="index"
-        @click="restoreSet(item, $event)"
+    <p v-if="setsIDs.length === 0" class="sets-empty">{{ emptyText }}</p>
+
+    <div class="sets-list">
+      <div
+        v-for="id in setsIDs"
+        :key="id"
+        class="set-card"
+        :class="{
+          'set-card--active': matchingSetID === id,
+          'set-card--pickable': !isLite,
+        }"
+        @click="onCardClick(id)"
       >
-        <v-list-item avatar>
-          <v-list-item-action style="margin-right: 8px">
-            <!--
-            <v-tooltip left>
-              <template v-slot:activator="{ on }">
-                <v-btn
-                  v-on="on"
-                  icon
-                  ripple
-                  color="blue"
-                  @click="restoreSet(item, $event)"
-                >
-                  <v-icon>mdi-backup-restore</v-icon>
-                </v-btn>
-              </template>
-              <span>Select Set</span>
-            </v-tooltip>
-            -->
-            <v-tooltip right>
-              <template v-slot:activator="{ on }">
-                <v-btn
-                  v-on="on"
-                  icon
-                  ripple
-                  color="blue"
-                  @click="addToSet(item, $event)"
-                >
-                  <v-icon>mdi-plus</v-icon>
-                </v-btn>
-              </template>
-              <span>Add the currently selected to this set</span>
-            </v-tooltip>
-            <v-tooltip right>
-              <template v-slot:activator="{ on }">
-                <v-btn
-                  v-on="on"
-                  icon
-                  ripple
-                  color="blue"
-                  @click="removeFromSet(item, $event)"
-                >
-                  <v-icon>mdi-minus</v-icon>
-                </v-btn>
-              </template>
-              <span>Remove the currently selected from this set</span>
-            </v-tooltip>
-            <v-tooltip right>
-              <template v-slot:activator="{ on }">
-                <v-btn v-on="on" icon ripple color="red" @click="remove(item)">
-                  <v-icon>mdi-close</v-icon>
-                </v-btn>
-              </template>
-              <span>Delete set</span>
-            </v-tooltip>
-          </v-list-item-action>
+        <div class="set-card-head">
+          <input
+            class="set-name"
+            :value="nameOf(id)"
+            spellcheck="false"
+            aria-label="Set name"
+            @click.stop
+            @mousedown.stop
+            @keydown.stop="onNameKeydown"
+            @change="changeName($event, id)"
+          />
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <span v-on="on" class="set-count">{{ countOf(id) }}</span>
+            </template>
+            <span>{{ countOf(id) }} options saved</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn v-on="on" x-small icon @click.stop="remove(id)">
+                <v-icon small>mdi-delete-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>Delete this set</span>
+          </v-tooltip>
+        </div>
 
-          <v-list-item-content>
-            <v-list-item-title
-              class="title"
-              style="display: flex; justify-content: space-between;"
-              >{{ setsMetadataMap[item].name }} &nbsp;&nbsp;&nbsp;
+        <div class="set-criteria">
+          <template v-if="setCriteriaChips(id)">
+            <span v-if="setCriteriaChips(id).length === 0" class="set-chip"
+              >All options</span
+            >
+            <span
+              v-for="chip in setCriteriaChips(id)"
+              :key="chip.key"
+              class="set-chip"
+              :class="'set-chip--' + chip.tone"
+              :title="chip.title"
+              >{{ chip.text }}</span
+            >
+          </template>
+          <span
+            v-else
+            class="set-chip set-chip--picked"
+            title="Saved from a selection rather than from filters"
+            >Hand-picked</span
+          >
+        </div>
 
-              <v-tooltip right>
-                <template v-slot:activator="{ on }">
-                  <v-chip
-                    style="padding: 5px;"
-                    small
-                    v-on="on"
-                    color="blue darken-3"
-                    text-color="white"
-                  >
-                    {{ setsMap[item].length }}
-                  </v-chip>
-                </template>
-                <span>Number of items in the set</span>
-              </v-tooltip>
-            </v-list-item-title>
-            <v-textarea
-              class="comment-text-area"
-              height="70px"
-              style="margin-bottom: -15px"
-              multiple
-              solo
-              full-width
-              outlined
-              dense
-              :value="setsMetadataMap[item].comment"
-              label="add notes here"
-              @input="changeComment($event, item)"
-              @click="
-                (e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                }
-              "
-              @mousedown="
-                (e) => {
-                  e.stopPropagation();
-                }
-              "
-              @keydown="onCardKeydown($event)"
-            />
-          </v-list-item-content>
-        </v-list-item>
-      </v-card>
-    </v-list>
-  </v-container>
+        <div class="set-actions">
+          <v-tooltip v-if="isLite" bottom max-width="260">
+            <template v-slot:activator="{ on }">
+              <v-btn
+                v-on="on"
+                x-small
+                depressed
+                :outlined="matchingSetID === id"
+                :color="matchingSetID === id ? 'green darken-1' : 'primary'"
+                @click.stop="restore(id)"
+              >
+                <v-icon left x-small>{{
+                  matchingSetID === id ? "mdi-check" : "mdi-restore"
+                }}</v-icon>
+                {{ matchingSetID === id ? "Showing" : "Restore" }}
+              </v-btn>
+            </template>
+            <span>{{
+              matchingSetID === id
+                ? "The current filters are this set's filters"
+                : "Replace the current filters with this set's filters. Undo brings yours back."
+            }}</span>
+          </v-tooltip>
+          <template v-if="can('setEditing')">
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-btn v-on="on" x-small icon color="blue" @click.stop="addToSet(id)">
+                  <v-icon small>mdi-plus</v-icon>
+                </v-btn>
+              </template>
+              <span>Add the selected options to this set</span>
+            </v-tooltip>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-btn
+                  v-on="on"
+                  x-small
+                  icon
+                  color="blue"
+                  @click.stop="removeFromSet(id)"
+                >
+                  <v-icon small>mdi-minus</v-icon>
+                </v-btn>
+              </template>
+              <span>Remove the selected options from this set</span>
+            </v-tooltip>
+          </template>
+          <v-spacer />
+          <button
+            v-if="!hasNote(id) && !openNotes[id]"
+            type="button"
+            class="set-note-toggle"
+            @click.stop="openNote(id)"
+          >
+            Add note
+          </button>
+        </div>
+
+        <textarea
+          v-if="hasNote(id) || openNotes[id]"
+          :ref="'note-' + id"
+          class="set-note"
+          rows="2"
+          placeholder="Add a note"
+          :value="noteOf(id)"
+          @click.stop
+          @mousedown.stop
+          @keydown.stop
+          @input="changeComment($event.target.value, id)"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
-<style scoped>
-.comment-text-area {
-  font-size: 0.8em;
-}
-
-.v-list-item {
-  height: 130px;
-  margin-right: 8px;
-  margin-left: -4px;
-}
-.v-btn {
-  height: 25px;
-  width: 25px;
-}
-</style>
 <script>
-//Source: https://codepen.io/sharon-the-encoder/pen/NzOLGy
-import * as d3 from "d3";
-import { mapState } from "vuex";
+import { mapGetters, mapState } from "vuex";
 import { operations } from "./operations";
 
 export default {
@@ -170,80 +163,260 @@ export default {
   props: ["width", "height", "x", "y", "type"],
   data: function() {
     return {
-      setNote: "Interesting",
-      createSet: {
-        clickAction: () => this.$store.dispatch("createSet"),
-        icon: "mdi-plus",
-        tooltip: () => "Create Set",
-        type: "selection",
-      },
+      // Sets whose empty note was opened with "Add note".
+      openNotes: {},
     };
   },
   computed: {
     ...mapState({
-      currentSelectionOperation: (state) => state.currentSelectionOperation,
       setsIDs: (state) => state.setsIDs,
       setsMetadataMap: (state) => state.setsMetadataMap,
       setsMap: (state) => state.setsMap,
+      dataLength: (state) => state.data.length,
     }),
-  },
-  mounted() {},
-  watch: {
-    width: function(newValue, oldValue) {},
-    height: function(newValue, oldValue) {},
-    chartData: {
-      handler: function(newValue, oldValue) {},
+    ...mapGetters([
+      "can",
+      "hasScope",
+      "isFilterActive",
+      "isLite",
+      "matchingSetID",
+      "selectionCount",
+      "setCriteriaChips",
+    ]),
+    saveTooltip() {
+      if (!this.isLite) {
+        return "Save the selected options as a set. Click a set later to bring its options back; the current selection operation applies.";
+      }
+      if (!this.isFilterActive && !this.hasScope) {
+        return "Save all options as a set. Filter the collection first to save just part of it.";
+      }
+      let count = this.isFilterActive ? this.selectionCount : this.dataLength;
+      return (
+        "Save the " +
+        count.toLocaleString() +
+        " matching options and the filters that found them. Restore the set later to bring those filters back."
+      );
+    },
+    emptyText() {
+      return this.isLite
+        ? "Nothing saved yet. Filter the collection, then save the results here to come back to them later."
+        : "No sets yet. Select options, then click New set.";
     },
   },
-  created() {},
   methods: {
-    onCardKeydown(e) {
-      console.log("keydown", e);
-      if (e.key == " ") {
-        e.stopPropagation();
+    nameOf(id) {
+      let metadata = this.setsMetadataMap[id];
+      return metadata ? metadata.name : id;
+    },
+    noteOf(id) {
+      let metadata = this.setsMetadataMap[id];
+      return metadata && metadata.comment ? metadata.comment : "";
+    },
+    hasNote(id) {
+      return this.noteOf(id) !== "";
+    },
+    countOf(id) {
+      let members = this.setsMap[id];
+      return members ? members.length : 0;
+    },
+    save() {
+      this.$store.dispatch("createSet");
+    },
+    restore(id) {
+      this.$store.dispatch("restoreSet", { setID: id });
+    },
+    onCardClick(id) {
+      // Lite restores only from its button, so a stray click never replaces
+      // the filters.
+      if (this.isLite) return;
+      this.$store.dispatch("restoreSet", {
+        setID: id,
+        operation: this.$store.state.currentSelectionOperation,
+      });
+    },
+    remove(id) {
+      this.$delete(this.openNotes, id);
+      this.$store.commit("removeSet", { setID: id });
+    },
+    openNote(id) {
+      this.$set(this.openNotes, id, true);
+      this.$nextTick(() => {
+        let refs = this.$refs["note-" + id];
+        if (refs && refs[0]) refs[0].focus();
+      });
+    },
+    changeComment(comment, id) {
+      this.$store.commit("setSetMetadata", { setID: id, comment: comment });
+    },
+    changeName(event, id) {
+      let name = event.target.value.trim();
+      if (name) {
+        this.$store.commit("setSetMetadata", { setID: id, name: name });
+      } else {
+        event.target.value = this.nameOf(id);
       }
     },
-    remove(ID) {
-      this.$store.commit("removeSet", { setID: ID });
+    onNameKeydown(event) {
+      if (event.key === "Enter" || event.key === "Escape") event.target.blur();
     },
-    changeComment(comment, itemID, e) {
-      console.log(comment, itemID, this, e);
-      this.$store.commit("setSetMetadata", { setID: itemID, comment: comment });
-    },
-    changeName(name, itemID) {
-      this.$store.commit("setSetMetadata", { setID: itemID, name: name });
-    },
-    restoreSet(ID, event) {
-      console.log("Restore set");
-      this.$store.dispatch("restoreSet", {
-        setID: ID,
-        operation: this.$store.state.currentSelectionOperation,
-      });
-    },
-    addToSet(ID, e) {
-      e.stopPropagation();
-      console.log(e);
+    addToSet(id) {
       this.$store.dispatch("updateSet", {
-        setID: ID,
+        setID: id,
         operation: operations.ADD,
       });
-      this.$forceUpdate();
     },
-    removeFromSet(ID, e) {
-      e.stopPropagation();
+    removeFromSet(id) {
       this.$store.dispatch("updateSet", {
-        setID: ID,
+        setID: id,
         operation: operations.SUBTRACT,
       });
-      this.$forceUpdate();
-    },
-    updateSet(ID, event) {
-      this.$store.dispatch("updateSet", {
-        setID: ID,
-        operation: this.$store.state.currentSelectionOperation,
-      });
-      this.$forceUpdate();
     },
   },
 };
 </script>
+
+<style scoped>
+.sets-view {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sets-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.sets-title {
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sets-empty {
+  margin: 12px 10px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+}
+.sets-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.set-card {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-left: 3px solid #90a4ae;
+  border-radius: 6px;
+  padding: 6px 8px 8px;
+  background: #fff;
+}
+.set-card--pickable {
+  cursor: pointer;
+}
+.set-card--pickable:hover {
+  background: #f5f9ff;
+}
+.set-card--active {
+  border-left-color: #43a047;
+  background: #f1f8f1;
+}
+.set-card-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.set-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 1px 3px;
+  background: transparent;
+  outline: none;
+  text-overflow: ellipsis;
+}
+.set-name:hover {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+.set-name:focus {
+  border-color: #1976d2;
+  background: #fff;
+}
+.set-count {
+  font-size: 12px;
+  line-height: 18px;
+  padding: 0 7px;
+  border-radius: 9px;
+  background: #e3eaf2;
+  color: #1a3b5d;
+}
+.set-criteria {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+.set-chip {
+  font-size: 11px;
+  line-height: 18px;
+  padding: 0 7px;
+  border-radius: 9px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: #eceff1;
+  color: #37474f;
+}
+.set-chip--range {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+.set-chip--gallery {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+.set-chip--members {
+  background: #fbe9e7;
+  color: #bf360c;
+}
+.set-chip--picked {
+  font-style: italic;
+}
+.set-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.set-note-toggle {
+  font-size: 12px;
+  color: #1976d2;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.set-note {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  font-size: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  padding: 4px 6px;
+  resize: vertical;
+  outline: none;
+}
+.set-note:focus {
+  border-color: #1976d2;
+}
+</style>

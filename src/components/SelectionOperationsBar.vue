@@ -2,6 +2,15 @@
   <v-container class="selectionOperationsContainer">
     <v-tooltip bottom>
       <template v-slot:activator="{ on }">
+        <div v-on="on" class="selection-count">
+          <strong>{{ selectionCount.toLocaleString() }}</strong> /
+          {{ totalCount.toLocaleString() }}
+        </div>
+      </template>
+      <span>Selected options, out of those shown</span>
+    </v-tooltip>
+    <v-tooltip bottom>
+      <template v-slot:activator="{ on }">
         <div
           :class="{ 'operation-container': true, 
             selected:
@@ -108,14 +117,30 @@
       </template>
       <span>Intersect&emsp;[hold Shift & Ctrl or press Num 5]</span>
     </v-tooltip>
+    <div v-if="isModifierHeld" class="held-hint">while held</div>
   </v-container>
 </template>
 
 <style scoped>
 .selectionOperationsContainer {
-  width: 350px;
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0 4px;
+}
+.selection-count {
+  font-size: 13px;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+.held-hint {
+  font-size: 11px;
+  opacity: 0.8;
+  white-space: nowrap;
 }
 .operation-icon {
   color: grey !important;
@@ -148,6 +173,17 @@
   animation-duration: 4s; */
 }
 
+/* Narrow screens: the outlined icon alone marks the current operation. */
+@media (max-width: 1500px) {
+  .operation-container > div,
+  .held-hint {
+    display: none;
+  }
+  .operation-container {
+    padding-right: 0;
+  }
+}
+
 
 
 
@@ -178,7 +214,17 @@ export default {
   computed: {
     ...mapState({
       currentSelectionOperation: (state) => state.currentSelectionOperation,
+      stickySelectionOperation: (state) => state.stickySelectionOperation,
+      data: (state) => state.data,
     }),
+    ...mapGetters(["selectionCount"]),
+    totalCount() {
+      return this.data ? this.data.length : 0;
+    },
+    // Shift/Ctrl override the chosen operation only while held.
+    isModifierHeld() {
+      return this.currentSelectionOperation !== this.stickySelectionOperation;
+    },
   },
   methods: {
     onReplace() {

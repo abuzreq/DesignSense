@@ -1,248 +1,244 @@
 <template>
-  <v-container
-    :id="viewID"
-    justify-start
-    align-start
-    class="pt-0"
-    :style="{ height: `${height}px` }"
-  >
-    <v-data-iterator
-      style="height: 100%"
-      :items="clusterReps"
-      hide-default-footer
-      :items-per-page="maxPerPage"
-      :sort-by="sortByVar"
-      :sort-desc="isSortDesc"
-    >
-      <template v-slot:header>
-        <v-container class="pa-0" fluid>
-          <div style="display: flex">
-            <v-select
-              v-if="useKMeans"
-              id="num_clusters_select"
-              density="compact"
-              style="margin-top: 15px;"
-              label="Num Clusters"
-              v-model="numClusters"
-              hide-details
-              :items="numClustersLabels"
-            ></v-select>
-            <v-select
-              v-else
-              id="num_clusters_select"
-              density="compact"
-              style="margin-top: 15px;"
-              label="Clusters Granularity"
-              :value="epsilonValues[1]"
-              hide-details
-              :items="epsilonValues"
-              @change="onEpsilonChange"
-            ></v-select>
-
-            <div style="display: flex; flex-direction: column;">
-              <div
-                style="display: flex; flex-direction: row; justify-content: space-between; position: relative; top: 12px"
-              >
-                <span><SmallGridIcon /></span>
-                <span><MediumGridIcon /></span>
-              </div>
-              <v-slider
-                id="size-slider"
-                min="0"
-                max="1"
-                step="1"
-                style="width: 150px;"
-                ticks="always"
-                tick-size="4"
-                v-model="colSpan"
-                hide-details
-              ></v-slider>
-            </div>
-            <v-tooltip :max-width="300" bottom>
-              <template v-slot:activator="{ on }">
-                <v-btn
-                  size="x-small"
-                  v-on="on"
-                  icon
-                  color="white"
-                  style="align-items: flex-end;"
-                  ><v-icon
-                    style="border: 1px solid currentColor; border-radius:50%;"
-                    >{{ "mdi-exclamation" }}</v-icon
-                  ></v-btn
-                >
-              </template>
-              <span
-                >This shows clusters in the design space. Each cluster
-                represents a group of items that are similar to each other with
-                respect to chosen data dimensions. You can choose the clustering
-                dimensions from the dropdown at the bottom, we recommend using
-                the same dimensions used in the scatterplot as a start. The
-                clusters granularity decides how fine (small value) or course
-                (large value) the clusters will be.</span
-              >
-            </v-tooltip>
-          </div>
-        </v-container>
+  <div :id="viewID" class="clusters-panel" :style="{ height: `${height}px` }">
+    <PanelHeader icon="mdi-chart-bubble" title="Clusters" :compact="width < 420">
+      <template v-if="useKMeans">
+        <span class="ph-label">Groups</span>
+        <v-select
+          v-model="numClusters"
+          :items="numClustersLabels"
+          dense
+          outlined
+          hide-details
+          class="ph-select ph-select--narrow"
+        />
       </template>
-      <template v-slot:default="items">
-        <v-layout grid-list-sm column style="height: 75vh">
-          <v-card color="primary" class="clusters-note">
-            Click to select clusters.
-          </v-card>
-          <v-flex md6 style="overflow-y: auto; overflow-x: hidden">
-            <v-row dense>
-              <v-col
-                v-for="(item, index) in items.items"
-                v-bind:key="cardSelector + item._id"
-                :cols="possibleColSpans[colSpan]"
-              >
-                <v-card
-                  v-bind:class="{
-                    clusterRep: true,
-                    outlined: numSelected > 0 && selectionMap[item._id],
-                    transparent:
-                      enableContext &&
-                      numSelected > 0 &&
-                      !selectionMap[item._id],
-                  }"
-                  v-bind:id="cardSelector + item._id"
-                >
-                  <span style="padding: 2px; position: relative; left: 3%;"
-                    >{{ "#" + (index + 1) }}
-                  </span>
-
-                  <v-tooltip bottom>
-                    <template v-slot:activator="{ on }">
-                      <v-chip
-                        small
-                        style="position: absolute; right: 3%;padding: 8px;"
-                        v-on="on"
-                        color="blue darken-3"
-                        text-color="white"
-                      >
-                        {{ clustersSize[item._id] }}
-                      </v-chip>
-                    </template>
-                    <span>Number of items in the cluster</span>
-                  </v-tooltip>
-
-                  <v-img
-                    contain
-                    :src="item.image"
-                    v-on:click="toggle(item, $event)"
-                    v-on:mouseover="hover(item)"
-                    style="min-height: 120px;"
-                  />
-                </v-card>
-              </v-col>
-            </v-row>
-          </v-flex>
-        </v-layout>
+      <template v-else>
+        <span class="ph-label">Detail</span>
+        <v-select
+          :value="epsilonLabel"
+          :items="epsilonValues"
+          dense
+          outlined
+          hide-details
+          class="ph-select"
+          @change="onEpsilonChange"
+        />
       </template>
-    </v-data-iterator>
 
-    <v-toolbar
-      v-show="showMultiselect"
-      dense
-      fixed
-      dark
-      color="blue darken-3"
-      class="mb-1"
-      style="margin-top: -35px"
-    >
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on, attrs }">
-          <v-simple-checkbox
-            :ripple="false"
-            style="float: left"
-            dense
-            v-on="on"
-            v-bind="attrs"
-            v-model="useKMeans"
-            icon="x-small"
-            off-icon="mdi-google-circles"
-            on-icon="mdi-shimmer"
-          />
-        </template>
-        <span v-if="useKMeans">Switch to clustering with DBScan</span>
-        <span v-else>Switch to clustering with Kmeans</span>
-      </v-tooltip>
-      <MultiDimensionSelect
-        :initialValue="dimensions"
-        :keys="numericDimensions"
-        :width="(4 / 5) * width"
-        v-on:update="onDimensionChange($event)"
-        initialOpenDirection="above"
+      <template v-slot:actions>
+        <v-tooltip bottom max-width="280">
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              small
+              class="ph-btn"
+              @click="useKMeans = !useKMeans"
+            >
+              <v-icon small>{{
+                useKMeans ? "mdi-shimmer" : "mdi-google-circles"
+              }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{
+            useKMeans
+              ? "Grouping with k-means into a set number of groups. Click to use DBSCAN, which finds the groups itself."
+              : "Grouping with DBSCAN. Click to use k-means with a set number of groups."
+          }}</span>
+        </v-tooltip>
+        <span class="ph-divider" />
+        <v-tooltip
+          v-for="(size, index) in thumbnailSizes"
+          :key="size.icon"
+          bottom
+        >
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              small
+              class="ph-btn"
+              :class="{ 'ph-btn--on': colSpan === index }"
+              @click="colSpan = index"
+            >
+              <v-icon small>{{ size.icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ size.label }}</span>
+        </v-tooltip>
+        <v-tooltip bottom max-width="300">
+          <template v-slot:activator="{ on }">
+            <v-icon v-on="on" small class="clusters-info"
+              >mdi-information-outline</v-icon
+            >
+          </template>
+          <span
+            >Clusters group options that are similar on the chosen dimensions.
+            Each image is the option closest to the centre of its group. Start
+            with the plotted dimensions, then add others. With DBSCAN, Detail
+            sets how fine the groups are.</span
+          >
+        </v-tooltip>
+      </template>
+    </PanelHeader>
+
+    <div class="clusters-dimensions">
+      <v-autocomplete
+        :value="dimensions"
+        :items="numericDimensions"
+        multiple
+        small-chips
+        deletable-chips
+        dense
+        outlined
+        hide-details
+        placeholder="Dimensions to group by"
+        class="clusters-dims-select"
+        @change="onDimensionChange"
       />
+    </div>
+    <p class="clusters-hint">Click a group to select its options.</p>
 
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn v-on="on" x-small icon @click="() => (dimensions = [])">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </template>
-        <span>Rest the dimensions.</span>
-      </v-tooltip>
-    </v-toolbar>
-  </v-container>
+    <div class="clusters-grid">
+      <div v-if="sortedReps.length === 0" class="clusters-empty">
+        {{
+          areDimensionsValid()
+            ? "Not enough options to form groups."
+            : "Choose at least one dimension to group options."
+        }}
+      </div>
+      <v-row dense class="ma-0">
+        <v-col
+          v-for="(item, index) in sortedReps"
+          :key="cardSelector + item._id"
+          :cols="possibleColSpans[colSpan]"
+        >
+          <div
+            :id="cardSelector + item._id"
+            class="cluster-card"
+            :class="{
+              outlined: numSelected > 0 && selectionMap[item._id],
+              transparent:
+                enableContext && numSelected > 0 && !selectionMap[item._id],
+            }"
+            @click="toggle(item, $event, index)"
+            @mouseover="hover(item)"
+          >
+            <v-img
+              contain
+              :src="item.image"
+              :aspect-ratio="4 / 3"
+              class="cluster-image"
+            />
+            <div class="cluster-meta">
+              <span class="cluster-index">#{{ index + 1 }}</span>
+              <span class="cluster-size"
+                >{{ clustersSize[item._id] }}
+                {{ clustersSize[item._id] === 1 ? "option" : "options" }}</span
+              >
+            </div>
+          </div>
+        </v-col>
+      </v-row>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-body {
-  user-select: none; /* Standard syntax */
+.clusters-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  border-left: 1px solid #e3e8ee;
+  user-select: none;
 }
-
-::v-deep label.v-label {
-  color: white;
+.clusters-info.v-icon {
+  margin: 0 4px 0 2px;
+  color: #90a4ae;
+  cursor: help;
 }
-
-::v-deep div.v-select__selections {
-  color: white;
+.clusters-dimensions {
+  flex: 0 0 auto;
+  padding: 8px 8px 0;
 }
-::v-deep .v-list .v-list-item--active {
-  background-color: white !important;
+.clusters-dims-select {
+  font-size: 13px;
 }
-::v-deep .v-list .v-list-item--active .v-list-item__title {
-  color: white !important;
+.clusters-dims-select.v-input--dense ::v-deep .v-input__slot {
+  min-height: 32px !important;
 }
-.clusters-note {
-  position: relative;
-  transform: translateX(-50%);
-  left: 50%;
+.clusters-dims-select ::v-deep .v-input__append-inner {
+  margin-top: 4px !important;
+}
+.clusters-dims-select ::v-deep fieldset {
+  border-color: #d5dce4;
+}
+.clusters-dims-select ::v-deep .v-chip {
+  margin: 3px 4px 3px 0 !important;
+}
+.clusters-hint {
+  flex: 0 0 auto;
+  margin: 6px 10px 2px;
+  font-size: 12px;
+  color: #78909c;
+}
+.clusters-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0 4px 8px;
+}
+.clusters-empty {
+  margin: 16px 8px;
+  font-size: 13px;
+  color: #78909c;
   text-align: center;
-  margin-left: 0px;
-  margin-right: 32px;
-  margin-top: 4px;
-  margin-bottom: 4px;
-  color: white;
 }
-
-.col > .v-card.outlined {
+.cluster-card {
+  overflow: hidden;
+  border: 1px solid #e3e8ee;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+.cluster-card:hover {
+  border-color: #90caf9;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.cluster-card.outlined {
   border: 2px solid rgb(33, 119, 180);
 }
-.col > .v-card:not(.transparent) {
-  opacity: 1;
+.cluster-card.transparent {
+  opacity: 0.35;
 }
-.col > .v-card.transparent {
-  opacity: 0.4;
+.cluster-card.hovered {
+  outline: 2px dashed rgb(33, 119, 180);
+  outline-offset: -2px;
 }
-
-.col > .v-card.hovered {
-  border: 3px dashed rgb(33, 119, 180); /*#82b1ff;*/
+.cluster-image {
+  background: #f5f7fa;
 }
-
-::v-deep .multiselect__tag {
-  width: 50px;
-  display: none;
+.cluster-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 3px 8px;
+  border-top: 1px solid #eef1f4;
+  font-size: 12px;
+  color: #455a64;
+  white-space: nowrap;
 }
-
-::v-deep .multiselect {
-  width: 200px;
+.cluster-index {
+  font-weight: 600;
 }
-
-::v-deep .v-slider--horizontal {
-  min-width: 5vw;
+.cluster-size {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #607d8b;
 }
 </style>
 
@@ -254,24 +250,20 @@ import * as d3 from "d3";
 import * as kmeans from "node-kmeans";
 
 import * as nj from "numjs";
-import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
+import PanelHeader from "@/components/PanelHeader.vue";
 
 //import  * as PNGImage from 'pngjs-image';
 import * as pixelmatch from "pixelmatch";
 const PNG = require("pngjs").PNG;
 
-import LargeGridIcon from "-!vue-svg-loader!/src/assets/large_grid_icon.svg";
-import MediumGridIcon from "-!vue-svg-loader!/src/assets/medium_grid_icon.svg";
-import SmallGridIcon from "-!vue-svg-loader!/src/assets/small_grid_icon.svg";
+// DBSCAN neighbourhood radii, finest first, matching epsilonValues.
+const EPSILONS = [0.05, 0.1, 0.2, 0.4];
 
 export default {
-  name: "AugmentedGridCards",
+  name: "ClusterView",
   components: {
     ModelGltf,
-    MultiDimensionSelect,
-    LargeGridIcon,
-    MediumGridIcon,
-    SmallGridIcon,
+    PanelHeader,
   },
   props: [
     "defaultEnableContext",
@@ -290,14 +282,16 @@ export default {
       chartData: [],
       selectionMap: {},
       useKMeans: true,
-      offContextIcon: "mdi-eye-off",
-      onContextIcon: "mdi-eye",
       viewID: null,
       colSpan: 1,
       possibleColSpans: [4, 6],
-      labels: ["M", "XL"],
+      // One per entry of possibleColSpans: three, then two groups per row.
+      thumbnailSizes: [
+        { icon: "mdi-view-comfy-outline", label: "Smaller images" },
+        { icon: "mdi-view-grid-outline", label: "Larger images" },
+      ],
       numClustersLabels: [3, 4, 5, 6, 7, 8],
-      epsilonValues: ["2 x granular", " granular", "coarse", "2 x coarse"],
+      epsilonValues: ["Finest", "Fine", "Coarse", "Coarsest"],
       maxPerPage: 10000,
       // gradient: "to bottom, rgba(50,50,50, .7), rgba(25,32,72, .1)",
       isSortDesc: false,
@@ -322,6 +316,14 @@ export default {
       hovered: (state) => state.hovered,
     }),
     ...mapGetters(["isHoveringEnabled"]),
+    epsilonLabel() {
+      return this.epsilonValues[EPSILONS.indexOf(this.epsilon)];
+    },
+    // In order along the scatterplot's x dimension.
+    sortedReps() {
+      let key = this.sortByVar;
+      return this.clusterReps.slice().sort((a, b) => a[key] - b[key]);
+    },
     cardSelector() {
       return "cluster_card_" + this.viewID + "_" + this.useKMeans + "_";
     },
@@ -364,7 +366,11 @@ export default {
         return;
       }
       console.log("clustering dimensions", this.dimensions);
-      var matrix = to2DMatrix(this.chartData, this.dimensions, true); //['TotalFlrArea']
+      // An option missing any clustering dimension can't be placed in a group.
+      let rows = this.chartData.filter((d) =>
+        this.dimensions.every((dim) => Number.isFinite(d[dim]))
+      );
+      var matrix = to2DMatrix(rows, this.dimensions, true);
 
       /*
       var clustering = require("density-clustering");
@@ -402,9 +408,9 @@ export default {
             clusterIndices
           );
           const centroidIndex = centroidRes.closestIndex;
-          this.clusterReps.push(this.chartData[centroidIndex]);
-          const id = this.chartData[centroidIndex]._id;
-          this.clustersMap[id] = clusterIndices.map((idx) => this.chartData[idx]);
+          this.clusterReps.push(rows[centroidIndex]);
+          const id = rows[centroidIndex]._id;
+          this.clustersMap[id] = clusterIndices.map((idx) => rows[idx]);
           this.clustersSize[id] = this.clustersMap[id].length;
         });
       } else {
@@ -423,11 +429,9 @@ export default {
             });
 
             for (var i = 0; i < closest.length; i++) {
-              this.clusterReps.push(this.chartData[closest[i]]);
-              const id = this.chartData[closest[i]]._id;
-              this.clustersMap[id] = res[
-                i
-              ].clusterInd.map((idx) => this.chartData[idx]);
+              this.clusterReps.push(rows[closest[i]]);
+              const id = rows[closest[i]]._id;
+              this.clustersMap[id] = res[i].clusterInd.map((idx) => rows[idx]);
               this.clustersSize[id] = this.clustersMap[id].length;
             }
           }
@@ -445,11 +449,8 @@ export default {
       }
       */
     },
-    onEpsilonChange(x, y)
-    {
-      let index = this.epsilonValues.indexOf(x)
-      const epsilonNumericValues = [0.05, 0.1, 0.2, 0.4]
-      this.epsilon = epsilonNumericValues[index];
+    onEpsilonChange(label) {
+      this.epsilon = EPSILONS[this.epsilonValues.indexOf(label)];
     },
     calculateCentroid(vectors) {
       if (vectors.length === 0) {
@@ -524,10 +525,15 @@ export default {
     unhover(item) {
       this.$store.commit("hover", { hovered: null });
     },
-    toggle(item, event) {
+    toggle(item, event, index) {
+      let memberIDs = this.clustersMap[item._id].map((d) => d._id);
+      // Clicking the inspected representative stops inspecting it.
+      if (this.hovered && this.hovered._id === item._id) {
+        this.$store.dispatch("inspectByClick", { item: item });
+      }
       this.$store.dispatch("update", {
         view: this.viewID,
-        selection: this.clustersMap[item._id].map((d) => d._id),
+        selection: memberIDs,
         operation: this.$store.state.currentSelectionOperation,
       });
 

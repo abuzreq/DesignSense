@@ -1,23 +1,39 @@
 <template>
-  <v-container style="width: 200px">
+  <v-container style="width: auto; padding: 0 4px;">
     <div class="text-center">
       <v-dialog v-model="dialog" width="500" overlay-opacity="0.5">
-        <template v-slot:activator="{ on, attrs }">
-          <v-btn color="blue lighten-2" dark v-bind="attrs" v-on="on">
-            Color
-          </v-btn>
+        <template v-slot:activator="{ on: dialogOn, attrs }">
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on: tooltipOn }">
+              <v-btn
+                text
+                small
+                class="color-by-button"
+                v-bind="attrs"
+                v-on="Object.assign({}, tooltipOn, dialogOn)"
+              >
+                <v-icon left small>mdi-palette</v-icon>
+                <span class="color-by-label">{{ colorColumn || "Color" }}</span>
+              </v-btn>
+            </template>
+            <span>{{
+              colorColumn
+                ? "Options are colored by " + colorColumn + ". Click to change."
+                : "Color the options by a category"
+            }}</span>
+          </v-tooltip>
         </template>
 
         <v-card height="350" style="overflow: hidden">
-          <v-card-title class="headline grey lighten-2">
-            Color Settings (experimental)
+          <v-card-title class="headline grey lighten-2" style="display: flex; align-items: center;">
+            Color Settings
+            <v-spacer />
             <v-btn
-               class="close-button"
+              icon
               color="red"
-              text
               @click="dialog = false"
             >
-              <v-icon>mdi-close </v-icon>
+              <v-icon>mdi-close</v-icon>
             </v-btn>
           </v-card-title>
           <v-row class="row-margins">
@@ -28,7 +44,7 @@
                 are supported)
               </div>
               <SingleDimensionSelect
-                :initialValue="this.$store.getters.colorColumn"
+                :initialValue="colorColumn"
                 v-on:update="onColorColumnChange($event)"
                 :width="this.selectorWidth"
                 :prefixWidth="this.prefixWidth"
@@ -122,23 +138,24 @@
 </template>
 
 <style scoped>
+.color-by-button {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.color-by-label {
+  display: inline-block;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .buttons-parent {
   justify-content: flex-end;
   position: relative;
 }
-.change-button {
-  position: absolute;
-  left: 50px;
-  bottom: -100px;
-}
+.change-button,
 .reset-button {
-  position: absolute;
-  right: 50px;
-  bottom: -100px;
-}
-.close-button {
   position: relative;
-  right: -250px;
 }
 </style>
 <script>
@@ -148,6 +165,7 @@
 
 import * as d3 from "d3";
 import SingleDimensionSelect from "@/components/SingleDimensionSelect.vue";
+import { mapState } from "vuex";
 
 export default {
   name: "ColorSelectionModal",
@@ -161,7 +179,11 @@ export default {
       selectorWidth: 400,
     };
   },
-  computed: {},
+  computed: {
+    ...mapState({
+      colorColumn: (state) => state.colorColumn,
+    }),
+  },
   methods: {
     OnColorReset: function () {
       this.$store.commit("changeColorColumn", "");
@@ -174,9 +196,17 @@ export default {
       this.$store.commit("changeColorColumn", this.currentColorColumn);
     },
     onColorRangeChange: function (newColorRange) {
-      this.$store.commit("changeColorRange", newColorColumn);
+      this.$store.commit("changeColorRange", newColorRange);
     },
     onColorScaleChange: function (newColorScale) {},
+  },
+  watch: {
+    colorColumn: {
+      immediate: true,
+      handler(val) {
+        this.currentColorColumn = val || "";
+      },
+    },
   },
 };
 </script>

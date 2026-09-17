@@ -13,27 +13,18 @@
       color=" white--text text--lighten-1"
       height="60"
     >
-      <v-toolbar-title id="designsense-title" style="width: 10vw">
+      <v-toolbar-title id="designsense-title" class="ds-title">
         <router-link to="/about"
           >DesignSense
-          <span style="font-size: 14px; color: deepskyblue"
+          <span class="ds-alpha" style="font-size: 14px; color: deepskyblue"
             >alpha</span
           ></router-link
         >
       </v-toolbar-title>
-      <v-divider vertical />
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="actions['help'].clickAction">
-            <v-icon>{{ actions["help"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["help"].tooltip() }}</span>
-      </v-tooltip>
+      <v-divider vertical class="ds-divider" />
 
-      <v-divider vertical />
+      <!-- Getting data in and out -->
       <LoadDataModal id="loading-data-bar"> </LoadDataModal>
-      <v-divider vertical />
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
           <v-btn v-on="on" icon @click="actions['saveToFile'].clickAction">
@@ -44,192 +35,116 @@
       </v-tooltip>
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn :disabled="!isStudySharable" v-on="on" icon @click="actions['shareStaticLink'].clickAction">
-            <v-icon>{{ actions["shareStaticLink"].icon }}</v-icon>
-          </v-btn>
+          <!-- A disabled button swallows pointer events, so the span carries the tooltip. -->
+          <span v-on="on">
+            <v-btn
+              :disabled="!isStudySharable"
+              icon
+              @click="actions['shareStaticLink'].clickAction"
+            >
+              <v-icon>{{ actions["shareStaticLink"].icon }}</v-icon>
+            </v-btn>
+          </span>
         </template>
         <span>{{ actions["shareStaticLink"].tooltip() }}</span>
       </v-tooltip>
-      <v-divider vertical />
+      <v-divider vertical class="ds-divider" />
 
+      <v-tooltip bottom max-width="340">
+        <template v-slot:activator="{ on }">
+          <div v-on="on" id="ui-mode-toggle" class="ui-mode-toggle">
+            <v-btn-toggle
+              :value="uiMode"
+              mandatory
+              dense
+              rounded
+              @change="setUiMode"
+            >
+              <v-btn small value="lite">Lite</v-btn>
+              <v-btn small value="expert">Expert</v-btn>
+            </v-btn-toggle>
+          </div>
+        </template>
+        <span v-if="isLite"
+          >Lite: brush the charts to filter the collection. Each filter is
+          listed in the bar and can be removed. Switch to Expert for selection
+          operations, inspection controls, and layout editing.</span
+        >
+        <span v-else
+          >Expert: expressive selection (Replace, Add, Subtract, Toggle,
+          Intersect), inspection controls, and layout editing. Switch to Lite
+          to simply filter and browse.</span
+        >
+      </v-tooltip>
+      <v-divider vertical class="ds-divider" />
+
+      <!-- How the collection is narrowed: filters in Lite, a selection in Expert -->
+      <div class="ds-narrowing">
+        <SelectionOperationsBar
+          v-if="can('selectionOperations')"
+          id="selection-operations-bar"
+        />
+        <FilterBar v-else id="filter-bar" />
+      </div>
+
+      <!-- Ask or command, in the same row: the list of suggestions floats
+           below, so the bar stays one row tall. -->
+      <AssistantBar ref="assistant" id="assistant-bar" />
+
+      <v-divider vertical class="ds-divider" />
+      <ToolbarGroup
+        id="sets-operations-bar"
+        :label="isLite ? 'Results' : 'Selection'"
+        :names="selectionActions"
+        :actions="actions"
+        :disabled="isActionDisabled"
+      />
+      <v-divider vertical class="ds-divider" />
+      <ToolbarGroup
+        id="data-operations-bar"
+        label="Zoom"
+        :names="dataActions"
+        :actions="actions"
+        :disabled="isActionDisabled"
+      />
+      <template v-if="can('inspectionControls')">
+        <v-divider vertical class="ds-divider" />
+        <ToolbarGroup
+          id="inspection-bar"
+          label="Inspection"
+          :names="inspectionActions"
+          :actions="actions"
+          :color="toolbarColor"
+        />
+      </template>
+      <v-divider vertical class="ds-divider" />
+      <ToolbarGroup id="view-bar" label="View" :actions="actions">
+        <ColorSelectionModal id="color-selection-bar" />
+        <v-tooltip v-if="can('layoutEditing')" bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              id="editing-mode"
+              v-on="on"
+              :color="toolbarColor(actions['toggleEditingMode'].type)"
+              icon
+              @click="actions['toggleEditingMode'].clickAction"
+            >
+              <v-icon>{{ actions["toggleEditingMode"].icon }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ actions["toggleEditingMode"].tooltip() }}</span>
+        </v-tooltip>
+      </ToolbarGroup>
+      <v-divider vertical class="ds-divider" />
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn
-            id="editing-mode"
-            v-on="on"
-            :color="actionType2Color(actions['toggleEditingMode'].type)"
-            icon
-            @click="actions['toggleEditingMode'].clickAction"
-          >
-            <v-icon>{{ actions["toggleEditingMode"].icon }}</v-icon>
+          <v-btn v-on="on" icon @click="actions['help'].clickAction">
+            <v-icon>{{ actions["help"].icon }}</v-icon>
           </v-btn>
         </template>
-        <span>{{ actions["toggleEditingMode"].tooltip() }}</span>
+        <span>{{ actions["help"].tooltip() }}</span>
       </v-tooltip>
-      <v-divider vertical />
 
- 
-      <v-spacer></v-spacer>
-      <SelectionOperationsBar id="selection-operations-bar" />
-      <v-spacer></v-spacer>
-      <!--<ColorSelectionModal id="color-selection-bar"> </ColorSelectionModal>-->
-
-      <v-divider vertical />
-      <v-spacer></v-spacer>
-      <div
-        id="inspection-bar"
-        style="box-shadow: none !important; display: flex;  flex-direction: column;"
-      >
-
-        <div style="margin-top: 0px;">
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <v-btn
-                v-on="on"
-                :color="actionType2Color(actions['togglePinInspection'].type)"
-                icon
-                @click="actions['togglePinInspection'].clickAction"
-              >
-                <v-icon>{{ actions["togglePinInspection"].icon }}</v-icon>
-              </v-btn>
-            </template>
-            <span>{{ actions["togglePinInspection"].tooltip() }}</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <v-btn
-                v-on="on"
-                :color="actionType2Color(actions['clearInspection'].type)"
-                icon
-                @click="actions['clearInspection'].clickAction"
-              >
-                <v-icon>{{ actions["clearInspection"].icon }}</v-icon>
-              </v-btn>
-            </template>
-            <span>{{ actions["clearInspection"].tooltip() }}</span>
-          </v-tooltip>
-
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <v-btn
-                v-on="on"
-                :color="actionType2Color(actions['toggleInspectionMode'].type)"
-                icon
-                @click="actions['toggleInspectionMode'].clickAction"
-              >
-                <v-icon>{{ actions["toggleInspectionMode"].icon }}</v-icon>
-              </v-btn>
-            </template>
-            <span>{{ actions["toggleInspectionMode"].tooltip() }}</span>
-          </v-tooltip>
-        </div>
-        <div style="align-self: center; margin-bottom: 5px;  margin-top: -5px; font-size: small;">
-          Inspection
-        </div>
-      </div>
-      <v-spacer></v-spacer>
-      <v-divider vertical />
-      <v-spacer></v-spacer>
-        <div id="sets-operations-bar" style="box-shadow: none !important; display: flex;  flex-direction: column;">
-        <div style="margin-top: 0px;">
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn v-on="on" icon @click="actions['reverseUpdate'].clickAction">
-              <v-icon>{{ actions["reverseUpdate"].icon }}</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ actions["reverseUpdate"].tooltip() }}</span>
-        </v-tooltip>
-
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              v-on="on"
-              icon
-              @click="actions['resetAllMarkings'].clickAction"
-            >
-              <v-icon>{{ actions["resetAllMarkings"].icon }}</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ actions["resetAllMarkings"].tooltip() }}</span>
-        </v-tooltip>
-
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              v-on="on"
-              icon
-              @click="actions['invertSelection'].clickAction"
-            >
-              <v-icon>{{ actions["invertSelection"].icon }}</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ actions["invertSelection"].tooltip() }}</span>
-        </v-tooltip>
-      </div>
-      <div style="align-self: center; margin-bottom: 5px;  margin-top: -5px; font-size: small;">
-           Selection
-        </div>
-    </div>
-    <v-spacer></v-spacer>
-      <v-divider vertical />
-      <v-spacer></v-spacer>
-      <div id="data-operations-bar" style="box-shadow: none !important; display: flex;  flex-direction: column;">
-
-        <div style="margin-top: 0px;">
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              v-on="on"
-              icon
-              @click="actions['undoDataTransformation'].clickAction"
-            >
-              <v-icon>{{ actions["undoDataTransformation"].icon }}</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ actions["undoDataTransformation"].tooltip() }}</span>
-        </v-tooltip>
-
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              v-on="on"
-              icon
-              @click="actions['zoomToSelection'].clickAction"
-            >
-              <v-icon>{{ actions["zoomToSelection"].icon }}</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ actions["zoomToSelection"].tooltip() }}</span>
-        </v-tooltip>
-
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              v-on="on"
-              icon
-              @click="actions['excludeSelection'].clickAction"
-            >
-              <v-icon>{{ actions["excludeSelection"].icon }}</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ actions["excludeSelection"].tooltip() }}</span>
-        </v-tooltip>
-
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn v-on="on" icon @click="actions['resetData'].clickAction">
-              <v-icon>{{ actions["resetData"].icon }}</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ actions["resetData"].tooltip() }}</span>
-        </v-tooltip>
-      </div>
-      <div style="align-self: center; margin-bottom: 5px;  margin-top: -5px; font-size: small;">
-        Zoom/Filter
-      </div>
-    </div>
-    <v-spacer></v-spacer>
     </v-app-bar>
     <v-dialog :key="456" v-model="isShareLinkModalOn" width="750px">
       <template>
@@ -296,7 +211,7 @@
                 style="align-self: center;"
                 @click="
                   $store.commit('setIsOpeningDialogOn', { value: false });
-                  $tours['onboardingTour'].start();
+                  actions.help.clickAction();
                 "
               >
                 Start On-boarding</v-btn
@@ -315,7 +230,7 @@
           >
             <div><router-link to="/about">About </router-link></div>
             &nbsp;&nbsp;|&nbsp;&nbsp;
-            <div><a href="mailto:aabuzura@sfu.ca">Contact</a></div>
+            <div><a href="mailto:abuzreq@gmail.com">Contact</a></div>
           </div>
           </div>
 
@@ -336,8 +251,9 @@
     </v-dialog>
     <v-main id="designsense-workspace" style="padding: 60px 0px 0px">
       <div
+        ref="workspace"
+        class="ds-workspace"
         @contextmenu="showContextMenuHandler"
-        style="height: 100%; width: 100%; border: 1px solid red"
       >
         <Card
           v-for="(item, index) in layouts"
@@ -346,6 +262,8 @@
           :initY="item.y"
           :initW="item.w"
           :initH="item.h"
+          :unitW="unitW"
+          :unitH="unitH"
           :type="item.type"
         />
       </div>
@@ -392,9 +310,29 @@
     <v-tour
       name="onboardingTour"
       :steps="onboardingStudyTourSteps"
-      :options="{ highlight: true }"
+      :options="{
+        highlight: true,
+        labels: {
+          buttonSkip: 'Skip tour',
+          buttonPrevious: 'Back',
+          buttonNext: 'Next',
+          buttonStop: 'Done',
+        },
+      }"
       :callbacks="onboardingCallbacks"
     ></v-tour>
+    <v-snackbar
+      v-model="showLoadNotice"
+      :color="loadState.error ? 'error' : 'grey darken-3'"
+      :timeout="loadState.error ? -1 : 8000"
+      bottom
+      left
+    >
+      {{ loadNotice }}
+      <template v-slot:action="{ attrs }">
+        <v-btn text v-bind="attrs" @click="showLoadNotice = false">Close</v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 
@@ -403,8 +341,24 @@
   z-index: 8000;
 }
 
+/* Tour steps: short, left-aligned and comfortable to read. */
+.v-tour .v-step {
+  max-width: 340px;
+  padding: 14px 16px;
+  border-radius: 8px;
+}
 .v-tour .v-step__header {
-  color: deepskyblue;
+  margin: -14px -16px 10px;
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+.v-tour .v-step__content {
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
 }
 
 .v-tour__target--highlighted {
@@ -427,6 +381,67 @@ body {
 }
 .v-toolbar {
   margin-top: -5px;
+}
+
+.ui-mode-toggle {
+  margin: 0 2px;
+}
+.ds-title {
+  flex: 0 0 auto;
+  margin-right: 4px;
+}
+.v-app-bar .v-divider--vertical.ds-divider {
+  align-self: center;
+  min-height: 32px;
+  max-height: 32px;
+  margin: 0 8px;
+}
+/* The filters or selection operations take whatever room the groups leave. */
+.ds-narrowing {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+.ds-workspace {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 60px);
+}
+/* Below 1500px Expert's toolbar needs every pixel, so labels give way to icons. */
+@media (max-width: 1500px) {
+  .v-app-bar .v-toolbar__content {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .ds-alpha {
+    display: none;
+  }
+  #loading-data-bar .load-data-label {
+    display: none;
+  }
+  #loading-data-bar .load-data-icon.v-icon {
+    margin: 0;
+  }
+  #loading-data-bar .load-data-button.v-btn {
+    min-width: 0 !important;
+    padding: 0 10px !important;
+  }
+  .v-app-bar .v-divider--vertical.ds-divider {
+    margin: 0 2px;
+  }
+  .v-app-bar .v-btn.v-btn--icon.v-size--default {
+    width: 34px !important;
+    height: 34px !important;
+  }
+}
+
+/* Expert mode: the pointer shows which operation a brush will apply. */
+body[data-selection-op] .scatter-svg .overlay,
+body[data-selection-op] .scatter-svg .lasso-area,
+body[data-selection-op] .parcoords .brush .overlay,
+body[data-selection-op] .scroll-container {
+  cursor: var(--ds-selection-cursor) !important;
 }
 </style>
 <script>
@@ -456,12 +471,37 @@ import ColorSelectionModal from "@/components/ColorSelectionModal.vue";
 import { operations } from "@/components/operations.js";
 
 import SelectionOperationsBar from "@/components/SelectionOperationsBar.vue";
+import FilterBar from "@/components/FilterBar.vue";
+import ToolbarGroup from "@/components/ToolbarGroup.vue";
+import { LAYOUT_COLUMNS, LAYOUT_ROWS } from "@/layout.js";
+import { applySelectionCursor } from "@/components/selectionCursors.js";
 
-import { readyToLoad, loadDataFromCloudURL} from "./main.js";
+import AssistantBar from "@/components/AssistantBar.vue";
+import {
+  DEFAULT_DATASET_URL,
+  loadDataset,
+  loadState,
+} from "@/data/loader.js";
+
+/**
+ * One onboarding step. `mode` is the UI mode whose controls the step points
+ * at; the tour switches to it first, so stepping back and forth still finds
+ * its target. `setup` prepares an example for the step.
+ */
+function tourStep(vm, mode, target, title, content, placement, setup) {
+  return {
+    target: target,
+    header: { title: title },
+    content: content,
+    params: { enableScrolling: false, placement: placement },
+    before: () => vm.prepareTourStep(mode, setup),
+  };
+}
 
 export default {
   name: "Demo",
   components: {
+    AssistantBar,
     ParCoordsView,
     GridView,
     AugmentedGridView,
@@ -476,6 +516,8 @@ export default {
     LoadDataModal,
     ColorSelectionModal,
     SelectionOperationsBar,
+    FilterBar,
+    ToolbarGroup,
   },
 
   data: function() {
@@ -485,546 +527,130 @@ export default {
         onSkip: () => (document.body.style.pointerEvents = "all"),
         onFinish: () => (document.body.style.pointerEvents = "all"),
       },
+      // Lite first, then what Expert adds. Each step names the mode it needs.
       onboardingStudyTourSteps: [
-        {
-          target: "#designsense-title", // We're using document.querySelector() under the hood
-          header: {
-            title: "Welcome to DesignSense!",
-          },
-          content:
-            "A tool for exploring, narrowing and understanding design spaces. DesignSense is designed to allow users to navigate through a large number of options while considering both the visual appearance and the data associated with those options. In short, <em>DesignSense </em> is a shopping interface that is augmented with advanced data visualizations and analysis! [Next: &rarr;, Previous: &larr; ]",
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-        {
-          target: "#loading-data-bar",
-          header: {
-            title: "Let's Get Started!",
-          },
-          content: `First, we need to load a dataset. <em>DesignSense</em> supports loading data by uploading local files or by loading them from a cloud folder. For now, we will use a simple dataset of used cars. `,
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-        {
-          target: "#designsense-center",
-          header: {
-            title: "Your Workspace",
-          },
-          content:
-            "This is your workspace. Each component plays a different role in the process of navigation as we will see. As a general tip, if you hover your mouse over any of the icons in the interface you will be presented with information on what these icons do.",
-          params: {
-            enableScrolling: false,
-            placement: "top",
-          },
-        },
-        {
-          target: '.v-card[type="Grid"]',
-          header: {
-            title: "Images Gallery",
-          },
-          content:
-            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on <i>inspection</i> shortly), while the grid of images below show all the options we are exploring. We can sort the images based on a data dimension (top left). We can select options by dragging a rectangle that touches their images or by simply clicking the checkbox to the top left of an option's image. Clicking on the eye icon (top-center) switch the grid to show only the currently selected options. You can change the size of the images on the grid using the size slider (top-right). If you pick the largest size, you become able to expand on the details of each option which makes it easier to compare them side-by-side",
-          params: {
-            enableScrolling: false,
-            placement: "left",
-          },
-        },
-        {
-          target: ".v-card[type='ScatterPlot']",
-          header: {
-            title: "2D Scatterplot",
-          },
-          content:
-            "The scatter plot is a simple but very effective visualization of 2-dimensional data. For example you can plot the price vs. year of manufacturing for each car. The scatterplot can be used to visually identify patterns like correlations, outliers, and clusters. By clicking then dragging on the scatterplot you create a selection box. All the options falling in this box are selected as a result. By default, any new selection will replace the current one. Let's see how to change that.",
-          before: () => {
-            console.log(this.$store.state.data)
-            let selectedData = this.$store.state.data.filter(
-              (d) =>
-                d["year"] > 2005 &&
-                d["year"] <= 2015 &&
-                d["price"] > 4000 &&
-                d["price"] <= 12000
-            );
-
-            this.$store.dispatch("update", {
-              markingID: this.$store.state.defaultMarkingID,
-              selection: selectedData.map((x) => x._id),
-              operation: operations.REPLACE,
-            });
-          },
-          params: {
-            enableScrolling: false,
-            placement: "left",
-          },
-        },
-       
-        {
-          target: '.v-card[type="ParallelCoordinatesPlot"]',
-          header: {
-            title: "The Parallel Coordinates Plot (PCP)",
-          },
-          content:
-            "The second data visualization is the parallel coordinates plot (PCP). In contrast to the scatterplot, this chart can be used to visualize more than 2 dimensions. Here each vertical axis is a different data dimension. Each option is represented by a string of lines that touch those axes exactly at the value of that the option for that axis/dimension. You can select options on the PCP by dragging a rectangle along any of the axes. You may also re-order the axes or flip them vertically by dragging and double-clicking on their titles respectively. Finally, you can also change the data dimensions shown using the wrench icon.",
-          before: () => {
-            console.log(this.$store.state.data)
-            let selectedData = this.$store.state.data.filter(
-              (d) =>
-                d["year"] > 2005 &&
-                d["year"] <= 2015 &&
-                d["price"] > 4000 &&
-                d["price"] <= 12000
-            );
-           
-            this.$store.dispatch("update", {
-              markingID: this.$store.state.defaultMarkingID,
-              selection: selectedData.map((x) => x._id),
-              operation: operations.REPLACE,
-            });
-          },
-          params: {
-            enableScrolling: false,
-            placement: "left",
-          },
-        },
-        {
-          target: "#selection-operations-bar",
-          header: {
-            title: "Selection Operations",
-          },
-          content:
-            "<em>DesignSense</em> supports 5 different selection operations (i.e. how the newly selected options will relate to the currently selected ones). You may click on those icons or use shortcuts: hold Shift for addition, hold Ctrl for subtraction, hold both for intersection. </br> You will also notice that when you make a selection on any component in the workspace then other components will respond by highlighting the same selected options. This coordination allows us to combine the best of what each component offers.",
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-
-        {
-          target: "#data-operations-bar",
-          header: {
-            title: "Zooming/Filtering",
-          },
-          content:
-            "Once you have selected a set of options there are few things you can do. You can choose to zoom on that set to examine it closely or exclude that set from your consideration. Both zooming and exclusion operations can be reverted back or reset completely.",
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-
-        {
-          target: "#sets-operations-bar",
-          header: {
-            title: "Selection",
-          },
-          content:
-            "On this panel, you can unselect everything (shortcut: ESC), or invert your current selection. You may also revert the last selection operation you made (shortcut: Ctrl-Z)",
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-        {
-          target: '.v-card[type="Sets"]',
-          header: {
-            title: "The Sets Panel",
-          },
-          content:
-            "Sets are a great mechanism for storing the progress we make during navigation. To create a set, click on 'New Set'. Once you create a set, you can bring it back by simply clicking on it. Note that the current selection operation will apply when you do, e.g. if you had Add on then the set will be added to your current selection. Finally, you can add/remove from a set using the +/- icons.",
-          before: () => {
-            let selectedData = this.$store.state.data.filter(
-              (d) => d["year"] > 2015
-            );
-
-            this.$store.dispatch("createSet", {
-              setName: "Set #1",
-              members: selectedData.map((x) => x._id),
-              comment: "Recent cars",
-            });
-          },
-          params: {
-            enableScrolling: false,
-            placement: "right",
-          },
-        },
-        {
-          target: '.v-card[type="Grid"]',
-          header: {
-            title: "Inspection: A Closer Look (hold Space)",
-          },
-          content:
-            "Sometimes we want to examine a single option in detail. This can be done by holding the Space button and moving the mouse over an option through any of its graphical representations, e.g. through its image in the gallery, its dot on the scatterplot, or its line on PCP. Doing so highlights that item everywhere and shows a large image of it on the Augmented Gallery. By clicking on the details button (top-left of the large image in the Gallery), you can find a data breakdown of the inspected option",
-          params: {
-            enableScrolling: false,
-            placement: "left-end",
-          },
-        },
-        {
-          target: '#inspection-bar',
-          header: {
-            title: "Pinning/Unpinning Inspection (P)",
-          },
-          content:
-            "By default, the inspected option remains highlighted unless it was canceled through the Cancel button or pressing ESC. Alternatively, you can choose to unpin (shortcut: P) the inspection which makes it go away once you release the Space keyboard button. The Continuous Inspection mode allows us to examine any option the mouse cursor passes by without holding Space.",
-          params: {
-            enableScrolling: false,
-            placement: "left",
-          },
-          before: () => {
-            this.$store.commit("toggleInspectionMode", { value: false });
-          },
-        },
-        {
-          target: ".v-card[type='ScatterPlot'] div.cluster-view",
-          header: {
-            title: "Clusters",
-          },
-          content:
-            "On the scatterplot, you can enable the advanced feature of automated clustering (by clicking on the icon at the top-right). <em>DesignSense</em> automatically clusters the current options into groups based on their similarity. We can choose any number of dimensions to group options based on through the pull down at the bottom. We can also control the number of cluster/groups to find. Each image here shows a representative sample from each of the formed groups (i.e. the option closest to the center of the cluster). By examining those representatives we can gain a bird-view of the data. To get a better grasp of this feature we suggest setting the clustering dimensions to be the same as those you have on the scatterplot. Finally, clustering responds to zooming and filtering operations, meaning you can cluster-->zoom-->cluster as a way to drill down into the dataset.",
-          params: {
-            enableScrolling: false,
-            placement: "left",
-          },
-          before: () => {
-            this.$store.commit("setClusteringPanelOpen", { value: true });
-          },
-        },
-        {
-          target: "#designsense-center",
-          header: {
-            title: "At Your Fingertips!",
-          },
-          content:
-            "By right-clicking anywhere we can summon a fast-access menu that has some of the operations we mentioned earlier. This is especially effective when using <em>DesignSense</em> across multiple screens.",
-          params: {
-            enableScrolling: false,
-            placement: "top",
-          },
-        },
-        {
-          target: "#editing-mode",
-          header: {
-            title: "Your Workspace, Your Process",
-          },
-          content:
-            "We can adjust the workspace to suit our needs through the Editing mode. This mode allows us to move or resize any of the panels in our workspace. </br>[Pro Tip]: zoom out in your browser before moving panels around.",
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-        {
-          target: "#designsense-title",
-          header: {
-            title: "Thanks!!",
-          },
-          content: `This marks the end of our tour of <em>DesignSense</em>! Feel free to reach us on aabuzura@sfu.ca`,
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-          before: () => {
-            this.$store.commit("toggleEditingMode", { value: false });
-          },
-        },
-      ],
-      onboardingTourSteps: [
-        {
-          target: "#designsense-title", // We're using document.querySelector() under the hood
-          header: {
-            title: "Welcome to DesignSense!",
-          },
-          content:
-            "A tool for exploring, narrowing and understanding design spaces. DesignSense is designed to allow users to navigate through a large number of options while considering both the visual appearance and the data associated with those options. In short, <em>DesignSense </em> is a shopping interface that is augmented with advanced data visualizations and analysis! [Next: &rarr;, Previous: &larr; ]",
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-        {
-          target: "#loading-data-bar",
-          header: {
-            title: "Let's Get Started!",
-          },
-          content: `First, we need to load a dataset. <em>DesignSense</em> supports loading data by uploading local files or by loading them from a cloud folder. For now, we will use a simple dataset of used cars. `,
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-        {
-          target: "#designsense-center",
-          header: {
-            title: "Your Workspace",
-          },
-          content:
-            "This is your workspace. Each component plays a different role in the process of navigation as we will see. As a general tip, if you hover your mouse over any of the icons in the interface you will be presented with information on what these icons do.",
-          params: {
-            enableScrolling: false,
-            placement: "top",
-          },
-        },
-        {
-          target: ".v-card[type='ScatterPlot']",
-          header: {
-            title: "2D Scatterplot",
-          },
-          content:
-            "The scatter plot is a simple but very effective visualization of 2-dimensional data. For example you can plot the price vs. year of manufacturing for each car. The scatterplot can be used to visually identify patterns like correlations, outliers, and clusters. By clicking then dragging on the scatterplot you create a selection box. All the options falling in this box are selected as a result. By default, any new selection will replace the current one. Let's see how to change that.",
-          before: () => {
-            console.log(this.$store.state.data)
-            let selectedData = this.$store.state.data.filter(
-              (d) =>
-                d["year"] > 2005 &&
-                d["year"] <= 2015 &&
-                d["price"] > 4000 &&
-                d["price"] <= 12000
-            );
-
-            this.$store.dispatch("update", {
-              markingID: this.$store.state.defaultMarkingID,
-              selection: selectedData.map((x) => x._id),
-              operation: operations.REPLACE,
-            });
-          },
-          params: {
-            enableScrolling: false,
-            placement: "left",
-          },
-        },
-        {
-          target: "#selection-operations-bar",
-          header: {
-            title: "Selection Operations",
-          },
-          content:
-            "<em>DesignSense</em> supports 5 different selection operations (i.e. how the newly selected options will relate to the currently selected ones). You may click on those icons or use shortcuts: hold Shift for addition, hold Ctrl for subtraction, hold both for intersection. </br> You will also notice that when you make a selection on any component in the workspace then other components will respond by highlighting the same selected options. This coordination allows us to combine the best of what each component offers.",
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-        {
-          target: '.v-card[type="ParallelCoordinatesPlot"]',
-          header: {
-            title: "The Parallel Coordinates Plot (PCP)",
-          },
-          content:
-            "The second data visualization is the parallel coordinates plot (PCP). In contrast to the scatterplot, this chart can be used to visualize more than 2 dimensions. Here each vertical axis is a different data dimension. Each option is represented by a string of lines that touch those axes exactly at the value of that the option for that axis/dimension. You can select options on the PCP by dragging a rectangle along any of the axes. You may also re-order the axes or flip them vertically by dragging and double-clicking on their titles respectively. Finally, you can also change the data dimensions shown using the wrench icon.",
-          before: () => {
-            console.log(this.$store.state.data)
-            let selectedData = this.$store.state.data.filter(
-              (d) =>
-                d["year"] > 2005 &&
-                d["year"] <= 2015 &&
-                d["price"] > 4000 &&
-                d["price"] <= 12000
-            );
-           
-            this.$store.dispatch("update", {
-              markingID: this.$store.state.defaultMarkingID,
-              selection: selectedData.map((x) => x._id),
-              operation: operations.REPLACE,
-            });
-          },
-          params: {
-            enableScrolling: false,
-            placement: "left",
-          },
-        },
-        {
-          target: '.v-card[type="Grid"]',
-          header: {
-            title: "The Augmented Gallery",
-          },
-          content:
-            "Many aspects of the options we navigate may not be adequately judged through data alone and require us to examine a graphical representation of them instead. The Augmented Gallery can be used to view images of the options we are navigating. The big image at the top represents the single option we are currently inspecting (more on <i>inspection</i> shortly), while the grid of images below show all the options we are exploring. We can sort the images based on a data dimension (top left). We can select options by dragging a rectangle that touches their images or by simply clicking the checkbox to the top left of an option's image. Clicking on the eye icon (top-center) switch the grid to show only the currently selected options. You can change the size of the images on the grid using the size slider (top-right). If you pick the largest size, you become able to expand on the details of each option which makes it easier to compare them side-by-side",
-          params: {
-            enableScrolling: false,
-            placement: "left",
-          },
-        },
-
-        {
-          target: "#data-operations-bar",
-          header: {
-            title: "Zooming/Filtering",
-          },
-          content:
-            "Once you have selected a set of options there are few things you can do. You can choose to zoom on that set to examine it closely or exclude that set from your consideration. Both zooming and exclusion operations can be reverted back or reset completely.",
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-        {
-          target: "#sets-operations-bar",
-          header: {
-            title: "Selection",
-          },
-          content:
-            "On this panel, you can unselect everything (shortcut: ESC), or invert your current selection. You may also revert the last selection operation you made (shortcut: Ctrl-Z)",
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-        {
-          target: '.v-card[type="Sets"]',
-          header: {
-            title: "The Sets Panel",
-          },
-          content:
-            "Sets are a great mechanism for storing the progress we make during navigation. To create a set, click on 'New Set'. Once you create a set, you can bring it back by simply clicking on it. Note that the current selection operation will apply when you do, e.g. if you had Add on then the set will be added to your current selection. Finally, you can add/remove from a set using the +/- icons.",
-          before: () => {
-            let selectedData = this.$store.state.data.filter(
-              (d) => d["year"] > 2015
-            );
-
-            this.$store.dispatch("createSet", {
-              setName: "Set #1",
-              members: selectedData.map((x) => x._id),
-              comment: "Recent cars",
-            });
-          },
-          params: {
-            enableScrolling: false,
-            placement: "right",
-          },
-        },
-        {
-          target: '.v-card[type="Grid"]',
-          header: {
-            title: "Inspection: A Closer Look (hold Space)",
-          },
-          content:
-            "Sometimes we want to examine a single option in detail. This can be done by holding the Space button and moving the mouse over an option through any of its graphical representations, e.g. through its image in the gallery, its dot on the scatterplot, or its line on PCP. Doing so highlights that item everywhere and shows a large image of it on the Augmented Gallery. By clicking on the details button (top-left of the large image in the Gallery), you can find a data breakdown of the inspected option",
-          params: {
-            enableScrolling: false,
-            placement: "left-end",
-          },
-        },
-        {
-          target: '#inspection-bar',
-          header: {
-            title: "Pinning/Unpinning Inspection (P)",
-          },
-          content:
-            "By default, the inspected option remains highlighted unless it was canceled through the Cancel button or pressing ESC. Alternatively, you can choose to unpin (shortcut: P) the inspection which makes it go away once you release the Space keyboard button. The Continuous Inspection mode allows us to examine any option the mouse cursor passes by without holding Space.",
-          params: {
-            enableScrolling: false,
-            placement: "left",
-          },
-          before: () => {
-            this.$store.commit("toggleInspectionMode", { value: false });
-          },
-        },
-        {
-          target: ".v-card[type='ScatterPlot'] div.cluster-view",
-          header: {
-            title: "Clusters",
-          },
-          content:
-            "On the scatterplot, you can enable the advanced feature of automated clustering (by clicking on the icon at the top-right). <em>DesignSense</em> automatically clusters the current options into groups based on their similarity. We can choose any number of dimensions to group options based on through the pull down at the bottom. We can also control the number of cluster/groups to find. Each image here shows a representative sample from each of the formed groups (i.e. the option closest to the center of the cluster). By examining those representatives we can gain a bird-view of the data. To get a better grasp of this feature we suggest setting the clustering dimensions to be the same as those you have on the scatterplot. Finally, clustering responds to zooming and filtering operations, meaning you can cluster-->zoom-->cluster as a way to drill down into the dataset.",
-          params: {
-            enableScrolling: false,
-            placement: "left",
-          },
-          before: () => {
-            this.$store.commit("setClusteringPanelOpen", { value: true });
-          },
-        },
-        {
-          target: "#designsense-center",
-          header: {
-            title: "At Your Fingertips!",
-          },
-          content:
-            "By right-clicking anywhere we can summon a fast-access menu that has some of the operations we mentioned earlier. This is especially effective when using <em>DesignSense</em> across multiple screens.",
-          params: {
-            enableScrolling: false,
-            placement: "top",
-          },
-        },
-        {
-          target: "#editing-mode",
-          header: {
-            title: "Your Workspace, Your Process",
-          },
-          content:
-            "We can adjust the workspace to suit our needs through the Editing mode. This mode allows us to move or resize any of the panels in our workspace. </br>[Pro Tip]: zoom out in your browser before moving panels around.",
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-        },
-        {
-          target: "#designsense-title",
-          header: {
-            title: "Thanks!!",
-          },
-          content: `This marks the end of our tour of <em>DesignSense</em>! Feel free to reach us on aabuzura@sfu.ca`,
-          params: {
-            enableScrolling: false,
-            placement: "bottom",
-          },
-          before: () => {
-            this.$store.commit("toggleEditingMode", { value: false });
-          },
-        },
+        tourStep(this, "lite", "#designsense-title", "Welcome to DesignSense",
+          "Explore a collection of design options through their images and their data. This tour takes about two minutes. Use the arrow keys or the buttons below.",
+          "bottom"),
+        tourStep(this, "lite", "#ui-mode-toggle", "Lite and Expert",
+          "<b>Lite</b> keeps things simple: you narrow the options with filters. <b>Expert</b> adds precise selection, clustering, and a layout you can rearrange. The tour starts in Lite.",
+          "bottom"),
+        tourStep(this, "lite", "#loading-data-bar", "Load your data",
+          "Open a collection from your computer or from a shared folder. This tour uses a small set of used cars.",
+          "bottom"),
+        tourStep(this, "lite", '.v-card[type="Grid"]', "Gallery",
+          "Every option appears here as an image. Sort them from the menu at the top and change the image size on the right. Click an image to inspect it, and click it again to stop.",
+          "right"),
+        tourStep(this, "lite", ".v-card[type='ScatterPlot']", "Scatterplot",
+          "Each dot is an option. Drag a box to filter by both axes, and choose the axes at the top. Click a dot to inspect it.",
+          "left", () => this.showTourFilter()),
+        tourStep(this, "lite", '.v-card[type="ParallelCoordinatesPlot"]', "Parallel coordinates",
+          "Each line is an option and each axis is a dimension. Drag along an axis to filter it. Drag a title to reorder the axes, or pick them under Axes.",
+          "left"),
+        tourStep(this, "lite", "#filter-bar", "Your filters",
+          "Each filter becomes a chip, and the count shows how many options match. Remove a chip to drop its filter, or press Esc to clear them all.",
+          "bottom"),
+        tourStep(this, "lite", "#data-operations-bar", "Zoom",
+          "Zoom in on the matching options to focus on them, or exclude them instead. Reset brings back the whole collection.",
+          "bottom"),
+        tourStep(this, "lite", '.v-card[type="Sets"]', "Saved sets",
+          "Save the current results along with their filters. Restore a set later to bring those filters back.",
+          "right", () => this.saveTourSet()),
+        tourStep(this, "expert", "#ui-mode-toggle", "Expert mode",
+          "Expert keeps everything you have seen and adds more control. Instead of filtering, you build a selection.",
+          "bottom"),
+        tourStep(this, "expert", "#selection-operations-bar", "Selection operations",
+          "Choose how a new selection combines with the current one: replace, add, subtract, toggle, or intersect. Hold Shift to add, Ctrl to subtract, or both to intersect.",
+          "bottom"),
+        tourStep(this, "expert", "#sets-operations-bar", "Selection tools",
+          "Undo, redo, clear, or invert the selection.",
+          "bottom"),
+        tourStep(this, "expert", ".v-card[type='ScatterPlot'] div.cluster-view", "Clusters",
+          "Clusters group options that are similar on the dimensions you choose. Each image stands for a group. Click it to select the whole group.",
+          "left", () => this.$store.commit("setClusteringPanelOpen", { value: true })),
+        tourStep(this, "expert", "#inspection-bar", "Inspection",
+          "Hold Space and move over any option to inspect it. Pin keeps it inspected after you let go, and the last button inspects without holding Space.",
+          "bottom"),
+        tourStep(this, "expert", "#editing-mode", "Your layout",
+          "Turn on editing to move and resize the panels.",
+          "bottom"),
+        tourStep(this, "lite", "#designsense-title", "You're ready",
+          "You're back in Lite. Switch to Expert whenever you need more control, and right-click anywhere for quick actions. Feedback is welcome at abuzreq@gmail.com.",
+          "bottom", () => this.$store.dispatch("clearFilters")),
       ],
       operationsList: operations,
       actions: {
-        reverseUpdate: {
-          clickAction: () => this.$store.dispatch("reverseUpdate"),
+        undo: {
+          clickAction: () => this.$store.dispatch("undo"),
           icon: "mdi-undo",
-          tooltip: () => "Reverse the last selection update [Ctrl-z]",
+          tooltip: () =>
+            this.isLite
+              ? "Undo the last filter change [Ctrl+Z]"
+              : "Undo the last selection change [Ctrl+Z]",
+          type: "selection",
+        },
+        redo: {
+          clickAction: () => this.$store.dispatch("redo"),
+          icon: "mdi-redo",
+          tooltip: () => "Redo [Ctrl+Y]",
           type: "selection",
         },
         createSet: {
           clickAction: () => this.$store.dispatch("createSet"),
           icon: "mdi-contain",
-          tooltip: () => "Create Set",
+          tooltip: () =>
+            this.isLite
+              ? "Save the matching options and their filters as a set"
+              : "Create Set",
           type: "selection",
         },
         resetAllMarkings: {
           clickAction: () => this.$store.dispatch("resetAllMarkings"),
           icon: "mdi-select-off",
-          tooltip: () => "Reset Selection [ESC]",
+          tooltip: () =>
+            this.isLite ? "Clear all filters [Esc]" : "Reset Selection [ESC]",
           type: "selection",
         },
         invertSelection: {
           clickAction: () => this.$store.dispatch("invertSelection"),
           icon: "mdi-select-inverse",
-          tooltip: () => "Invert Selection",
+          tooltip: () =>
+            this.isLite
+              ? "Invert: show everything the filters leave out"
+              : "Invert Selection",
           type: "selection",
         },
         undoDataTransformation: {
           clickAction: () => this.$store.dispatch("undoDataTransformation"),
           icon: "mdi-magnify-minus-outline",
-          tooltip: () => "Undo zooming or filtering operations",
+          tooltip: () => "Step back out of the last zoom or exclusion",
           type: "data",
         },
         zoomToSelection: {
           clickAction: () => this.$store.dispatch("zoomToSelection"),
           icon: "mdi-magnify-plus-outline",
-          tooltip: () => "Zoom on the selected",
+          tooltip: () =>
+            this.isLite
+              ? "Zoom in on the matching options. Charts rescale to them and you can filter again inside them."
+              : "Zoom on the selected",
           type: "data",
         },
         excludeSelection: {
           clickAction: () => this.$store.dispatch("excludeSelection"),
           icon: "mdi-filter-remove-outline",
-          tooltip: () => "Filter out the selected",
+          tooltip: () =>
+            this.isLite
+              ? "Exclude the matching options from the collection"
+              : "Filter out the selected",
           type: "data",
         },
         resetData: {
           clickAction: () => this.$store.dispatch("resetData"),
           icon: "mdi-restart",
-          tooltip: () => "Reset Data",
+          tooltip: () =>
+            this.isLite
+              ? "Show the full collection again. Your filters stay."
+              : "Show all the data again",
           type: "data",
         },
         toggleInspectionMode: {
@@ -1053,11 +679,16 @@ export default {
         },
         help: {
           clickAction: () => {
-            readyToLoad("https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv"
-            ).then((data) => {
-            //TODO get skinny boxes then create a set from them + debug this
-               this.$tours["onboardingTour"].start();
-             });
+            // The tour starts in Lite, then introduces Expert.
+            this.$store.dispatch("setUiMode", "lite");
+            // The tour walks through the used-car dataset, so it loads first.
+            loadDataset(DEFAULT_DATASET_URL, { source: "tour" })
+              .then((dataset) => {
+                if (dataset) this.$tours["onboardingTour"].start();
+              })
+              .catch(() => {
+                /* loadState.error carries the message */
+              });
           },
           icon: "mdi-help-circle-outline",
           tooltip: () => "Start the on-boarding tour!",
@@ -1075,7 +706,10 @@ export default {
         saveToFile: {
           clickAction: () => this.$store.dispatch("saveSelectedToFile"),
           icon: "mdi-download",
-          tooltip: () => "Download the selected options to file (.csv)",
+          tooltip: () =>
+            this.isLite
+              ? "Download the matching options (.csv)"
+              : "Download the selected options to file (.csv)",
           type: "misc",
         },
         shareStaticLink: {
@@ -1085,33 +719,35 @@ export default {
           type: "misc",
         },
       },
-      contextMenuItems: [
-        "togglePinInspection",
-        "clearInspection",
-        "resetAllMarkings",
-        "createSet",
-        "excludeSelection",
-        "zoomToSelection",
-        "undoDataTransformation",
-      ],
-
       showContextMenu: false,
       rightClickPos: { x: 0, y: 0 },
       isShareLinkModalOn: false,
+      dismissedNotice: "",
+      // The page minus its scrollbar gutter and the 60px app bar, so panels
+      // mount at their final size. Re-measured on mount and on window resize.
+      workspaceWidth: document.documentElement.clientWidth,
+      workspaceHeight: Math.max(0, document.documentElement.clientHeight - 60),
     };
   },
   destroyed() {},
+  beforeDestroy() {
+    if (this.workspaceObserver) this.workspaceObserver.disconnect();
+    window.removeEventListener("resize", this.onWorkspaceResize);
+    document.removeEventListener("click", this.onDocumentClick);
+    clearTimeout(this.resizeTimer);
+  },
   created() {
     document.title = "DesignSense";
     //To close the context menu when a click happens anywhere
-    document.addEventListener("click", (e) => {
+    this.onDocumentClick = (e) => {
       //To prevent the context menu from closing when the click is on it
       let contextMenuNode = d3.select(".vue-radial-menu-container")
         ._groups[0][0];
       if (e.target !== contextMenuNode) {
         this.showContextMenu = false;
       }
-    });
+    };
+    document.addEventListener("click", this.onDocumentClick);
 
     this.track();
     let shown = localStorage.getItem("wasOpeningDialogShown");
@@ -1125,6 +761,15 @@ export default {
     }
   },
   mounted() {
+    this.measureWorkspace();
+    // The observer also catches size changes no window resize event reports;
+    // both feed the same delayed measurement.
+    window.addEventListener("resize", this.onWorkspaceResize);
+    if (window.ResizeObserver) {
+      this.workspaceObserver = new ResizeObserver(this.onWorkspaceResize);
+      this.workspaceObserver.observe(this.$refs.workspace);
+    }
+
     let contextMenuCenter = this.$el.getElementsByClassName(
       "vue-radial-menu-container"
     )[0];
@@ -1133,22 +778,6 @@ export default {
       this.moveToNextOperation();
     });
 
-    Vue.nextTick(() => {
-      let dialogs = document.getElementsByClassName("v-dialog");
-      if (dialogs.length > 1) {
-        dialogs[1].parentElement.remove();
-      }
-
-      let overlays = document.getElementsByClassName("v-overlay");
-      if (overlays) {
-        Array.from(overlays).sort((a, b) => a.style.zIndex - b.style.zIndex);
-
-        if (overlays.length > 1) {
-          overlays[0].remove();
-          console.log("over over", overlays);
-        }
-      }
-    });
   },
   computed: {
     ...mapState({
@@ -1160,14 +789,196 @@ export default {
       isOpeningDialogOn: (state) => state.isOpeningDialogOn,
       shareLink:  (state) => state.shareLink,
       isStudySharable: (state) => state.isStudySharable,
+      uiMode: (state) => state.uiMode,
+      shownCount: (state) => state.data.length,
+      dataStack: (state) => state.dataStack,
+      filterHistory: (state) => state.filterHistory,
+      filterFuture: (state) => state.filterFuture,
+      selectionHistory: (state) => state.selectionHistory,
+      selectionFuture: (state) => state.selectionFuture,
     }),
+    ...mapGetters([
+      "can",
+      "isLite",
+      "isFilterActive",
+      "hasScope",
+      "selectionCount",
+    ]),
+    loadState() {
+      return loadState;
+    },
+    /**
+     * What the last load left to say. The load dialog shows its own errors, so
+     * only a load nobody watched reports one here.
+     */
+    loadNotice() {
+      if (loadState.error) {
+        let unwatched =
+          loadState.source === "startup" || loadState.source === "tour";
+        return unwatched ? loadState.error : "";
+      }
+      return loadState.warnings.join(" ");
+    },
+    showLoadNotice: {
+      get() {
+        return this.loadNotice !== "" && this.loadNotice !== this.dismissedNotice;
+      },
+      set(value) {
+        if (!value) this.dismissedNotice = this.loadNotice;
+      },
+    },
+    // Panels sit on a grid stretched over the workspace, so they fill any screen.
+    unitW() {
+      return this.workspaceWidth / LAYOUT_COLUMNS;
+    },
+    unitH() {
+      return this.workspaceHeight / LAYOUT_ROWS;
+    },
+    selectionActions() {
+      // Lite's undo, redo and clear already sit in the filter bar; what it
+      // lacks is inverting the result and saving it as a set.
+      return this.isLite
+        ? ["invertSelection", "createSet"]
+        : ["undo", "redo", "resetAllMarkings", "invertSelection"];
+    },
+    dataActions() {
+      return [
+        "zoomToSelection",
+        "excludeSelection",
+        "undoDataTransformation",
+        "resetData",
+      ];
+    },
+    inspectionActions() {
+      return ["togglePinInspection", "clearInspection", "toggleInspectionMode"];
+    },
+    contextMenuItems() {
+      if (this.isLite) {
+        return [
+          "clearInspection",
+          "resetAllMarkings",
+          "createSet",
+          "zoomToSelection",
+          "excludeSelection",
+          "undo",
+        ];
+      }
+      return [
+        "togglePinInspection",
+        "clearInspection",
+        "resetAllMarkings",
+        "createSet",
+        "excludeSelection",
+        "zoomToSelection",
+        "undoDataTransformation",
+      ];
+    },
+  },
+  watch: {
+    currentSelectionOperation: {
+      immediate: true,
+      handler() {
+        this.updateSelectionCursor();
+      },
+    },
+    uiMode() {
+      this.updateSelectionCursor();
+    },
   },
   methods: {
     track() {
       console.log("tracking", this.$gtag);
       this.$gtag.pageview("/");
     },
+    setUiMode(mode) {
+      if (mode) this.$store.dispatch("setUiMode", mode);
+    },
+    /** Puts the workspace in `mode` for a tour step, then runs its setup. */
+    prepareTourStep(mode, setup) {
+      let store = this.$store;
+      store.commit("toggleEditingMode", { value: false });
+      let switching = store.state.uiMode !== mode;
+      if (switching) store.dispatch("setUiMode", mode);
+      if (setup) setup();
+      // Give the panels time to re-render, so the step finds its target.
+      return new Promise((resolve) => setTimeout(resolve, switching ? 400 : 50));
+    },
+    /** Filters the tour's used-car data, so the filter chips have something to show. */
+    showTourFilter() {
+      let dims = this.$store.state.numericDimensions;
+      if (!dims.includes("price") || !dims.includes("year")) return;
+      this.$store.dispatch("setRangeFilters", {
+        ranges: { price: [4000, 12000], year: [2006, 2015] },
+      });
+    },
+    saveTourSet() {
+      if (this.$store.state.setsIDs.length === 0) {
+        this.$store.dispatch("createSet");
+      }
+    },
+    measureWorkspace() {
+      let el = this.$refs.workspace;
+      if (!el) return;
+      this.workspaceWidth = el.clientWidth;
+      this.workspaceHeight = el.clientHeight;
+    },
+    // Resizing rebuilds every chart, so wait until the size settles.
+    onWorkspaceResize() {
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = setTimeout(this.measureWorkspace, 150);
+    },
+    /** Greys out toolbar actions that would do nothing right now. */
+    isActionDisabled(name) {
+      // Zoom and exclude act on the filter result in Lite, the selection in Expert.
+      let count = this.isLite
+        ? this.isFilterActive
+          ? this.selectionCount
+          : 0
+        : this.selectionCount;
+      switch (name) {
+        case "undo":
+          return (
+            (this.isLite ? this.filterHistory : this.selectionHistory)
+              .length === 0
+          );
+        case "redo":
+          return (
+            (this.isLite ? this.filterFuture : this.selectionFuture).length ===
+            0
+          );
+        case "zoomToSelection":
+        case "excludeSelection":
+          return count === 0 || count >= this.shownCount;
+        case "undoDataTransformation":
+          return this.isLite ? !this.hasScope : this.dataStack.length === 0;
+        case "resetData":
+          return !this.hasScope;
+        case "invertSelection":
+          // Nothing to invert until something is filtered out.
+          return this.isLite ? !this.isFilterActive : false;
+        default:
+          return false;
+      }
+    },
+    // Toggles light up while on; other toolbar buttons keep the bar's color.
+    toolbarColor(type) {
+      if (
+        type === "inspecting" ||
+        type === "inspectionPin" ||
+        type === "editing"
+      ) {
+        return this.actionType2Color(type);
+      }
+      return undefined;
+    },
+    updateSelectionCursor() {
+      applySelectionCursor(
+        document.body,
+        this.can("selectionOperations") ? this.currentSelectionOperation : null
+      );
+    },
     moveToNextOperation() {
+      if (!this.can("selectionOperations")) return;
       console.log("move");
       let current = this.$store.state.currentSelectionOperation;
       let allOperationsValues = Object.values(operations);

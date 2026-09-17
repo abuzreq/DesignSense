@@ -1,282 +1,286 @@
 <template>
-  <v-container style="width: 200px">
+  <v-container style="width: auto; padding: 0 4px">
     <div class="text-center">
-      <v-dialog v-model="dialog" width="800" overlay-opacity="0.5">
+      <v-dialog v-model="dialog" width="760" overlay-opacity="0.5">
         <template v-slot:activator="{ on, attrs }">
-          <v-btn color="red lighten-2" dark v-bind="attrs" v-on="on">
-            Load Data
+          <v-btn
+            color="red lighten-2"
+            dark
+            class="load-data-button"
+            title="Load data"
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-icon left class="load-data-icon">mdi-folder-open-outline</v-icon>
+            <span class="load-data-label">Load Data</span>
           </v-btn>
         </template>
 
-        <v-card style="height: 480px">
-          <v-card-title class="headline grey lighten-2">
-            Data Loading
-          </v-card-title>
-          <v-row no-gutters class="row-margins">
-            <v-col :cols="11">
-              <v-row no-gutters>
-                <v-col :cols="2">
-                  <span>Enter a URL:&emsp;</span>
-                </v-col>
-                <v-col :cols="8">
-                  <v-text-field v-model="url" clearable> </v-text-field>
-                </v-col>
-                <v-col :cols="2">
-                  <v-btn
-                    style="margin-left: 80px; margin-top: 12px"
-                    :disabled="!isValid"
-                    @click="onInputUrlSubmit"
-                  >
-                    Load
-                    <v-icon>mdi-cloud-upload-outline</v-icon>
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-col>
-            <h5 style="color: #9d9d9d; text-align: center">
-              Please put data.csv, images, and 3D-json files into the same
-              folder. (<a
+        <v-card>
+          <v-card-title class="headline grey lighten-2">Load data</v-card-title>
+          <v-progress-linear
+            :active="loadState.loading"
+            indeterminate
+            height="3"
+            color="primary"
+          />
+
+          <v-card-text class="pt-4">
+            <v-alert
+              v-if="loadState.error"
+              type="error"
+              dense
+              outlined
+              dismissible
+              class="mb-4"
+              @input="dismissError"
+              >{{ loadState.error }}</v-alert
+            >
+
+            <div class="load-label">From a link</div>
+            <div class="load-row">
+              <v-text-field
+                v-model="url"
+                dense
+                outlined
+                hide-details
+                clearable
+                :disabled="loadState.loading"
+                placeholder="Link to a CSV file, or to a folder holding data.csv"
+                @keydown.enter="loadUrl"
+              />
+              <v-btn
+                color="primary"
+                depressed
+                :disabled="!isValidUrl || loadState.loading"
+                :loading="isLoading('url')"
+                @click="loadUrl"
+                >Load</v-btn
+              >
+            </div>
+            <p class="load-hint">
+              A folder should hold data.csv together with its images and 3D json
+              files (<a
                 href="https://tt-acm.github.io/DesignExplorer/design_explorer_data/example/online/example.zip"
                 target="_blank"
                 >example.zip</a
-              >)
-            </h5>
-          </v-row>
-          <v-divider></v-divider>
-          <v-row no-gutters class="row-margins">
-            <v-col :cols="2">
-              <span>Pick a Preset Dataset:&emsp;</span>
-            </v-col>
-            <v-col :cols="8">
-              <v-select :items="URLs" item-text="name" return-object>
-                <template v-slot:item="data" ripple>
-                  <span style="width: 100%" @click="onUrlChange(data.item)">
-                    {{ data.item.name }}
-                    <h5
-                      style="
-                        color: #9d9d9d;
-                        word-wrap: break-word;
-                        width: 600px;
-                      "
-                    >
-                      {{ data.item.info }}
-                    </h5>
-                  </span>
+              >). Google Drive and OneDrive folders work too. For files on
+              GitHub, use the Raw link.
+            </p>
+
+            <v-divider class="my-4" />
+
+            <div class="load-label">A prepared dataset</div>
+            <div class="load-row">
+              <v-select
+                v-model="selectedPreset"
+                :items="presets"
+                item-text="name"
+                return-object
+                dense
+                outlined
+                hide-details
+                placeholder="Choose a dataset"
+                :disabled="loadState.loading"
+              >
+                <template v-slot:item="{ item }">
+                  <v-list-item-content>
+                    <v-list-item-title>{{ item.name }}</v-list-item-title>
+                    <v-list-item-subtitle v-if="item.info" class="preset-info">{{
+                      item.info
+                    }}</v-list-item-subtitle>
+                  </v-list-item-content>
                 </template>
               </v-select>
-            </v-col>
-            <v-col :cols="2">
               <v-btn
-                style="margin-left: 32px; margin-top: 12px"
-                :disabled="!currentPresetURL || currentPresetURL == ''"
-                @click="onPresetURSubmit"
+                color="primary"
+                depressed
+                :disabled="!selectedPreset || loadState.loading"
+                :loading="isLoading('preset')"
+                @click="loadPreset"
+                >Load</v-btn
               >
-                Load
-                <v-icon>mdi-cloud-upload-outline</v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
+            </div>
 
-          <v-divider></v-divider>
-          <v-row no-gutters class="row-margins">
-            <v-col :cols="2">
-              <span>Upload a Local File:&emsp;</span>
-            </v-col>
-            <v-col :cols="10">
-              <v-file-input
-                label="File input"
-                outlined
-                dense
-                @change="loadFromCSV($event)"
-              ></v-file-input>
-            </v-col>
-            <h5 style="color: #9d9d9d; text-align: center">
-              Make sure that the images column in the csv file you upload
-              contains public URLs (<a
+            <v-divider class="my-4" />
+
+            <div class="load-label">From your computer</div>
+            <v-file-input
+              :key="fileInputKey"
+              accept=".csv,.tsv,.txt,text/csv"
+              dense
+              outlined
+              hide-details
+              prepend-icon=""
+              prepend-inner-icon="mdi-paperclip"
+              placeholder="Choose a CSV file"
+              :disabled="loadState.loading"
+              :loading="isLoading('file')"
+              @change="loadFile"
+            />
+            <p class="load-hint">
+              The image columns of a local file need public links (<a
                 href="https://tt-acm.github.io/DesignExplorer/design_explorer_data/example/LocalCSV_example.csv"
                 target="_blank"
-                >data.csv</a
-              >)
-            </h5>
-          </v-row>
+                >example data.csv</a
+              >).
+            </p>
+          </v-card-text>
 
-          <!--
-            <v-divider></v-divider>
-         <v-card-actions>
-            <v-btn color="red" text @click="dialog = false"> Close </v-btn>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn text @click="dialog = false">Close</v-btn>
           </v-card-actions>
-      -->
         </v-card>
       </v-dialog>
     </div>
   </v-container>
 </template>
 
-
 <script>
-import {
-  loadDataFromURL,
-  loadDataFromCloudURL,
-  loadData,
-  prepareData,
-  readyToLoad,
-} from "../main.js";
+import { loadDataset, loadState } from "@/data/loader.js";
 const isUrl = require("is-valid-http-url");
-import * as d3 from "d3";
+
+const PRESETS = [
+  {
+    name: "Craigslist - Used Cars",
+    url:
+      "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv",
+    info: "Used cars with their price, year and mileage",
+  },
+  {
+    name: "Simple Box",
+    url:
+      "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv",
+    info: "A simple red box (from https://tt-acm.github.io/DesignExplorer/)",
+  },
+  {
+    name: "Façade Design",
+    url:
+      "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/facade/data.csv",
+    info: "Façade panel variations",
+  },
+  {
+    name: "AIA Building",
+    url:
+      "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/AIA%20building.csv",
+    info:
+      "The AIA building dataset (from https://tt-acm.github.io/DesignExplorer/)",
+  },
+  {
+    name: "Windows Exploration",
+    url:
+      "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/default_onload.csv",
+    info:
+      "Exploring impact of windows on lighting/heating (from https://tt-acm.github.io/DesignExplorer/)",
+  },
+  {
+    name: "Massing Study",
+    url:
+      "https://raw.githubusercontent.com/Zohrehhasanpur/GalleryDesignDataset/main/data.csv",
+    info:
+      "A generative design dataset exploring different massing for an arts gallery project.",
+  },
+  {
+    name: "Rezoning Project",
+    url:
+      "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/rezoning/data.csv",
+    info: "Form exploration for a rezoning project",
+  },
+  {
+    name: "Solar",
+    url:
+      "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/solar/data.csv",
+    info: "Solar analysis for a tower placement",
+  },
+  {
+    name: "Malaeeb",
+    url: "https://drive.google.com/open?id=1LNFH92UGzsLbP07JJJ3fvwMAKlf6FE2h",
+    info: "Procedurally generated game puzzles",
+  },
+  {
+    name: "Covid",
+    url:
+      "https://drive.google.com/drive/folders/1FtHuhukPhaD8Fk9o8cjUH65Pr8ryBmcY?usp=sharing",
+    info: "Molecular designs from the Postera.ai crowdsourcing project",
+  },
+];
 
 export default {
   name: "LoadDataModal",
   data() {
     return {
       dialog: false,
-      URLs: [
-        {
-          name: "Simple Box",
-          url: "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv",
-          type: "csv",
-          info: "A simple red box (from https://tt-acm.github.io/DesignExplorer/)",
-        },
-        {
-          name: "Craigslist - Used Cars",
-          url: "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv",
-          type: "csv",
-        }, 
-        {
-          name: "Façade Design",
-          url: "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/facade/data.csv",
-          type: "csv",
-        },
-        {
-          name: "AIA Building",
-          url: "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/AIA%20building.csv",
-          type: "csv",
-          info: "The AIA building dataset (from https://tt-acm.github.io/DesignExplorer/)",
-        },
-        {
-          name: "Windows Exploration",
-          url: "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/default_onload.csv",
-          type: "csv",
-          info: "Exploring impact of windows on lighting/heating (from https://tt-acm.github.io/DesignExplorer/)",
-        },
-        {
-          name: "Massing Study",
-          url: "https://raw.githubusercontent.com/Zohrehhasanpur/GalleryDesignDataset/main/data.csv",
-          type: "csv",
-          info: "A generative design dataset exploring different massing for an arts gallery project.",
-        },
-
-
-        /*{
-          name: "Rezoning Project (unoptimized)",//P+W Crofton
-          url:
-            "https://drive.google.com/open?id=1QBanCG1t4xak_5lj0Nwazhy5ANHAX_x7",
-          type: "cloud",
-          info: "Form exploration for a rezoning project (images not optimized before uploading)",
-        },*/
-        {
-          name: "Rezoning Project",
-          url: "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/rezoning/data.csv", //https://drive.google.com/drive/folders/1lH8DYa6y8sinaSDTohfjQ5apyIFFlxF4
-          type: "csv",
-          info: "Form exploration for a rezoning project",
-        },
-        {
-          name: "Solar",
-          url: "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/solar/data.csv",
-          type: "csv",
-          info: "Solar analysis for a tower placement",
-        },
-        /*{
-          name: "SmartGeometry",
-          url: "http://142.58.183.69:5051",
-          type: "server",
-          info: "Results of a form exploration exercise during Smart Geometry 2018 by multiple designers",
-        },*/
-        /*{
-          name: "DreamLens",
-          url: "https://drive.google.com/drive/folders/1L1cxJAXS6AJ0t1q9mIvvpfjC-PXITaw8",
-          type: "cloud",
-          info: "The dataset from the paper by Autodesk: 'Dream Lens: Exploration and Visualization of Large-Scale Generative Design Datasets'",
-        },
-        {
-          name: "Facade Exploration",
-          url: "https://drive.google.com/drive/folders/1tXPQpiF3nLAfM7v4tDeG1w2hMAogsuJa?usp=sharing",
-          type: "cloud",
-          info: "Performance exploration for facade structures by johnmsloane (big dataset!)",
-        },*/
-        {
-          name: "Malaeeb",
-          url: "https://drive.google.com/open?id=1LNFH92UGzsLbP07JJJ3fvwMAKlf6FE2h",
-          type: "cloud",
-          info: "Procedurally generated game puzzles",
-        },
-        /*{
-          name: "D*",
-          url: "http://sr-02645.iat.sfu.ca:5052",
-          type: "server",
-          info: "",
-        },*/
-
-        {
-          name: "Covid",
-          url: "https://drive.google.com/drive/folders/1FtHuhukPhaD8Fk9o8cjUH65Pr8ryBmcY?usp=sharing",
-          type: "cloud",
-          info: "Molecular designs from the Postera.ai crowdsourcing project",
-        },
-        /*{
-          name: "Local Host",
-          url: "http://localhost:5050",
-          type: "server",
-          info: "",
-        },*/
-      ],
+      presets: PRESETS,
+      selectedPreset: null,
       url: "",
-      cloudURL: "",
-      currentPresetURL: ""
+      // Remounting the file input lets the same file be chosen again.
+      fileInputKey: 0,
     };
   },
   computed: {
-    isValid() {
-      if (!this.url) return false;
-
-      return isUrl(this.url);
+    loadState() {
+      return loadState;
+    },
+    trimmedUrl() {
+      return (this.url || "").trim();
+    },
+    isValidUrl() {
+      return this.trimmedUrl !== "" && isUrl(this.trimmedUrl);
     },
   },
   methods: {
-    onInputUrlSubmit() {
-      loadDataFromCloudURL(this.url);
+    isLoading(source) {
+      return loadState.loading && loadState.source === source;
     },
-    onUrlChange(value) {
-      this.currentPresetURL = value;
+    loadUrl() {
+      if (!this.isValidUrl || loadState.loading) return;
+      this.load(this.trimmedUrl, "url");
     },
-    onPresetURSubmit() {
-      if (this.currentPresetURL.type === "server") {
-        loadDataFromURL(this.currentPresetURL.url, "/alternatives");
-      } else if (this.currentPresetURL.type === "cloud") {
-        loadDataFromCloudURL(this.currentPresetURL.url);
-      } else if (this.currentPresetURL.type === "csv") {
-        readyToLoad(this.currentPresetURL.url);
-      }
+    loadPreset() {
+      if (!this.selectedPreset || loadState.loading) return;
+      this.load(this.selectedPreset.url, "preset");
     },
-    loadFromCSV(file) {
-      var reader = new FileReader();
-
-      reader.onload = function (e) {
-        var inputString = e.target.result;
-
-        // I need to add some defense here
-        // separateInputOutputs(e);
-
-        var data = d3.csvParse(inputString);
-        loadData(prepareData(data));
-      };
-      reader.readAsText(file);
+    loadFile(file) {
+      // Clearing the input reports no file.
+      if (!file || loadState.loading) return;
+      this.load({ file: file }, "file");
+    },
+    /**
+     * A load that succeeds mounts a new app, which replaces this dialog; one
+     * that fails leaves the dialog open, with the error shown above.
+     */
+    load(input, source) {
+      loadDataset(input, { source: source }).catch(() => {
+        this.fileInputKey += 1;
+      });
+    },
+    dismissError() {
+      loadState.error = null;
     },
   },
 };
 </script>
 
 <style scoped>
-.row-margins {
-  margin: 25px 25px 25px 25px;
+.load-label {
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #37474f;
+}
+.load-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.load-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #78909c;
+}
+.preset-info {
+  max-width: 620px;
+  white-space: normal;
 }
 </style>

@@ -8,7 +8,61 @@ import * as d3 from "d3";
 import * as d3Chromatic from "d3-scale-chromatic";
 
 import createLogger from "./logger";
-import { encodeUrl } from "@/main.js";
+import { encodeUrl } from "@/data/shareLink.js";
+import { saveLayouts, defaultLayouts } from "@/layout.js";
+import { UI_MODES, canUse, normalizeMode } from "@/uiModes.js";
+import {
+  GALLERY_KEY,
+  applyFilters,
+  compileFilters,
+  describeFilter,
+  filterTone,
+  gallerySelectionTest,
+  isScopeFilter,
+  makeMembersFilter,
+  makeRangeFilter,
+  makeScopeFilter,
+  narrowingFilters,
+  boxesFor,
+  rangeKey,
+  removeFilterBox,
+  removeFilterByKey,
+  sameFilterList,
+  scopeFilters,
+  scopeSignature,
+  selectOnlyInGallery as selectOnlyInGalleryFilters,
+  setGallerySelected,
+  upsertFilter,
+} from "./filters.js";
+import { RATING_BOUNDS, RATING_DIMENSION, isRated } from "@/ratings.js";
+
+const UI_MODE_KEY = "designsense-uiMode";
+// Undo depth for both the Expert selection and the Lite filters.
+const HISTORY_LIMIT = 50;
+
+function readStoredUiMode() {
+  try {
+    return normalizeMode(localStorage.getItem(UI_MODE_KEY));
+  } catch (e) {
+    return UI_MODES.LITE;
+  }
+}
+
+function persistUiMode(mode) {
+  try {
+    localStorage.setItem(UI_MODE_KEY, mode);
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+const VIEW_TYPE_LABELS = {
+  ScatterPlot: "Scatterplot",
+  ParallelCoordinatesPlot: "PCP",
+  Grid: "Gallery",
+  Sets: "Set",
+  SPLOM: "SPLOM",
+};
 
 Vue.use(Vuex);
 
@@ -16,7 +70,10 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
   return new Vuex.Store({
     plugins: [createLogger],
     state: {
+      // What a brush applies right now: the sticky operation, or a held modifier's.
       currentSelectionOperation: operations.REPLACE,
+      // Chosen with the toolbar or number keys; restored when modifiers are released.
+      stickySelectionOperation: operations.REPLACE,
       layouts: new_layouts,
       defaultMarkingID: utils.generateID(), //"_lqpkb07gn"
       rawData: new_data,
@@ -25,12 +82,19 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       view2markingIDs: new Map(),
       markingID2views: new Map(),
       markingsMap: {}, // markingID -> marking object. Marking object is {altID -> highlightState}
-      previousDefaultMarkingsMap: {},
+      // Expert undo/redo, as arrays of selected IDs on the default marking.
+      selectionHistory: [],
+      selectionFuture: [],
+      // Markings are mutated in place, out of Vue's sight. Bumping this lets
+      // getters such as selectionCount recompute.
+      selectionVersion: 0,
       viewsMap: {},
 
       setsIDs: [],
       setsMetadataMap: {},
       setsMap: {},
+      // The filters each set was saved from, or null for a hand-picked set.
+      setsCriteriaMap: {},
       numericDimensions: getNumericDimensions(dataTypesMap),
       nonNumericDimensions: getNonNumericDimensions(dataTypesMap),
       allDimensions: Object.keys(dataTypesMap),
@@ -52,11 +116,34 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       colorRange: d3Chromatic.schemeTableau10,
       colorColumn: "",
 
+      uiMode: readStoredUiMode(),
+      // Lite mode's filters (see store/filters.js) and their undo history.
+      filters: [],
+      filterHistory: [],
+      filterFuture: [],
+      // Which zoom and exclude filters `data` currently reflects.
+      appliedScopeSignature: "",
+
       isOpeningDialogOn: true,
       isStudySharable: false,
       shareLink: null,
 
-      isClusteringPanelOpen: true
+      isClusteringPanelOpen: true,
+
+      /*
+       * Settings that belong to a view but have to be reachable from outside
+       * it. The gallery's sort and the scatterplot's axes were component data,
+       * which meant nothing else could set them -- not the assistant, not a
+       * share link, not a saved layout.
+       *
+       * null means "the view picks its own default".
+       */
+      viewSettings: {
+        sortBy: null,
+        sortDesc: true,
+        scatterX: null,
+        scatterY: null,
+      },
     },
     getters: {
       colorScale: (state) => d3.scaleOrdinal(state.colorRange),
@@ -134,6 +221,68 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         return state.hovered;
       },
       isHoveringEnabled: (state) => state.isInspectionMode,
+      colorColumn: (state) => state.colorColumn,
+      isExpert: (state) => state.uiMode !== UI_MODES.LITE,
+      isLite: (state) => state.uiMode === UI_MODES.LITE,
+      can: (state) => (feature) => canUse(state.uiMode, feature),
+      // Hover inspects only while Space is held (or continuous inspection is on).
+      isChartHoverEnabled: (state) => state.isInspectionMode,
+      // An empty result under active filters means "nothing matches", which
+      // views must draw differently from "no filters yet".
+      // Zoom and exclude scope the data rather than narrow it, so they don't
+      // count here.
+      isFilterActive: (state) =>
+        state.uiMode === UI_MODES.LITE &&
+        narrowingFilters(state.filters).length > 0,
+      narrowingFilters: (state) => narrowingFilters(state.filters),
+      // Whether the data shown is a zoomed or excluded part of the collection.
+      hasScope: (state) =>
+        state.uiMode === UI_MODES.LITE
+          ? state.filters.some(isScopeFilter)
+          : state.data !== state.rawData,
+      /** The boxes brushed over exactly these dimensions, for charts that draw them. */
+      boxesFor: (state) => (dims) => boxesFor(state.filters, dims),
+      filterChips: (state) => state.filters.map(describeChip),
+      // Lite: the saved set whose filters are exactly the current ones.
+      matchingSetID: (state) => {
+        if (state.uiMode !== UI_MODES.LITE) return null;
+        let id = state.setsIDs.find((setID) =>
+          sameFilterList(setFilters(state, setID), state.filters)
+        );
+        return id === undefined ? null : id;
+      },
+      /** Chips for the filters a set was saved from; null for a hand-picked set. */
+      setCriteriaChips: (state) => (setID) => {
+        let criteria = state.setsCriteriaMap[setID];
+        return criteria ? criteria.map(describeChip) : null;
+      },
+      hasRatings: (state) => state.rawData.some(isRated),
+      selectionCount: (state, getters) => {
+        void state.selectionVersion;
+        return Object.keys(getters.selectedInMarking(state.defaultMarkingID))
+          .length;
+      },
+      // The gallery ignores its own selection, as crossfilter views do, so
+      // unselected options stay in its pool (dimmed) and can be reselected.
+      galleryPool: (state) => {
+        let others = removeFilterByKey(
+          narrowingFilters(state.filters),
+          GALLERY_KEY
+        );
+        if (state.uiMode !== UI_MODES.LITE || others.length === 0) {
+          return state.data;
+        }
+        return state.data.filter(compileFilters(others));
+      },
+      hasGallerySelection: (state) =>
+        state.uiMode === UI_MODES.LITE &&
+        state.filters.some((f) => f.key === GALLERY_KEY),
+      /** A predicate id -> whether that option is selected in the gallery. */
+      isSelectedInGallery: (state) => gallerySelectionTest(state.filters),
+      gallerySelectedCount: (state, getters) => {
+        let selected = getters.isSelectedInGallery;
+        return getters.galleryPool.filter((d) => selected(d._id)).length;
+      },
     },
     mutations: {
       /* setSimilarityMap(state, payload)
@@ -142,7 +291,16 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
              },  */
 
       changeSelectionOperation(state, newOperation) {
+        state.stickySelectionOperation = newOperation;
         state.currentSelectionOperation = newOperation;
+      },
+      // A held modifier overrides the sticky operation only while it is held.
+      setModifierOperation(state, operation) {
+        state.currentSelectionOperation =
+          operation || state.stickySelectionOperation;
+      },
+      setViewSetting(state, payload) {
+        Vue.set(state.viewSettings, payload.key, payload.value);
       },
       changeColorColumn(state, newColorColumn) {
         state.colorColumn = newColorColumn;
@@ -150,6 +308,66 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
 
       changeColorRange(state, newColorRange) {
         state.colorRange = newColorRange;
+      },
+      setUiMode(state, payload) {
+        let mode = normalizeMode(payload && payload.value);
+        state.uiMode = mode;
+        persistUiMode(mode);
+        if (mode === UI_MODES.LITE) {
+          state.isEditingMode = false;
+          state.stickySelectionOperation = operations.REPLACE;
+          state.currentSelectionOperation = operations.REPLACE;
+        }
+      },
+      setFilters(state, payload) {
+        state.filters = payload.filters;
+      },
+      recordFilters(state) {
+        state.filterHistory.push(state.filters);
+        if (state.filterHistory.length > HISTORY_LIMIT) {
+          state.filterHistory.shift();
+        }
+        state.filterFuture = [];
+      },
+      // Filter arrays are never mutated in place, so history can hold references.
+      stepFilterHistory(state, payload) {
+        let back = payload.direction < 0;
+        let from = back ? state.filterHistory : state.filterFuture;
+        let to = back ? state.filterFuture : state.filterHistory;
+        if (from.length === 0) return;
+        to.push(state.filters);
+        state.filters = from.pop();
+      },
+      clearFilterHistory(state) {
+        state.filterHistory = [];
+        state.filterFuture = [];
+      },
+      clearDataStack(state) {
+        state.dataStack = [];
+      },
+      setScopedData(state, payload) {
+        state.data = payload.data;
+        state.appliedScopeSignature = payload.signature;
+      },
+      updateLayout(state, payload) {
+        let i = state.layouts.findIndex((l) => l.type === payload.type);
+        if (i < 0) return;
+        Vue.set(state.layouts, i, Object.assign({}, state.layouts[i], payload));
+        saveLayouts(state.layouts);
+      },
+      /** Adds a panel that is not open, at its default place (or a free corner). */
+      openLayout(state, payload) {
+        if (state.layouts.some((l) => l.type === payload.type)) return;
+        let preset = defaultLayouts().find((l) => l.type === payload.type);
+        let entry = preset || { type: payload.type, x: 0, y: 0, w: 16, h: 12 };
+        state.layouts.push(Object.assign({}, entry));
+        saveLayouts(state.layouts);
+      },
+      closeLayout(state, payload) {
+        let i = state.layouts.findIndex((l) => l.type === payload.type);
+        if (i < 0) return;
+        state.layouts.splice(i, 1);
+        saveLayouts(state.layouts);
       },
       toggleEditingMode(state, payload) {
         if (payload) {
@@ -189,9 +407,16 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       },
       resetMarking(state, payload) {
         let marking = state.markingsMap[payload.markingID];
+        if (!marking) return;
+        let before =
+          payload.markingID === state.defaultMarkingID
+            ? getSelectedIDs(marking)
+            : null;
         for (var alt in marking) {
           marking[alt] = 0;
         }
+        if (before) pushSelectionHistory(state, before, []);
+        state.selectionVersion += 1;
       },
       createView(state, payload) {
         let viewID = payload.view;
@@ -237,45 +462,41 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         state.markingID2views.get(markingID).add(view);
       },
       reverseUpdate(state) {
-        console.log("revresig", state.previousDefaultMarkingsMap);
-        if (Object.keys(state.previousDefaultMarkingsMap).length !== 0) {
-          var selection = getSelectedIDs(state.previousDefaultMarkingsMap);
-          operate(
-            state.markingsMap[state.defaultMarkingID],
-            selection,
-            operations.REPLACE
-          );
-          state.previousDefaultMarkingsMap = {};
-        }
+        stepSelectionHistory(
+          state,
+          state.selectionHistory,
+          state.selectionFuture
+        );
+      },
+      redoUpdate(state) {
+        stepSelectionHistory(
+          state,
+          state.selectionFuture,
+          state.selectionHistory
+        );
       },
       update(state, payload) {
-        let selection = payload.selection;
-        let operation = payload.operation;
-        if (payload.hasOwnProperty("markingID")) {
-          if (payload.markingID === state.defaultMarkingID) {
-            state.previousDefaultMarkingsMap = Object.assign(
-              state.previousDefaultMarkingsMap,
-              state.markingsMap[payload.markingID]
-            );
-          }
-          operate(state.markingsMap[payload.markingID], selection, operation);
-        } else {
-          let view = payload.view;
-
-          if (state.view2markingIDs.has(view)) {
-            state.view2markingIDs.get(view).forEach((markingID) => {
-              if (markingID === state.defaultMarkingID) {
-                state.previousDefaultMarkingsMap = Object.assign(
-                  state.previousDefaultMarkingsMap,
-                  state.markingsMap[markingID]
-                );
-              }
-              operate(state.markingsMap[markingID], selection, operation);
-            });
-          } else {
-            console.log("This view does not affect any marking");
-          }
+        let markingIDs = payload.hasOwnProperty("markingID")
+          ? [payload.markingID]
+          : Array.from(state.view2markingIDs.get(payload.view) || []);
+        if (markingIDs.length === 0) {
+          console.log("This view does not affect any marking");
+          return;
         }
+        markingIDs.forEach((markingID) => {
+          let marking = state.markingsMap[markingID];
+          if (!marking) return;
+          // Only the default marking is user-facing, so only it is undoable.
+          let before =
+            markingID === state.defaultMarkingID && payload.record !== false
+              ? getSelectedIDs(marking)
+              : null;
+          operate(marking, payload.selection, payload.operation);
+          if (before) {
+            pushSelectionHistory(state, before, getSelectedIDs(marking));
+          }
+        });
+        state.selectionVersion += 1;
       },
       hover(state, payload) {
         state.hovered = payload.hovered;
@@ -311,7 +532,11 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         if (payload.hasOwnProperty("name")) {
           name = payload.name;
         }
-        state.setsMetadataMap[ID] = { name: name, comment: comment };
+        Vue.set(
+          state.setsMetadataMap,
+          ID,
+          Object.assign({}, metadata, { name: name, comment: comment })
+        );
       },
       addSet(state, payload) {
         let ID = "";
@@ -321,12 +546,15 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
           state.setsCounter += 1;
           ID = "Set #" + state.setsCounter; //utils.generateID();
         }
+        Vue.set(state.setsMap, ID, payload.members);
+        Vue.set(
+          state.setsCriteriaMap,
+          ID,
+          payload.criteria ? payload.criteria.slice() : null
+        );
+        let comment = payload && payload.comment ? payload.comment : "";
+        Vue.set(state.setsMetadataMap, ID, { name: ID, comment: comment });
         state.setsIDs.push(ID);
-        state.setsMap[ID] = payload.members;
-        let comment =
-          payload && payload.comment ? payload.comment : "Comment Here";
-        state.setsMetadataMap[ID] = { name: ID, comment: comment };
-        console.log(state.setsMetadataMap);
       },
       updateSet(state, payload) {
         let ID = payload.setID;
@@ -335,7 +563,9 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         console.log(ID, state.setsMap[ID], setMarking);
         setMarking = operate(setMarking, payload.members, payload.operation);
         console.log(getSelectedIDs(setMarking));
-        state.setsMap[ID] = getSelectedIDs(setMarking); //Object.keys(setMarking)
+        Vue.set(state.setsMap, ID, getSelectedIDs(setMarking));
+        // Edited by hand, so the filters it was saved from no longer describe it.
+        Vue.set(state.setsCriteriaMap, ID, null);
       },
       removeSet(state, payload) {
         let ID = payload.setID;
@@ -345,8 +575,9 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
             state.setsIDs.splice(i, 1);
           }
         }
-        delete state.setsMap[ID];
-        delete state.setsMetadataMap[ID];
+        Vue.delete(state.setsMap, ID);
+        Vue.delete(state.setsCriteriaMap, ID);
+        Vue.delete(state.setsMetadataMap, ID);
       },
       updateCtrlKey(state, payload) {
         state.isCtrlKey = payload.value;
@@ -374,10 +605,47 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         context.commit("createMarkingEntry", payload);
       },
       update(context, payload) {
+        if (context.state.uiMode === UI_MODES.LITE && payload.view) {
+          // Views that are not filter-aware still report plain ID selections.
+          // In Lite each such view owns one filter that its next gesture replaces.
+          let key = "picked:" + payload.view;
+          let ids = payload.selection || [];
+          let next =
+            ids.length === 0
+              ? removeFilterByKey(context.state.filters, key)
+              : upsertFilter(
+                  context.state.filters,
+                  makeMembersFilter(
+                    key,
+                    viewLabelForPayload(context, payload) + " picks",
+                    ids
+                  )
+                );
+          commitFilters(context, next);
+          return;
+        }
         context.commit("update", payload);
       },
-      reverseUpdate(context) {
+      undo(context) {
+        if (context.state.uiMode === UI_MODES.LITE) {
+          if (context.state.filterHistory.length === 0) return;
+          context.commit("stepFilterHistory", { direction: -1 });
+          applyFiltersToMarking(context);
+          return;
+        }
         context.commit("reverseUpdate");
+      },
+      redo(context) {
+        if (context.state.uiMode === UI_MODES.LITE) {
+          if (context.state.filterFuture.length === 0) return;
+          context.commit("stepFilterHistory", { direction: 1 });
+          applyFiltersToMarking(context);
+          return;
+        }
+        context.commit("redoUpdate");
+      },
+      reverseUpdate(context) {
+        context.dispatch("undo");
       },
       clearInspection(context) {
         context.commit("setLastHovered", {
@@ -385,6 +653,19 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         });
         context.commit("hover", { hovered: null });
         context.commit("toggleInspectionMode", { value: false });
+      },
+      /**
+       * A click inspects an option. Clicking the inspected option again stops
+       * inspecting, continuous inspection included.
+       */
+      inspectByClick(context, payload) {
+        let state = context.state;
+        let item = payload.item;
+        if (item && state.hovered && state.hovered._id === item._id) {
+          context.dispatch("clearInspection");
+        } else {
+          context.commit("hover", { hovered: item });
+        }
       },
       togglePinInspection(context, payload) {
         context.commit("togglePinInspection");
@@ -398,7 +679,178 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         context.commit("toggleInspectionMode");
       },
       toggleEditingMode(context, payload) {
-        context.commit("toggleEditingMode");
+        if (!context.getters.can("layoutEditing")) return;
+        context.commit("toggleEditingMode", payload);
+      },
+      setUiMode(context, payload) {
+        let state = context.state;
+        let mode = normalizeMode(
+          payload && payload.value !== undefined ? payload.value : payload
+        );
+        if (mode === state.uiMode) return;
+
+        if (mode === UI_MODES.EXPERT) {
+          // The marking already holds the filter result, so it simply becomes
+          // the Expert selection. A zoom stays, one step back from all data.
+          context.commit("setUiMode", { value: mode });
+          context.commit("setFilters", { filters: [] });
+          context.commit("clearFilterHistory");
+          context.commit("clearDataStack");
+          if (state.data !== state.rawData) {
+            context.commit("pushDataStack", { data: state.rawData });
+          }
+          context.commit("setScopedData", { data: state.data, signature: "" });
+          return;
+        }
+
+        // Carry Expert state into Lite as filters instead of dropping it
+        // silently: a zoomed subset stays zoomed, the selection becomes a filter.
+        let carried = [];
+        if (state.data !== state.rawData) {
+          carried.push(
+            makeScopeFilter(
+              utils.generateID(),
+              "zoom",
+              state.data.map((d) => d._id)
+            )
+          );
+        }
+        let selectedIDs = Object.keys(
+          context.getters.selectedInMarking(state.defaultMarkingID)
+        );
+        // A selection covering everything shown adds no constraint.
+        if (selectedIDs.length > 0 && selectedIDs.length < state.data.length) {
+          carried.push(
+            makeMembersFilter("carried", "Expert selection", selectedIDs)
+          );
+        }
+        context.commit("clearDataStack");
+        context.commit("setUiMode", { value: mode });
+        context.commit("clearFilterHistory");
+        context.commit("setFilters", { filters: carried });
+        // The data already is the zoomed subset, so keep it instead of rebuilding.
+        context.commit("setScopedData", {
+          data: state.data,
+          signature: scopeSignature(carried),
+        });
+        applyFiltersToMarking(context);
+      },
+      /**
+       * `ranges` maps a dimension to one [lo, hi] or to a list of them (its
+       * brushes, OR-ed) and replaces that dimension's own filter; an empty
+       * list removes it. `clear` lists dimensions whose every range filter
+       * goes, a rectangle over the dimension and another included.
+       */
+      setRangeFilters(context, payload) {
+        let state = context.state;
+        let next = state.filters;
+        let ranges = payload.ranges || {};
+        Object.keys(ranges).forEach((dim) => {
+          next = withAxisRanges(next, state.data, dim, rangeList(ranges[dim]));
+        });
+        (payload.clear || []).forEach((dim) => {
+          next = removeRangeFiltersOn(next, dim);
+        });
+        commitFilters(context, next);
+      },
+      /**
+       * Everything one axis shows after a gesture on it, in one step: its
+       * own brushes as `ranges`, and for each scatterplot rectangle filter
+       * with a range on the axis, that filter's boxes as edited there
+       * (`pairs: [{ key, boxes }]`; an empty list removes the filter).
+       */
+      setAxisBrushes(context, payload) {
+        let state = context.state;
+        let next = withAxisRanges(state.filters, state.data, payload.dim, payload.ranges || []);
+        (payload.pairs || []).forEach((pair) => {
+          let current = next.find((f) => f.key === pair.key);
+          if (!current) return;
+          let filter =
+            pair.boxes.length === 0
+              ? null
+              : makeRangeFilter(current.dims, pair.boxes, boundsFor(state.data, current.dims));
+          next = filter ? upsertFilter(next, filter) : removeFilterByKey(next, pair.key);
+        });
+        commitFilters(context, next);
+      },
+      /**
+       * The rectangles of a scatterplot, as boxes over its two dimensions
+       * (`{ x: [lo, hi], y: [lo, hi] }`); an empty list removes them.
+       * `replace` names dimensions whose own filter the plot was drawing as
+       * its rectangle (a lone axis brush mirrored there), so that brush moves
+       * into the boxes rather than staying behind as a second constraint.
+       * Filters the plot does not draw are never touched.
+       */
+      setBoxFilter(context, payload) {
+        let state = context.state;
+        let dims = payload.dims;
+        let next = state.filters;
+        (payload.replace || []).forEach((dim) => {
+          next = removeFilterByKey(next, rangeKey(dim));
+        });
+        let filter =
+          payload.boxes.length === 0
+            ? null
+            : makeRangeFilter(dims, payload.boxes, boundsFor(state.data, dims));
+        next = filter
+          ? upsertFilter(next, filter)
+          : removeFilterByKey(next, rangeKey(dims));
+        commitFilters(context, next);
+      },
+      /** Drops one brush of a range filter from its chip. */
+      removeFilterBox(context, payload) {
+        commitFilters(
+          context,
+          removeFilterBox(context.state.filters, payload.key, payload.index)
+        );
+      },
+      /**
+       * A filter over a list of ids the assistant computed -- a top-k, a
+       * percentile band, a Pareto front. Keyed like any other filter, so it
+       * appears as a removable chip and joins the undo history rather than
+       * being a change the user cannot see or reverse.
+       */
+      applyMembersFilter(context, payload) {
+        if (!payload.ids || payload.ids.length === 0) return;
+        commitFilters(
+          context,
+          upsertFilter(
+            context.state.filters,
+            makeMembersFilter(payload.key, payload.label, payload.ids)
+          )
+        );
+      },
+      removeFilter(context, payload) {
+        commitFilters(
+          context,
+          removeFilterByKey(context.state.filters, payload.key)
+        );
+      },
+      /** Removes every filter but keeps a zoom, as Esc keeps it in Expert. */
+      clearFilters(context) {
+        if (context.getters.narrowingFilters.length === 0) return;
+        commitFilters(context, scopeFilters(context.state.filters));
+      },
+      toggleGallerySelection(context, payload) {
+        if (context.state.uiMode !== UI_MODES.LITE) return;
+        let selected = context.getters.isSelectedInGallery(payload.id);
+        commitFilters(
+          context,
+          setGallerySelected(context.state.filters, [payload.id], !selected)
+        );
+      },
+      selectOnlyInGallery(context, payload) {
+        if (context.state.uiMode !== UI_MODES.LITE) return;
+        commitFilters(
+          context,
+          selectOnlyInGalleryFilters(context.state.filters, payload.ids)
+        );
+      },
+      selectAllInGallery(context) {
+        commitFilters(
+          context,
+          removeFilterByKey(context.state.filters, GALLERY_KEY)
+        );
       },
       processShareLink(context, payload)
       {
@@ -494,6 +946,11 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         });
       },
       zoomToSelection(context) {
+        if (context.getters.isLite) {
+          scopeToResult(context, "zoom");
+          return;
+        }
+        if (!context.getters.can("zoomAndExclude")) return;
         let dataMapSubset = context.getters.selectedInMarking(
           context.state.defaultMarkingID
         );
@@ -504,6 +961,11 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         }
       },
       excludeSelection(context) {
+        if (context.getters.isLite) {
+          scopeToResult(context, "exclude");
+          return;
+        }
+        if (!context.getters.can("zoomAndExclude")) return;
         let toFilter = context.getters.selectedInMarking(
           context.state.defaultMarkingID
         );
@@ -512,6 +974,27 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         context.commit("setData", { newData: selection });
       },
       invertSelection(context) {
+        if (!context.getters.can("invertSelection")) return;
+        if (context.getters.isLite) {
+          // Lite has a result set rather than a selection: its inverse is a
+          // filter to everything the current filters leave out. Zoom and
+          // exclude are scope, not narrowing, so they stay in place.
+          if (!context.getters.isFilterActive) return;
+          let shown = new Set(
+            applyFilters(context.state.filters, context.state.data).map(String)
+          );
+          let ids = context.state.data
+            .filter((row) => !shown.has(String(row._id)))
+            .map((row) => row._id);
+          let kept = scopeFilters(context.state.filters);
+          commitFilters(
+            context,
+            kept.concat([
+              makeMembersFilter("inverted", "Inverted: " + ids.length + " options", ids),
+            ])
+          );
+          return;
+        }
         let inverted = Object.keys(
           context.getters.unselectedInMarking(context.state.defaultMarkingID)
         );
@@ -522,15 +1005,37 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         });
       },
       resetData(context) {
+        if (context.getters.isLite) {
+          // Back to the full collection; the filters stay.
+          commitFilters(context, narrowingFilters(context.state.filters));
+          return;
+        }
         //context.commit('resetMarking', { "markingID": context.state.defaultMarkingID });
         context.commit("setData", { newData: context.state.rawData });
       },
       resetAllMarkings(context) {
+        if (context.state.uiMode === UI_MODES.LITE) {
+          context.dispatch("clearFilters");
+          return;
+        }
         for (var markingID in context.state.markingsMap) {
           context.commit("resetMarking", { markingID: markingID });
         }
       },
       undoDataTransformation(context) {
+        if (context.getters.isLite) {
+          let scopes = scopeFilters(context.state.filters);
+          if (scopes.length === 0) return;
+          commitFilters(
+            context,
+            removeFilterByKey(
+              context.state.filters,
+              scopes[scopes.length - 1].key
+            )
+          );
+          return;
+        }
+        if (!context.getters.can("zoomAndExclude")) return;
         if (context.state.dataStack.length > 0) {
           let args = { data: "" };
           context.commit("popDataStack", args);
@@ -539,21 +1044,40 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       },
       createSet(context, payload) {
         let members = [];
+        // A Lite set is a saved search: it keeps the filters, so restoring it
+        // brings them back.
+        let criteria = null;
         if (payload && payload.members) {
           members = payload.members;
+        } else if (context.getters.isLite) {
+          members = context.getters.isFilterActive
+            ? Object.keys(
+                context.getters.selectedInMarking(
+                  context.state.defaultMarkingID
+                )
+              )
+            : context.state.data.map((d) => d._id);
+          criteria = context.state.filters;
         } else {
           members = Object.keys(
             context.getters.selectedInMarking(context.state.defaultMarkingID)
           );
         }
-        console.log("members", members);
         context.commit("addSet", {
           members: members,
+          criteria: criteria,
           setName: payload ? payload.setName : null,
           comment: payload ? payload.comment : null,
         });
       },
       restoreSet(context, payload) {
+        if (context.state.uiMode === UI_MODES.LITE) {
+          // The saved filters replace the current ones; undo brings those back.
+          let next = setFilters(context.state, payload.setID).slice();
+          if (sameFilterList(next, context.state.filters)) return;
+          commitFilters(context, next);
+          return;
+        }
         context.dispatch("resetData"); //Ahmed: in case restoring is called when portions of the data is being zoomed on. Altneratives includes adding only the content of set not present
         context.commit("update", {
           markingID: context.state.defaultMarkingID,
@@ -571,9 +1095,179 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
           operation: payload.operation,
         });
       },
+      rateAlt(context, payload) {
+        context.commit("rateAlt", payload);
+        // A Rating filter has to pick up the new rating.
+        if (context.getters.isFilterActive) applyFiltersToMarking(context);
+      },
     },
     modules: {},
   });
+}
+
+function viewLabelForPayload(context, payload) {
+  if (payload.viewType) return payload.viewType;
+  if (payload.view && context.state.viewsMap[payload.view]) {
+    let component = context.state.viewsMap[payload.view];
+    let t =
+      (component._props && component._props.type) ||
+      (component.$props && component.$props.type);
+    return VIEW_TYPE_LABELS[t] || t || "View";
+  }
+  return "View";
+}
+
+function commitFilters(context, next) {
+  if (next === context.state.filters) return;
+  context.commit("recordFilters");
+  context.commit("setFilters", { filters: next });
+  applyFiltersToMarking(context);
+}
+
+/**
+ * Lite keeps the default marking equal to the filter result, so every view
+ * that already reads markings follows the filters without knowing about them.
+ */
+function applyFiltersToMarking(context) {
+  let state = context.state;
+  syncScopedData(context);
+  let narrowing = narrowingFilters(state.filters);
+  let ids = narrowing.length > 0 ? applyFilters(narrowing, state.data) : [];
+  context.commit("update", {
+    markingID: state.defaultMarkingID,
+    selection: ids,
+    operation: operations.REPLACE,
+    record: false,
+  });
+}
+
+/**
+ * Zoom and exclude filters apply to `data` itself, so charts rescale to them.
+ * Recomputed only when those filters change, since new data rebuilds every chart.
+ */
+function syncScopedData(context) {
+  let state = context.state;
+  let signature = scopeSignature(state.filters);
+  if (signature === state.appliedScopeSignature) return;
+  let scopes = scopeFilters(state.filters);
+  context.commit("setScopedData", {
+    data:
+      scopes.length > 0
+        ? state.rawData.filter(compileFilters(scopes))
+        : state.rawData,
+    signature: signature,
+  });
+}
+
+/**
+ * Lite zoom and exclude turn the current result into a scope. The filters that
+ * found it are cleared, since inside a zoom they would match everything and
+ * after an exclusion nothing; the scope keeps their descriptions for its chip.
+ */
+function scopeToResult(context, action) {
+  let state = context.state;
+  let narrowing = narrowingFilters(state.filters);
+  if (narrowing.length === 0) return;
+  let ids = applyFilters(narrowing, state.data);
+  if (ids.length === 0 || ids.length === state.data.length) return;
+  let scope = makeScopeFilter(
+    utils.generateID(),
+    action,
+    ids,
+    narrowing.map((f) => describeFilter(f).text)
+  );
+  commitFilters(context, scopeFilters(state.filters).concat([scope]));
+}
+
+function describeChip(filter) {
+  return Object.assign(
+    { key: filter.key, kind: filter.kind, tone: filterTone(filter) },
+    describeFilter(filter)
+  );
+}
+
+/** The filters that restore a set: the ones it was saved from, or its members. */
+function setFilters(state, setID) {
+  let criteria = state.setsCriteriaMap[setID];
+  if (criteria) return criteria;
+  let metadata = state.setsMetadataMap[setID];
+  return [
+    makeMembersFilter(
+      "set",
+      "In " + (metadata ? metadata.name : setID),
+      state.setsMap[setID] || [],
+      setID
+    ),
+  ];
+}
+
+function dimensionBounds(data, dim) {
+  // Ratings keep their whole scale, so a brush up to 5 stars stays open-ended.
+  if (dim === RATING_DIMENSION) return RATING_BOUNDS;
+  let extent = d3.extent(data, (d) => d[dim]);
+  return extent[0] === undefined ? null : extent;
+}
+
+/** `{ dim: [min, max] }` for the dimensions a range filter spans. */
+function boundsFor(data, dims) {
+  let bounds = {};
+  dims.forEach((dim) => (bounds[dim] = dimensionBounds(data, dim)));
+  return bounds;
+}
+
+/** The filters with `dim`'s own range filter replaced by these ranges (none removes it). */
+function withAxisRanges(filters, data, dim, list) {
+  let filter =
+    list.length === 0
+      ? null
+      : makeRangeFilter(
+          [dim],
+          list.map((range) => ({ [dim]: range })),
+          boundsFor(data, [dim])
+        );
+  return filter
+    ? upsertFilter(filters, filter)
+    : removeFilterByKey(filters, rangeKey(dim));
+}
+
+/** One range or a list of ranges, as a list. */
+function rangeList(value) {
+  if (!value || value.length === 0) return [];
+  return Array.isArray(value[0]) ? value : [value];
+}
+
+/** Removes every range filter that constrains `dim`, alone or with another. */
+function removeRangeFiltersOn(filters, dim) {
+  if (!filters.some((f) => f.kind === "range" && f.dims.includes(dim))) {
+    return filters;
+  }
+  return filters.filter((f) => !(f.kind === "range" && f.dims.includes(dim)));
+}
+
+function sameIds(a, b) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+/** Records `before` as an undo step, unless the change did nothing. */
+function pushSelectionHistory(state, before, after) {
+  if (sameIds(before, after)) return;
+  state.selectionHistory.push(before);
+  if (state.selectionHistory.length > HISTORY_LIMIT) {
+    state.selectionHistory.shift();
+  }
+  state.selectionFuture = [];
+}
+
+function stepSelectionHistory(state, from, to) {
+  let marking = state.markingsMap[state.defaultMarkingID];
+  if (!marking || from.length === 0) return;
+  to.push(getSelectedIDs(marking));
+  operate(marking, from.pop(), operations.REPLACE);
+  state.selectionVersion += 1;
 }
 
 function processShareLinkSup() {
