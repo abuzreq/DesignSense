@@ -25,7 +25,7 @@
     </v-tooltip>
 
     <span v-if="filterChips.length === 0" class="filter-hint">
-      Brush a chart or drag over images; brush again for OR. Click a point to inspect.
+      Brush a chart or drag over images; brush again for OR. Click a point, line or image to inspect.
     </span>
 
     <div class="filter-chips">
@@ -131,9 +131,9 @@ import { mapGetters, mapState } from "vuex";
 
 const CHIP_COLORS = {
   range: "blue darken-2",
-  gallery: "green darken-2",
+  gallery: "green darken-3",
   scope: "blue-grey darken-1",
-  members: "deep-orange darken-2",
+  members: "deep-orange darken-3",
 };
 
 export default {

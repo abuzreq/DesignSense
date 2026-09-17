@@ -14,22 +14,26 @@
       height="60"
     >
       <v-toolbar-title id="designsense-title" class="ds-title">
-        <router-link to="/about"
-          >DesignSense
-          <span class="ds-alpha" style="font-size: 14px; color: deepskyblue"
-            >alpha</span
-          ></router-link
+        DesignSense
+        <span class="ds-stage" style="font-size: 14px; color: deepskyblue"
+          >beta</span
         >
       </v-toolbar-title>
       <v-divider vertical class="ds-divider" />
 
       <!-- Getting data in and out -->
-      <LoadDataModal id="loading-data-bar"> </LoadDataModal>
+      <LoadDataModal id="loading-data-bar" compact> </LoadDataModal>
       <v-tooltip bottom>
         <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="actions['saveToFile'].clickAction">
-            <v-icon>{{ actions["saveToFile"].icon }}</v-icon>
-          </v-btn>
+          <span v-on="on">
+            <v-btn
+              icon
+              :disabled="actionDisabled('saveToFile')"
+              @click="actions['saveToFile'].clickAction"
+            >
+              <v-icon>{{ actions["saveToFile"].icon }}</v-icon>
+            </v-btn>
+          </span>
         </template>
         <span>{{ actions["saveToFile"].tooltip() }}</span>
       </v-tooltip>
@@ -50,6 +54,23 @@
       </v-tooltip>
       <v-divider vertical class="ds-divider" />
 
+      <!-- Arranging the panels is about the workspace as a whole rather than
+           about any one group of tools, so it stands on its own here. The
+           wrapper stays whichever mode is on: a Vuetify tooltip places its
+           activator in the bar itself, outside what Vue tracks, so appearing
+           and disappearing beside one shifts it out of place. -->
+      <div class="ds-layout-slot">
+        <TipButton
+          v-if="can('layoutEditing')"
+          id="editing-mode"
+          :icon="actions['toggleEditingMode'].icon"
+          :tooltip="actions['toggleEditingMode'].tooltip()"
+          :color="toolbarColor(actions['toggleEditingMode'].type)"
+          @click="actions['toggleEditingMode'].clickAction"
+        />
+        <v-divider v-if="can('layoutEditing')" vertical class="ds-divider" />
+      </div>
+
       <v-tooltip bottom max-width="340">
         <template v-slot:activator="{ on }">
           <div v-on="on" id="ui-mode-toggle" class="ui-mode-toggle">
@@ -66,14 +87,12 @@
           </div>
         </template>
         <span v-if="isLite"
-          >Lite: brush the charts to filter the collection. Each filter is
-          listed in the bar and can be removed. Switch to Expert for selection
-          operations, inspection controls, and layout editing.</span
+          >Lite: brush the charts to filter the options. Each filter is listed
+          in the bar and can be removed. Expert adds {{ expertAdds }}.</span
         >
         <span v-else
-          >Expert: expressive selection (Replace, Add, Subtract, Toggle,
-          Intersect), inspection controls, and layout editing. Switch to Lite
-          to simply filter and browse.</span
+          >Expert adds {{ expertAdds }}. Switch to Lite to simply filter and
+          browse.</span
         >
       </v-tooltip>
       <v-divider vertical class="ds-divider" />
@@ -92,12 +111,53 @@
       <AssistantBar ref="assistant" id="assistant-bar" />
 
       <v-divider vertical class="ds-divider" />
+      <!-- The shortlist is reachable even when the Sets panel is closed. -->
+      <v-menu bottom left offset-y>
+        <template v-slot:activator="{ on: menu }">
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on: tooltip }">
+              <span v-on="tooltip">
+                <v-btn id="cart-chip" icon v-on="menu">
+                  <v-badge
+                    :value="cartCount > 0"
+                    :content="cartCount"
+                    color="orange darken-2"
+                    overlap
+                  >
+                    <v-icon>mdi-bookmark-multiple-outline</v-icon>
+                  </v-badge>
+                </v-btn>
+              </span>
+            </template>
+            <span>{{ cartTooltip }}</span>
+          </v-tooltip>
+        </template>
+        <v-list dense>
+          <v-list-item @click="addResultToCart">
+            <v-list-item-icon><v-icon>mdi-playlist-plus</v-icon></v-list-item-icon>
+            <v-list-item-title>Add the selected</v-list-item-title>
+          </v-list-item>
+          <v-list-item :disabled="cartCount === 0" @click="clearCart">
+            <v-list-item-icon><v-icon>mdi-bookmark-off-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Clear the shortlist</v-list-item-title>
+          </v-list-item>
+          <v-divider />
+          <v-list-item :disabled="cartCount === 0" @click="compareCart">
+            <v-list-item-icon><v-icon>mdi-table-column</v-icon></v-list-item-icon>
+            <v-list-item-title>Compare the shortlist</v-list-item-title>
+          </v-list-item>
+          <v-list-item :disabled="cartCount === 0" @click="saveCartAsSet">
+            <v-list-item-icon><v-icon>mdi-content-save-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Save the shortlist as a set</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
       <ToolbarGroup
         id="sets-operations-bar"
         :label="isLite ? 'Results' : 'Selection'"
         :names="selectionActions"
         :actions="actions"
-        :disabled="isActionDisabled"
+        :disabled="actionDisabled"
       />
       <v-divider vertical class="ds-divider" />
       <ToolbarGroup
@@ -105,9 +165,12 @@
         label="Zoom"
         :names="dataActions"
         :actions="actions"
-        :disabled="isActionDisabled"
+        :disabled="actionDisabled"
       />
-      <template v-if="can('inspectionControls')">
+      <!-- Lite inspects by clicking and stops with Esc or the inspector's
+           close button, so only Expert has inspection controls and the
+           analysis tools. -->
+      <template v-if="isExpert">
         <v-divider vertical class="ds-divider" />
         <ToolbarGroup
           id="inspection-bar"
@@ -115,140 +178,283 @@
           :names="inspectionActions"
           :actions="actions"
           :color="toolbarColor"
+          :disabled="actionDisabled"
         />
-      </template>
-      <v-divider vertical class="ds-divider" />
-      <ToolbarGroup id="view-bar" label="View" :actions="actions">
-        <ColorSelectionModal id="color-selection-bar" />
-        <v-tooltip v-if="can('layoutEditing')" bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              id="editing-mode"
-              v-on="on"
-              :color="toolbarColor(actions['toggleEditingMode'].type)"
-              icon
-              @click="actions['toggleEditingMode'].clickAction"
-            >
-              <v-icon>{{ actions["toggleEditingMode"].icon }}</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ actions["toggleEditingMode"].tooltip() }}</span>
-        </v-tooltip>
-      </ToolbarGroup>
-      <v-divider vertical class="ds-divider" />
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon @click="actions['help'].clickAction">
-            <v-icon>{{ actions["help"].icon }}</v-icon>
-          </v-btn>
-        </template>
-        <span>{{ actions["help"].tooltip() }}</span>
-      </v-tooltip>
-
-    </v-app-bar>
-    <v-dialog :key="456" v-model="isShareLinkModalOn" width="750px">
-      <template>
-        <v-card
-        style="z-index: 300; padding: 15px"
-          height="200px"
-          max-width="650">
-          <v-card-title style="font-size: xx-large;">
-            Share Link
-          </v-card-title>
-          <v-row no-gutters style="padding: 25px;" >
-            <div v-if="shareLink">
-            {{shareLink}}
-          </div>
-          <div v-else>There is no static link for you if you are not using online shared folder. </div>
-          </v-row>
-          <div style="position: absolute; top: 5%;right: 5%;">
-            <v-btn
-              icon
-              @click="isShareLinkModalOn = false"
-            >
-              <v-icon>{{ "mdi-close" }}</v-icon></v-btn
-            >
-          </div>
-      </v-card>
-      </template>
-    </v-dialog>
-
-    <v-dialog :key="123" v-model="isOpeningDialogOn" width="650px">
-      <template>
-        <v-card
-          style="z-index: 300; padding: 15px"
-          height="400px"
-          max-width="650"
-        >
-          <v-card-title style="font-size: xx-large;">
-            Welcome to DesignSense!
-          </v-card-title>
-          <div style="position: absolute; top: 5%;right: 5%;">
-            <v-btn
-              icon
-              @click="$store.commit('setIsOpeningDialogOn', { value: false })"
-            >
-              <v-icon>{{ "mdi-close" }}</v-icon></v-btn
-            >
-          </div>
-          <div
-            style="font-size: large; display: flex; flex-direction: column; padding: 10px 20px;"
-          >
-            <p>
-              DesignSense is a tool for navigating and making sense of
-              parametric design spaces.
-            </p>
-            <div style="display: flex; flex-direction: row;">
-            <div style="display: flex; flex-direction: column; width: 300px; align-items: center;justify-content: space-between;">
-              <p>
-                First time here? we suggest starting with the
-                onboarding tour.
-              </p>
-
+        <v-divider vertical class="ds-divider" />
+        <!-- Reading the collection as a whole rather than acting on it.
+             Sensitivity is the first of these; others will join it. -->
+        <ToolbarGroup id="analysis-bar" label="Analysis" :actions="actions">
+          <v-tooltip v-if="can('sensitivity')" bottom>
+            <template v-slot:activator="{ on }">
               <v-btn
-                color="blue lighten-2"
-                dark
-                style="align-self: center;"
-                @click="
-                  $store.commit('setIsOpeningDialogOn', { value: false });
-                  actions.help.clickAction();
-                "
+                id="sensitivity-button"
+                v-on="on"
+                icon
+                @click="actions['openSensitivity'].clickAction"
               >
-                Start On-boarding</v-btn
-              >
-            </div>
-            <div style="display: flex; flex-direction: column; width: 300px; align-items: center;justify-content: space-between;">
-              <p>
-                Been here before?
-              </p>
-              <LoadDataModal> </LoadDataModal>
-            </div>
-          </div>
-          <p style="margin-top:20px; font-size: medium;"><em> This is an ongoing research project, so we would appreciate your feedback!</em></p>
-          <div
-            style="display: flex; flex-direction: row;   justify-content: center; border-bottom: 1px solid #00000057;  "
-          >
-            <div><router-link to="/about">About </router-link></div>
-            &nbsp;&nbsp;|&nbsp;&nbsp;
-            <div><a href="mailto:abuzreq@gmail.com">Contact</a></div>
-          </div>
-          </div>
-
-
-          <div
-            style="width: 600px; font-size: small; position: absolute; bottom: 2%;left: 5%;text-align: left;"
-          >
-            <p style="margin-bottom: 0px;">
-              Built by
-              <a href="https://abuzreq.netlify.app/" target="_blank"
-                >Ahmed Abuzuraiq</a
-              >
-            </p>
-            <div>v1.1.2</div>
-          </div>
-        </v-card>
+                <v-icon>{{ actions["openSensitivity"].icon }}</v-icon>
+              </v-btn>
+            </template>
+            <span>{{ actions["openSensitivity"].tooltip() }}</span>
+          </v-tooltip>
+        </ToolbarGroup>
       </template>
+      <v-divider vertical class="ds-divider" />
+      <v-menu bottom left offset-y>
+        <template v-slot:activator="{ on: menu }">
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on: tooltip }">
+              <span v-on="tooltip">
+                <v-btn id="help-menu" icon v-on="menu">
+                  <v-icon>mdi-help-circle-outline</v-icon>
+                </v-btn>
+              </span>
+            </template>
+            <span>Help, the tour, and shortcuts</span>
+          </v-tooltip>
+        </template>
+        <v-list dense>
+          <v-list-item @click="requestTour">
+            <v-list-item-icon><v-icon>mdi-map-marker-path</v-icon></v-list-item-icon>
+            <v-list-item-title>Take the tour</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="isOpeningDialogOn = true">
+            <v-list-item-icon><v-icon>mdi-home-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Welcome screen</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="isShortcutsDialogOn = true">
+            <v-list-item-icon><v-icon>mdi-keyboard-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Keyboard shortcuts &amp; gestures</v-list-item-title>
+          </v-list-item>
+          <v-divider />
+          <v-list-item @click="isLayoutDialogOn = true">
+            <v-list-item-icon><v-icon>mdi-view-grid-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Layout presets…</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="resetLayout">
+            <v-list-item-icon><v-icon>mdi-view-dashboard-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Reset layout</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="isClearWorkDialogOn = true">
+            <v-list-item-icon><v-icon>mdi-delete-sweep-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Clear saved work…</v-list-item-title>
+          </v-list-item>
+          <v-divider />
+          <v-list-item to="/about">
+            <v-list-item-icon><v-icon>mdi-information-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>About</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </v-app-bar>
+
+    <v-dialog v-model="isShareLinkModalOn" max-width="620px">
+      <v-card>
+        <v-card-title>Share this dataset</v-card-title>
+        <v-card-text>
+          <template v-if="shareLink">
+            <p>Anyone with this link opens the same dataset.</p>
+            <v-text-field
+              ref="shareField"
+              :value="shareLink"
+              readonly
+              outlined
+              dense
+              hide-details
+              @focus="$event.target.select()"
+            >
+              <template v-slot:append-outer>
+                <v-btn color="primary" depressed small @click="copyShareLink">
+                  {{ shareCopied ? "Copied" : "Copy" }}
+                </v-btn>
+              </template>
+            </v-text-field>
+          </template>
+          <p v-else>
+            Only datasets opened from a link (a CSV file or a shared online
+            folder) can be shared. Files from your computer can't.
+          </p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="isShareLinkModalOn = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
     </v-dialog>
+
+    <v-dialog v-model="isOpeningDialogOn" max-width="650px">
+      <v-card class="ds-welcome">
+        <v-card-title class="text-h5">
+          Welcome to DesignSense
+          <v-spacer />
+          <v-btn icon aria-label="Close" @click="isOpeningDialogOn = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text class="ds-welcome-body">
+          <p>
+            Explore a collection of design options through their images and
+            data.
+          </p>
+          <div class="ds-welcome-choices">
+            <div class="ds-welcome-choice">
+              <p>First time here? Start with the short tour.</p>
+              <v-btn
+                color="blue darken-1"
+                dark
+                @click="
+                  isOpeningDialogOn = false;
+                  requestTour();
+                "
+                >Take the tour</v-btn
+              >
+            </div>
+            <div class="ds-welcome-choice">
+              <p>Been here before? Open your data.</p>
+              <LoadDataModal />
+            </div>
+          </div>
+          <p class="ds-welcome-note">
+            <em
+              >This is an ongoing research project, so we would appreciate your
+              feedback!</em
+            >
+          </p>
+          <div class="ds-welcome-links">
+            <router-link to="/about">About</router-link>
+            <span>|</span>
+            <a href="mailto:abuzreq@gmail.com">Contact</a>
+          </div>
+          <div class="ds-welcome-credit">
+            Built by
+            <a href="https://abuzreq.netlify.app/" target="_blank"
+              >Ahmed Abuzuraiq</a
+            >
+            · v1.1.2
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="isShortcutsDialogOn" max-width="640px" scrollable>
+      <v-card>
+        <v-card-title>
+          Keyboard shortcuts &amp; gestures
+          <v-spacer />
+          <v-btn icon aria-label="Close" @click="isShortcutsDialogOn = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text>
+          <h4 class="ds-shortcuts-heading">Keys</h4>
+          <table class="ds-shortcuts">
+            <tr v-for="row in shortcutRows.keys" :key="row[0]">
+              <td><kbd>{{ row[0] }}</kbd></td>
+              <td>{{ row[1] }}</td>
+            </tr>
+          </table>
+          <h4 class="ds-shortcuts-heading">Mouse</h4>
+          <table class="ds-shortcuts">
+            <tr v-for="row in shortcutRows.mouse" :key="row[0]">
+              <td>{{ row[0] }}</td>
+              <td>{{ row[1] }}</td>
+            </tr>
+          </table>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="isLayoutDialogOn" max-width="760px">
+      <v-card>
+        <v-card-title>
+          Choose a layout
+          <v-spacer />
+          <v-btn icon aria-label="Close" @click="isLayoutDialogOn = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text>
+          <p class="ds-layout-intro">
+            Pick one of these, or arrange the panels yourself by dragging their
+            headers and edges. Whichever you pick is remembered.
+          </p>
+          <div class="ds-presets">
+            <button
+              v-for="preset in layoutPresets"
+              :key="preset.id"
+              type="button"
+              class="ds-preset"
+              :class="{ 'ds-preset--on': layoutPreset === preset.id }"
+              @click="chooseLayoutPreset(preset.id)"
+            >
+              <span class="ds-preset-figure">
+                <span
+                  v-for="panel in presetPanels(preset)"
+                  :key="panel.type"
+                  class="ds-preset-panel"
+                  :style="panel.style"
+                  >{{ panel.label }}</span
+                >
+              </span>
+              <span class="ds-preset-name">
+                {{ preset.name }}
+                <v-icon v-if="layoutPreset === preset.id" x-small color="primary"
+                  >mdi-check</v-icon
+                >
+              </span>
+              <span class="ds-preset-desc">{{ preset.description }}</span>
+            </button>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="arrangeLayoutMyself">Arrange it myself</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="isClearWorkDialogOn" max-width="460px">
+      <v-card>
+        <v-card-title>Clear saved work?</v-card-title>
+        <v-card-text>
+          This removes the saved sets, their notes, the shortlist and every
+          rating for this dataset, here and in this browser's storage. It can't
+          be undone. Custom dimensions stay.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="isClearWorkDialogOn = false">Cancel</v-btn>
+          <v-btn color="error" text @click="clearSavedWork">Clear</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="isTourDialogOn" max-width="460px">
+      <v-card>
+        <v-card-title>Start the tour?</v-card-title>
+        <v-card-text>
+          The tour uses the sample used-car data, so it replaces the dataset on
+          screen. Your sets and ratings for this dataset are saved and come back
+          when you load it again.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="isTourDialogOn = false">Cancel</v-btn>
+          <v-btn
+            color="primary"
+            text
+            @click="
+              isTourDialogOn = false;
+              startTour();
+            "
+            >Start the tour</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <DimensionsDialog />
+    <CompareDialog />
+    <SensitivityDialog />
     <v-main id="designsense-workspace" style="padding: 60px 0px 0px">
       <div
         ref="workspace"
@@ -256,8 +462,8 @@
         @contextmenu="showContextMenuHandler"
       >
         <Card
-          v-for="(item, index) in layouts"
-          :key="index"
+          v-for="item in layouts"
+          :key="item.type"
           :initX="item.x"
           :initY="item.y"
           :initW="item.w"
@@ -321,7 +527,35 @@
       }"
       :callbacks="onboardingCallbacks"
     ></v-tour>
+    <!-- Store notices (a deleted set, a download) take the snackbar over the
+         last load's message; a new notice replaces the one on screen. -->
     <v-snackbar
+      v-if="storeNotice"
+      :key="'notice-' + storeNotice.id"
+      :value="true"
+      color="grey darken-3"
+      :timeout="storeNotice.action ? 8000 : 5000"
+      bottom
+      left
+      @input="onNoticeInput"
+    >
+      {{ storeNotice.text }}
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          v-if="storeNotice.action"
+          text
+          color="amber"
+          v-bind="attrs"
+          @click="runNoticeAction"
+          >Undo</v-btn
+        >
+        <v-btn text v-bind="attrs" @click="$store.commit('dismissNotice')"
+          >Close</v-btn
+        >
+      </template>
+    </v-snackbar>
+    <v-snackbar
+      v-else
       v-model="showLoadNotice"
       :color="loadState.error ? 'error' : 'grey darken-3'"
       :timeout="loadState.error ? -1 : 8000"
@@ -386,6 +620,10 @@ body {
 .ui-mode-toggle {
   margin: 0 2px;
 }
+.ds-layout-slot {
+  display: inline-flex;
+  align-items: center;
+}
 .ds-title {
   flex: 0 0 auto;
   margin-right: 4px;
@@ -397,11 +635,139 @@ body {
   margin: 0 8px;
 }
 /* The filters or selection operations take whatever room the groups leave. */
+/* The badge wrapper is taller than a bare icon, which pushes the bookmark
+   below the line the other toolbar icons sit on. */
+#cart-chip .v-badge {
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  margin-top: -2px;
+}
 .ds-narrowing {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   justify-content: center;
+}
+.ds-welcome-body {
+  font-size: 16px;
+}
+.ds-welcome-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 8px 0 12px;
+}
+.ds-welcome-choice {
+  flex: 1 1 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+}
+.ds-welcome-note {
+  margin-top: 12px;
+  font-size: 14px;
+}
+.ds-welcome-links {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+}
+.ds-welcome-credit {
+  margin-top: 8px;
+  font-size: 13px;
+}
+.ds-layout-intro {
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #37474f;
+}
+.ds-presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.ds-preset {
+  display: block;
+  padding: 8px;
+  text-align: left;
+  border: 1px solid #cfd8dc;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+.ds-preset:hover {
+  border-color: #90caf9;
+}
+.ds-preset--on {
+  border-color: #1565c0;
+  box-shadow: 0 0 0 1px #1565c0 inset;
+}
+/* A scale drawing of the preset, on the same 48x24 grid as the workspace. */
+.ds-preset-figure {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding-top: 50%;
+  background: #eceff1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.ds-preset-panel {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px;
+  font-size: 9px;
+  line-height: 1;
+  color: #37474f;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #b0bec5;
+  overflow: hidden;
+}
+.ds-preset-name {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #263238;
+}
+.ds-preset-desc {
+  display: block;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #546e7a;
+}
+.ds-shortcuts-heading {
+  margin: 12px 0 4px;
+  color: #37474f;
+}
+.ds-shortcuts {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.ds-shortcuts td {
+  padding: 4px 8px 4px 0;
+  vertical-align: top;
+  border-bottom: 1px solid #eceff1;
+  color: #37474f;
+}
+.ds-shortcuts td:first-child {
+  white-space: nowrap;
+  width: 38%;
+}
+.ds-shortcuts kbd {
+  background: #eceff1;
+  color: #263238;
+  box-shadow: none;
+  font-size: 13px;
 }
 .ds-workspace {
   position: relative;
@@ -414,7 +780,7 @@ body {
     padding-left: 8px;
     padding-right: 8px;
   }
-  .ds-alpha {
+  .ds-stage {
     display: none;
   }
   #loading-data-bar .load-data-label {
@@ -440,6 +806,7 @@ body {
 body[data-selection-op] .scatter-svg .overlay,
 body[data-selection-op] .scatter-svg .lasso-area,
 body[data-selection-op] .parcoords .brush .overlay,
+body[data-selection-op] .cluster-card,
 body[data-selection-op] .scroll-container {
   cursor: var(--ds-selection-cursor) !important;
 }
@@ -448,14 +815,11 @@ body[data-selection-op] .scroll-container {
 import Vue from "vue";
 
 import ParCoordsView from "@/components/ParCoordsView.vue";
-import GridView from "@/components/GridView.vue";
 import AugmentedGridView from "@/components/AugmentedGridView.vue";
 
 import SPLOMView from "@/components/SPLOMView.vue";
-import DendrogramView from "@/components/DendrogramView.vue";
 
 import ScatterplotView from "@/components/ScatterplotView.vue";
-import TSNEView from "@/components/TSNEView.vue";
 
 import SetsView from "@/components/SetsView.vue";
 
@@ -467,16 +831,45 @@ import * as d3 from "d3";
 
 import { RadialMenu, RadialMenuItem } from "vue-radial-menu";
 import LoadDataModal from "@/components/LoadDataModal.vue";
-import ColorSelectionModal from "@/components/ColorSelectionModal.vue";
 import { operations } from "@/components/operations.js";
 
 import SelectionOperationsBar from "@/components/SelectionOperationsBar.vue";
 import FilterBar from "@/components/FilterBar.vue";
 import ToolbarGroup from "@/components/ToolbarGroup.vue";
-import { LAYOUT_COLUMNS, LAYOUT_ROWS } from "@/layout.js";
+import TipButton from "@/components/TipButton.vue";
+import { LAYOUT_COLUMNS, LAYOUT_PRESETS, LAYOUT_ROWS } from "@/layout.js";
+
+// Short names for the panels drawn in a preset's thumbnail.
+const PANEL_LABELS = {
+  Grid: "Gallery",
+  ScatterPlot: "Scatter",
+  ParallelCoordinatesPlot: "PCP",
+  Sets: "Sets",
+  SPLOM: "SPLOM",
+};
+
+// What Expert adds to Lite, said the same way in the mode tooltip and the tour.
+// Outlive the workspace, which is mounted again for each dataset.
+const welcome = { pending: isFirstVisit() };
+const tour = { pending: false };
+
+function isFirstVisit() {
+  try {
+    if (localStorage.getItem("wasOpeningDialogShown") === "true") return false;
+    localStorage.setItem("wasOpeningDialogShown", "true");
+  } catch (e) {
+    /* without storage, every visit counts as the first */
+  }
+  return true;
+}
+const EXPERT_ADDS =
+  "selection operations and the lasso, clusters, coloring, editing sets, inspection controls, and layout editing";
 import { applySelectionCursor } from "@/components/selectionCursors.js";
 
 import AssistantBar from "@/components/AssistantBar.vue";
+import DimensionsDialog from "@/components/DimensionsDialog.vue";
+import CompareDialog from "@/components/CompareDialog.vue";
+import SensitivityDialog from "@/components/SensitivityDialog.vue";
 import {
   DEFAULT_DATASET_URL,
   loadDataset,
@@ -502,22 +895,22 @@ export default {
   name: "Demo",
   components: {
     AssistantBar,
+    DimensionsDialog,
+    CompareDialog,
+    SensitivityDialog,
     ParCoordsView,
-    GridView,
     AugmentedGridView,
     SPLOMView,
-    DendrogramView,
     ScatterplotView,
-    TSNEView,
     SetsView,
     Card,
     RadialMenu,
     RadialMenuItem,
     LoadDataModal,
-    ColorSelectionModal,
     SelectionOperationsBar,
     FilterBar,
     ToolbarGroup,
+    TipButton,
   },
 
   data: function() {
@@ -530,10 +923,10 @@ export default {
       // Lite first, then what Expert adds. Each step names the mode it needs.
       onboardingStudyTourSteps: [
         tourStep(this, "lite", "#designsense-title", "Welcome to DesignSense",
-          "Explore a collection of design options through their images and their data. This tour takes about two minutes. Use the arrow keys or the buttons below.",
+          "Explore a collection of design options through their images and data. This tour takes about two minutes. Use the arrow keys or the buttons below.",
           "bottom"),
         tourStep(this, "lite", "#ui-mode-toggle", "Lite and Expert",
-          "<b>Lite</b> keeps things simple: you narrow the options with filters. <b>Expert</b> adds precise selection, clustering, and a layout you can rearrange. The tour starts in Lite.",
+          "<b>Lite</b> keeps things simple: you narrow the options with filters. <b>Expert</b> adds " + EXPERT_ADDS + ". The tour starts in Lite.",
           "bottom"),
         tourStep(this, "lite", "#loading-data-bar", "Load your data",
           "Open a collection from your computer or from a shared folder. This tour uses a small set of used cars.",
@@ -548,16 +941,16 @@ export default {
           "Each line is an option and each axis is a dimension. Drag along an axis to filter it. Drag a title to reorder the axes, or pick them under Axes.",
           "left"),
         tourStep(this, "lite", "#filter-bar", "Your filters",
-          "Each filter becomes a chip, and the count shows how many options match. Remove a chip to drop its filter, or press Esc to clear them all.",
+          "Each filter becomes a chip, and the count shows how many options match. Remove a chip to drop its filter. Press Esc to stop inspecting, then again to clear every filter.",
           "bottom"),
         tourStep(this, "lite", "#data-operations-bar", "Zoom",
-          "Zoom in on the matching options to focus on them, or exclude them instead. Reset brings back the whole collection.",
+          "Zoom in on the selected options to focus on them, or exclude them instead. Reset brings back the whole collection.",
           "bottom"),
         tourStep(this, "lite", '.v-card[type="Sets"]', "Saved sets",
           "Save the current results along with their filters. Restore a set later to bring those filters back.",
           "right", () => this.saveTourSet()),
         tourStep(this, "expert", "#ui-mode-toggle", "Expert mode",
-          "Expert keeps everything you have seen and adds more control. Instead of filtering, you build a selection.",
+          "Expert keeps everything you have seen and adds " + EXPERT_ADDS + ". Instead of filtering, you build a selection.",
           "bottom"),
         tourStep(this, "expert", "#selection-operations-bar", "Selection operations",
           "Choose how a new selection combines with the current one: replace, add, subtract, toggle, or intersect. Hold Shift to add, Ctrl to subtract, or both to intersect.",
@@ -575,7 +968,7 @@ export default {
           "Turn on editing to move and resize the panels.",
           "bottom"),
         tourStep(this, "lite", "#designsense-title", "You're ready",
-          "You're back in Lite. Switch to Expert whenever you need more control, and right-click anywhere for quick actions. Feedback is welcome at abuzreq@gmail.com.",
+          "You're back in Lite. Switch to Expert whenever you need more control, and right-click the workspace for quick actions. The help menu has this tour and every shortcut. Feedback is welcome at abuzreq@gmail.com.",
           "bottom", () => this.$store.dispatch("clearFilters")),
       ],
       operationsList: operations,
@@ -600,15 +993,17 @@ export default {
           icon: "mdi-contain",
           tooltip: () =>
             this.isLite
-              ? "Save the matching options and their filters as a set"
-              : "Create Set",
+              ? "Save the selected options and their filters as a set"
+              : "Save the selected options as a set",
           type: "selection",
         },
         resetAllMarkings: {
           clickAction: () => this.$store.dispatch("resetAllMarkings"),
           icon: "mdi-select-off",
           tooltip: () =>
-            this.isLite ? "Clear all filters [Esc]" : "Reset Selection [ESC]",
+            this.isLite
+              ? "Clear every filter [Esc]"
+              : "Clear the selection [Esc]",
           type: "selection",
         },
         invertSelection: {
@@ -617,7 +1012,7 @@ export default {
           tooltip: () =>
             this.isLite
               ? "Invert: show everything the filters leave out"
-              : "Invert Selection",
+              : "Invert the selection",
           type: "selection",
         },
         undoDataTransformation: {
@@ -631,8 +1026,8 @@ export default {
           icon: "mdi-magnify-plus-outline",
           tooltip: () =>
             this.isLite
-              ? "Zoom in on the matching options. Charts rescale to them and you can filter again inside them."
-              : "Zoom on the selected",
+              ? "Zoom in on the selected options. Charts rescale to them and you can filter again inside them."
+              : "Zoom in on the selected options",
           type: "data",
         },
         excludeSelection: {
@@ -640,8 +1035,8 @@ export default {
           icon: "mdi-filter-remove-outline",
           tooltip: () =>
             this.isLite
-              ? "Exclude the matching options from the collection"
-              : "Filter out the selected",
+              ? "Exclude the selected options from the collection"
+              : "Exclude the selected",
           type: "data",
         },
         resetData: {
@@ -650,7 +1045,7 @@ export default {
           tooltip: () =>
             this.isLite
               ? "Show the full collection again. Your filters stay."
-              : "Show all the data again",
+              : "Show every option again",
           type: "data",
         },
         toggleInspectionMode: {
@@ -658,40 +1053,43 @@ export default {
           icon: "mdi-selection-ellipse-arrow-inside",
           tooltip: () =>
             this.isInspectionMode
-              ? "Disable inspection on hovering ['Space' to disable inspection]"
-              : "Enable continuous inspection on hovering. ['Space' to enable on-spot inspection]",
+              ? "Stop inspecting on hover"
+              : "Inspect options on hover without holding Space (or hold Space to inspect while hovering)",
           type: "inspecting",
         },
         clearInspection: {
           clickAction: () => this.$store.dispatch("clearInspection"),
           icon: "mdi-cancel",
-          tooltip: () => "Cancel the currently inspected item [ESC]",
+          tooltip: () =>
+            "Stop inspecting the current option [Esc]",
           type: "inspecting",
+        },
+        addSelectionToCart: {
+          clickAction: () => this.$store.dispatch("addResultToCart"),
+          icon: "mdi-playlist-plus",
+          tooltip: () => "Add selection to shortlist",
+          type: "selection",
+        },
+        compareResult: {
+          clickAction: () => this.$store.dispatch("openCompare", { source: "selection" }),
+          icon: "mdi-table-column",
+          tooltip: () => "Compare the selected options side by side",
+          type: "selection",
         },
         togglePinInspection: {
           clickAction: () => this.$store.dispatch("togglePinInspection"),
           icon: "mdi-pin",
           tooltip: () =>
             this.isInspectionPinned
-              ? "Unpin the currently inspected item [P]"
-              : "Pin the currently inspected item [P]",
+              ? "Unpin the inspected option [P]"
+              : "Pin the inspected option [P]",
           type: "inspectionPin",
         },
-        help: {
-          clickAction: () => {
-            // The tour starts in Lite, then introduces Expert.
-            this.$store.dispatch("setUiMode", "lite");
-            // The tour walks through the used-car dataset, so it loads first.
-            loadDataset(DEFAULT_DATASET_URL, { source: "tour" })
-              .then((dataset) => {
-                if (dataset) this.$tours["onboardingTour"].start();
-              })
-              .catch(() => {
-                /* loadState.error carries the message */
-              });
-          },
-          icon: "mdi-help-circle-outline",
-          tooltip: () => "Start the on-boarding tour!",
+        openSensitivity: {
+          clickAction: () => this.$store.dispatch("openSensitivity"),
+          icon: "mdi-tune-variant",
+          tooltip: () =>
+            "Sensitivity: which inputs move which outputs, across the whole collection",
           type: "misc",
         },
         toggleEditingMode: {
@@ -699,8 +1097,8 @@ export default {
           icon: "mdi-table-edit",
           tooltip: () =>
             this.isEditingMode
-              ? "Disable Editing Mode.  [`]"
-              : "Enable Editing Mode. (to resize and move the panels)   [`]",
+              ? "Stop editing the layout [`]"
+              : "Edit the layout: move and resize the panels [`]",
           type: "editing",
         },
         saveToFile: {
@@ -708,21 +1106,37 @@ export default {
           icon: "mdi-download",
           tooltip: () =>
             this.isLite
-              ? "Download the matching options (.csv)"
-              : "Download the selected options to file (.csv)",
+              ? "Download the selected options (.csv)"
+              : "Download the selected options, or every option when nothing is selected (.csv)",
           type: "misc",
         },
         shareStaticLink: {
           clickAction: () => this.isShareLinkModalOn = true,
           icon: "mdi-share-variant-outline",
-          tooltip: () => "Creates a static link to share this session if the data was hosted on a cloud service.",
+          tooltip: () =>
+            this.isStudySharable
+              ? "Copy a link that reopens this dataset"
+              : "Only datasets opened from a link can be shared",
           type: "misc",
         },
       },
       showContextMenu: false,
       rightClickPos: { x: 0, y: 0 },
       isShareLinkModalOn: false,
+      shareCopied: false,
+      isShortcutsDialogOn: false,
+      isClearWorkDialogOn: false,
+      isTourDialogOn: false,
+      isLayoutDialogOn: false,
+      // Set while editing is turned on from the layout dialog, so answering
+      // the prompt doesn't raise it again.
+      arrangeRequested: false,
+      layoutPresets: LAYOUT_PRESETS,
+      expertAdds: EXPERT_ADDS,
       dismissedNotice: "",
+      // Whether an option is inspected; follows the store only when that
+      // changes, not as inspection moves from option to option.
+      isInspecting: false,
       // The page minus its scrollbar gutter and the 60px app bar, so panels
       // mount at their final size. Re-measured on mount and on window resize.
       workspaceWidth: document.documentElement.clientWidth,
@@ -735,6 +1149,7 @@ export default {
     window.removeEventListener("resize", this.onWorkspaceResize);
     document.removeEventListener("click", this.onDocumentClick);
     clearTimeout(this.resizeTimer);
+    clearTimeout(this.copiedTimer);
   },
   created() {
     document.title = "DesignSense";
@@ -750,17 +1165,29 @@ export default {
     document.addEventListener("click", this.onDocumentClick);
 
     this.track();
-    let shown = localStorage.getItem("wasOpeningDialogShown");
-    console.log("SHOWN", shown, typeof shown);
-    if (shown !== "true") {
-      this.$store.commit("setIsOpeningDialogOn", { value: true });
-
-      localStorage.setItem("wasOpeningDialogShown", "true");
-    } else {
-      this.$store.commit("setIsOpeningDialogOn", { value: false });
+    // Each loaded dataset mounts a new workspace. The welcome screen stays
+    // up across the startup loads of a first visit, until it is closed or
+    // the user loads data of their own.
+    let startup = loadState.source === null || loadState.source === "startup";
+    this.$store.commit("setIsOpeningDialogOn", {
+      value: welcome.pending && startup && !tour.pending,
+    });
+    if (!startup) welcome.pending = false;
+    // A tour started from other data loads the sample first; the workspace
+    // that sample mounts starts the tour.
+    if (tour.pending && loadState.source === "tour") {
+      tour.pending = false;
+      setTimeout(() => this.$tours["onboardingTour"].start(), 300);
     }
   },
   mounted() {
+    this.$watch(
+      () => this.$store.state.hovered != null,
+      (value) => {
+        this.isInspecting = value;
+      },
+      { immediate: true }
+    );
     this.measureWorkspace();
     // The observer also catches size changes no window resize event reports;
     // both feed the same delayed measurement.
@@ -786,7 +1213,6 @@ export default {
       isEditingMode: (state) => state.isEditingMode,
       isInspectionMode: (state) => state.isInspectionMode,
       isInspectionPinned: (state) => state.isInspectionPinned,
-      isOpeningDialogOn: (state) => state.isOpeningDialogOn,
       shareLink:  (state) => state.shareLink,
       isStudySharable: (state) => state.isStudySharable,
       uiMode: (state) => state.uiMode,
@@ -799,13 +1225,65 @@ export default {
     }),
     ...mapGetters([
       "can",
+      "cartCount",
+      "isInCart",
+      "isExpert",
       "isLite",
       "isFilterActive",
       "hasScope",
       "selectionCount",
     ]),
+    isOpeningDialogOn: {
+      get() {
+        return this.$store.state.isOpeningDialogOn;
+      },
+      set(value) {
+        if (!value) welcome.pending = false;
+        this.$store.commit("setIsOpeningDialogOn", { value: value });
+      },
+    },
+    storeNotice() {
+      return this.$store.state.notice;
+    },
+    cartTooltip() {
+      if (this.cartCount === 0) {
+        return "The shortlist: options you keep aside while browsing";
+      }
+      return (
+        this.cartCount +
+        (this.cartCount === 1 ? " option " : " options ") +
+        "on the shortlist"
+      );
+    },
+    layoutPreset() {
+      return this.$store.state.layoutPreset;
+    },
     loadState() {
       return loadState;
+    },
+    shortcutRows() {
+      let keys = [
+        ["Esc", "Stop inspecting; press again to clear every filter (Lite) or the selection (Expert)"],
+        ["Ctrl+Z", "Undo the last filter or selection change"],
+        ["Ctrl+Y or Ctrl+Shift+Z", "Redo"],
+        ["/ or Ctrl+K", "Ask or command in the assistant bar"],
+        ["Space (hold)", "Inspect whatever the pointer is over"],
+        ["P", "Pin the inspected option (Expert)"],
+        ["1 to 5", "Pick a selection operation: replace, add, subtract, toggle, intersect (Expert)"],
+        ["Shift / Ctrl (hold)", "Add / subtract while brushing; both to intersect (Expert)"],
+        ["`", "Edit the layout (Expert)"],
+      ];
+      let mouse = [
+        ["Click an option", "Inspect it; click it again to stop"],
+        ["Drag on a chart", "Filter (Lite) or select (Expert) the options inside"],
+        ["Drag again on the same chart", "Lite: add another range, matching either"],
+        ["Click empty chart space", "Clear that chart's filter or selection"],
+        ["Drag an axis title", "Reorder the parallel coordinates axes"],
+        ["Double-click an axis title", "Flip that axis"],
+        ["Right-click the workspace", "Quick actions"],
+        ["Click the current star", "Clear a rating"],
+      ];
+      return { keys: keys, mouse: mouse };
     },
     /**
      * What the last load left to say. The load dialog shows its own errors, so
@@ -817,7 +1295,10 @@ export default {
           loadState.source === "startup" || loadState.source === "tour";
         return unwatched ? loadState.error : "";
       }
-      return loadState.warnings.join(" ");
+      return [loadState.notice]
+        .concat(loadState.warnings)
+        .filter(Boolean)
+        .join(" ");
     },
     showLoadNotice: {
       get() {
@@ -834,12 +1315,22 @@ export default {
     unitH() {
       return this.workspaceHeight / LAYOUT_ROWS;
     },
+    /**
+     * Toolbar actions that would do nothing right now, by name, worked out
+     * once per change for every button.
+     */
+    disabledActions() {
+      let disabled = {};
+      Object.keys(this.actions).forEach((name) => {
+        disabled[name] = this.isActionDisabled(name);
+      });
+      return disabled;
+    },
     selectionActions() {
-      // Lite's undo, redo and clear already sit in the filter bar; what it
-      // lacks is inverting the result and saving it as a set.
+      // Lite's undo and redo already sit in the filter bar.
       return this.isLite
-        ? ["invertSelection", "createSet"]
-        : ["undo", "redo", "resetAllMarkings", "invertSelection"];
+        ? ["resetAllMarkings", "invertSelection", "compareResult", "createSet"]
+        : ["undo", "redo", "resetAllMarkings", "invertSelection", "compareResult"];
     },
     dataActions() {
       return [
@@ -850,12 +1341,16 @@ export default {
       ];
     },
     inspectionActions() {
-      return ["togglePinInspection", "clearInspection", "toggleInspectionMode"];
+      // Pinning and continuous inspection are Expert's; Lite inspects by clicking.
+      return this.can("inspectionControls")
+        ? ["togglePinInspection", "clearInspection", "toggleInspectionMode"]
+        : ["clearInspection"];
     },
     contextMenuItems() {
       if (this.isLite) {
         return [
           "clearInspection",
+          "addSelectionToCart",
           "resetAllMarkings",
           "createSet",
           "zoomToSelection",
@@ -866,6 +1361,7 @@ export default {
       return [
         "togglePinInspection",
         "clearInspection",
+        "addSelectionToCart",
         "resetAllMarkings",
         "createSet",
         "excludeSelection",
@@ -884,11 +1380,138 @@ export default {
     uiMode() {
       this.updateSelectionCursor();
     },
+    // Editing usually starts because the layout isn't right, so offer the
+    // presets first; they are one click, rearranging by hand is many.
+    isEditingMode(value) {
+      if (!value) {
+        this.arrangeRequested = false;
+        return;
+      }
+      // Editing asked for from the dialog itself is the answer to the prompt,
+      // not another reason to show it.
+      if (this.arrangeRequested) {
+        this.arrangeRequested = false;
+        return;
+      }
+      // A preset is one click and covers most of what editing gets opened for,
+      // so the presets come first and editing waits until it is chosen.
+      this.$store.commit("toggleEditingMode", { value: false });
+      this.isLayoutDialogOn = true;
+    },
   },
   methods: {
     track() {
-      console.log("tracking", this.$gtag);
       this.$gtag.pageview("/");
+    },
+    /** The tour walks through the sample data; loading it replaces other data, so ask first. */
+    requestTour() {
+      if (loadState.link === DEFAULT_DATASET_URL) {
+        this.startTour({ reload: false });
+      } else {
+        this.isTourDialogOn = true;
+      }
+    },
+    startTour(options) {
+      // The tour starts in Lite, then introduces Expert.
+      this.$store.dispatch("setUiMode", "lite");
+      if (options && options.reload === false) {
+        this.$store.dispatch("clearFilters");
+        this.$tours["onboardingTour"].start();
+        return;
+      }
+      tour.pending = true;
+      loadDataset(DEFAULT_DATASET_URL, { source: "tour" })
+        .then((dataset) => {
+          if (!dataset) tour.pending = false;
+        })
+        .catch(() => {
+          tour.pending = false;
+          /* loadState.error carries the message */
+        });
+    },
+    /** The preset's panels as percentages, for its thumbnail. */
+    presetPanels(preset) {
+      return preset.build(this.workspaceWidth).map((panel) => ({
+        type: panel.type,
+        label: PANEL_LABELS[panel.type] || panel.type,
+        style: {
+          left: (panel.x / LAYOUT_COLUMNS) * 100 + "%",
+          top: (panel.y / LAYOUT_ROWS) * 100 + "%",
+          width: (panel.w / LAYOUT_COLUMNS) * 100 + "%",
+          height: (panel.h / LAYOUT_ROWS) * 100 + "%",
+        },
+      }));
+    },
+    chooseLayoutPreset(id) {
+      this.$store.commit("applyLayoutPreset", { id: id });
+      this.isLayoutDialogOn = false;
+    },
+    /** The one way out of the dialog that turns layout editing on. */
+    arrangeLayoutMyself() {
+      this.isLayoutDialogOn = false;
+      this.arrangeRequested = true;
+      this.$store.commit("toggleEditingMode", { value: true });
+    },
+    resetLayout() {
+      this.$store.commit("toggleEditingMode", { value: false });
+      this.$store.commit("resetLayouts");
+    },
+    clearSavedWork() {
+      this.isClearWorkDialogOn = false;
+      this.$store.dispatch("clearSavedWork");
+    },
+    copyShareLink() {
+      let done = () => {
+        this.shareCopied = true;
+        clearTimeout(this.copiedTimer);
+        this.copiedTimer = setTimeout(() => (this.shareCopied = false), 2000);
+      };
+      let fallback = () => {
+        let field = this.$refs.shareField;
+        let input = field && field.$el.querySelector("input");
+        if (!input) return;
+        input.select();
+        try {
+          if (document.execCommand("copy")) done();
+        } catch (e) {
+          /* the link stays selected, to copy by hand */
+        }
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(this.shareLink).then(done, fallback);
+      } else {
+        fallback();
+      }
+    },
+    compareCart() {
+      this.$store.dispatch("openCompare", { source: "cart" });
+    },
+    saveCartAsSet() {
+      this.$store.dispatch("saveCartAsSet", { name: "" });
+    },
+    addResultToCart() {
+      this.$store.dispatch("addResultToCart");
+    },
+    clearCart() {
+      this.$store.dispatch("clearCart");
+    },
+    onNoticeInput(value) {
+      if (!value) this.$store.commit("dismissNotice");
+    },
+    runNoticeAction() {
+      let notice = this.storeNotice;
+      let action = notice ? notice.action : null;
+      if (action === "undoRemoveSet") {
+        this.$store.commit("restoreRemovedSet");
+      } else if (action === "restoreCart") {
+        this.$store.dispatch("restoreCart");
+      } else if (action && action.indexOf("undoSaveCart:") === 0) {
+        // The saved set's id travels in the action, so undo removes that set.
+        this.$store.dispatch("undoSaveCartAsSet", {
+          setID: action.slice("undoSaveCart:".length),
+        });
+      }
+      this.$store.commit("dismissNotice");
     },
     setUiMode(mode) {
       if (mode) this.$store.dispatch("setUiMode", mode);
@@ -927,7 +1550,14 @@ export default {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = setTimeout(this.measureWorkspace, 150);
     },
-    /** Greys out toolbar actions that would do nothing right now. */
+    /**
+     * For the toolbar groups: they call this while rendering, so the disabled
+     * states are theirs to depend on, and Demo doesn't re-render with them.
+     */
+    actionDisabled(name) {
+      return !!this.disabledActions[name];
+    },
+    /** Whether a toolbar action would do nothing right now. */
     isActionDisabled(name) {
       // Zoom and exclude act on the filter result in Lite, the selection in Expert.
       let count = this.isLite
@@ -956,6 +1586,17 @@ export default {
         case "invertSelection":
           // Nothing to invert until something is filtered out.
           return this.isLite ? !this.isFilterActive : false;
+        case "resetAllMarkings":
+          return this.isLite ? !this.isFilterActive : false;
+        case "clearInspection":
+          return !this.isInspecting;
+        case "addSelectionToCart":
+          return count === 0;
+        case "compareResult":
+          return count === 0;
+        case "saveToFile":
+          // Lite downloads the matches, so when nothing matches there is nothing to download.
+          return this.isLite && this.isFilterActive && this.selectionCount === 0;
         default:
           return false;
       }
@@ -979,7 +1620,6 @@ export default {
     },
     moveToNextOperation() {
       if (!this.can("selectionOperations")) return;
-      console.log("move");
       let current = this.$store.state.currentSelectionOperation;
       let allOperationsValues = Object.values(operations);
       let index = allOperationsValues.findIndex((x) => x == current);

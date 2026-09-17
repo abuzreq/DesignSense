@@ -3,6 +3,9 @@
       <span
         v-for="(star, index) in stars"
         :key="index"
+        :title="starTitle(index + 1)"
+        :aria-label="starTitle(index + 1)"
+        role="button"
         @click="setRating(index + 1)"
         @mouseover="hoverRating(index + 1)"
         @mouseleave="resetHover"
@@ -40,10 +43,17 @@
         }
     },
     methods: {
+      // Clicking the star of the current rating clears it.
       setRating(value) {
-        console.log("setRating", value)
-        this.rating = value;
+        // Number(): ratings loaded from a file may arrive as strings.
+        this.rating = value === Number(this.rating) ? 0 : value;
+        // Otherwise the hover keeps the cleared stars lit until the mouse leaves.
+        if (this.rating === 0) this.resetHover();
         this.$emit('onRatingChanged', this.rating);
+      },
+      starTitle(value) {
+        if (value === Number(this.rating)) return "Clear rating";
+        return value === 1 ? "Rate 1 star" : "Rate " + value + " stars";
       },
       hoverRating(value) {
         this.hoverRatingValue = value;

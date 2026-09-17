@@ -84,9 +84,10 @@ function parseHttpUrl(text) {
 }
 
 /**
- * Downloads a resolved source as `{ text, baseUrl, files, link }`: the CSV
- * text, where relative file names resolve from, a folder's files by name, and
- * the link that reopens the dataset (none for local files).
+ * Downloads a resolved source as `{ text, baseUrl, files, rawFiles, link }`:
+ * the CSV text, where relative file names resolve from, a folder's files by
+ * name (`rawFiles` holding the originals, companions included), and the link
+ * that reopens the dataset (none for local files).
  */
 export function fetchSource(source, options) {
   let apiKey = options && options.apiKey;
@@ -111,7 +112,9 @@ export function fetchSource(source, options) {
   return listing.then((folder) =>
     fetchText(pickDataCsv(folder)).then((text) => ({
       text: text,
-      files: Object.assign({}, folder.models, folder.images),
+      files: folder.files,
+      // The originals, for a model's companion .bin, .mtl and textures.
+      rawFiles: folder.raw,
       link: source.link,
     }))
   );
@@ -229,19 +232,41 @@ function folderError(status, service, message) {
   );
 }
 
+// Drive reports a .glb as "model/gltf-binary" some days and
+// "application/octet-stream" others, and .obj and .mtl usually as text, so the
+// extension decides whenever the type doesn't.
+const MODEL_FILE = /\.(glb|gltf|obj)$/i;
+// A .gltf names its own buffers and textures, and a .mtl its maps, so the
+// folder's other files are kept rather than sorted away.
+const MODEL_ASSET = /\.(bin|mtl|ktx2|dds|tga|hdr)$/i;
+const IMAGE_FILE = /\.(png|jpe?g|webp|gif|bmp|svg)$/i;
+
 function emptyFolder() {
-  return { csv: {}, images: {}, models: {} };
+  // `files` is what the data's cells resolve to; `raw` is the bytes of every
+  // file, which is what a 3D model and its companions have to be fetched from.
+  return { csv: {}, files: {}, raw: {} };
 }
 
 function addToFolder(folder, name, mimeType, url, imageUrl) {
   let type = mimeType || "";
+  folder.raw[name] = url;
   if (/\.(csv|tsv)$/i.test(name) || type === "text/csv") {
     folder.csv[name] = url;
-  } else if (type.indexOf("image/") === 0) {
-    folder.images[name] = imageUrl || url;
-  } else if (type === "application/json" && name.indexOf("setting") !== 0) {
-    // Design Explorer's setting files are not models.
-    folder.models[name] = url;
+    return;
+  }
+  if (type.indexOf("image/") === 0 || IMAGE_FILE.test(name)) {
+    // A gallery wants the resized copy, not the original megabytes.
+    folder.files[name] = imageUrl || url;
+    return;
+  }
+  if (MODEL_FILE.test(name) || type.indexOf("model/") === 0) {
+    folder.files[name] = url;
+    return;
+  }
+  if (MODEL_ASSET.test(name)) return;
+  if (type === "application/json" && name.indexOf("setting") !== 0) {
+    // Design Explorer's 3D files: kept so the loader can say it can't show them.
+    folder.files[name] = url;
   }
 }
 

@@ -14,13 +14,17 @@ export const loadState = Vue.observable({
   source: null,
   error: null,
   warnings: [],
+  // The link of the dataset on screen (null for a local file).
+  link: null,
+  // A short confirmation after a load the user started.
+  notice: null,
 });
 
 let mount = null;
 let latestLoad = 0;
 const STALE = { stale: true };
 
-/** `options.mount(data, dataTypesMap, { link })` shows a loaded dataset. */
+/** `options.mount(data, dataTypesMap, { link, name })` shows a loaded dataset. */
 export function configureLoader(options) {
   mount = options.mount;
 }
@@ -38,22 +42,38 @@ export function loadDataset(input, options) {
   loadState.source = (options && options.source) || "url";
   loadState.error = null;
   loadState.warnings = [];
+  loadState.notice = null;
   let stillLatest = (value) => {
     if (token !== latestLoad) throw STALE;
     return value;
   };
 
+  let resolved = null;
   return Promise.resolve(input)
     .then(resolveSource)
-    .then((source) => fetchSource(source, { apiKey: window.Gkey }))
+    .then((source) => {
+      resolved = source;
+      return fetchSource(source, { apiKey: window.Gkey });
+    })
     .then(stillLatest)
     .then((fetched) => {
       let dataset = buildDataset(fetched.text, {
         baseUrl: fetched.baseUrl,
         files: fetched.files,
+        rawFiles: fetched.rawFiles,
       });
-      mount(dataset.data, dataset.dataTypesMap, { link: fetched.link || null });
+      mount(dataset.data, dataset.dataTypesMap, {
+        link: fetched.link || null,
+        // A local file has no link; its name helps tell it from others.
+        name: resolved && resolved.kind === "file" ? resolved.file.name : null,
+      });
       loadState.warnings = dataset.warnings;
+      loadState.link = fetched.link || null;
+      let source = loadState.source;
+      if (source === "url" || source === "preset" || source === "file") {
+        let n = dataset.data.length;
+        loadState.notice = "Loaded " + n + (n === 1 ? " option." : " options.");
+      }
       loadState.loading = false;
       return dataset;
     })

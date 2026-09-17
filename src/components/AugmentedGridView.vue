@@ -1,309 +1,221 @@
 <template>
   <v-container :id="viewID" justify-start align-start>
     <v-container class="pa-0 ma-0">
+      <PanelHeader
+        icon="mdi-image-multiple-outline"
+        title="Gallery"
+        :compact="compactHeader"
+        class="gallery-header"
+      >
+        <template v-slot:default>
+          <span class="ph-label">Sort</span>
+          <v-autocomplete
+            v-model="sortByVar"
+            :items="sortItems"
+            dense
+            outlined
+            hide-details
+            class="ph-select"
+            @change="updateAuxiliaries()"
+          />
+          <TipButton
+            small
+            small-icon
+            btn-class="ph-btn"
+            :icon="isSortDesc ? 'mdi-sort-descending' : 'mdi-sort-ascending'"
+            :tooltip="
+              isSortDesc
+                ? 'Descending. Click for ascending order.'
+                : 'Ascending. Click for descending order.'
+            "
+            @click="toggleSortOrder"
+          />
+          <span class="ph-divider" />
+          <v-tooltip bottom max-width="320">
+            <template v-slot:activator="{ on }">
+              <span v-on="on" class="ph-meta"
+                ><strong>{{ headerCount }}</strong> {{ headerLabel }}</span
+              >
+            </template>
+            <span>{{ headerTooltip }}</span>
+          </v-tooltip>
+          <v-btn
+            v-if="hasGallerySelection"
+            small
+            text
+            color="primary"
+            class="ph-text-btn"
+            @click="$store.dispatch('selectAllInGallery')"
+            >Select all</v-btn
+          >
+        </template>
+
+        <template v-slot:actions>
+          <TipButton
+            small
+            small-icon
+            :btn-class="enableContext ? 'ph-btn' : 'ph-btn ph-btn--on'"
+            :icon="enableContext ? 'mdi-eye-outline' : 'mdi-eye-off-outline'"
+            :tooltip="contextToggleTip"
+            @click="toggleContext"
+          />
+          <span class="ph-divider" />
+          <TipButton
+            v-for="(size, index) in thumbnailSizes"
+            :key="size.icon"
+            small
+            small-icon
+            :btn-class="colSpan === index ? 'ph-btn ph-btn--on' : 'ph-btn'"
+            :icon="size.icon"
+            :tooltip="size.label"
+            @click="setThumbnailSize(index)"
+          />
+        </template>
+      </PanelHeader>
+
+      <!-- The inspector takes at most INSPECTOR_SHARE of the panel's height;
+           the thumbnail list below gets the rest. -->
+      <v-card
+        v-if="inspectedItem || isInspectionViewPinned"
+        cols="12"
+        class="inspector_card"
+        :style="{
+          'max-height': inspectorHeight + 'px',
+          '--inspector-image-height': inspectorImageHeight + 'px',
+        }"
+      >
+        <div class="inspected_item_top_bar">
+          <div style="display: flex; align-items: center;">
+            <TipButton
+              small
+              icon="mdi-list-box"
+              :icon-color="isParamsPanelOpen ? 'primary' : 'secondary'"
+              :tooltip="isParamsPanelOpen ? 'Hide details' : 'Show details'"
+              @click="toggleParamsPanel"
+            />
+            <!-- Only when there is something to switch between. -->
+            <ImageSwitcher
+              v-if="hasSeveralImages && !showing3D"
+              :images="inspectedImages"
+              :index="inspectedImageIndex"
+              @change="setImageIndex(inspectedItem._id, $event)"
+            />
+            <template v-if="hasModels">
+              <TipButton
+                small
+                :icon="showing3D ? 'mdi-image-outline' : 'mdi-video-3d'"
+                :icon-color="showing3D ? 'primary' : 'secondary'"
+                :tooltip="showing3D ? 'Show the images' : 'Show the 3D model'"
+                @click="showing3D = !showing3D"
+              />
+              <ImageSwitcher
+                v-if="showing3D && inspectedModels.length > 1"
+                :images="inspectedModels"
+                :index="inspectedModelIndex"
+                @change="setModelIndex(inspectedItem._id, $event)"
+              />
+            </template>
+          </div>
+          <div style="display: flex;">
+            <StarRating
+              v-if="inspectedItem"
+              :item="inspectedItem"
+              @onRatingChanged="onRatingChanged"
+            />
+            <CustomDimensionControl
+              v-if="inspectedItem"
+              :item="inspectedItem"
+            />
+            <TipButton
+              v-if="inspectedItem"
+              small
+              :icon="
+                inspectedInCart ? 'mdi-bookmark-check' : 'mdi-bookmark-plus-outline'
+              "
+              :color="inspectedInCart ? 'orange darken-2' : undefined"
+              :tooltip="
+                inspectedInCart
+                  ? 'On the shortlist'
+                  : 'Keep aside on the shortlist for comparing'
+              "
+              @click="toggleInCart(inspectedItem)"
+            />
+            <TipButton
+              small
+              icon="mdi-close"
+              tooltip="Close inspection"
+              @click="closeInspection"
+            />
+          </div>
+        </div>
+
+        <div class="params_panel_parent">
+          <!-- Built only while open: it re-renders with every inspection. -->
+          <div v-if="isParamsPanelOpen" class="params_panel">
+            <v-list plain>
+              <v-list-item
+                plain
+                style="min-height: 28px; padding: 0 8px;"
+                v-for="(param, j) in filteredKeys"
+                :key="j"
+              >
+                <v-list-item-content
+                  plain
+                  style="font-weight: bold; padding: 4px 0;"
+                  >{{ label(param) }}</v-list-item-content
+                >
+                <v-list-item-content
+                  plain
+                  style="padding: 4px 0;"
+                  class="justify-center"
+                >
+                  {{ formatParam(inspectedItem, param) }}
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </div>
+        </div>
+        <div
+          class="inspector_image_area"
+          :style="{
+            'justify-content': isParamsPanelOpen ? 'end' : 'center',
+          }"
+        >
+          <ModelViewer
+            v-if="inspectedItem && showing3D && inspectedModel"
+            :model="inspectedModel"
+            :height="inspectorImageHeight"
+            @loaded="modelLoaded = true"
+          />
+          <imageZoom
+            v-else-if="inspectedItem && inspectedImage"
+            style="display: flex; justify-content: center;"
+            :regular="inspectedImage"
+            :zoom-amount="2"
+            :click-zoom="true"
+            img-class="inspected_image"
+            :alt="inspectedAlt"
+            :show-message="false"
+          />
+          <div v-else class="inspector_no_image">No picture for this option.</div>
+        </div>
+      </v-card>
+
       <v-data-iterator
         :items="chartData"
         hide-default-footer
         :items-per-page="maxPerPage"
         :sort-by="sortByVar"
         :sort-desc="isSortDesc"
+        :custom-sort="gallerySort"
       >
-        <template v-slot:header>
-          <PanelHeader
-            icon="mdi-image-multiple-outline"
-            title="Gallery"
-            :compact="compactHeader"
-            class="gallery-header"
-          >
-            <span class="ph-label">Sort</span>
-            <v-autocomplete
-              v-model="sortByVar"
-              :items="keys"
-              dense
-              outlined
-              hide-details
-              class="ph-select"
-              @change="updateAuxiliaries()"
-            />
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <v-btn
-                  v-on="on"
-                  icon
-                  small
-                  class="ph-btn"
-                  @click="isSortDesc = !isSortDesc"
-                >
-                  <v-icon small>{{
-                    isSortDesc ? "mdi-sort-descending" : "mdi-sort-ascending"
-                  }}</v-icon>
-                </v-btn>
-              </template>
-              <span>{{
-                isSortDesc
-                  ? "Descending. Click for ascending order."
-                  : "Ascending. Click for descending order."
-              }}</span>
-            </v-tooltip>
-            <span class="ph-divider" />
-            <v-tooltip bottom max-width="320">
-              <template v-slot:activator="{ on }">
-                <span v-on="on" class="ph-meta"
-                  ><strong>{{ headerCount }}</strong> {{ headerLabel }}</span
-                >
-              </template>
-              <span>{{ headerTooltip }}</span>
-            </v-tooltip>
-            <v-btn
-              v-if="hasGallerySelection"
-              small
-              text
-              color="primary"
-              class="ph-text-btn"
-              @click="$store.dispatch('selectAllInGallery')"
-              >Select all</v-btn
-            >
-
-            <template v-slot:actions>
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-on="on"
-                    icon
-                    small
-                    class="ph-btn"
-                    :class="{ 'ph-btn--on': !enableContext }"
-                    @click="enableContext = !enableContext"
-                  >
-                    <v-icon small>{{
-                      enableContext ? "mdi-eye-outline" : "mdi-eye-off-outline"
-                    }}</v-icon>
-                  </v-btn>
-                </template>
-                <span v-if="isLite && enableContext">Show selected only</span>
-                <span v-else-if="isLite"
-                  >Also show unselected options, dimmed</span
-                >
-                <span v-else-if="enableContext"
-                  >Show only the selected options</span
-                >
-                <span v-else
-                  >Show all options while highlighting the selected
-                  options</span
-                >
-              </v-tooltip>
-              <span class="ph-divider" />
-              <v-tooltip
-                v-for="(size, index) in thumbnailSizes"
-                :key="size.icon"
-                bottom
-              >
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    v-on="on"
-                    icon
-                    small
-                    class="ph-btn"
-                    :class="{ 'ph-btn--on': colSpan === index }"
-                    @click="setThumbnailSize(index)"
-                  >
-                    <v-icon small>{{ size.icon }}</v-icon>
-                  </v-btn>
-                </template>
-                <span>{{ size.label }}</span>
-              </v-tooltip>
-            </template>
-          </PanelHeader>
-
-          <v-card
-            v-if="inspectedItem || isInspectionViewPinned"
-            cols="12"
-            style="width: 100%"
-          >
-            <div class="inspected_item_top_bar">
-              <div style="display: flex;">
-                <!--
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <v-btn
-                  icon
-                  v-on="on"
-                  @click="() => (inspecting3DView = !inspecting3DView)"
-                >
-                  <v-icon v-if="inspecting3DView"
-                    >mdi-file-image-outline</v-icon
-                  >
-                  <v-icon v-else>mdi-video-3d</v-icon>
-                </v-btn>
-              </template>
-              <span>
-                <span v-if="inspecting3DView">Show 2D image instead</span>
-                <span v-else>Show 3D model instead</span>
-              </span>
-            </v-tooltip>
-
-            <v-progress-circular
-              v-show="isLoading"
-              indeterminate
-              :width="3"
-              :size="25"
-              color="primary"
-            ></v-progress-circular>
--->
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-on="on"
-                      icon
-                      small
-                      @click="isParamsPanelOpen = !isParamsPanelOpen"
-                    >
-                      <v-icon
-                        :color="isParamsPanelOpen ? 'primary' : 'secondary'"
-                        >mdi-list-box</v-icon
-                      >
-                    </v-btn>
-                  </template>
-                  <span>
-                    <span v-if="isParamsPanelOpen">Hide details</span>
-                    <span v-else>Show details</span>
-                  </span>
-                </v-tooltip>
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-on="on"
-                      v-show="
-                        inspectedItem &&
-                          inspectedItem.images &&
-                          inspectedItem.images.length > 1
-                      "
-                      icon
-                      @click="() => previousView(inspectedItem)"
-                    >
-                      <v-icon small>mdi-arrow-left</v-icon>
-                    </v-btn>
-                  </template>
-                  <span>Previous image</span>
-                </v-tooltip>
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-on="on"
-                      v-show="
-                        inspectedItem &&
-                          inspectedItem.images &&
-                          inspectedItem.images.length > 1
-                      "
-                      icon
-                      @click="() => nextView(inspectedItem)"
-                    >
-                      <v-icon small>mdi-arrow-right</v-icon>
-                    </v-btn>
-                  </template>
-                  <span>Next image</span>
-                </v-tooltip>
-              </div>
-              <div style="display: flex;">
-                <StarRating
-                  v-if="inspectedItem"
-                  :item="inspectedItem"
-                  @onRatingChanged="onRatingChanged"
-                />
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      small
-                      icon
-                      v-on="on"
-                      @click="
-                        () => {
-                          inspectedItem = null;
-                          unhover();
-                        }
-                      "
-                    >
-                      <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                  </template>
-                  <span>Close inspection</span>
-                </v-tooltip>
-              </div>
-            </div>
-
-            <div class="params_panel_parent">
-              <div
-                class="params_panel"
-                :style="{ display: isParamsPanelOpen ? 'block' : 'none' }"
-              >
-                <v-list plain>
-                  <v-list-item
-                    plain
-                    style="min-height: 28px; padding: 0 8px;"
-                    v-for="(param, j) in filteredKeys"
-                    :key="j"
-                  >
-                    <v-list-item-content
-                      plain
-                      style="font-weight: bold; padding: 4px 0;"
-                      >{{ param }}</v-list-item-content
-                    >
-                    <v-list-item-content
-                      plain
-                      style="padding: 4px 0;"
-                      class="justify-center"
-                    >
-                      {{ inspectedItem[param] }}
-                    </v-list-item-content>
-                  </v-list-item>
-                </v-list>
-              </div>
-            </div>
-            <div
-              :style="{
-                display: 'flex',
-                'flex-direction': 'row',
-                'justify-content': isParamsPanelOpen ? 'end' : 'center',
-              }"
-            >
-              <imageZoom
-                v-if="inspectedItem && !inspecting3DView"
-                style="display: flex; justify-content: center;"
-                :regular="inspectedItem.image"
-                :zoom-amount="2"
-                :click-zoom="true"
-                img-class="inspected_image"
-                :alt="inspectedItem.image"
-                :show-message="false"
-              />
-              <!--
-              <model-gltf
-                ref="gltf"
-                v-else-if="inspectedItem && inspecting3DView && isModelGLTF"
-                :src="inspectedItem.gltf"
-                :on-load="onGLTFLoaded(this)"
-                :rotation="modelRotation"
-                :position="modelPosition"
-                :lights="modelLights"
-              />-->
-              <v-card
-                v-else
-                width="100%"
-                height="400px"
-                id="inspector"
-                name="inspector"
-              ></v-card>
-            </div>
-          </v-card>
-        </template>
-
         <template v-slot:no-data>
           <div class="gallery-empty">{{ emptyMessage }}</div>
         </template>
         <template v-slot:default="items">
           <drag-select-container
             selectorClass="thumbnail_card"
-            :scrollAccessor="(el) => el.firstChild.firstChild"
+            :scrollAccessor="dragScrollAccessor"
             :disabled="
               !galleryFiltering && (!enableContext || !can('gallerySelection'))
             "
@@ -316,14 +228,16 @@
               column
               :style="{
                 'max-height': `calc(${height}px - ${
-                  inspectedItem ? 400 : 0
+                  hasInspectedItem ? inspectorHeight : 0
                 }px -  100px)`,
               }"
             >
+              <!-- min-height 0 lets the list shrink into the space left and
+                   scroll; thumbnails wrap, so it never scrolls sideways. -->
               <v-flex
                 md6
                 class="scroll-container gallery-scroller"
-                style="overflow-y: scroll; overflow-x: visible"
+                style="overflow-y: scroll; overflow-x: hidden; min-height: 0;"
               >
                 <v-card
                   color="primary"
@@ -348,102 +262,29 @@
                       }"
                     />
                     <v-col
-                      v-for="item in windowedItems(items.items)"
-                      v-bind:key="cardSelector + item._id"
+                      v-for="card in windowedCards(items.items)"
+                      :key="card.key"
                       :cols="possibleColSpans[colSpan]"
                       :class="[
                         'thumbnail_container',
                         possibleColSpans[colSpan] > 3 ? 'top-thumbnails' : '',
                       ]"
                     >
-                      <!--<v-card :id="item._id" v-if="enableContext || selected.includes(index)"  v-on:click="addSelection(index)">-->
-                      <v-card
-                        class="thumbnail_card"
-                        v-bind:id="cardSelector + item._id"
-                      >
-                        <v-img
-                          v-bind:class="cardClasses(item)"
-                          v-if="item"
-                          :src="item.image"
-                          :lazy-src="lazyImageSrc"
-                          :ref="'img_' + cardSelector + item._id"
-                          alt="item.image"
-                          @mouseover="isHoveringEnabled ? hover(item) : null"
-                          @click="inspect(item)"
-                          @load="imageLoaded()"
-                          @error="imageLoadingError(item)"
-                        >
-                          <button
-                            v-if="galleryFiltering"
-                            class="gallery-toggle"
-                            :title="
-                              isSelectedInGallery(item._id)
-                                ? 'Unselect'
-                                : 'Select'
-                            "
-                            @mousedown.stop
-                            @click.stop="toggleInGallery(item)"
-                          >
-                            <v-icon small color="white">{{
-                              isSelectedInGallery(item._id)
-                                ? "mdi-minus"
-                                : "mdi-plus"
-                            }}</v-icon>
-                          </button>
-                          <template v-else>
-                            <input
-                              v-if="enableContext && can('gallerySelection')"
-                              v-on:click="toggle(item, $event)"
-                              class="image_checkbox"
-                              type="checkbox"
-                              :checked="selectionMap[item._id]"
-                            />
-                            <button
-                              class="xbtn"
-                              v-else-if="can('gallerySelection')"
-                              v-on:click="toggle(item, $event)"
-                            />
-                          </template>
-                        </v-img>
-
-                        <v-expansion-panels
-                          v-show="possibleColSpans[colSpan] > 3"
-                        >
-                          <v-expansion-panel>
-                            <v-expansion-panel-header>
-                              <template v-slot:default="{ open }">
-                                <span
-                                  v-if="!open"
-                                  style="text-align: center;font-size: smaller;"
-                                >
-                                  Expand for Details
-                                </span>
-                              </template>
-                            </v-expansion-panel-header>
-
-                            <v-expansion-panel-content>
-                              <v-list>
-                                <v-list-item
-                                  style="min-height: 28px;"
-                                  v-for="(param, j) in filteredKeys"
-                                  :key="j"
-                                >
-                                  <v-list-item-content
-                                    style="font-weight: bold; padding: 6px 0;"
-                                    >{{ param }}</v-list-item-content
-                                  >
-                                  <v-list-item-content
-                                    style="padding: 6px 0;"
-                                    class="justify-center"
-                                  >
-                                    {{ item[param] }}
-                                  </v-list-item-content>
-                                </v-list-item>
-                              </v-list>
-                            </v-expansion-panel-content>
-                          </v-expansion-panel>
-                        </v-expansion-panels>
-                      </v-card>
+                      <GalleryCard
+                        :item="card.item"
+                        :card-id="cardSelector + card.item._id"
+                        :lazy-src="lazyImageSrc"
+                        :control="cardControl"
+                        :show-details="possibleColSpans[colSpan] > 3"
+                        :detail-keys="filteredKeys"
+                        v-bind="cardState(card.item)"
+                        @hover="onCardHover"
+                        @inspect="inspect"
+                        @load="imageLoaded"
+                        @toggle-gallery="toggleInGallery"
+                        @toggle="toggle"
+                        @toggle-cart="toggleInCart"
+                      />
                     </v-col>
                     <v-col
                       v-if="trailingSpacerHeight(items.items.length) > 0"
@@ -496,6 +337,21 @@
   border: 1px solid rgb(0, 0, 0, 0.1);
   border-radius: 4px;
 }
+/* Sized from the panel's height (see `inspectorHeight`), not the window's, so
+   the thumbnail list keeps its share however tall the panel is. */
+.inspector_card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.inspector_image_area {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
 ::v-deep .params_panel {
   margin-left: 0px;
   position: absolute;
@@ -503,13 +359,14 @@
   z-index: 100;
   overflow-y: scroll;
   min-width: 240px;
-  height: 38vh;
+  height: var(--inspector-image-height, 38vh);
   width: auto;
   font-size: small;
   opacity: 0.8;
 }
 ::v-deep .inspected_image {
-  height: 40vh;
+  height: var(--inspector-image-height, 40vh);
+  max-height: 100%;
   width: 100%;
   object-fit: contain;
 }
@@ -537,7 +394,8 @@
 ::v-deep #gallery_axis {
   display: block;
   position: relative;
-  height: 400px;
+  /* Stretches to the list's height in its flex row. */
+  flex: 0 0 40px;
   left: -5px;
   top: 0px;
   width: 40px;
@@ -550,27 +408,12 @@
   min-width: 20px;
 }
 
-.xbtn {
-  position: relative;
-  top: -6%;
-  left: -4%;
-  height: 18px;
-  line-height: 18px;
-  width: 18px;
-  font-size: 0.85em;
-  font-weight: bold;
-  border-radius: 50%;
-  background-color: #ef0000;
-  color: white;
-  text-align: center;
-  cursor: pointer;
-}
-.xbtn::before {
-  content: "x";
-}
+/* Takes what the axis and scrollbar leave, rather than 100% on top of them,
+   which pushed the row wider than the list. */
 .images-container {
   margin-top: 5px;
-  width: 100%;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 ::v-deep .scroll-tooltip {
@@ -649,82 +492,11 @@
   align-items: start;
 }
 
-.col > .thumbnail_card:not(.hovered) .v-image.under_drag_selection {
-  border: 2px dashed rgb(33, 119, 180);
-}
-
-.col > .thumbnail_card:not(.hovered) .v-image.outlined {
-  border: 3px solid rgb(33, 119, 180);
-  background-color: lightgray;
-}
-
-::v-deep .col > .thumbnail_card:not(.hovered) .v-image.outlined > div {
-  scale: 0.9;
-}
-
-.col > .thumbnail_card.hovered .v-image.outlined {
-  margin: 2px;
-  border: 3px solid rgb(33, 119, 180);
-}
-
-.col > .thumbnail_card .v-image:not(.transparent) {
-  opacity: 1;
-}
-
-.col > .thumbnail_card .v-image.transparent {
-  opacity: 0.35;
-}
-
-/* Lite: unselected options stay in the pool, dimmed. Only the picture fades,
-   so the card's select button stays readable. */
-::v-deep .v-image.gallery-dimmed .v-image__image,
-::v-deep .v-image.gallery-dimmed .v-image__placeholder {
-  opacity: 0.3;
-}
-
-.gallery-toggle {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(21, 101, 192, 0.9);
-  opacity: 0;
-  transition: opacity 0.12s;
-  cursor: pointer;
-}
-
-.thumbnail_card:hover .gallery-toggle,
-.gallery-toggle:focus-visible {
-  opacity: 1;
-}
-
-.image_checkbox {
-  width: 18px;
-  height: 18px;
-  display: inline;
-  position: absolute;
-  top: 3%;
-  left: 3%;
-}
-
-.image_checkbox:checked {
-  top: -3%;
-  left: -3%;
-}
 
 ::v-deep .v-slider--horizontal {
   min-width: 5vw;
 }
 
-.col > .thumbnail_card.hovered {
-  /* border: 3px solid #ff0000;*/
-  border: 3px dashed rgb(33, 119, 180); /*#82b1ff;*/
-}
 
 #enableContextBtn {
   margin-bottom: -10px;
@@ -742,20 +514,73 @@ import Vue from "vue";
 
 import imageZoom from "vue-image-zoomer";
 
-import { ModelGltf, ModelThree } from "vue-3d-model";
 import { operations } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import DragSelect from "@/plugins/DragSelect.vue";
 import StarRating from "@/components/StarRating.vue";
+import CustomDimensionControl from "@/components/CustomDimensionControl.vue";
+import GalleryCard from "@/components/GalleryCard.vue";
+import ImageSwitcher from "@/components/ImageSwitcher.vue";
+import { DETAIL_BLACKLIST } from "@/store/compare.js";
+import { isAssetColumn } from "@/data/assets.js";
+import ModelViewer from "@/components/ModelViewer.vue";
+import TipButton from "@/components/TipButton.vue";
+import { formatValue } from "@/store/filters.js";
+import { dimensionItems, displayName } from "@/columns.js";
 
 import PanelHeader from "@/components/PanelHeader.vue";
+
+// What a thumbnail shows while its image loads: a light-grey 4x3 rectangle.
+const LAZY_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='3'%3E%3Crect width='4' height='3' fill='%23eceff1'/%3E%3C/svg%3E";
+
+// The largest share of the gallery panel's height the inspector may take.
+const INSPECTOR_SHARE = 0.45;
+// The inspector's top bar (buttons, stars) and its details strip, in px.
+const INSPECTOR_BAR_HEIGHT = 42;
+
+function isMissingValue(value) {
+  return (
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    (typeof value === "number" && isNaN(value))
+  );
+}
+
+/**
+ * Orders two values of one dimension: numbers by value, anything else as text
+ * with numbers inside it compared by value. A missing value goes last in both
+ * directions, so options not given a custom value yet don't lead a descending
+ * sort.
+ */
+const textOrder = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: "base",
+});
+
+function compareForSort(a, b, desc) {
+  let aMissing = isMissingValue(a);
+  let bMissing = isMissingValue(b);
+  if (aMissing || bMissing) return aMissing === bMissing ? 0 : aMissing ? 1 : -1;
+  let order =
+    typeof a === "number" && typeof b === "number"
+      ? a - b
+      : textOrder.compare(String(a), String(b));
+  return desc ? -order : order;
+}
 
 export default {
   name: "AugmentedGridCards",
   components: {
     PanelHeader,
     StarRating,
+    CustomDimensionControl,
+    GalleryCard,
+    ImageSwitcher,
+    ModelViewer,
+    TipButton,
     "drag-select-container": DragSelect,
     imageZoom,
   },
@@ -763,29 +588,12 @@ export default {
   data: function() {
     return {
       isParamsPanelOpen: false,
-      isLoading: false,
-      va3cViewer: null,
-      isModelGLTF: false,
-      modelCameraPosition: { x: 1, y: 2, z: -3 },
-      modelCameraRotation: { x: 3, y: 2, z: -1 },
-      modelRotation: { x: -Math.PI / 3, y: 0, z: 0 },
-      modelPosition: { x: 0, y: -30, z: -30 },
-      modelLights: [
-        {
-          type: "AmbientLight",
-          color: 0xaaaaaa,
-        },
-        {
-          type: "hemispherelight",
-          groundColor: 0xff0000,
-          skyColor: 0xffffff,
-          intensity: 0.8,
-        },
-      ],
-      crossOrigin: "anonymous",
       chartData: [],
       cards: [],
       selectionMap: {},
+      // Markings change in place, out of Vue's sight; bumped on every change
+      // so the cards' selection state is read again.
+      markingVersion: 0,
       viewID: null,
       colSpan: 1,
       possibleColSpans: [1, 2, 3, 4],
@@ -805,10 +613,19 @@ export default {
       sortFallback: "",
       enableContext: this.defaultEnableContext,
       inspectedItem: null,
-      inspecting3DView: false,
-      inspectedItemViewIndex: 0,
-      inspected3DIcon: "mdi-video-3d",
-      inspected2DIcon: "mdi-file-image-outline",
+      // Whether an item is inspected, for the list's height: unlike
+      // `inspectedItem`, it doesn't change as inspection moves between items,
+      // so the list doesn't re-render with it.
+      hasInspectedItem: false,
+      // Whether the 3D model is showing instead of the pictures.
+      showing3D: false,
+      // Whether a model is on screen, so hovering doesn't tear it down.
+      modelLoaded: false,
+      // Which view each option is showing, by option id. Component state, never
+      // the row: `image` is what the gallery, the clusters and the exports
+      // read, and it must not move under them.
+      imageIndexById: {},
+      modelIndexById: {},
       isInspectionViewPinned: false,
       isSelectionDragOn: false,
       dragSelection: {},
@@ -826,22 +643,6 @@ export default {
       // drag would lose items it has already swept over.
       pinnedWindowStart: null,
       pinnedWindowEnd: null,
-      keysBlackList: [
-        "index",
-        "selected",
-        "gltf",
-        "image",
-        "ID",
-        "id",
-        "_id",
-        "geometry",
-        "json",
-        "img",
-        "threeD",
-        "collection",
-        "images",
-        "description",
-      ],
     };
   },
   computed: {
@@ -876,7 +677,7 @@ export default {
       numericDimensions: (state) => state.numericDimensions,
       nonNumericDimensions: (state) => state.nonNumericDimensions,
       hovered: (state) => state.hovered,
-      lastHovered: (state) => state.lastHovered,
+      inspectionClears: (state) => state.inspectionClears,
 
       colorColumn: (state) => state.colorColumn,
       uiMode: (state) => state.uiMode,
@@ -893,9 +694,20 @@ export default {
       "hasGallerySelection",
       "isSelectedInGallery",
       "gallerySelectedCount",
+      "isInCart",
     ]),
+    /** Whether the inspected option is on the shortlist. */
+    inspectedInCart() {
+      return !!this.inspectedItem && this.isInCart(this.inspectedItem._id);
+    },
     galleryFiltering() {
       return this.can("galleryFiltering");
+    },
+    /** The selection control each card offers (see GalleryCard). */
+    cardControl() {
+      if (this.galleryFiltering) return "gallery";
+      if (!this.can("gallerySelection")) return null;
+      return this.enableContext ? "checkbox" : "xbutton";
     },
     compactHeader() {
       return this.width < 620;
@@ -928,9 +740,80 @@ export default {
     cardSelector() {
       return "card_" + this.viewID + "_";
     },
+    contextToggleTip() {
+      if (this.isLite) {
+        return this.enableContext
+          ? "Show selected only"
+          : "Also show unselected options, dimmed";
+      }
+      return this.enableContext
+        ? "Show only the selected options"
+        : "Show all options while highlighting the selected options";
+    },
+    /** The inspector's height in px: a share of the panel's height. */
+    inspectorHeight() {
+      let panel = Number(this.height);
+      if (!(panel > 0)) return 400;
+      return Math.round(panel * INSPECTOR_SHARE);
+    },
+    /** The inspected image's height: the inspector less its top bar. */
+    inspectorImageHeight() {
+      return Math.max(60, this.inspectorHeight - INSPECTOR_BAR_HEIGHT);
+    },
+    /** The inspected option's views, and the one on screen. */
+    inspectedImages() {
+      let item = this.inspectedItem;
+      return (item && item.images) || [];
+    },
+    inspectedImageIndex() {
+      let item = this.inspectedItem;
+      if (!item) return 0;
+      let index = this.imageIndexById[item._id] || 0;
+      // A remembered index outlives a reload that changed the view count.
+      return Math.min(index, Math.max(0, this.inspectedImages.length - 1));
+    },
+    inspectedImage() {
+      return this.inspectedImages[this.inspectedImageIndex];
+    },
+    inspectedAlt() {
+      let item = this.inspectedItem;
+      if (!item) return "";
+      let view = this.inspectedImages.length > 1
+        ? " view " + (this.inspectedImageIndex + 1)
+        : "";
+      return "Option " + item._id + view;
+    },
+    inspectedModels() {
+      let item = this.inspectedItem;
+      return (item && item._models) || [];
+    },
+    hasModels() {
+      return this.inspectedModels.length > 0;
+    },
+    inspectedModelIndex() {
+      let item = this.inspectedItem;
+      if (!item) return 0;
+      let index = this.modelIndexById[item._id] || 0;
+      return Math.min(index, Math.max(0, this.inspectedModels.length - 1));
+    },
+    inspectedModel() {
+      return this.inspectedModels[this.inspectedModelIndex];
+    },
+    hasSeveralImages() {
+      let item = this.inspectedItem;
+      return !!item && !!item.images && item.images.length > 1;
+    },
+    sortItems() {
+      // Sorting by a picture's address means nothing, so those columns stay out.
+      return dimensionItems(
+        this.keys.filter((key) => !isAssetColumn(key) && key !== "Tags")
+      );
+    },
     filteredKeys() {
+      // The compare view hides the same columns, and the asset predicate covers
+      // the names a list never could ("img_2", "model3d_3").
       return [...this.numericDimensions, ...this.nonNumericDimensions].filter(
-        (x) => !this.keysBlackList.includes(x)
+        (x) => DETAIL_BLACKLIST.indexOf(x) === -1 && !isAssetColumn(x)
       );
     },
     columnsPerRow() {
@@ -958,13 +841,17 @@ export default {
 
   updated() {
     // The iterator mounts its scroller after this component, so binding here
-    // too covers the case where it was absent at mount. Both calls are
-    // idempotent and converge after a pass or two.
+    // too covers the case where it was absent at mount. Idempotent. Row
+    // height is not measured here: reading card heights forces a layout, and
+    // renders happen on every filter change and hover.
     this.attachGalleryScrollListener();
-    this.measureRowHeight();
   },
   created() {
     this.viewID = "id" + this._uid;
+    // Which card shows which item (see windowedCards); outside data(), since
+    // rendering writes it.
+    this.cardKeys = null;
+    this.nextCardKey = 0;
 
     this.$store.subscribe((mutation, state) => {
       if (
@@ -979,6 +866,7 @@ export default {
         this.chartData.forEach((d) => {
           d.selected = this.selectionMap[d._id];
         });
+        this.markingVersion += 1;
         if (mutation.type == "resetMarking" && !this.isLite) {
           this.enableContext = true;
         }
@@ -998,46 +886,78 @@ export default {
     // Both modes open on every option; the eye narrows to the selection.
     this.enableContext = true;
     this.updateContext();
-    //Inspection setup
-    this.isModelGLTF = this.chartData[0].gltf ? true : false;
-    this.inspectedItem = this.chartData[0];
-    this.lazyImageSrc = this.chartData[0].image;
+    // Nothing is inspected until the user inspects an option. Loading
+    // thumbnails show a neutral grey, not some other option's picture.
+    this.lazyImageSrc = LAZY_PLACEHOLDER;
 
     this.sortFallback =
       this.keys.find((k) => !isNaN(this.chartData[0][k])) || this.keys[0];
 
-    // To prevent the space key from scrolling down, which it does by default
-    this.onWindowKeydown = function(e) {
-      if (e.key == " " && e.target == document.body) {
+    // Space would scroll the page, and the arrows step the inspected option's
+    // views -- but only with focus on the page itself, so typing keeps them.
+    this.onWindowKeydown = (e) => {
+      if (e.target !== document.body) return;
+      if (e.key === " ") {
         e.preventDefault();
+        return;
       }
+      let by = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0;
+      if (by !== 0 && this.stepImage(by)) e.preventDefault();
     };
     window.addEventListener("keydown", this.onWindowKeydown);
   },
   methods: {
+    label: displayName,
+    toggleSortOrder() {
+      this.isSortDesc = !this.isSortDesc;
+    },
+    toggleContext() {
+      this.enableContext = !this.enableContext;
+    },
+    toggleParamsPanel() {
+      this.isParamsPanelOpen = !this.isParamsPanelOpen;
+    },
+    // Same as Esc: the store stops inspection and every view follows.
+    closeInspection() {
+      this.$store.dispatch("clearInspection");
+    },
+    /** Where the drag-select container finds the element that scrolls. */
+    dragScrollAccessor(el) {
+      return el.firstChild.firstChild;
+    },
     galleryScrollEl() {
       // Not ".scroll-container": DragSelect removes that class when disabled.
       return this.$el ? this.$el.querySelector(".gallery-scroller") : null;
     },
-    cardClasses(item) {
+    /**
+     * A card's selection state, as the plain props its card compares: a card
+     * re-renders only when one of these changes for it.
+     */
+    cardState(item) {
+      void this.markingVersion;
+      let id = item._id;
       if (this.galleryFiltering) {
         return {
-          "gallery-dimmed": !this.isSelectedInGallery(item._id),
-          under_drag_selection:
-            this.isSelectionDragOn &&
-            this.dragSelection[String(item._id)] === true,
+          inGallery: this.isSelectedInGallery(id),
+          underDrag:
+            this.isSelectionDragOn && this.dragSelection[String(id)] === true,
         };
       }
+      let selected = !!this.selectionMap[id];
       return {
-        outlined: this.hasSelection && this.selectionMap[item._id],
-        transparent:
-          this.enableContext &&
-          this.hasSelection &&
-          !this.selectionMap[item._id],
+        outlined: this.hasSelection && selected,
+        transparent: this.enableContext && this.hasSelection && !selected,
+        checked: selected,
       };
+    },
+    onCardHover(item) {
+      if (this.isHoveringEnabled) this.hover(item);
     },
     toggleInGallery(item) {
       this.$store.dispatch("toggleGallerySelection", { id: item._id });
+    },
+    toggleInCart(item) {
+      this.$store.dispatch("toggleInCart", { id: item._id });
     },
     sameItems(a, b) {
       if (!a || !b || a.length !== b.length) return false;
@@ -1069,19 +989,24 @@ export default {
     },
     /**
      * Rows are assumed uniform in height. That holds for the render-style
-     * imagery these galleries show, and `measureRowHeight` re-measures after
-     * every render so any drift self-corrects on the next frame.
+     * imagery these galleries show. Heights change only when images load, the
+     * tile size changes or the panel resizes, so it is re-measured then (see
+     * `scheduleRowMeasure`), not after every render.
      */
     measureRowHeight() {
       let nodes = this.$el
         ? this.$el.querySelectorAll(".images-container > .thumbnail_container")
         : [];
-      // Take the tallest of a sample rather than the first card: a card whose
-      // image has not arrived yet collapses to a few pixels, and a single
-      // collapsed card would otherwise poison the estimate for the whole grid.
+      // A card whose image has not arrived yet collapses to a few pixels; a
+      // collapsed estimate would window hundreds of cards onto the page. So
+      // only cards with a loaded image count, the tallest of a sample, and
+      // with none loaded yet the current estimate stands.
       let h = 0;
-      let sample = Math.min(nodes.length, 24);
-      for (let i = 0; i < sample; i++) {
+      let seen = 0;
+      for (let i = 0; i < nodes.length && seen < 24; i++) {
+        if (nodes[i].querySelector(".v-image__image--preload")) continue;
+        if (!nodes[i].querySelector(".v-image__image")) continue;
+        seen += 1;
         h = Math.max(h, nodes[i].offsetHeight);
       }
       if (h > 0 && Math.abs(h - this.measuredRowHeight) > 2) {
@@ -1127,11 +1052,45 @@ export default {
       }
       return { start: Math.max(0, start), end: Math.max(start, end) };
     },
-    windowedItems(list) {
+    /**
+     * The window's items as `{ item, key }`, where a key names a card. An
+     * item still in view keeps its card, which only moves, so its image
+     * stays. The cards of items that left go to the items that arrived, and
+     * are updated rather than destroyed and rebuilt: scrolling hands the cards
+     * leaving one end to the items entering the other.
+     */
+    windowedCards(list) {
       if (!list) return [];
-      if (!this.isVirtualized) return list;
-      let w = this.visibleWindow(list.length);
-      return list.slice(w.start, w.end);
+      let w = this.isVirtualized
+        ? this.visibleWindow(list.length)
+        : { start: 0, end: list.length };
+      let items = list.slice(w.start, w.end);
+      // Item ID -> card key, from the previous render. Not reactive: it only
+      // remembers what the last render did.
+      let previous = this.cardKeys || new Map();
+      let next = new Map();
+      let taken = new Set();
+      items.forEach((item) => {
+        let key = previous.get(item._id);
+        if (key !== undefined) {
+          next.set(item._id, key);
+          taken.add(key);
+        }
+      });
+      let free = [];
+      previous.forEach((key) => {
+        if (!taken.has(key)) free.push(key);
+      });
+      let cards = items.map((item) => {
+        let key = next.get(item._id);
+        if (key === undefined) {
+          key = free.length > 0 ? free.pop() : this.nextCardKey++;
+          next.set(item._id, key);
+        }
+        return { item: item, key: key };
+      });
+      this.cardKeys = next;
+      return cards;
     },
     leadingSpacerHeight(total) {
       if (!this.isVirtualized) return 0;
@@ -1143,10 +1102,6 @@ export default {
       let w = this.visibleWindow(total);
       let remainingRows = Math.ceil((total - w.end) / this.columnsPerRow);
       return Math.max(0, remainingRows) * this.rowHeight;
-    },
-    imageLoadingError(item) {
-      this.$refs["img_" + this.cardSelector + item._id][0].src =
-        "data:image/webp;base64,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";
     },
     imageLoaded() {
       this.numLoadedImages += 1;
@@ -1185,8 +1140,14 @@ export default {
         Math.max(0, rowIndex * this.columnsPerRow)
       );
       let datum = sorted[idx];
-      if (datum && datum[this.sortByVar] !== undefined) {
-        this.scrollLabel.textContent = Math.round(datum[this.sortByVar]);
+      let value = datum ? datum[this.sortByVar] : undefined;
+      if (typeof value === "number" && isFinite(value)) {
+        // Weighted dimensions run from 0 to 1, so rounding them would say nothing.
+        this.scrollLabel.textContent = this.$store.getters.fixedBoundsOf(
+          this.sortByVar
+        )
+          ? this.formatParam(datum, this.sortByVar)
+          : Math.round(value);
       }
     },
     /** The gallery's items in the order the iterator renders them. */
@@ -1194,13 +1155,26 @@ export default {
       let list = this.chartData.slice();
       if (!this.sortByVar) return list;
       let dim = this.sortByVar;
-      let dir = this.isSortDesc ? -1 : 1;
-      return list.sort((a, b) => {
-        let av = a[dim];
-        let bv = b[dim];
-        if (av === bv) return 0;
-        return (av > bv ? 1 : -1) * dir;
-      });
+      let desc = this.isSortDesc;
+      return list.sort((a, b) => compareForSort(a[dim], b[dim], desc));
+    },
+    /** The iterator's sort: options with no value go last, whichever the direction. */
+    gallerySort(items, sortBy, sortDesc) {
+      let dim = Array.isArray(sortBy) ? sortBy[0] : sortBy;
+      if (!dim) return items;
+      let desc = Array.isArray(sortDesc) ? !!sortDesc[0] : !!sortDesc;
+      return items.sort((a, b) => compareForSort(a[dim], b[dim], desc));
+    },
+    /** A value as the details list shows it; custom and weighted values are rounded. */
+    formatParam(item, param) {
+      let value = item ? item[param] : undefined;
+      let bounds = this.$store.getters.fixedBoundsOf(param);
+      if (bounds) {
+        return typeof value === "number" && isFinite(value)
+          ? formatValue(value, bounds[1] - bounds[0])
+          : "\u2014";
+      }
+      return value;
     },
     showTooltip(event) {
       console.log("moving");
@@ -1224,49 +1198,22 @@ export default {
         item: this.inspectedItem,
       });
     },
-    nextView(item) {
-      this.inspectedItemViewIndex =
-        (this.inspectedItemViewIndex + 1) % item.images.length;
-      item.image = item.images[this.inspectedItemViewIndex];
+    setImageIndex(id, index) {
+      this.$set(this.imageIndexById, id, index);
     },
-    previousView(item) {
-      let index = this.inspectedItemViewIndex - 1;
-      if (index < 0) {
-        index = item.images.length - 1;
-      }
-      this.inspectedItemViewIndex = index;
-      item.image = item.images[this.inspectedItemViewIndex];
+    setModelIndex(id, index) {
+      this.$set(this.modelIndexById, id, index);
+      this.modelLoaded = false;
     },
-    onGLTFLoaded() {
-      this.isLoading = false;
-      //TODO fetch the loaded object and color it.. see https://github.com/abuzreq/abuzreq.github.io/blob/develop/js/geom.js
-      /*
-        if(this.$refs.gltf)
-        {
-          let object = this.$refs.gltf.scene;
-          object.traverse(function(child) {
-
-              if (child.type ==  'Mesh')
-              {
-
-                  var materialColor = new THREE.Color();
-                  materialColor.setRGB( 0.4, 0.0, 0.0 );
-                  let material = new THREE.MeshPhongMaterial( { color: materialColor, side: THREE.DoubleSide } );
-
-                  child.material = material;//new THREE.Color(0xffb830);
-
-                //console.log(child)
-              }
-          });
-           //  this.$refs.gltf.update();
-          //this.$refs.gltf.updateRenderer();//renderer.render(object, this.$refs.gltf.camera)
-        }*/
-    },
-    onProgressLoading3DModel(d) {
-      this.isLoading = true;
-    },
-    onDoneLoading3DModel(d) {
-      this.isLoading = false;
+    /** Arrow keys step the inspected option's views. */
+    stepImage(by) {
+      let count = this.inspectedImages.length;
+      if (!this.inspectedItem || count < 2 || this.showing3D) return false;
+      this.setImageIndex(
+        this.inspectedItem._id,
+        (this.inspectedImageIndex + by + count) % count
+      );
+      return true;
     },
     getAllCards() {
       let cardNodes = d3.select("#" + this.viewID).selectAll(".thumbnail_card")
@@ -1374,6 +1321,17 @@ export default {
     },
     // A click inspects; clicking the inspected option again stops inspecting.
     inspect(item) {
+      // With a model on screen the panel stays on its option while the pointer
+      // wanders, so the store already counts the wandered-over option as the
+      // hovered one: clicking it would read as "clicked the inspected option
+      // again" and stop inspecting. A click here means "show me this one".
+      let pinned = this.showing3D && this.modelLoaded && this.inspectedItem;
+      if (pinned && item._id !== this.inspectedItem._id) {
+        this.modelLoaded = false;
+        this.inspectedItem = item;
+        this.$store.commit("hover", { hovered: item });
+        return;
+      }
       this.$store.dispatch("inspectByClick", { item: item });
     },
     unhover(item) {
@@ -1417,11 +1375,9 @@ export default {
       let IDs = this.getItemsIDs(images);
       let altsData = this.chartData.filter((alt) => IDs.includes(alt._id));
       // Sort images by their data values
-      const sortedData = Array.from(altsData).sort((a, b) => {
-        return (
-          (a[this.sortByVar] - b[this.sortByVar]) * (this.isSortDesc ? -1 : 1)
-        );
-      });
+      const sortedData = Array.from(altsData).sort((a, b) =>
+        compareForSort(a[this.sortByVar], b[this.sortByVar], this.isSortDesc)
+      );
 
       var i = 0;
       //Assumes images are already sorted
@@ -1559,26 +1515,6 @@ export default {
       }
       return count;
     },
-    load3DJSON(item) {
-      console.log("loading 3D TODO: not implemented");
-
-      /*    if (this.inspecting3DView && !this.isModelGLTF) {
-        d3.json(item.json).then((jsonModel) => {
-          this.isLoading = false;
-
-          if (!this.va3cViewer) {
-            let inspector = d3.select("#" + this.viewID).select("#inspector");
-            if (inspector) {
-              this.va3cViewer = new SPECTACLES(inspector._groups[0][0]);
-            }
-          }
-
-          if (this.va3cViewer) {
-            this.va3cViewer.loadNewModel(jsonModel);
-          }
-        });
-      } */
-    },
   },
   beforeDestroy() {
     if (this._measureTimer) clearTimeout(this._measureTimer);
@@ -1587,6 +1523,9 @@ export default {
   },
 
   watch: {
+    showing3D: function(value) {
+      if (!value) this.modelLoaded = false;
+    },
     colSpan: function() {
       // Tile size changed, so the cached row height no longer applies.
       this.measuredRowHeight = 0;
@@ -1594,6 +1533,14 @@ export default {
     },
     height: function() {
       Vue.nextTick(() => this.measureRowHeight());
+    },
+    // Wider columns make taller images.
+    width: function() {
+      this.scheduleRowMeasure();
+    },
+    // The first cards of a collection, or of a filter that matched nothing.
+    chartDataLength: function(length, previous) {
+      if (length > 0 && !previous) this.scheduleRowMeasure();
     },
     isSortDesc: {
       handler: function() {
@@ -1614,46 +1561,35 @@ export default {
     },
     rawChartData: {
       handler: function(newValue, oldValue) {
+        this.imageIndexById = {};
+        this.modelIndexById = {};
         this.updateContext();
       },
       //deep: true
     },
     hovered: function(newValue, oldValue) {
-      if (oldValue) {
-        d3.select("#" + this.viewID)
-          .select("#" + this.cardSelector + oldValue._id)
-          .classed("hovered", false);
+      // The hovered card outlines itself (see GalleryCard).
+      // A loaded model stays put: swapping it out on every option the pointer
+      // crosses would throw away a scene the user waited for. Clicking still
+      // moves inspection.
+      if (newValue && !(this.showing3D && this.modelLoaded)) {
+        this.inspectedItem = newValue;
       }
-      if (newValue) {
-        d3.select("#" + this.viewID)
-          .select("#" + this.cardSelector + newValue._id)
-          .classed("hovered", true);
-
-        if (!this.inspecting3DView) {
-          //Change inpsection only if showing 2D. Quickly changing 3D models would be too slow.
-          this.inspectedItem = newValue;
-        }
-      } else {
-        if (this.lastHovered) {
-          this.inspectedItem = this.lastHovered;
-        } else {
-          this.inspectedItem = null;
-        }
-      }
+      // A hover that just leaves an option (e.g. while Space-hovering) keeps
+      // showing the option that was inspected. Stopping inspection on purpose
+      // closes the panel instead: see `inspectionClears`.
     },
-    inspecting3DView: function(newValue) {
-      if (this.inspectedItem && newValue == true) {
-        this.isLoading = true;
-        this.load3DJSON(this.inspectedItem);
-      } else {
-        this.va3cViewer = null;
-      }
+    // Bumped by the store's clearInspection (Esc, cancel, the panel's X,
+    // clicking the inspected option again).
+    inspectionClears: function() {
+      this.inspectedItem = null;
     },
     inspectedItem: function(newItem) {
-      this.inspectedItemViewIndex = 0;
-      if (newItem && this.inspecting3DView) {
-        this.isLoading = true;
-        this.load3DJSON(newItem);
+      this.hasInspectedItem = !!newItem;
+      this.modelLoaded = false;
+      // An option without a model has nothing to show on the 3D tab.
+      if (this.showing3D && (!newItem || !newItem._models || newItem._models.length === 0)) {
+        this.showing3D = false;
       }
     },
     colorColumn: function(newValue, oldValue) {

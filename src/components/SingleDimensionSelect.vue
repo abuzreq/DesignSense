@@ -16,6 +16,7 @@
       :showLabels="false"
       v-model="value"
       :options="keys"
+      :custom-label="label"
     ></multiselect>
   </div>
 </template>
@@ -23,6 +24,7 @@
 <script>
 import Multiselect from "vue-multiselect";
 import { mapState, mapGetters } from "vuex";
+import { displayName } from "@/columns.js";
 
 //[todo] handle the case when no prefix is provided then show nothing
 
@@ -48,6 +50,7 @@ export default {
     },
   },
   methods: {
+    label: displayName,
     onChange: function (value, id) {
       this.$emit("update", value);
     },

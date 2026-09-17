@@ -55,6 +55,7 @@ import TemplateView from "@/components/TemplateView.vue";
 import MultiDimensionSelect from "@/components/MultiDimensionSelect.vue";
 import { round } from "@/components/utils.js";
 import { operations } from "@/components/operations.js";
+import { isAssetColumn } from "@/data/assets.js";
 
 export default {
   mixins: [TemplateView],
@@ -77,22 +78,13 @@ export default {
   },
   mounted() {},
   created() {
-    this.keysBlackList = [
-      "index",
-      "selected",
-      "gltf",
-      "image",
-      "ID",
-      "id",
-      "_id",
-      "geometry",
-      "json",
-      "img",
-      "threeD",
-      "collection",
-      "images",
-    ];
-    this.allKeys = Object.keys(this.chartData[0]);
+    // Bookkeeping columns only: the picture and model ones are isAssetColumn's,
+    // since a list can never cover "img_2" or "model3d_3".
+    this.keysBlackList = ["index", "selected", "ID", "id", "_id", "collection"];
+    // The axes on offer, so nothing holding a picture or a model can be picked.
+    this.allKeys = Object.keys(this.chartData[0]).filter(
+      (key) => !isAssetColumn(key)
+    );
 
     this.excludedDimensions = this.nonNumericDimensions;
     this.excludedDimensions.push("selected");

@@ -41,7 +41,6 @@ export const STATS = [
   ["std", "std"], ["stdev", "std"], ["variance", "std"],
 ];
 export const PANELS = [
-  ["splom", "SPLOM"], ["matrix", "SPLOM"],
   ["parallel", "ParallelCoordinatesPlot"], ["pcp", "ParallelCoordinatesPlot"],
   ["scatter", "ScatterPlot"], ["gallery", "Grid"], ["grid", "Grid"], ["sets", "Sets"],
   ["clusters", "Clusters"],

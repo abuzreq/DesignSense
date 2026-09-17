@@ -6,12 +6,15 @@
           <v-btn
             color="red lighten-2"
             dark
+            :small="compact"
             class="load-data-button"
             title="Load data"
             v-bind="attrs"
             v-on="on"
           >
-            <v-icon left class="load-data-icon">mdi-folder-open-outline</v-icon>
+            <v-icon left :small="compact" class="load-data-icon"
+              >mdi-folder-open-outline</v-icon
+            >
             <span class="load-data-label">Load Data</span>
           </v-btn>
         </template>
@@ -59,14 +62,72 @@
               >
             </div>
             <p class="load-hint">
-              A folder should hold data.csv together with its images and 3D json
-              files (<a
+              A folder holds data.csv next to the images and 3D files it names
+              (<a
                 href="https://tt-acm.github.io/DesignExplorer/design_explorer_data/example/online/example.zip"
                 target="_blank"
-                >example.zip</a
-              >). Google Drive and OneDrive folders work too. For files on
-              GitHub, use the Raw link.
+                >Design Explorer example</a
+              >). Google Drive and OneDrive folders work too — keep everything
+              in one folder, shared so anyone with the link can view. For files
+              on GitHub, use the Raw link.
             </p>
+
+            <v-expansion-panels flat class="load-help">
+              <v-expansion-panel>
+                <v-expansion-panel-header>
+                  Naming images and 3D files
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <p>
+                    <strong>Images</strong> — <code>img</code> (or
+                    <code>image</code>) is the first view; <code>img_2</code>,
+                    <code>img_3</code> … are the others. Upper or lower case
+                    doesn't matter. A column called <code>image_url</code> is
+                    not picked up.
+                  </p>
+                  <p>
+                    <strong>3D</strong> — <code>model3d</code> (or
+                    <code>3d</code>) is the first model, then
+                    <code>model3d_2</code> and so on.
+                  </p>
+                  <p>
+                    <strong>Formats</strong> — .glb, .gltf and .obj. A .obj
+                    picks up a .mtl of the same name from the same folder; a
+                    .glb is one self-contained file, so it is the one that
+                    always works.
+                  </p>
+                  <p class="mb-0">
+                    In a Google Drive or OneDrive folder you can skip the extra
+                    columns: a file named <code>12_2.png</code> beside
+                    <code>12.png</code> becomes that option's second view, and
+                    <code>12.glb</code> becomes its model.
+                  </p>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+              <v-expansion-panel>
+                <v-expansion-panel-header>
+                  Exporting 3D from Rhino and Grasshopper
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <p>
+                    <strong>Rhino 8</strong> — select the geometry, then
+                    <em>File ▸ Export Selected</em> and choose glTF from the
+                    file-type list (Options sets materials and compression).
+                  </p>
+                  <p>
+                    <strong>Rhino 7</strong> — install McNeel's glTF exporter
+                    from the Package Manager, or export
+                    <em>Wavefront (.obj)</em> instead, ticking
+                    <em>Map Rhino Z to OBJ Y</em> so the model stands upright.
+                  </p>
+                  <p class="mb-0">
+                    <strong>Grasshopper</strong> — bake the geometry into Rhino
+                    first (right-click ▸ Bake), then export as above. Export one
+                    file per option and name it like that option's image.
+                  </p>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
+            </v-expansion-panels>
 
             <v-divider class="my-4" />
 
@@ -119,7 +180,7 @@
               @change="loadFile"
             />
             <p class="load-hint">
-              The image columns of a local file need public links (<a
+              The image and 3D columns of a local file need public links (<a
                 href="https://tt-acm.github.io/DesignExplorer/design_explorer_data/example/LocalCSV_example.csv"
                 target="_blank"
                 >example data.csv</a
@@ -195,7 +256,7 @@ const PRESETS = [
   },
   {
     name: "Malaeeb",
-    url: "https://drive.google.com/open?id=1LNFH92UGzsLbP07JJJ3fvwMAKlf6FE2h",
+    url: "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/malaeeb/data.csv",
     info: "Procedurally generated game puzzles",
   },
   {
@@ -208,6 +269,10 @@ const PRESETS = [
 
 export default {
   name: "LoadDataModal",
+  props: {
+    // A smaller button, for the app bar.
+    compact: { type: Boolean, default: false },
+  },
   data() {
     return {
       dialog: false,
@@ -274,10 +339,30 @@ export default {
   align-items: center;
   gap: 12px;
 }
+.load-help {
+  margin-top: 8px;
+}
+.load-help ::v-deep .v-expansion-panel-header {
+  min-height: 36px;
+  padding: 0;
+  font-size: 13px;
+  color: #1565c0;
+}
+.load-help ::v-deep .v-expansion-panel-content__wrap {
+  padding: 0 0 8px;
+  font-size: 13px;
+  color: #37474f;
+}
+.load-help code {
+  background: #eceff1;
+  color: #263238;
+  box-shadow: none;
+  font-size: 12px;
+}
 .load-hint {
   margin: 8px 0 0;
   font-size: 12px;
-  color: #78909c;
+  color: #546e7a;
 }
 .preset-info {
   max-width: 620px;

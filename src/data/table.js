@@ -1,5 +1,14 @@
 import Papa from "papaparse";
 import { LoadError } from "./errors.js";
+import { CUSTOM, WEIGHTED, columnKind, displayName } from "@/columns.js";
+import {
+  IMAGE_EXTENSIONS,
+  MODEL_EXTENSIONS,
+  classifyColumns,
+  modelFormat,
+  setClaimedColumns,
+  setFolderFiles,
+} from "./assets.js";
 
 /*
  * Turns CSV text into the rows DesignSense works with. Free of the DOM and of
@@ -17,7 +26,7 @@ const ADDED_COLUMN_TYPES = {
   Tags: "string",
   image: "string",
   images: "string",
-  json: "string",
+  _models: "string",
 };
 
 export function isBlank(value) {
@@ -125,12 +134,25 @@ export function validateTable(rows, fields) {
   }
 }
 
-/** "Float" for columns whose non-blank values are all numbers, else "string". */
+/** Custom and weighted dimensions hold numbers, whatever a file puts in them. */
+function isNumericByName(field) {
+  let kind = columnKind(field);
+  return kind === CUSTOM || kind === WEIGHTED;
+}
+
+/**
+ * "Float" for columns whose non-blank values are all numbers, and for
+ * "custom:" and "weighted:" columns; else "string".
+ */
 export function inferColumnTypes(rows, fields) {
   let types = {};
   fields.forEach((field) => {
     if (ID_COLUMNS.indexOf(field) !== -1) {
       types[field] = "string";
+      return;
+    }
+    if (isNumericByName(field)) {
+      types[field] = "Float";
       return;
     }
     let hasValue = false;
@@ -147,24 +169,35 @@ export function inferColumnTypes(rows, fields) {
 
 /**
  * Converts numeric columns to numbers, in place. Blank cells become undefined,
- * so they read as missing rather than as zero. Returns blank counts by column.
+ * so they read as missing rather than as zero, and so do cells that aren't
+ * numbers, which only a column numeric by name can have. Returns
+ * `{ blanks, invalid }`: counts of each by column.
  */
 export function castColumns(rows, types) {
   let blanks = {};
+  let invalid = {};
   Object.keys(types).forEach((field) => {
     if (types[field] !== "Float") return;
-    let count = 0;
+    let blankCount = 0;
+    let invalidCount = 0;
     rows.forEach((row) => {
       if (isBlank(row[field])) {
         row[field] = undefined;
-        count += 1;
+        blankCount += 1;
+        return;
+      }
+      let text = String(row[field]).trim();
+      if (NUMBER.test(text)) {
+        row[field] = Number(text);
       } else {
-        row[field] = Number(String(row[field]).trim());
+        row[field] = undefined;
+        invalidCount += 1;
       }
     });
-    if (count > 0) blanks[field] = count;
+    if (blankCount > 0) blanks[field] = blankCount;
+    if (invalidCount > 0) invalid[field] = invalidCount;
   });
-  return blanks;
+  return { blanks: blanks, invalid: invalid };
 }
 
 /**
@@ -233,29 +266,83 @@ export function makeAssetResolver(options) {
       missing += 1;
       return text;
     },
+    /**
+     * Files named after `text` in the same folder: "12_2.png" beside "12.png".
+     * Only a folder that lists its files (Drive, OneDrive) can offer these; a
+     * plain web folder lists nothing, so it returns none.
+     */
+    related(text, extensions) {
+      if (isBlank(text)) return [];
+      let base = fileName(String(text).trim()).toLowerCase();
+      let dot = base.lastIndexOf(".");
+      if (dot > 0) base = base.slice(0, dot);
+      if (base === "") return [];
+      let found = [];
+      Object.keys(byFileName).forEach((name) => {
+        let match = /^(.*?)[\s_-](\d+)\.([a-z0-9]+)$/i.exec(name);
+        if (!match || match[1] !== base) return;
+        if (extensions.indexOf(match[3].toLowerCase()) === -1) return;
+        found.push({ number: parseInt(match[2], 10), url: byFileName[name] });
+      });
+      return found
+        .sort((a, b) => a.number - b.number)
+        .map((entry) => entry.url);
+    },
     get missing() {
       return missing;
     },
   };
 }
 
-/** Adds what every view relies on: ratings, tags, and resolved images and models. */
-export function prepareRows(rows, resolver) {
+/** The URLs a row's asset columns point at, in view order and without repeats. */
+function resolveViews(resolver, row, columns, extensions) {
+  let urls = [];
+  let seen = {};
+  let firstCell = null;
+  columns.forEach((column) => {
+    let url = resolver.resolve(row[column]);
+    if (url === undefined || seen[url]) return;
+    if (firstCell === null) firstCell = row[column];
+    seen[url] = true;
+    urls.push(url);
+  });
+  // Further views of the same file, for folders that list what they hold.
+  resolver.related(firstCell, extensions).forEach((url) => {
+    if (seen[url]) return;
+    seen[url] = true;
+    urls.push(url);
+  });
+  return urls;
+}
+
+/**
+ * Adds what every view relies on: ratings, tags, and resolved images and
+ * models. `columns` is what classifyColumns found: the image and the model
+ * columns, each in the order their views should appear.
+ */
+export function prepareRows(rows, resolver, columns) {
+  let imageColumns = (columns && columns.images) || [];
+  let modelColumns = (columns && columns.models) || [];
   rows.forEach((row) => {
     // A blank rating means not rated yet.
     if (typeof row.Rating !== "number" || !isFinite(row.Rating)) row.Rating = 0;
     if (!row.Tags) row.Tags = [];
-    if (!isBlank(row.img)) {
-      row.image = resolver.resolve(row.img);
-      row.images = [row.image];
-    } else {
-      row.images = Object.keys(row)
-        .filter((key) => key.indexOf("img") !== -1)
-        .map((key) => resolver.resolve(row[key]))
-        .filter((src) => src !== undefined);
-      row.image = row.images[0];
-    }
-    row.json = resolver.resolve(row.threeD);
+    let views = resolveViews(resolver, row, imageColumns, IMAGE_EXTENSIONS);
+    row.images = views;
+    // The gallery, the clusters and the exports read `image`, so it stays the
+    // first view for the life of the dataset; which view the inspector shows
+    // is the inspector's own business.
+    row.image = views[0];
+    row._models = resolveViews(
+      resolver,
+      row,
+      modelColumns,
+      MODEL_EXTENSIONS
+    ).map((url) => ({
+      url: url,
+      name: fileName(url),
+      format: modelFormat(url),
+    }));
   });
   return rows;
 }
@@ -273,16 +360,25 @@ export function buildDataset(text, options) {
 
   let repeats = assignIds(rows);
   let types = inferColumnTypes(rows, table.fields);
-  let blanks = castColumns(rows, types);
+  // Sorted before the cast, so a column named "model" is judged by the text in
+  // it rather than by the numbers it was turned into.
+  let assets = classifyColumns(table.fields, rows, types);
+  let cast = castColumns(rows, types);
+  let blanks = cast.blanks;
   let resolver = makeAssetResolver(options);
-  prepareRows(rows, resolver);
+  prepareRows(rows, resolver, assets);
+  setClaimedColumns(assets.claimed);
+  setFolderFiles((options && options.rawFiles) || (options && options.files) || null);
 
   delete blanks.Rating;
-  let blankColumns = Object.keys(blanks);
+  // A custom dimension's blanks are values not entered yet, not gaps in the data.
+  let blankColumns = Object.keys(blanks).filter(
+    (field) => !isNumericByName(field)
+  );
   if (blankColumns.length > 0) {
     let listed = blankColumns
       .slice(0, 4)
-      .map((field) => field + " (" + blanks[field] + ")")
+      .map((field) => displayName(field) + " (" + blanks[field] + ")")
       .join(", ");
     warnings.push(
       "Some numeric cells are blank and are treated as missing: " +
@@ -291,10 +387,44 @@ export function buildDataset(text, options) {
         "."
     );
   }
+  let invalidColumns = Object.keys(cast.invalid);
+  if (invalidColumns.length > 0) {
+    warnings.push(
+      "Custom and weighted dimensions hold numbers, so cells that aren't are treated as missing: " +
+        invalidColumns
+          .slice(0, 4)
+          .map((field) => displayName(field) + " (" + cast.invalid[field] + ")")
+          .join(", ") +
+        (invalidColumns.length > 4 ? ", and more" : "") +
+        "."
+    );
+  }
   if (repeats > 0) {
     warnings.push(
       plural(repeats, "row repeats", "rows repeat") +
         " an ID used by another row and got a unique one."
+    );
+  }
+  if (assets.conflicts.length > 0) {
+    let pair = assets.conflicts[0];
+    warnings.push(
+      "Two columns name the same view (" +
+        pair[0] +
+        ", " +
+        pair[1] +
+        "). They are shown in the order they appear."
+    );
+  }
+  if (assets.claimed.length > 0) {
+    warnings.push(
+      "The column " +
+        assets.claimed.join(", ") +
+        " holds 3D files, so it is shown as a 3D view rather than as a dimension."
+    );
+  }
+  if (assets.legacyJson.length > 0) {
+    warnings.push(
+      "This dataset points to Design Explorer 3D files (.json), which DesignSense can't show. Export the geometry as .glb or .obj instead."
     );
   }
   if (resolver.missing > 0) {

@@ -1,22 +1,15 @@
 <template>
   <div class="toolbar-group">
     <div class="toolbar-group-buttons">
-      <v-tooltip v-for="name in names" :key="name" bottom>
-        <template v-slot:activator="{ on }">
-          <!-- A disabled button swallows pointer events, so the span carries the tooltip. -->
-          <span v-on="on">
-            <v-btn
-              icon
-              :disabled="disabled(name)"
-              :color="color(actions[name].type)"
-              @click="actions[name].clickAction"
-            >
-              <v-icon>{{ actions[name].icon }}</v-icon>
-            </v-btn>
-          </span>
-        </template>
-        <span>{{ actions[name].tooltip() }}</span>
-      </v-tooltip>
+      <TipButton
+        v-for="name in names"
+        :key="name"
+        :icon="actions[name].icon"
+        :tooltip="actions[name].tooltip()"
+        :disabled="disabled(name)"
+        :color="color(actions[name].type)"
+        @click="actions[name].clickAction"
+      />
       <slot />
     </div>
     <div v-if="label" class="toolbar-group-label">{{ label }}</div>
@@ -24,9 +17,15 @@
 </template>
 
 <script>
-/** A labelled row of toolbar buttons, each drawn from Demo's `actions`. */
+import TipButton from "@/components/TipButton.vue";
+
+/**
+ * A labelled row of toolbar buttons, each drawn from Demo's `actions`.
+ * `disabled(name)` says whether an action would do nothing now.
+ */
 export default {
   name: "ToolbarGroup",
+  components: { TipButton },
   props: {
     label: { type: String, default: "" },
     names: { type: Array, default: () => [] },
@@ -50,14 +49,14 @@ export default {
   align-items: center;
   height: 40px;
 }
-.toolbar-group-buttons .v-btn.v-btn--icon {
+.toolbar-group-buttons ::v-deep .tip-button .v-btn.v-btn--icon {
   width: 40px;
   height: 40px;
 }
 .toolbar-group-label {
   font-size: 11px;
   line-height: 12px;
-  opacity: 0.7;
+  color: #cfd8dc;
   white-space: nowrap;
 }
 </style>

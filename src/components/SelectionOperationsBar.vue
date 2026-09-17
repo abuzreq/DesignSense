@@ -9,7 +9,52 @@
       </template>
       <span>Selected options, out of those shown</span>
     </v-tooltip>
-    <v-tooltip bottom>
+
+    <!-- Narrow screens: the five operations fold into the current one, which
+         opens the rest. The bar shares its row with the filters, the assistant
+         and the toolbar groups, and this is what gives way first. -->
+    <v-menu v-if="compact" bottom offset-y>
+      <template v-slot:activator="{ on: menu }">
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on: tooltip }">
+            <v-btn
+              small
+              text
+              class="operation-compact"
+              v-on="Object.assign({}, menu, tooltip)"
+            >
+              <v-icon small left class="operation-icon operation-icon--current">{{
+                operationIcon(currentSelectionOperation)
+              }}</v-icon>
+              {{ currentSelectionOperation }}
+              <v-icon x-small right>mdi-menu-down</v-icon>
+            </v-btn>
+          </template>
+          <span
+            >{{ currentSelectionOperation }}: how a new selection combines with
+            the current one. Click to change, or press 1 to 5.</span
+          >
+        </v-tooltip>
+      </template>
+      <v-list dense>
+        <v-list-item
+          v-for="item in operationItems"
+          :key="item.operation"
+          :input-value="item.operation === stickySelectionOperation"
+          @click="choose(item.operation)"
+        >
+          <v-list-item-icon class="mr-2"
+            ><v-icon small>{{ item.icon }}</v-icon></v-list-item-icon
+          >
+          <v-list-item-title>{{ item.operation }}</v-list-item-title>
+          <v-list-item-action-text class="ml-4">{{
+            item.hint
+          }}</v-list-item-action-text>
+        </v-list-item>
+      </v-list>
+    </v-menu>
+
+    <v-tooltip v-if="!compact" bottom>
       <template v-slot:activator="{ on }">
         <div
           :class="{ 'operation-container': true, 
@@ -27,7 +72,7 @@
       </template>
       <span>Replace&emsp;[Num 1]</span>
     </v-tooltip>
-    <v-tooltip bottom>
+    <v-tooltip v-if="!compact" bottom>
       <template v-slot:activator="{ on }">
         <div
           :class="{'operation-container': true, 
@@ -49,7 +94,7 @@
       </template>
       <span>Add&emsp;[hold Shift or press Num 2]</span>
     </v-tooltip>
-    <v-tooltip bottom>
+    <v-tooltip v-if="!compact" bottom>
       <template v-slot:activator="{ on }">
         <div
           :class="{'operation-container': true, 
@@ -71,7 +116,7 @@
       </template>
       <span>Subtract&emsp;[hold Ctrl or press Num 3]</span>
     </v-tooltip>
-    <v-tooltip bottom>
+    <v-tooltip v-if="!compact" bottom>
       <template v-slot:activator="{ on }">
         <div
           :class="{'operation-container': true, 
@@ -95,7 +140,7 @@
       </template>
       <span>Toggle&emsp;[Num 4]</span>
     </v-tooltip>
-    <v-tooltip bottom>
+    <v-tooltip v-if="!compact" bottom>
       <template v-slot:activator="{ on }">
         <div
           :class="{'operation-container': true, 
@@ -117,7 +162,7 @@
       </template>
       <span>Intersect&emsp;[hold Shift & Ctrl or press Num 5]</span>
     </v-tooltip>
-    <div v-if="isModifierHeld" class="held-hint">while held</div>
+    <div v-if="isModifierHeld && !compact" class="held-hint">while held</div>
   </v-container>
 </template>
 
@@ -173,6 +218,15 @@
   animation-duration: 4s; */
 }
 
+.operation-compact {
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.operation-icon--current {
+  color: white !important;
+}
+
 /* Narrow screens: the outlined icon alone marks the current operation. */
 @media (max-width: 1500px) {
   .operation-container > div,
@@ -191,7 +245,26 @@
 
 <script>
 import { operations } from "@/components/operations.js";
+import { operationIcon } from "@/components/operationIcons.js";
 import { mapState, mapGetters } from "vuex";
+
+// Below this the toolbar has no room for five buttons (the same width at
+// which the assistant bar and the toolbar labels give way).
+const COMPACT_WIDTH = 1500;
+
+const OPERATION_ITEMS = [
+  { operation: operations.REPLACE, hint: "1" },
+  { operation: operations.ADD, hint: "Shift · 2" },
+  { operation: operations.SUBTRACT, hint: "Ctrl · 3" },
+  { operation: operations.TOGGLE, hint: "4" },
+  { operation: operations.INTERSECT, hint: "Shift+Ctrl · 5" },
+].map(function(item) {
+  return {
+    operation: item.operation,
+    hint: item.hint,
+    icon: operationIcon(item.operation),
+  };
+});
 
 import ReplaceIcon from "-!vue-svg-loader!/src/assets/replace_icon.svg";
 import AddIcon from "-!vue-svg-loader!/src/assets/add_icon.svg";
@@ -209,7 +282,20 @@ export default {
     IntersectIcon,
   },
   data: function() {
-    return { operationsList: operations };
+    return {
+      operationsList: operations,
+      operationItems: OPERATION_ITEMS,
+      windowWidth: typeof window !== "undefined" ? window.innerWidth : 1920,
+    };
+  },
+  created() {
+    this.onResize = () => {
+      this.windowWidth = window.innerWidth;
+    };
+    window.addEventListener("resize", this.onResize);
+  },
+  beforeDestroy() {
+    window.removeEventListener("resize", this.onResize);
   },
   computed: {
     ...mapState({
@@ -221,12 +307,19 @@ export default {
     totalCount() {
       return this.data ? this.data.length : 0;
     },
+    compact() {
+      return this.windowWidth <= COMPACT_WIDTH;
+    },
     // Shift/Ctrl override the chosen operation only while held.
     isModifierHeld() {
       return this.currentSelectionOperation !== this.stickySelectionOperation;
     },
   },
   methods: {
+    operationIcon: operationIcon,
+    choose(operation) {
+      this.$store.commit("changeSelectionOperation", operation);
+    },
     onReplace() {
       this.$store.commit("changeSelectionOperation", operations.REPLACE);
     },

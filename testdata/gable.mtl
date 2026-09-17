@@ -1,0 +1,7 @@
+newmtl walls
+Kd 0.85 0.85 0.82
+Ka 0.2 0.2 0.2
+
+newmtl roof
+Kd 0.70 0.25 0.20
+Ka 0.2 0.2 0.2

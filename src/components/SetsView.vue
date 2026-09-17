@@ -15,6 +15,124 @@
         </template>
         <span>{{ saveTooltip }}</span>
       </v-tooltip>
+      <v-menu bottom left offset-y>
+        <template v-slot:activator="{ on }">
+          <v-btn icon small v-on="on" aria-label="More set actions">
+            <v-icon small>mdi-dots-vertical</v-icon>
+          </v-btn>
+        </template>
+        <v-list dense>
+          <v-list-item @click="confirmClear = true">
+            <v-list-item-title>Clear saved work…</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+    </div>
+
+    <v-dialog v-model="confirmClear" max-width="460px">
+      <v-card>
+        <v-card-title>Clear saved work?</v-card-title>
+        <v-card-text>
+          This removes the saved sets, their notes, the shortlist and every
+          rating for this dataset, here and in this browser's storage. It can't
+          be undone. Custom dimensions stay.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="confirmClear = false">Cancel</v-btn>
+          <v-btn color="error" text @click="clearSavedWork">Clear</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- The shortlist sits above the sets because that is what it becomes. -->
+    <div class="cart-section">
+      <div class="cart-header">
+        <span class="cart-title">Shortlist</span>
+        <span v-if="cartCount > 0" class="cart-count">{{ cartCount }}</span>
+        <v-spacer />
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <span v-on="on">
+              <v-btn
+                icon
+                x-small
+                :disabled="cartCount === 0"
+                aria-label="Compare the shortlist"
+                @click="compareCart"
+              >
+                <v-icon small>mdi-table-column</v-icon>
+              </v-btn>
+            </span>
+          </template>
+          <span>Compare the shortlisted options side by side</span>
+        </v-tooltip>
+        <v-menu bottom left offset-y>
+          <template v-slot:activator="{ on }">
+            <v-btn icon x-small v-on="on" aria-label="More shortlist actions">
+              <v-icon small>mdi-dots-vertical</v-icon>
+            </v-btn>
+          </template>
+          <v-list dense>
+            <v-list-item @click="addResultToCart">
+              <v-list-item-title>{{ addResultLabel }}</v-list-item-title>
+            </v-list-item>
+            <v-list-item :disabled="cartCount === 0" @click="clearCart">
+              <v-list-item-title>Clear the shortlist</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </div>
+
+      <p v-if="cartCount === 0" class="cart-empty">
+        Keep options aside here as you browse, then compare them or save them as
+        a set.
+      </p>
+      <template v-else>
+        <div class="cart-strip">
+          <div
+            v-for="item in cartItems"
+            :key="'cart-' + item._id"
+            class="cart-thumb"
+            :class="{ 'cart-thumb--away': !isShown(item._id) }"
+            :title="
+              isShown(item._id)
+                ? 'Inspect this option'
+                : 'Not in the current view'
+            "
+            @click="inspect(item)"
+          >
+            <v-img
+              :src="item.image"
+              :alt="'Shortlisted option ' + item._id"
+              :aspect-ratio="4 / 3"
+              contain
+            />
+            <button
+              type="button"
+              class="cart-thumb-remove"
+              aria-label="Remove from the shortlist"
+              @click.stop="removeFromCart(item)"
+            >
+              <v-icon x-small color="white">mdi-close</v-icon>
+            </button>
+          </div>
+        </div>
+        <div class="cart-save">
+          <input
+            v-model="cartName"
+            class="cart-name"
+            spellcheck="false"
+            :placeholder="nextSetName"
+            aria-label="Name for the saved set"
+            @keydown.stop
+            @keydown.enter="saveCart"
+          />
+          <v-btn small depressed color="primary" @click="saveCart">
+            Save as set
+          </v-btn>
+        </div>
+      </template>
     </div>
 
     <p v-if="setsIDs.length === 0" class="sets-empty">{{ emptyText }}</p>
@@ -126,6 +244,20 @@
               <span>Remove the selected options from this set</span>
             </v-tooltip>
           </template>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                icon
+                x-small
+                v-on="on"
+                aria-label="Compare this set"
+                @click.stop="compareSet(id)"
+              >
+                <v-icon small>mdi-table-column</v-icon>
+              </v-btn>
+            </template>
+            <span>Compare this set's options side by side</span>
+          </v-tooltip>
           <v-spacer />
           <button
             v-if="!hasNote(id) && !openNotes[id]"
@@ -165,6 +297,9 @@ export default {
     return {
       // Sets whose empty note was opened with "Add note".
       openNotes: {},
+      confirmClear: false,
+      // The name to save the shortlist under; blank means the next "Set #N".
+      cartName: "",
     };
   },
   computed: {
@@ -173,6 +308,7 @@ export default {
       setsMetadataMap: (state) => state.setsMetadataMap,
       setsMap: (state) => state.setsMap,
       dataLength: (state) => state.data.length,
+      setsCounter: (state) => state.setsCounter,
     }),
     ...mapGetters([
       "can",
@@ -182,7 +318,17 @@ export default {
       "matchingSetID",
       "selectionCount",
       "setCriteriaChips",
+      "cartCount",
+      "cartItems",
+      "dataMap",
     ]),
+    /** What the shortlist would be named if it were saved unnamed. */
+    nextSetName() {
+      return "Set #" + (this.setsCounter + 1);
+    },
+    addResultLabel() {
+      return "Add the selected";
+    },
     saveTooltip() {
       if (!this.isLite) {
         return "Save the selected options as a set. Click a set later to bring its options back; the current selection operation applies.";
@@ -194,7 +340,7 @@ export default {
       return (
         "Save the " +
         count.toLocaleString() +
-        " matching options and the filters that found them. Restore the set later to bring those filters back."
+        " selected options and the filters that found them. Restore the set later to bring those filters back."
       );
     },
     emptyText() {
@@ -204,6 +350,38 @@ export default {
     },
   },
   methods: {
+    /** An option a zoom left out is still shortlisted, just not on screen. */
+    isShown(id) {
+      return !!this.dataMap[id];
+    },
+    inspect(item) {
+      this.$store.dispatch("inspectByClick", { item: item });
+    },
+    removeFromCart(item) {
+      this.$store.commit("removeFromCart", { ids: [item._id] });
+    },
+    addResultToCart() {
+      this.$store.dispatch("addResultToCart");
+    },
+    clearCart() {
+      this.$store.dispatch("clearCart");
+    },
+    saveCart() {
+      if (this.cartCount === 0) return;
+      this.$store.dispatch("saveCartAsSet", { name: this.cartName });
+      this.cartName = "";
+    },
+    compareCart() {
+      this.$store.dispatch("openCompare", { source: "cart" });
+    },
+    compareSet(id) {
+      this.$store.dispatch("openCompare", { source: "set", setID: id });
+    },
+    clearSavedWork() {
+      this.confirmClear = false;
+      this.openNotes = {};
+      this.$store.dispatch("clearSavedWork");
+    },
     nameOf(id) {
       let metadata = this.setsMetadataMap[id];
       return metadata ? metadata.name : id;
@@ -236,7 +414,8 @@ export default {
     },
     remove(id) {
       this.$delete(this.openNotes, id);
-      this.$store.commit("removeSet", { setID: id });
+      // The action offers to undo the deletion.
+      this.$store.dispatch("removeSet", { setID: id });
     },
     openNote(id) {
       this.$set(this.openNotes, id, true);
@@ -289,7 +468,92 @@ export default {
   padding: 10px 10px 8px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
+.cart-section {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fafbfc;
+}
+.cart-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cart-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #37474f;
+}
+.cart-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #f57c00;
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+.cart-empty {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #546e7a;
+}
+/* A strip rather than a grid: the sets list below must keep its room. */
+.cart-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 6px 0 2px;
+}
+.cart-thumb {
+  position: relative;
+  flex: 0 0 72px;
+  border: 1px solid #cfd8dc;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+  cursor: pointer;
+}
+.cart-thumb--away {
+  opacity: 0.45;
+}
+.cart-thumb-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(69, 90, 100, 0.85);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.cart-thumb:hover .cart-thumb-remove,
+.cart-thumb-remove:focus-visible {
+  opacity: 1;
+}
+.cart-save {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 6px;
+}
+.cart-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid #cfd8dc;
+  border-radius: 4px;
+  font-size: 13px;
+}
 .sets-title {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 15px;
   font-weight: 500;
   white-space: nowrap;

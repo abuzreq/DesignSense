@@ -9,7 +9,13 @@ import * as d3Chromatic from "d3-scale-chromatic";
 
 import createLogger from "./logger";
 import { encodeUrl } from "@/data/shareLink.js";
-import { saveLayouts, defaultLayouts } from "@/layout.js";
+import {
+  saveLayouts,
+  defaultLayouts,
+  loadPresetId,
+  presetLayouts,
+  savePresetId,
+} from "@/layout.js";
 import { UI_MODES, canUse, normalizeMode } from "@/uiModes.js";
 import {
   GALLERY_KEY,
@@ -35,6 +41,12 @@ import {
   upsertFilter,
 } from "./filters.js";
 import { RATING_BOUNDS, RATING_DIMENSION, isRated } from "@/ratings.js";
+import { createDimensionsStore } from "./dimensions.js";
+import { emptySets, openSession } from "./session.js";
+import { addIds, removeIds, uniqueSetName } from "./cart.js";
+import { isDerivedAssetKey } from "@/data/assets.js";
+import { INPUT, OUTPUT, columnKind } from "@/columns.js";
+import Papa from "papaparse";
 
 const UI_MODE_KEY = "designsense-uiMode";
 // Undo depth for both the Expert selection and the Lite filters.
@@ -46,6 +58,13 @@ function readStoredUiMode() {
   } catch (e) {
     return UI_MODES.LITE;
   }
+}
+
+/** A layout the user arranged is no longer one of the presets. */
+function forgetPreset(state) {
+  if (!state.layoutPreset) return;
+  state.layoutPreset = null;
+  savePresetId(null);
 }
 
 function persistUiMode(mode) {
@@ -66,8 +85,23 @@ const VIEW_TYPE_LABELS = {
 
 Vue.use(Vuex);
 
-function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
-  return new Vuex.Store({
+/**
+ * `options.datasetKey` identifies the dataset across visits, for what is saved
+ * per dataset; without one nothing is.
+ */
+function builder(
+  new_data,
+  dataTypesMap,
+  new_layouts,
+  new_similarity_map,
+  options
+) {
+  // Saved ratings go onto the rows first, so weighted dimensions that weigh
+  // the rating start from them.
+  const session = openSession(new_data, options && options.datasetKey);
+  // Custom and weighted dimensions go onto the rows before Vue observes them.
+  const dimensions = createDimensionsStore(new_data, dataTypesMap, options);
+  const store = new Vuex.Store({
     plugins: [createLogger],
     state: {
       // What a brush applies right now: the sticky operation, or a held modifier's.
@@ -75,6 +109,8 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       // Chosen with the toolbar or number keys; restored when modifiers are released.
       stickySelectionOperation: operations.REPLACE,
       layouts: new_layouts,
+      // The preset the layout came from, or null once panels were moved.
+      layoutPreset: loadPresetId(),
       defaultMarkingID: utils.generateID(), //"_lqpkb07gn"
       rawData: new_data,
       data: new_data,
@@ -90,15 +126,32 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       selectionVersion: 0,
       viewsMap: {},
 
-      setsIDs: [],
-      setsMetadataMap: {},
-      setsMap: {},
+      // Sets start as saved for this dataset (see store/session.js).
+      setsIDs: session.sets.setsIDs,
+      setsMetadataMap: session.sets.setsMetadataMap,
+      setsMap: session.sets.setsMap,
       // The filters each set was saved from, or null for a hand-picked set.
-      setsCriteriaMap: {},
-      numericDimensions: getNumericDimensions(dataTypesMap),
+      setsCriteriaMap: session.sets.setsCriteriaMap,
+      // The set deleted last, so the deletion can be undone.
+      lastRemovedSet: null,
+      // The shortlist: options picked one at a time and kept aside through
+      // filtering, brushing, zooming and mode switches, until they are saved
+      // as a set. Ids, resolved against rawData, so a zoom never empties it.
+      cart: session.cart,
+      // The shortlist before it was cleared or saved, so both can be undone.
+      lastCart: null,
+      // Which options the compare view is showing, and where they came from.
+      compareDialog: { open: false, source: "cart", ids: [], setID: null },
+      // Whether the sensitivity reading is open.
+      sensitivityDialog: { open: false },
+      // A message for the workspace's snackbar: { id, text, action }.
+      notice: null,
+      numericDimensions: getNumericDimensions(dataTypesMap).concat(
+        dimensions.names
+      ),
       nonNumericDimensions: getNonNumericDimensions(dataTypesMap),
-      allDimensions: Object.keys(dataTypesMap),
-      setsCounter: 0,
+      allDimensions: Object.keys(dataTypesMap).concat(dimensions.names),
+      setsCounter: session.sets.setsCounter,
 
       similarity_map: new_similarity_map,
 
@@ -106,6 +159,9 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
 
       hovered: null,
       lastHovered: null,
+      // Bumped whenever inspection is stopped on purpose (Esc, cancel, clicking
+      // the inspected option again), unlike a hover that merely leaves an option.
+      inspectionClears: 0,
 
       isCtrlKey: false,
       isShiftKey: false,
@@ -144,8 +200,10 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         scatterX: null,
         scatterY: null,
       },
+      ...dimensions.state,
     },
     getters: {
+      ...dimensions.getters,
       colorScale: (state) => d3.scaleOrdinal(state.colorRange),
       colorize: (state, getters) => (dataItem) => {
         return getters.colorScale(dataItem[state.colorColumn]);
@@ -161,23 +219,28 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       data: (state) => {
         return state.data;
       },
-      inputDimensions: (state) => {
-          if(state.data && state.data[0])
-          {
-              return Object.keys(state.data[0]).filter(x => x.toUpperCase().includes("IN:")).map(x => x.toUpperCase())
-          }
-          else {return []}
-      },
-      outputDimensions: (state) => {
-        if(state.data && state.data[0])
-        {
-          return Object.keys(state.data[0]).filter(x => x.toUpperCase().includes("OUT:")).map(x => x.toUpperCase())
-        }
-        else {return []}
-    },
+      // Input and output parameters, by their "in:" and "out:" prefixes,
+      // upper-cased as the parallel coordinates compare them.
+      inputDimensions: (state) =>
+        state.allDimensions
+          .filter((dim) => columnKind(dim) === INPUT)
+          .map((dim) => dim.toUpperCase()),
+      outputDimensions: (state) =>
+        state.allDimensions
+          .filter((dim) => columnKind(dim) === OUTPUT)
+          .map((dim) => dim.toUpperCase()),
       dataMap: (state) => {
         return createDataMap(state.data);
       },
+      // The whole collection, so the shortlist keeps options a zoom left out.
+      rawDataMap: (state) => {
+        return createDataMap(state.rawData);
+      },
+      cartCount: (state) => state.cart.length,
+      cartSet: (state) => new Set(state.cart),
+      isInCart: (state, getters) => (id) => getters.cartSet.has(String(id)),
+      cartItems: (state, getters) =>
+        state.cart.map((id) => getters.rawDataMap[id]).filter(Boolean),
       selectedInMarking: (state, getters) => (markingID) => {
         return getSelectedInMarking(
           state.markingsMap[markingID],
@@ -285,6 +348,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       },
     },
     mutations: {
+      ...dimensions.mutations,
       /* setSimilarityMap(state, payload)
              {   
                  state.similarity_map = payload.similarity_map;
@@ -354,6 +418,16 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         if (i < 0) return;
         Vue.set(state.layouts, i, Object.assign({}, state.layouts[i], payload));
         saveLayouts(state.layouts);
+        forgetPreset(state);
+      },
+      /** Arranges the panels as one of the presets in layout.js. */
+      applyLayoutPreset(state, payload) {
+        let layouts = presetLayouts(payload.id);
+        if (!layouts) return;
+        state.layouts = layouts;
+        saveLayouts(state.layouts);
+        state.layoutPreset = payload.id;
+        savePresetId(payload.id);
       },
       /** Adds a panel that is not open, at its default place (or a free corner). */
       openLayout(state, payload) {
@@ -362,12 +436,21 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         let entry = preset || { type: payload.type, x: 0, y: 0, w: 16, h: 12 };
         state.layouts.push(Object.assign({}, entry));
         saveLayouts(state.layouts);
+        forgetPreset(state);
+      },
+      /** Puts every panel back where it starts, reopening any that were closed. */
+      resetLayouts(state) {
+        state.layouts = defaultLayouts();
+        saveLayouts(state.layouts);
+        state.layoutPreset = "balanced";
+        savePresetId("balanced");
       },
       closeLayout(state, payload) {
         let i = state.layouts.findIndex((l) => l.type === payload.type);
         if (i < 0) return;
         state.layouts.splice(i, 1);
         saveLayouts(state.layouts);
+        forgetPreset(state);
       },
       toggleEditingMode(state, payload) {
         if (payload) {
@@ -504,13 +587,19 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       setLastHovered(state, payload) {
         state.lastHovered = payload.lastHovered;
       },
+      noteInspectionCleared(state) {
+        state.inspectionClears += 1;
+      },
+      /**
+       * Rates in place, as custom values are set: replacing the row in `data`
+       * would rebuild every chart. Views that draw ratings imperatively redraw
+       * on `dimensionValuesVersion`.
+       */
       rateAlt(state, payload) {
-        var index = state.data.findIndex((x) => x._id === payload.item._id);
-        console.log(state.data, index, payload.item, payload.rating);
-        var alt = state.data[index];
-        alt.Rating = payload.rating;
-
-        Vue.set(state.data, index, alt);
+        let row = state.rawData.find((x) => x._id === payload.item._id);
+        if (!row || row.Rating === payload.rating) return;
+        row.Rating = payload.rating;
+        state.dimensionValuesVersion += 1;
       },
       popDataStack(state, payload) {
         payload.data = state.dataStack.pop();
@@ -540,11 +629,19 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       },
       addSet(state, payload) {
         let ID = "";
+        // A set's id is its name, so a repeat would overwrite the set that
+        // holds it and leave two cards editing one set. Named sets are made
+        // unique before they get here (see uniqueSetName); the counter can
+        // still land on a name someone typed, so it steps past it.
         if (payload && payload.setName) {
           ID = payload.setName;
         } else {
-          state.setsCounter += 1;
-          ID = "Set #" + state.setsCounter; //utils.generateID();
+          do {
+            state.setsCounter += 1;
+            ID = "Set #" + state.setsCounter;
+          } while (
+            Object.prototype.hasOwnProperty.call(state.setsMap, ID)
+          );
         }
         Vue.set(state.setsMap, ID, payload.members);
         Vue.set(
@@ -569,15 +666,75 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       },
       removeSet(state, payload) {
         let ID = payload.setID;
-
-        for (var i = 0; i < state.setsIDs.length; i++) {
-          if (state.setsIDs[i] === ID) {
-            state.setsIDs.splice(i, 1);
-          }
-        }
+        let index = state.setsIDs.indexOf(ID);
+        if (index === -1) return;
+        state.lastRemovedSet = {
+          id: ID,
+          index: index,
+          members: state.setsMap[ID],
+          criteria: state.setsCriteriaMap[ID],
+          metadata: state.setsMetadataMap[ID],
+        };
+        state.setsIDs.splice(index, 1);
         Vue.delete(state.setsMap, ID);
         Vue.delete(state.setsCriteriaMap, ID);
         Vue.delete(state.setsMetadataMap, ID);
+      },
+      restoreRemovedSet(state) {
+        let removed = state.lastRemovedSet;
+        if (!removed || state.setsIDs.indexOf(removed.id) !== -1) return;
+        Vue.set(state.setsMap, removed.id, removed.members);
+        Vue.set(state.setsCriteriaMap, removed.id, removed.criteria);
+        Vue.set(state.setsMetadataMap, removed.id, removed.metadata);
+        state.setsIDs.splice(
+          Math.min(removed.index, state.setsIDs.length),
+          0,
+          removed.id
+        );
+        state.lastRemovedSet = null;
+      },
+      clearSets(state) {
+        let sets = emptySets();
+        state.setsIDs = sets.setsIDs;
+        state.setsMap = sets.setsMap;
+        state.setsCriteriaMap = sets.setsCriteriaMap;
+        state.setsMetadataMap = sets.setsMetadataMap;
+        state.setsCounter = sets.setsCounter;
+        state.lastRemovedSet = null;
+      },
+      addToCart(state, payload) {
+        state.cart = addIds(state.cart, payload.ids);
+      },
+      removeFromCart(state, payload) {
+        state.cart = removeIds(state.cart, payload.ids);
+      },
+      /** Replaces the shortlist: used for clearing it and for putting it back. */
+      setCart(state, payload) {
+        state.cart = (payload.ids || []).slice();
+      },
+      rememberCart(state, payload) {
+        state.lastCart = payload.ids ? payload.ids.slice() : null;
+      },
+      setCompareDialog(state, payload) {
+        state.compareDialog = Object.assign({}, state.compareDialog, payload);
+      },
+      setSensitivityDialog(state, payload) {
+        state.sensitivityDialog = Object.assign(
+          {},
+          state.sensitivityDialog,
+          payload
+        );
+      },
+      /** `{ text, action }`; `action` names what the snackbar's button does. */
+      showNotice(state, payload) {
+        state.notice = {
+          id: (state.notice ? state.notice.id : 0) + 1,
+          text: payload.text,
+          action: payload.action || null,
+        };
+      },
+      dismissNotice(state) {
+        state.notice = null;
       },
       updateCtrlKey(state, payload) {
         state.isCtrlKey = payload.value;
@@ -601,6 +758,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       },
     },
     actions: {
+      ...dimensions.actions,
       createMarkingEntry(context, payload) {
         context.commit("createMarkingEntry", payload);
       },
@@ -647,12 +805,19 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       reverseUpdate(context) {
         context.dispatch("undo");
       },
-      clearInspection(context) {
+      /**
+       * Stops inspecting. `{ keepShown: true }` (releasing Space) leaves the
+       * gallery showing the last option; otherwise its inspector closes too.
+       */
+      clearInspection(context, payload) {
         context.commit("setLastHovered", {
           lastHovered: context.state.hovered,
         });
         context.commit("hover", { hovered: null });
         context.commit("toggleInspectionMode", { value: false });
+        if (!(payload && payload.keepShown)) {
+          context.commit("noteInspectionCleared");
+        }
       },
       /**
        * A click inspects an option. Clicking the inspected option again stops
@@ -669,7 +834,6 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       },
       togglePinInspection(context, payload) {
         context.commit("togglePinInspection");
-        console.log(context.state.isInspectionPinned);
         if (!context.state.isInspectionPinned) {
           context.dispatch("clearInspection");
         }
@@ -745,9 +909,12 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         let state = context.state;
         let next = state.filters;
         let ranges = payload.ranges || {};
-        Object.keys(ranges).forEach((dim) => {
-          next = withAxisRanges(next, state.data, dim, rangeList(ranges[dim]));
-        });
+        // Custom and weighted dimensions can't be filtered by.
+        Object.keys(ranges)
+          .filter((dim) => !context.getters.isUnfilterable(dim))
+          .forEach((dim) => {
+            next = withAxisRanges(next, state.data, dim, rangeList(ranges[dim]));
+          });
         (payload.clear || []).forEach((dim) => {
           next = removeRangeFiltersOn(next, dim);
         });
@@ -761,6 +928,7 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
        */
       setAxisBrushes(context, payload) {
         let state = context.state;
+        if (context.getters.isUnfilterable(payload.dim)) return;
         let next = withAxisRanges(state.filters, state.data, payload.dim, payload.ranges || []);
         (payload.pairs || []).forEach((pair) => {
           let current = next.find((f) => f.key === pair.key);
@@ -784,6 +952,12 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       setBoxFilter(context, payload) {
         let state = context.state;
         let dims = payload.dims;
+        if (
+          payload.boxes.length > 0 &&
+          dims.some((dim) => context.getters.isUnfilterable(dim))
+        ) {
+          return;
+        }
         let next = state.filters;
         (payload.replace || []).forEach((dim) => {
           next = removeFilterByKey(next, rangeKey(dim));
@@ -855,9 +1029,8 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
       processShareLink(context, payload)
       {
         let shareLink = processShareLinkSup();
-        console.log("processShareLink", shareLink)
-        //if null then then something went wrong or the dataset is not shared on a cloud service
-        context.state.isStudySharable = shareLink?true:false;
+        // Null for a local file, which has no link to reopen it by.
+        context.state.isStudySharable = shareLink ? true : false;
         context.state.shareLink = shareLink;
       },
       saveSelectedToFile(context, payload) {
@@ -866,31 +1039,50 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
         );
         let selection = map2Data(dataMapSubset);
 
-        var data = selection.length > 0 ? selection : context.state.data;
-        var blacklist = ["_id", "images", "image", "json"];
+        // Lite exports what matches the filters, even when that is nothing;
+        // with no filters, or in Expert with nothing selected, everything shown.
+        let narrowed = context.getters.isLite
+          ? context.getters.isFilterActive
+          : selection.length > 0;
+        var data = narrowed ? selection : context.state.data;
+        if (data.length === 0) return;
+        var fileName =
+          "designsense-" + new Date().toISOString().slice(0, 10) + ".csv";
+        // The app's own keys go; the columns that named the pictures and the
+        // models stay, so an exported file reloads with its media.
         var selectDims = context.state.allDimensions.filter(
-          (x) => !blacklist.includes(x)
+          (x) => x !== "_id" && !isDerivedAssetKey(x)
         );
-        var csvContent = "data:attachment/csv;charset=utf-8,";
-
-        csvContent += selectDims.join(",") + "\n"; //add first row
-        var dataString = "";
-        data.forEach(function(infoArray, index) {
-          dataString = context.state.allDimensions
-            .map((dim) => infoArray[dim])
-            .join(","); //Object.values(infoArray);
-          csvContent += index < data.length ? dataString + "\n" : dataString;
+        // Rows list the header's columns, quoted where needed; a missing
+        // value is an empty cell.
+        var csv = Papa.unparse({
+          fields: selectDims,
+          data: data.map((row) =>
+            selectDims.map((dim) =>
+              row[dim] === undefined || row[dim] === null ? "" : row[dim]
+            )
+          ),
         });
-        csvContent = encodeURI(csvContent);
-
+        var url = URL.createObjectURL(
+          new Blob([csv], { type: "text/csv;charset=utf-8" })
+        );
         var a = d3
           .select("body")
           .append("a")
-          .attr("href", csvContent)
-          .attr("target", "_blank")
-          .attr("download", "DSense_SelectedResults.csv");
-
+          .attr("href", url)
+          .attr("download", fileName);
         a.node().click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        context.commit("showNotice", {
+          text:
+            "Downloaded " +
+            data.length +
+            (data.length === 1 ? " option" : " options") +
+            " as " +
+            fileName +
+            ".",
+        });
       },
       updateCtrlKey(context, payload) {
         context.commit("updateCtrlKey", payload);
@@ -1010,8 +1202,9 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
           commitFilters(context, narrowingFilters(context.state.filters));
           return;
         }
-        //context.commit('resetMarking', { "markingID": context.state.defaultMarkingID });
+        // Back to all data, so there is no zoom left to step out of.
         context.commit("setData", { newData: context.state.rawData });
+        context.commit("clearDataStack");
       },
       resetAllMarkings(context) {
         if (context.state.uiMode === UI_MODES.LITE) {
@@ -1070,6 +1263,142 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
           comment: payload ? payload.comment : null,
         });
       },
+      /** Every one-option shortlist control goes through here. */
+      toggleInCart(context, payload) {
+        let id = String(payload.id);
+        if (context.getters.isInCart(id)) {
+          context.commit("removeFromCart", { ids: [id] });
+        } else {
+          context.commit("addToCart", { ids: [id] });
+        }
+      },
+      /** Shortlists everything the filters or the selection currently leave. */
+      addResultToCart(context) {
+        let ids = Object.keys(
+          context.getters.selectedInMarking(context.state.defaultMarkingID)
+        );
+        if (context.getters.isLite && !context.getters.isFilterActive) {
+          ids = context.state.data.map((row) => row._id);
+        }
+        let before = context.state.cart;
+        context.commit("addToCart", { ids: ids });
+        let added = context.state.cart.length - before.length;
+        if (added === 0) {
+          context.commit("showNotice", {
+            text: "Those options are already on the shortlist.",
+          });
+          return;
+        }
+        context.commit("rememberCart", { ids: before });
+        context.commit("showNotice", {
+          text:
+            "Added " + added + (added === 1 ? " option" : " options") + " to the shortlist.",
+          action: "restoreCart",
+        });
+      },
+      clearCart(context) {
+        if (context.state.cart.length === 0) return;
+        context.commit("rememberCart", { ids: context.state.cart });
+        context.commit("setCart", { ids: [] });
+        context.commit("showNotice", {
+          text: "Cleared the shortlist.",
+          action: "restoreCart",
+        });
+      },
+      restoreCart(context) {
+        if (!context.state.lastCart) return;
+        context.commit("setCart", { ids: context.state.lastCart });
+        context.commit("rememberCart", { ids: null });
+      },
+      /**
+       * Turns the shortlist into a set and empties it, so the next shortlist
+       * starts clean rather than saving the same options twice.
+       */
+      saveCartAsSet(context, payload) {
+        let members = context.state.cart.slice();
+        if (members.length === 0) return;
+        let name = uniqueSetName(
+          context.state.setsIDs,
+          payload ? payload.name : ""
+        );
+        context.dispatch("createSet", { members: members, setName: name });
+        let setID = context.state.setsIDs[context.state.setsIDs.length - 1];
+        context.commit("rememberCart", { ids: members });
+        context.commit("setCart", { ids: [] });
+        context.commit("showNotice", {
+          text:
+            "Saved " +
+            members.length +
+            (members.length === 1 ? " option as " : " options as ") +
+            setID +
+            ".",
+          action: "undoSaveCart:" + setID,
+        });
+      },
+      /** Puts a just-saved set back on the shortlist. */
+      undoSaveCartAsSet(context, payload) {
+        let setID = payload && payload.setID;
+        if (setID && context.state.setsMap[setID]) {
+          // The mutation, not the action: undoing shouldn't offer its own undo.
+          context.commit("removeSet", { setID: setID });
+        }
+        context.dispatch("restoreCart");
+      },
+      openCompare(context, payload) {
+        let source = (payload && payload.source) || "cart";
+        let setID = (payload && payload.setID) || null;
+        let ids = [];
+        if (source === "set" && setID) {
+          ids = (context.state.setsMap[setID] || []).slice();
+        } else if (source === "selection") {
+          ids = Object.keys(
+            context.getters.selectedInMarking(context.state.defaultMarkingID)
+          );
+          if (context.getters.isLite && !context.getters.isFilterActive) {
+            ids = context.state.data.map((row) => row._id);
+          }
+        } else {
+          source = "cart";
+          ids = context.state.cart.slice();
+        }
+        if (ids.length === 0) {
+          context.commit("showNotice", {
+            text:
+              source === "cart"
+                ? "The shortlist is empty. Add options to compare them."
+                : "Nothing to compare yet.",
+          });
+          return;
+        }
+        context.commit("setCompareDialog", {
+          open: true,
+          source: source,
+          ids: ids,
+          setID: setID,
+        });
+      },
+      closeCompare(context) {
+        context.commit("setCompareDialog", { open: false });
+      },
+      /** Reading which inputs drive which outputs; Expert's, like clustering. */
+      openSensitivity(context) {
+        if (!context.getters.can("sensitivity")) return;
+        context.commit("setSensitivityDialog", { open: true });
+      },
+      closeSensitivity(context) {
+        context.commit("setSensitivityDialog", { open: false });
+      },
+      /** Drops one column; from the shortlist it also drops the membership. */
+      removeFromCompare(context, payload) {
+        let id = String(payload.id);
+        let dialog = context.state.compareDialog;
+        context.commit("setCompareDialog", {
+          ids: dialog.ids.filter((other) => String(other) !== id),
+        });
+        if (dialog.source === "cart") {
+          context.commit("removeFromCart", { ids: [id] });
+        }
+      },
       restoreSet(context, payload) {
         if (context.state.uiMode === UI_MODES.LITE) {
           // The saved filters replace the current ones; undo brings those back.
@@ -1095,14 +1424,56 @@ function builder(new_data, dataTypesMap, new_layouts, new_similarity_map) {
           operation: payload.operation,
         });
       },
+      /** Deletes a set, and offers to undo that. */
+      removeSet(context, payload) {
+        let metadata = context.state.setsMetadataMap[payload.setID];
+        context.commit("removeSet", payload);
+        context.commit("showNotice", {
+          text: "Deleted " + (metadata ? metadata.name : payload.setID) + ".",
+          action: "undoRemoveSet",
+        });
+      },
+      /**
+       * Forgets the sets, notes and ratings saved for this dataset, and clears
+       * them from the workspace. Custom dimensions are managed on their own.
+       */
+      clearSavedWork(context) {
+        context.commit("clearSets");
+        // Left behind, the shortlist would be written back 400ms later and
+        // re-create the record that was just forgotten.
+        context.commit("setCart", { ids: [] });
+        context.commit("rememberCart", { ids: null });
+        context.state.rawData.forEach((row) => {
+          if (!(row[RATING_DIMENSION] > 0)) return;
+          context.dispatch("rateAlt", { item: row, rating: 0 });
+        });
+        session.clear();
+        context.commit("showNotice", {
+          text:
+            "Cleared the saved sets, notes, ratings and shortlist for this dataset.",
+        });
+      },
       rateAlt(context, payload) {
         context.commit("rateAlt", payload);
-        // A Rating filter has to pick up the new rating.
-        if (context.getters.isFilterActive) applyFiltersToMarking(context);
+        // Weighted dimensions that weigh the rating follow it.
+        context.commit("refreshDerivedValues", {
+          id: payload.item._id,
+          dim: RATING_DIMENSION,
+        });
+        // A filter on Rating has to pick up the new rating. Other filters
+        // select by other values or by ID, so their result stands.
+        let byRating = context.getters.narrowingFilters.some(
+          (f) => f.kind === "range" && f.dims.includes(RATING_DIMENSION)
+        );
+        if (context.getters.isFilterActive && byRating) {
+          applyFiltersToMarking(context);
+        }
       },
     },
     modules: {},
   });
+  session.attach(store);
+  return store;
 }
 
 function viewLabelForPayload(context, payload) {
@@ -1270,49 +1641,15 @@ function stepSelectionHistory(state, from, to) {
   state.selectionVersion += 1;
 }
 
+/**
+ * A link that reopens the current dataset, or null when it has none (a local
+ * file). It keeps the page's path, so it works wherever the app is hosted.
+ */
 function processShareLinkSup() {
-  let _folderInfo = window._folderInfo;
-  if(_folderInfo === null || _folderInfo === undefined || !_folderInfo.inLink )
-        return null;
-  console.log(_folderInfo);
-  var studyCaseLink = encodeUrl(_folderInfo.inLink);
-  var studyEncodedUrl = "";
-
-  if (studyCaseLink.length === 0) {
-    var warningString =
-      "There is no static link for you if you are not using online shared folder.";
-    //d3.select("#myStudyID").html(warningString);
-    //$("#showStillLink").modal();
-    console.log(warningString);
-    return;
-  } else if (_folderInfo.DE_PW.length > 0) {
-    // if _folderInfo.DE_PW existed, just return.
-    studyEncodedUrl = document.location.origin + "/?ID=" + _folderInfo.DE_PW;
-    //d3.select("#myStudyID").html(studyEncodedUrl);
-    //$("#showStillLink").modal();
-
-    console.log(studyEncodedUrl, "https://goo.gl/" + _folderInfo.DE_PW);
-    return;
-  }
-
-  //valid online folder available
-  var studyLongUrl = document.location.origin + "/?ID=" + studyCaseLink;
-  //d3.select("#welcome").style("display", "none");
-  console.log("studyLongUrl", studyLongUrl);
-  let UrlId = studyLongUrl;
-
-  _folderInfo.DE_PW = UrlId;
-
-  if (UrlId.length == 6) {
-    // google url id
-
-    studyEncodedUrl = document.location.origin + "/?ID=" + _folderInfo.DE_PW;
-  } else if (UrlId.startsWith("BL_")) {
-    studyEncodedUrl = document.location.origin + "/?ID=" + _folderInfo.DE_PW;
-  } else {
-    studyEncodedUrl = studyLongUrl;
-  }
-  return studyEncodedUrl;
+  let info = window._folderInfo;
+  if (!info || !info.inLink) return null;
+  let page = document.location.origin + document.location.pathname;
+  return page + "?ID=" + encodeURIComponent(encodeUrl(info.inLink));
 }
 
 function prepare_map(data) {
@@ -1541,7 +1878,9 @@ function map2Data(map) {
   return result;
 }
 function filterData(dataMap, toFilter) {
-  var dataMapCopy = JSON.parse(JSON.stringify(dataMap));
+  // A shallow copy: the rows stay the collection's own, so edits to them
+  // (ratings, custom values) reach rawData and keys holding undefined survive.
+  var dataMapCopy = Object.assign({}, dataMap);
   for (var altID in toFilter) {
     delete dataMapCopy[altID];
   }

@@ -59,7 +59,7 @@ const REFUSALS = {
 };
 
 function labelOf(dim) {
-  return String(dim).replace(/^(in|out)\s*:\s*/i, "");
+  return String(dim).replace(/^(in|out|custom|weighted)\s*:\s*/i, "");
 }
 
 /** A short echo of what was understood, so a misreading is visible. */
@@ -245,7 +245,13 @@ let extentsSignature = "";
 
 /** `{ column: [min, median, max] }` for every numeric column, cached per dataset. */
 function extentsFor(state, schema) {
-  let signature = schema.columns.join("|") + "#" + (state.data ? state.data.length : 0);
+  // Custom values change without the columns or row count changing.
+  let signature =
+    schema.columns.join("|") +
+    "#" +
+    (state.data ? state.data.length : 0) +
+    "#" +
+    (state.dimensionValuesVersion || 0);
   if (extentsCache && extentsSignature === signature) return extentsCache;
   let out = {};
   schema.numeric.forEach((dim) => {

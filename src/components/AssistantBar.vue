@@ -1,6 +1,16 @@
 <template>
-  <div class="assistant-bar" :class="{ 'assistant-bar--open': open }">
-    <div class="assistant-field">
+  <div class="assistant-bar" :class="barClasses">
+    <!-- On a narrow screen the bar is only this button; the field opens over
+         the toolbar instead of taking width from its neighbours. -->
+    <v-tooltip v-if="compact" bottom>
+      <template v-slot:activator="{ on }">
+        <v-btn v-on="on" icon small class="assistant-toggle" aria-label="Ask or command" @click="expand">
+          <v-icon small>mdi-console-line</v-icon>
+        </v-btn>
+      </template>
+      <span>Ask or command&nbsp;&nbsp;[/]</span>
+    </v-tooltip>
+    <div v-show="!compact || floating" class="assistant-field">
       <v-icon small class="assistant-icon">mdi-console-line</v-icon>
       <input
         ref="input"
@@ -70,41 +80,47 @@
           <span class="assistant-item-hint">{{ i === highlighted ? item.hint : "" }}</span>
           <span class="assistant-item-why" :title="whyTitle(item.why)">{{ whyMark(item.why) }}</span>
         </div>
-      </div>
-    </div>
 
-    <v-menu v-model="helpOpen" offset-y open-on-hover close-delay="250" max-height="70vh" :close-on-content-click="false">
-      <template v-slot:activator="{ on }">
-        <v-btn v-on="on" icon small class="assistant-help">
-          <v-icon small>mdi-help-circle-outline</v-icon>
-        </v-btn>
-      </template>
-      <v-card class="assistant-card">
-        <v-card-text>
-          <div class="assistant-card-title">Supported instructions</div>
-          <div class="assistant-card-lead">
-            Click one: it goes into the bar, asks for any column or number it needs, and runs.
+        <!-- The instruction list lives in the popup, so the bar has no second
+             "?" next to the app's own help. -->
+        <template v-if="!text && !slot">
+          <div
+            class="assistant-help-toggle"
+            :class="{ 'assistant-help-toggle--open': helpOpen }"
+            @click="toggleHelp"
+          >
+            <v-icon x-small class="assistant-help-icon">mdi-help-circle-outline</v-icon>
+            <span>What can I ask?</span>
+            <span class="assistant-item-hint">{{ helpOpen ? "Esc hides" : "type ?" }}</span>
           </div>
-          <div v-for="(entries, group) in instructionGroups" :key="group" class="assistant-group">
-            <div class="assistant-group-name">{{ group }}</div>
-            <div
-              v-for="entry in entries"
-              :key="entry.insert"
-              class="assistant-group-item"
-              :title="entry.title"
-              @click="start(entry)"
-            >
-              <span class="assistant-group-item-text">{{ entry.label }}</span>
-              <span class="assistant-group-item-hint">{{ entry.hint }}</span>
+          <div v-if="helpOpen" ref="helpList" class="assistant-help-list">
+            <div class="assistant-card-lead">
+              Click one or use the arrow keys and Enter: it goes into the bar, asks for any
+              column or number it needs, and runs.
+            </div>
+            <div v-for="section in helpSections" :key="section.group" class="assistant-group">
+              <div class="assistant-group-name">{{ section.group }}</div>
+              <div
+                v-for="row in section.rows"
+                :key="row.entry.insert"
+                class="assistant-group-item"
+                :class="{ 'assistant-group-item--on': row.index === helpAt }"
+                :title="row.entry.title"
+                @mouseenter="helpAt = row.index"
+                @click="start(row.entry)"
+              >
+                <span class="assistant-group-item-text">{{ row.entry.label }}</span>
+                <span class="assistant-group-item-hint">{{ row.entry.hint }}</span>
+              </div>
+            </div>
+            <div class="assistant-card-note">
+              Or type in your own words: Tab fills in the next part, Enter or a click runs it.
+              Join steps with "and". Everything done shows as a chip and undoes with Ctrl+Z.
             </div>
           </div>
-          <div class="assistant-card-note">
-            Or type in your own words: Tab fills in the next part, Enter or a click runs it.
-            Join steps with "and". Everything done shows as a chip and undoes with Ctrl+Z.
-          </div>
-        </v-card-text>
-      </v-card>
-    </v-menu>
+        </template>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -143,6 +159,20 @@ const ENCODER_TEXT = {
   failed: "The meaning model could not load; suggestions are ranked by wording.",
 };
 
+/* The same breakpoint at which the toolbar swaps its labels for icons. */
+const NARROW = "(max-width: 1500px)";
+/** Width of the field while it floats over the toolbar, and of its popup. */
+const FIELD_WIDTH = 380;
+const POPUP_WIDTH = 520;
+
+let narrowList = null;
+function narrowQuery() {
+  if (!narrowList && typeof window !== "undefined" && window.matchMedia) {
+    narrowList = window.matchMedia(NARROW);
+  }
+  return narrowList;
+}
+
 const SLOT_WORDS = {
   dim: "column", op: "comparison", value: "number", values: "value", k: "how many",
   n: "how many", percent: "percent", order: "order", stat: "statistic", panel: "view",
@@ -169,12 +199,52 @@ export default {
       highlighted: -1,
       open: false,
       helpOpen: false,
+      // The highlighted row of the instruction list, for arrow keys.
+      helpAt: -1,
       encoder: semanticStatus(),
+      // Narrow toolbar: the bar is a button until it is used.
+      compact: narrowQuery() ? narrowQuery().matches : false,
+      expanded: false,
+      // Which way the floating field and its popup open, so both stay on screen.
+      alignRight: false,
+      popupRight: false,
     };
   },
   computed: {
     instructionGroups() {
       return instructions();
+    },
+    /** The groups with a running index, so the keyboard can walk them. */
+    helpSections() {
+      let index = 0;
+      let groups = this.instructionGroups;
+      return Object.keys(groups).map((group) => ({
+        group: group,
+        rows: groups[group].map((entry) => ({ entry: entry, index: index++ })),
+      }));
+    },
+    helpEntries() {
+      let out = [];
+      this.helpSections.forEach((section) => {
+        section.rows.forEach((row) => out.push(row.entry));
+      });
+      return out;
+    },
+    /**
+     * Whether the field floats over the toolbar. It never takes width from its
+     * neighbours: narrow, it floats whenever it is open; wide, it sits in its
+     * own slot and floats out to full width only while in use.
+     */
+    floating() {
+      return this.compact ? this.expanded : this.focused || this.open;
+    },
+    barClasses() {
+      return {
+        "assistant-bar--compact": this.compact,
+        "assistant-bar--floating": this.floating,
+        "assistant-bar--right": this.alignRight,
+        "assistant-bar--popup-right": this.popupRight,
+      };
     },
     placeholder() {
       return "Ask or command…  [/]";
@@ -203,6 +273,17 @@ export default {
       }
     };
     document.addEventListener("keydown", this.onGlobalKeydown);
+    // Crossing the breakpoint swaps the inline field for the button and back.
+    this.onNarrowChange = () => {
+      this.compact = narrowQuery().matches;
+      if (!this.focused && !this.text) this.expanded = false;
+      if (this.floating) this.place();
+    };
+    let query = narrowQuery();
+    if (query) {
+      if (query.addEventListener) query.addEventListener("change", this.onNarrowChange);
+      else query.addListener(this.onNarrowChange);
+    }
     // The encoder loads in the background; the bar works before it arrives,
     // and the table's index is built while the page is idle so the first
     // click does not wait for it.
@@ -217,10 +298,15 @@ export default {
     clearTimeout(this.vectorTimer);
     clearTimeout(this.blurTimer);
     document.removeEventListener("keydown", this.onGlobalKeydown);
+    let query = narrowQuery();
+    if (query) {
+      if (query.removeEventListener) query.removeEventListener("change", this.onNarrowChange);
+      else query.removeListener(this.onNarrowChange);
+    }
   },
   methods: {
     short(column) {
-      return String(column).replace(/^(in|out)\s*:\s*/i, "");
+      return String(column).replace(/^(in|out|custom|weighted)\s*:\s*/i, "");
     },
     slotWord(name) {
       return SLOT_WORDS[name] || name;
@@ -241,16 +327,70 @@ export default {
 
     onFocus() {
       clearTimeout(this.blurTimer);
+      if (!this.floating) this.place();
       this.focused = true;
+      if (this.compact) this.expanded = true;
       this.open = true;
       this.refresh();
     },
     onBlur() {
       this.focused = false;
       // Let a click on an item land before the list goes away.
-      this.blurTimer = setTimeout(() => { this.open = false; }, 150);
+      this.blurTimer = setTimeout(() => {
+        this.open = false;
+        this.helpOpen = false;
+        // Narrow: back to the button, unless there is text still to finish.
+        if (this.compact && !this.text) this.expanded = false;
+      }, 150);
+    },
+    /** Opens the narrow bar over the toolbar and puts the caret in it. */
+    expand() {
+      if (!this.expanded) this.place();
+      this.expanded = true;
+      this.$nextTick(() => {
+        if (this.$refs.input) this.$refs.input.focus();
+      });
+    },
+    /**
+     * Picks the side the floating field and its popup open towards: from the
+     * bar's left edge, unless that would run off the right of the window.
+     */
+    place() {
+      if (!this.$el || !this.$el.getBoundingClientRect) return;
+      let rect = this.$el.getBoundingClientRect();
+      let room = window.innerWidth - 8;
+      this.alignRight = rect.left + FIELD_WIDTH > room;
+      let popupLeft = this.alignRight ? rect.right - FIELD_WIDTH : rect.left;
+      this.popupRight = popupLeft + POPUP_WIDTH > room;
+    },
+    toggleHelp() {
+      this.helpOpen = !this.helpOpen;
+      this.helpAt = -1;
+    },
+    /** Arrow keys and Enter inside the instruction list. */
+    helpKeydown(e) {
+      let n = this.helpEntries.length;
+      if (!n) return false;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        if (this.helpAt < 0) this.helpAt = e.key === "ArrowDown" ? 0 : n - 1;
+        else this.helpAt = e.key === "ArrowDown" ? (this.helpAt + 1) % n : (this.helpAt - 1 + n) % n;
+        this.$nextTick(() => {
+          let list = this.$refs.helpList;
+          let row = list && list.querySelector(".assistant-group-item--on");
+          if (row && row.scrollIntoView) row.scrollIntoView({ block: "nearest" });
+        });
+        return true;
+      }
+      if (e.key === "Enter" && this.helpAt >= 0) {
+        e.preventDefault();
+        this.start(this.helpEntries[this.helpAt]);
+        return true;
+      }
+      return false;
     },
     onInput() {
+      if (this.text) this.helpOpen = false;
       this.open = true;
       this.reply = this.reply && this.reply.kind === "clarify" ? this.reply : null;
       // Typing restarts the choice: the first item is the best reading of
@@ -319,9 +459,22 @@ export default {
 
       if (key === "Escape") {
         e.preventDefault();
+        if (this.helpOpen) {
+          this.helpOpen = false;
+          return;
+        }
         this.dismiss();
         return;
       }
+      // "?" in an empty box shows the instruction list, which then takes the
+      // arrow keys and Enter until something is typed.
+      if (key === "?" && !this.text) {
+        e.preventDefault();
+        this.open = true;
+        this.toggleHelp();
+        return;
+      }
+      if (this.helpOpen && !this.text && this.open && this.helpKeydown(e)) return;
       if (key === "ArrowDown" || key === "ArrowUp") {
         e.preventDefault();
         if (listOpen) {
@@ -373,7 +526,10 @@ export default {
     run(text, prefer) {
       let reply = ask(this.$store, text, { prefer: prefer });
       if (reply.kind === "help") {
-        this.reply = { kind: "answer", message: "The list is under the ? on the right." };
+        // Asking for help opens the list in place.
+        this.reply = null;
+        this.helpOpen = true;
+        this.helpAt = -1;
       } else {
         this.reply = reply;
       }
@@ -411,6 +567,10 @@ export default {
       this.text = this.historyAt < 0 ? "" : this.history[this.historyAt];
     },
     focus() {
+      if (this.compact && !this.expanded) {
+        this.expand();
+        return;
+      }
       this.$refs.input.focus();
     },
   },
@@ -418,18 +578,30 @@ export default {
 </script>
 
 <style scoped>
-/* One compact control in the toolbar; the list and replies float below it. */
+/* One compact control in the toolbar; the list and replies float below it.
+   Its slot in the row never changes size while it is used: the field floats
+   over the neighbours instead, so filter chips and operations stay put. */
 .assistant-bar {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 2px;
+  justify-content: center;
   flex: 1 1 200px;
   min-width: 120px;
   max-width: 380px;
+  height: 30px;
   padding: 0 2px;
 }
-/* Takes what the toolbar leaves, shrinks first when it is tight, and grows
-   while in use so a sentence stays readable. */
+/* Narrow toolbar: only a button, until "/", Ctrl+K or a click opens it. */
+.assistant-bar--compact {
+  flex: 0 0 36px;
+  min-width: 36px;
+  max-width: 36px;
+  padding: 0;
+}
+.assistant-toggle {
+  flex: 0 0 auto;
+}
 .assistant-field {
   position: relative;
   display: flex;
@@ -437,9 +609,25 @@ export default {
   flex: 1 1 auto;
   min-width: 0;
 }
-.assistant-bar--open,
-.assistant-bar:focus-within {
-  flex-basis: 380px;
+.assistant-bar--floating .assistant-field {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 380px;
+  max-width: calc(100vw - 16px);
+  z-index: 40;
+  background: #263238;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+.assistant-bar--floating.assistant-bar--right .assistant-field {
+  left: auto;
+  right: 0;
+}
+.assistant-bar--popup-right .assistant-suggest {
+  left: auto;
+  right: 0;
 }
 .assistant-icon {
   position: absolute;
@@ -590,16 +778,30 @@ export default {
   opacity: 0.5;
   flex: 0 0 auto;
 }
-.assistant-help {
-  flex: 0 0 auto;
+.assistant-help-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 2px;
+  opacity: 0.85;
 }
-.assistant-card {
-  width: 360px;
-  max-width: 360px;
+.assistant-help-toggle:hover,
+.assistant-help-toggle--open {
+  background: rgba(0, 191, 255, 0.1);
+  opacity: 1;
 }
-.assistant-card-title {
-  font-weight: 600;
-  margin-bottom: 2px;
+.assistant-help-icon.v-icon {
+  color: inherit;
+  opacity: 0.8;
+}
+.assistant-help-list {
+  max-height: 55vh;
+  overflow-y: auto;
+  padding: 6px 10px 8px;
 }
 .assistant-card-lead {
   font-size: 11px;
@@ -625,8 +827,8 @@ export default {
   border-radius: 3px;
   cursor: pointer;
 }
-.assistant-group-item:hover {
-  background: rgba(0, 191, 255, 0.14);
+.assistant-group-item--on {
+  background: rgba(0, 191, 255, 0.18);
 }
 .assistant-group-item-text {
   overflow: hidden;

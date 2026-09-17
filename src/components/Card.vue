@@ -86,14 +86,11 @@ import vdr from "vue-draggable-resizable-gorkys";
 import { mapState, mapGetters } from "vuex";
 
 import ParCoordsView from "@/components/ParCoordsView.vue";
-import GridView from "@/components/GridView.vue";
 import AugmentedGridView from "@/components/AugmentedGridView.vue";
 
 import SPLOMView from "@/components/SPLOMView.vue";
-import DendrogramView from "@/components/DendrogramView.vue";
 
 import ScatterplotView from "@/components/ScatterplotView.vue";
-import TSNEView from "@/components/TSNEView.vue";
 
 import SetsView from "@/components/SetsView.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
@@ -104,12 +101,9 @@ const SCATTER_MIN_WIDTH = 400;
 export default {
   components: {
     ParCoordsView,
-    GridView,
     AugmentedGridView,
     SPLOMView,
-    DendrogramView,
     ScatterplotView,
-    TSNEView,
     SetsView,
   },
   // initX..initH are grid cells; unitW and unitH are a cell's size in pixels.

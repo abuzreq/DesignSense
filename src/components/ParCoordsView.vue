@@ -5,8 +5,19 @@
       title="Parallel coordinates"
       :compact="width < 640"
     >
-      <span class="ph-meta">{{ headerHint }}</span>
+      <template v-slot:default>
+        <span class="ph-meta">{{ headerHint }}</span>
+      </template>
       <template v-slot:actions>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn small text class="ph-text-btn" v-on="on" @click="openDimensions">
+              <v-icon small left>mdi-scale-balance</v-icon>
+              Dimensions
+            </v-btn>
+          </template>
+          <span>Add criteria of your own and weigh them into weighted dimensions</span>
+        </v-tooltip>
         <v-menu offset-y left :close-on-content-click="false">
           <template v-slot:activator="{ on: menu }">
             <v-tooltip bottom>
@@ -38,7 +49,7 @@
                     : "mdi-checkbox-blank-outline"
                 }}</v-icon>
               </v-list-item-icon>
-              <v-list-item-title>{{ dim }}</v-list-item-title>
+              <v-list-item-title>{{ axisTitles[dim] || dim }}</v-list-item-title>
             </v-list-item>
           </v-list>
         </v-menu>
@@ -63,9 +74,19 @@ import TemplateView from "@/components/TemplateView.vue";
 import PanelHeader from "@/components/PanelHeader.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
 import { round } from "@/components/utils.js";
-import { sameRange } from "@/store/filters.js";
+import { formatValue, sameRange } from "@/store/filters.js";
 import { operations } from "@/components/operations.js";
 import { RATING_BOUNDS, RATING_DIMENSION } from "@/ratings.js";
+import { snapValue } from "@/customDimensions.js";
+import { displayName } from "@/columns.js";
+import { isAssetColumn } from "@/data/assets.js";
+
+const CUSTOM_AXIS_COLOR = "#6a1b9a";
+const WEIGHTED_AXIS_COLOR = "#00796b";
+// About one tick per this many pixels of axis height.
+const AXIS_TICK_SPACING = 40;
+// Room kept between neighbouring axis titles.
+const TITLE_PADDING = 8;
 
 export default {
   mixins: [TemplateView],
@@ -82,22 +103,51 @@ export default {
       isSyncingBrush: false,
       // Where the current press began, to tell clicks on lines from drags.
       press: null,
+      // Whether an option is inspected. The header reads this rather than
+      // the inspected option, so it doesn't re-render as inspection moves.
+      isInspecting: false,
     };
   },
   computed: {
     ...mapState({
       numericDimensions: (state) => state.numericDimensions,
       nonNumericDimensions: (state) => state.nonNumericDimensions,
+      dimensionValuesVersion: (state) => state.dimensionValuesVersion,
     }),
     ...mapGetters([
       "inputDimensions",
       "outputDimensions",
       "hasRatings",
+      "customDimensionNames",
+      "weightedDimensionNames",
+      "unfilterableDimensions",
+      "dimensionStructure",
     ]),
+    /** Axes drawn over a fixed range rather than their data's extent. */
+    fixedAxisBounds() {
+      let bounds = { [RATING_DIMENSION]: RATING_BOUNDS.slice() };
+      this.unfilterableDimensions.forEach((dim) => {
+        bounds[dim] = this.$store.getters.fixedBoundsOf(dim);
+      });
+      return bounds;
+    },
+    /**
+     * Axis titles: names without their column prefix, with custom axes marked
+     * as editable and weighted ones as sums.
+     */
+    axisTitles() {
+      let titles = {};
+      this.numericDimensions.forEach((dim) => (titles[dim] = displayName(dim)));
+      this.customDimensionNames.forEach((dim) => (titles[dim] += " \u270e"));
+      this.weightedDimensionNames.forEach((dim) => (titles[dim] += " \u03a3"));
+      return titles;
+    },
     // Rating is offered once something is rated, since only then has it an axis.
+    // Picture and model columns are never axes, however they were typed.
     axisOptions() {
       return this.numericDimensions.filter(
-        (dim) => dim !== RATING_DIMENSION || this.hasRatings
+        (dim) =>
+          !isAssetColumn(dim) && (dim !== RATING_DIMENSION || this.hasRatings)
       );
     },
     visibleAxisCount() {
@@ -107,41 +157,58 @@ export default {
       return this.height - this.headerHeight;
     },
     headerHint() {
-      return (
+      let hint =
         (this.isLite
           ? "Drag along an axis to filter"
-          : "Drag along an axis to select") + " · drag a title to reorder"
-      );
+          : "Drag along an axis to select") + " · drag a title to reorder";
+      if (this.customDimensionNames.some((dim) => this.isAxisShown(dim))) {
+        hint += this.isInspecting
+          ? " · drag the knob on \u270e axes to edit"
+          : " · inspect an option to edit it on \u270e axes";
+      }
+      return hint;
     },
   },
   mounted() {},
   created() {
-    this.keysBlackList = [
-      "index",
-      "selected",
-      "gltf",
-      "image",
-      "ID",
-      "id",
-      "_id",
-      "geometry",
-      "json",
-      "img",
-      "threeD",
-      "collection",
-      "images",
-    ];
+    // Bookkeeping columns only: the picture and model ones are isAssetColumn's,
+    // since a list can never cover "img_2" or "model3d_3".
+    this.keysBlackList = ["index", "selected", "ID", "id", "_id", "collection"];
     this.allKeys = Object.keys(this.chartData[0]);
 
     // A copy, so the store's list of categorical dimensions is left alone.
     this.excludedDimensions = this.nonNumericDimensions.concat(["selected"]);
     // Lite's own axis brushes by dimension. Not in data(): d3 state, not view state.
     this.liteBrushes = null;
+    // The knob being dragged: { dim, id, y, value, moved }.
+    this.knobGesture = null;
+    this.lineFrame = null;
+    this.knobFrame = null;
+    this.titleFrame = null;
+    // Positions and titles the axis titles were last fitted to.
+    this.fittedTitlesKey = null;
+  },
+  beforeDestroy() {
+    if (this.lineFrame) cancelAnimationFrame(this.lineFrame);
+    if (this.knobFrame) cancelAnimationFrame(this.knobFrame);
+    if (this.titleFrame) cancelAnimationFrame(this.titleFrame);
   },
   watch: {
     // The Rating axis appears with the first rating.
     hasRatings: function() {
       this.scheduleRefresh();
+    },
+    // Custom and weighted dimensions were added, removed or given new bounds.
+    dimensionStructure: function() {
+      let known = this.$store.state.allDimensions;
+      this.excludedDimensions = this.excludedDimensions.filter(
+        (dim) => dim === "selected" || known.includes(dim)
+      );
+      this.scheduleRefresh();
+    },
+    // Values changed in place: redraw the lines, not the chart.
+    dimensionValuesVersion: function() {
+      this.scheduleLineRedraw();
     },
   },
   methods: {
@@ -212,10 +279,347 @@ export default {
       }
       let hovered = this.$store.getters.getHovered;
       this.updateStyleGivenHovered(hovered);
+      this.drawKnobs();
     },
     afterChartRebuilt() {
       this.syncLiteBrushes();
       this.updateStyleGivenHovered(this.$store.getters.getHovered);
+      this.drawKnobs();
+    },
+    openDimensions() {
+      this.$store.dispatch("openDimensionDialog", { mode: "manage" });
+    },
+    /*
+     * Custom dimensions are edited on their axes, one option at a time: the
+     * inspected option gets a knob, a slider thumb where its line crosses
+     * each custom axis, dragged to set its value. A line with no value crosses
+     * below the axes, in the band under the separator, and its knob waits
+     * there; dragging a knob down into that band clears the value. Knobs sit
+     * inside the axis group, so they move with the axis when it is reordered,
+     * and their drag keeps presses from reordering, brushing or inspecting.
+     */
+    drawKnobs() {
+      let chart = this.chart;
+      if (this._isDestroyed || !chart || !chart.g()) return;
+      let editable = new Set(this.customDimensionNames);
+      let dimensions = chart.dimensions();
+      let hovered = this.$store.state.hovered;
+      // Only a line that is drawn can be edited on the chart.
+      let items =
+        editable.size > 0 &&
+        hovered &&
+        chart.data().some((d) => d._id === hovered._id)
+          ? [hovered]
+          : [];
+      let nullY = this.nullBandY();
+      let vm = this;
+      chart.g().each(function(dim) {
+        let group = d3.select(this);
+        let layer = group.select("g.ds-knobs");
+        if (!editable.has(dim) || !dimensions[dim]) {
+          layer.remove();
+          return;
+        }
+        if (layer.empty()) layer = group.append("g").attr("class", "ds-knobs");
+        let yscale = dimensions[dim].yscale;
+        let knobs = layer.selectAll("g.ds-knob").data(items, (d) => d._id);
+        knobs.exit().remove();
+        let entered = knobs
+          .enter()
+          .append("g")
+          .attr("class", "ds-knob")
+          .call(vm.knobDrag(dim));
+        // A larger, invisible target, so the thumb is easy to grab.
+        entered
+          .append("rect")
+          .attr("class", "ds-knob-target")
+          .attr("x", -16)
+          .attr("y", -12)
+          .attr("width", 32)
+          .attr("height", 24);
+        entered
+          .append("rect")
+          .attr("class", "ds-knob-thumb")
+          .attr("x", -12)
+          .attr("y", -7)
+          .attr("width", 24)
+          .attr("height", 14)
+          .attr("rx", 4);
+        [-2.5, 2.5].forEach((y) => {
+          entered
+            .append("line")
+            .attr("class", "ds-knob-grip")
+            .attr("x1", -5)
+            .attr("x2", 5)
+            .attr("y1", y)
+            .attr("y2", y);
+        });
+        entered.append("title");
+        layer
+          .selectAll("g.ds-knob")
+          .each(function(d) {
+            let y = vm.knobY(yscale, d[dim], nullY);
+            this.__knobY = y;
+            d3.select(this)
+              .attr("transform", "translate(0," + y + ")")
+              .classed("ds-knob--empty", !Number.isFinite(d[dim]));
+          })
+          .select("title")
+          .text(
+            (d) =>
+              "Drag to set " +
+              displayName(dim) +
+              " of " +
+              d._id +
+              " (" +
+              vm.formatAxisValue(dim, d[dim]) +
+              ")"
+          );
+      });
+    },
+    scheduleKnobRedraw() {
+      if (this.knobFrame) return;
+      this.knobFrame = requestAnimationFrame(() => {
+        this.knobFrame = null;
+        this.drawKnobs();
+      });
+    },
+    knobDrag(dim) {
+      let vm = this;
+      return d3
+        .drag()
+        .subject(function() {
+          return { x: 0, y: this.__knobY || 0 };
+        })
+        .on("start", function(d) {
+          vm.knobGesture = { dim: dim, id: d._id, moved: false };
+          d3.select(this).classed("ds-knob--dragging", true);
+          // The pointer leaves the thumb while dragging fast; keep the grip.
+          document.body.classList.add("ds-knob-grabbing");
+        })
+        .on("drag", function(d) {
+          let gesture = vm.knobGesture;
+          let axis = vm.chart && vm.chart.dimensions()[dim];
+          let def = vm.$store.getters.dimensionDef(dim);
+          if (!gesture || !axis || !def) return;
+          gesture.moved = true;
+          let yscale = axis.yscale;
+          let range = yscale.range();
+          let top = Math.min(range[0], range[1]);
+          let bottom = Math.max(range[0], range[1]);
+          let nullY = vm.nullBandY();
+          let y = Math.max(top, Math.min(nullY, d3.event.y));
+          // Past the separator line, halfway down to the missing band.
+          let cleared = y >= (bottom + nullY) / 2;
+          let value = cleared
+            ? undefined
+            : snapValue(yscale.invert(Math.min(y, bottom)), def.bounds);
+          gesture.value = value;
+          gesture.y = cleared ? nullY : yscale(value);
+          this.__knobY = gesture.y;
+          d3.select(this)
+            .attr("transform", "translate(0," + gesture.y + ")")
+            .classed("ds-knob--empty", cleared);
+          vm.$store.dispatch("setDimensionValue", {
+            dim: dim,
+            id: d._id,
+            value: value,
+            final: false,
+          });
+          vm.showKnobTooltip();
+        })
+        .on("end", function(d) {
+          let gesture = vm.knobGesture;
+          vm.knobGesture = null;
+          d3.select(this).classed("ds-knob--dragging", false);
+          document.body.classList.remove("ds-knob-grabbing");
+          if (!vm.chart) return;
+          vm.cleanTooltip();
+          if (vm.hovered) vm.addTooltip([vm.hovered]);
+          if (gesture && gesture.moved) {
+            vm.$store.dispatch("setDimensionValue", {
+              dim: dim,
+              id: d._id,
+              value: d[dim],
+              final: true,
+            });
+          }
+        });
+    },
+    showKnobTooltip() {
+      let gesture = this.knobGesture;
+      if (!gesture || !this.chart) return;
+      this.cleanTooltip();
+      this.createTooltip([
+        [
+          this.chart.xscale(gesture.dim),
+          this.knobTooltipY(gesture.y),
+          this.formatAxisValue(gesture.dim, gesture.value),
+        ],
+      ]);
+    },
+    /** Where lines with no value cross, below the axes. */
+    nullBandY() {
+      let margin = this.chart.margin();
+      return this.chart.height() - margin.top - margin.bottom + 1;
+    },
+    /**
+     * The baseline of a value label for a knob at `y`, clear of its thumb
+     * (14px tall): above it, or below it where the top of the chart would cut
+     * the label off. A label box runs from 14px above its baseline to 4px
+     * below (see createTooltip).
+     */
+    knobTooltipY(y) {
+      let above = y - 12;
+      return above - 14 < -this.chart.margin().top ? y + 22 : above;
+    },
+    knobY(yscale, value, nullY) {
+      let y = Number.isFinite(value) ? yscale(value) : NaN;
+      return Number.isFinite(y) ? y : nullY;
+    },
+    formatAxisValue(dim, value) {
+      if (value === undefined || value === null || value === "") return "\u2013";
+      let bounds = this.fixedAxisBounds[dim];
+      if (bounds && typeof value === "number" && dim !== RATING_DIMENSION) {
+        return formatValue(value, bounds[1] - bounds[0]);
+      }
+      return "" + value;
+    },
+    scheduleLineRedraw() {
+      if (this.lineFrame) return;
+      this.lineFrame = requestAnimationFrame(() => {
+        this.lineFrame = null;
+        this.redrawLinesInPlace();
+      });
+    },
+    /**
+     * Values edited on rows are redrawn from the same rows: the lines, the
+     * selection over them, tooltips and knobs, without rebuilding the axes.
+     */
+    redrawLinesInPlace() {
+      if (this._isDestroyed || !this.chart || !this.$el.isConnected) return;
+      // A rebuild is on its way and redraws everything anyway.
+      if (this._refreshTimer) return;
+      this.chart.render();
+      // Rendering clears the canvas the selection is drawn on.
+      this.chart.highlight(this.$store.getters.selectedDataInView(this.viewID));
+      this.updateStyleGivenHovered(this.hovered);
+      this.cleanTooltip();
+      if (this.knobGesture) this.showKnobTooltip();
+      else if (this.hovered) this.addTooltip([this.hovered]);
+      this.drawKnobs();
+    },
+    /** Marks custom and weighted axes: no brushes, their own label colours. */
+    decorateAxes(chart) {
+      let custom = new Set(this.customDimensionNames);
+      let weighted = new Set(this.weightedDimensionNames);
+      chart.svg.selectAll("g.dimension").each(function(dim) {
+        let group = d3.select(this);
+        group
+          .classed("ds-unfilterable", custom.has(dim) || weighted.has(dim))
+          .classed("ds-custom-axis", custom.has(dim))
+          .classed("ds-weighted-axis", weighted.has(dim));
+        let color = custom.has(dim)
+          ? CUSTOM_AXIS_COLOR
+          : weighted.has(dim)
+          ? WEIGHTED_AXIS_COLOR
+          : null;
+        if (!color) return;
+        group.select("text.label").style("fill", color);
+        group.select("path.domain").style("stroke", color);
+      });
+    },
+    scheduleTitleFit(chart) {
+      if (this.titleFrame) return;
+      this.titleFrame = requestAnimationFrame(() => {
+        this.titleFrame = null;
+        if (this._isDestroyed || chart !== this.chart) return;
+        this.fitAxisTitles(chart);
+      });
+    },
+    /**
+     * Keeps axis titles from running into each other: each gets the room
+     * halfway to its neighbours (the outermost ones also the margin beside
+     * them), is nudged inward at the edges, and is cut with an ellipsis when
+     * still too long, with the full name in a <title> for hovering. The
+     * library only writes titles when it creates the axes, so this reruns
+     * after renders, which also cover dragging an axis to reorder.
+     */
+    fitAxisTitles(chart) {
+      if (!chart || !chart.svg) return;
+      let dimensions = chart.dimensions();
+      let margin = chart.margin();
+      let innerWidth = chart.width() - margin.left - margin.right;
+      let labels = chart.svg.selectAll("g.dimension text.label");
+      if (labels.empty()) return;
+      let positions = {};
+      labels.each((dim) => {
+        let x = chart.xscale(dim);
+        positions[dim] = Number.isFinite(x) ? x : 0;
+      });
+      let titleOf = (dim) =>
+        (dimensions[dim] && dimensions[dim].title) || "" + dim;
+      let keys = Object.keys(positions);
+      let key =
+        innerWidth +
+        "|" +
+        keys.map((dim) => dim + ":" + positions[dim] + ":" + titleOf(dim)).join("|");
+      // Nothing moved or was renamed since the last fit, and the labels are
+      // the ones fitted then (a rebuild makes fresh, unmarked ones).
+      if (key === this.fittedTitlesKey) {
+        let fresh = false;
+        labels.each(function(dim) {
+          if (this.getAttribute("data-full-title") !== titleOf(dim)) fresh = true;
+        });
+        if (!fresh) return;
+      }
+      // Hidden panels measure every text as 0 wide; fit again once shown.
+      let measured = true;
+      let xs = keys.map((dim) => positions[dim]).sort((a, b) => a - b);
+      let leftEdge = -margin.left + 2;
+      let rightEdge = innerWidth + margin.right - 2;
+      labels.each(function(dim) {
+        let label = d3.select(this);
+        let full = titleOf(dim);
+        let x = positions[dim];
+        let at = xs.indexOf(x);
+        let left =
+          at > 0 ? Math.max(leftEdge, (xs[at - 1] + x) / 2 + TITLE_PADDING / 2) : leftEdge;
+        let right =
+          at < xs.length - 1
+            ? Math.min(rightEdge, (x + xs[at + 1]) / 2 - TITLE_PADDING / 2)
+            : rightEdge;
+        let room = Math.max(0, right - left);
+        // Setting the text also drops an earlier <title>.
+        label.text(full).attr("data-full-title", full);
+        let node = label.node();
+        let width = node.getComputedTextLength();
+        if (width === 0 && full.length > 0) measured = false;
+        if (width > room) {
+          // Keep the custom (✎) or weighted (Σ) mark; cut the name before it.
+          let mark = /\s[✎Σ]$/.test(full) ? full.slice(-2) : "";
+          let name = mark ? full.slice(0, -2) : full;
+          let shortened = (n) => name.slice(0, n).trim() + "…" + mark;
+          // The longest prefix that fits with the ellipsis.
+          let lo = 0;
+          let hi = name.length;
+          while (lo < hi) {
+            let mid = Math.ceil((lo + hi) / 2);
+            node.textContent = shortened(mid);
+            if (node.getComputedTextLength() <= room) lo = mid;
+            else hi = mid - 1;
+          }
+          node.textContent = shortened(lo);
+          width = node.getComputedTextLength();
+          label.append("title").text(full);
+        }
+        // Centred on the axis unless that would cross the room's edges.
+        let center = x;
+        if (center - width / 2 < left) center = left + width / 2;
+        if (center + width / 2 > right) center = right - width / 2;
+        label.attr("x", center - x);
+      });
+      this.fittedTitlesKey = measured ? key : null;
     },
     /*
      * Lite's axis brushes: several per axis, OR-ed, owned here. The library's
@@ -228,10 +632,13 @@ export default {
       let vm = this;
       let dimensions = chart.dimensions();
       let hidden = this.hiddenAxes();
+      let unfilterable = new Set(this.unfilterableDimensions);
       this.liteBrushes = {};
       chart.g().each(function(dim) {
         let axis = dimensions[dim];
         if (!axis || hidden.includes(dim)) return;
+        // Custom and weighted dimensions can't be filtered by.
+        if (unfilterable.has(dim)) return;
         if (!axis.yscale || typeof axis.yscale.invert !== "function") return;
         vm.liteBrushes[dim] = {
           group: d3.select(this).append("g").attr("class", "lite-brushes"),
@@ -433,7 +840,6 @@ export default {
       Object.keys(this.liteBrushes || {}).forEach((dim) =>
         this.writeAxisBrushes(dim, [])
       );
-      this.drawPairStrums();
     },
     /**
      * Draws the store's brushes on each axis, so a filter set on the
@@ -452,84 +858,20 @@ export default {
         }
         this.writeAxisBrushes(dim, wanted);
       });
-      this.drawPairStrums();
     },
-    /**
-     * A scatterplot rectangle is drawn as a brush on each of its two axes;
-     * this joins the two, top to top and bottom to bottom, so the pair reads
-     * as one rectangle rather than two independent brushes. Every line
-     * between the two ranges runs between the ties.
-     */
-    drawPairStrums() {
-      if (!this.chart || !this.liteBrushes) return;
-      let layer = this.chart.svg.select("g.lite-strums");
-      if (layer.empty()) {
-        layer = this.chart.svg.insert("g", ":first-child").attr("class", "lite-strums");
-      }
-      let dimensions = this.chart.dimensions();
-      let xscale = this.chart.xscale;
-      let pixels = (dim, range) => {
-        let y = dimensions[dim].yscale;
-        let ys = range ? [y(range[0]), y(range[1])] : y.range();
-        return [Math.min(ys[0], ys[1]), Math.max(ys[0], ys[1])];
-      };
-      let strums = [];
-      if (this.isLite) {
-        this.$store.state.filters.forEach((filter) => {
-          if (filter.kind !== "range" || filter.dims.length !== 2) return;
-          if (!filter.dims.every((dim) => this.liteBrushes[dim])) return;
-          let [left, right] = filter.dims
-            .slice()
-            .sort((a, b) => xscale(a) - xscale(b));
-          filter.boxes.forEach((box, i) => {
-            let ya = pixels(left, box[left]);
-            let yb = pixels(right, box[right]);
-            [0, 1].forEach((edge) => {
-              strums.push({
-                key: filter.key + ":" + i + ":" + edge,
-                x1: xscale(left),
-                y1: ya[edge],
-                x2: xscale(right),
-                y2: yb[edge],
-              });
-            });
-          });
-        });
-      }
-      let groups = layer.selectAll("g.lite-strum").data(strums, (d) => d.key);
-      let entered = groups.enter().append("g").attr("class", "lite-strum");
-      entered.append("line");
-      entered.append("circle").attr("class", "from").attr("r", 3.5);
-      entered.append("circle").attr("class", "to").attr("r", 3.5);
-      let all = entered.merge(groups);
-      all
-        .select("line")
-        .attr("x1", (d) => d.x1)
-        .attr("y1", (d) => d.y1)
-        .attr("x2", (d) => d.x2)
-        .attr("y2", (d) => d.y2);
-      all
-        .select("circle.from")
-        .attr("cx", (d) => d.x1)
-        .attr("cy", (d) => d.y1);
-      all
-        .select("circle.to")
-        .attr("cx", (d) => d.x2)
-        .attr("cy", (d) => d.y2);
-      groups.exit().remove();
-    },
-
     hoverHandler: function() {
       this.cleanTooltip();
       this.chart.unmark();
 
       let hovered = this.$store.getters.getHovered;
+      this.isInspecting = !!hovered;
       if (hovered) {
         this.chart.mark([hovered]);
         this.addTooltip([hovered]);
       }
 
       this.updateStyleGivenHovered(hovered);
+      this.drawKnobs();
     },
     updateStyleGivenHovered(hovered) {
       let dict = {}
@@ -638,9 +980,10 @@ export default {
       // add tooltip to multiple clicked lines
       var clickedDataSet = [];
 
-      var margins = this.chart.margin();
       let dimensions = this.chart.dimensions();
       let xscale = this.chart.xscale;
+      let nullY = this.nullBandY();
+      let knobAxes = new Set(this.customDimensionNames);
 
       for (var i = 0; i < clicked.length; i++) {
         let datum = clicked[i];
@@ -648,11 +991,18 @@ export default {
           let dim = dimensions[dimName];
           let yscale = dim.yscale;
 
+          // A missing value is drawn in the band below the axes.
           let y = yscale(datum[dimName]);
+          if (!Number.isFinite(y)) y = nullY;
+          // The inspected option's knob sits on custom axes; keep clear of it.
+          if (knobAxes.has(dimName)) y = this.knobTooltipY(y);
           let x = xscale(dimName);
 
-          var text = datum[dimName];
-          clickedDataSet.push([x, y, "" + text]);
+          clickedDataSet.push([
+            x,
+            y,
+            this.formatAxisValue(dimName, datum[dimName]),
+          ]);
         }
       }
       this.createTooltip(clickedDataSet);
@@ -752,13 +1102,15 @@ export default {
       // but I couldn't find it so I just wrote this for now
       var margins = this.chart.margin();
       var graphCentPts = [];
+      let nullY = this.nullBandY();
       // console.log("filtered " + data);
       data.forEach((d) => {
         var initCenPts = this.chart.compute_real_centroids(d);
 
-        // move points based on margins
+        // move points based on margins; missing values cross below the axes
         var cenPts = initCenPts.map(function(d) {
-          return [d[0] + margins["left"], d[1] + margins["top"]];
+          let y = Number.isFinite(d[1]) ? d[1] : nullY;
+          return [d[0] + margins["left"], y + margins["top"]];
         });
 
         graphCentPts.push(cenPts);
@@ -838,13 +1190,14 @@ export default {
       })("#" + this.viewID)
         .data(this.chartData)
         .width(this.width - 8)
-        .height(this.chartHeight - 6)
-        //    .dimensions(sampleDimensions)
-        //chart.detectDimensions();
-        .hideAxis(this.hiddenAxes());
-
-      // The library reads each axis type from the first row, which may be blank.
+        .height(this.chartHeight - 6);
+      // The library reads each axis type from the first row, and hiding axes
+      // renders, which fails for a type it can't scale: a blank first value.
+      declareNumberAxes(chart, this.chartData, this.numericDimensions);
+      chart.hideAxis(this.hiddenAxes());
       applyNumericTypes(chart, this.numericDimensions);
+      applyFixedScales(chart, this.fixedAxisBounds, this.axisTitles);
+      applyTickCounts(chart);
 
       chart.createAxes();
       // Expert brushes once per axis with the library; Lite draws its own
@@ -913,11 +1266,11 @@ export default {
         });
 
       chart.color((d) => this.colorize(d)).render();
-
-      // The Rating axis always spans 0 to 5 stars, however few are rated.
-      if (chart.dimensions()[RATING_DIMENSION]) {
-        chart.scale(RATING_DIMENSION, RATING_BOUNDS.slice());
-      }
+      // Flipping an axis or brushing re-renders; knobs follow.
+      chart.on("render.knobs", () => this.scheduleKnobRedraw());
+      // Reordering moves axes and re-renders; titles are refitted to the new
+      // neighbours (a no-op when nothing moved).
+      chart.on("render.titles", () => this.scheduleTitleFit(chart));
 
       //Source for the hover on mouse over is adopted from: http://bl.ocks.org/mostaphaRoudsari/b4e090bb50146d88aec4
       //This includes all the auxilary functions called downstream from markLineOnHover() which was called highlightLineOnClick() in the orignal source
@@ -941,17 +1294,6 @@ export default {
       // Strums and axis drags stop propagation, so listen in the capture phase
       // to learn where every press began.
       svg.node().addEventListener("mousedown", (e) => this.recordPress(e), true);
-      // Dragging a title reorders the axes over a short transition; the
-      // bands between axes follow once it has settled.
-      svg.node().addEventListener(
-        "mouseup",
-        () => {
-          if (this.press && this.press.onAxis) {
-            setTimeout(() => this.drawPairStrums(), 350);
-          }
-        },
-        true
-      );
 
       let outputLabelColor = "steelblue";
       let inputLabelColor = "black";
@@ -971,6 +1313,9 @@ export default {
       d3.selectAll(".parcoords path.domain").style("stroke", function(d, i) {
         return colorSet[i];
       });
+      this.decorateAxes(chart);
+      this.fittedTitlesKey = null;
+      this.fitAxisTitles(chart);
 
       //Resetting the centroids data used for faster hovering via memoization.
       this.graphCentriodPoints = null;
@@ -1006,6 +1351,64 @@ export default {
     },
   },
 };
+
+/**
+ * Declares numeric axes before anything renders. Without this, a blank value
+ * in the first row makes the library type the axis "undefined", which it has
+ * no scale for.
+ */
+function declareNumberAxes(chart, data, numericDimensions) {
+  if (!data || data.length === 0) return;
+  let declared = {};
+  Object.keys(data[0]).forEach((dim) => {
+    if (numericDimensions.indexOf(dim) !== -1) declared[dim] = { type: "number" };
+  });
+  if (Object.keys(declared).length > 0) chart.dimensions(declared);
+}
+
+/**
+ * Draws these axes over fixed bounds (`{ dim: [min, max] }`) rather than their
+ * values' extent, with a linear scale even when every value is the same or
+ * missing, so they stay put while values change and knobs can be dragged.
+ * The Rating axis always spans 0 to 5 stars, however few are rated.
+ */
+function applyFixedScales(chart, boundsByDim, titles) {
+  let dimensions = chart.dimensions();
+  if (!dimensions) return;
+  let margin = chart.margin();
+  let padding = chart.nullValueSeparatorPadding();
+  let h = chart.height() - margin.top - margin.bottom;
+  let range = [h + 1 - padding.bottom - padding.top, 1];
+  Object.keys(dimensions).forEach((dim) => {
+    let axis = dimensions[dim];
+    if (titles[dim]) axis.title = titles[dim];
+    let bounds = boundsByDim[dim];
+    if (!bounds) return;
+    axis.type = "number";
+    axis.yscale = d3
+      .scaleLinear()
+      .domain(bounds.slice())
+      .range(range);
+  });
+}
+
+/**
+ * Gives every axis about one tick per AXIS_TICK_SPACING pixels of its height,
+ * rather than the library's fixed 5. Flipping an axis redraws it from the same
+ * settings, so the count sticks.
+ */
+function applyTickCounts(chart) {
+  let dimensions = chart.dimensions();
+  if (!dimensions) return;
+  let margin = chart.margin();
+  let padding = chart.nullValueSeparatorPadding();
+  let axisHeight =
+    chart.height() - margin.top - margin.bottom - padding.bottom - padding.top;
+  let ticks = Math.max(2, Math.round(axisHeight / AXIS_TICK_SPACING));
+  Object.keys(dimensions).forEach((dim) => {
+    dimensions[dim].ticks = ticks;
+  });
+}
 
 /** Marks every numeric dimension as a number axis, whatever the first row holds. */
 function applyNumericTypes(chart, numericDimensions) {
@@ -1063,20 +1466,37 @@ function sameAxisItems(drawn, wanted, span) {
   fill: rgba(40, 40, 40, 0.3);
 }
 
-/* The ties between the two axis brushes of one scatterplot rectangle. */
-::v-deep .parcoords g.lite-strum {
+/* Custom and weighted axes can't be brushed; the library reinstalls its brushes, so hide them. */
+::v-deep .parcoords g.dimension.ds-unfilterable > g.brush {
+  display: none;
+}
+/* The inspected option's thumb on a custom axis. */
+::v-deep .parcoords g.ds-knob {
+  cursor: grab;
+}
+::v-deep .parcoords g.ds-knob .ds-knob-target {
+  fill: transparent;
+}
+::v-deep .parcoords g.ds-knob .ds-knob-thumb {
+  fill: #ffffff;
+  stroke: #6a1b9a;
+  stroke-width: 2px;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.35));
+}
+::v-deep .parcoords g.ds-knob .ds-knob-grip {
+  stroke: #6a1b9a;
+  stroke-width: 1.5px;
+  stroke-linecap: round;
   pointer-events: none;
 }
-::v-deep .parcoords g.lite-strum line {
-  stroke: #1e88e5;
-  stroke-width: 1;
-  stroke-opacity: 0.55;
-  stroke-dasharray: 4 3;
+::v-deep .parcoords g.ds-knob:hover .ds-knob-thumb,
+::v-deep .parcoords g.ds-knob.ds-knob--dragging .ds-knob-thumb {
+  fill: #f3e5f5;
+  stroke-width: 2.5px;
 }
-::v-deep .parcoords g.lite-strum circle {
-  fill: #1e88e5;
-  fill-opacity: 0.7;
-  stroke: none;
+/* Waiting below the axes: this option has no value yet. */
+::v-deep .parcoords g.ds-knob.ds-knob--empty .ds-knob-thumb {
+  stroke-dasharray: 3 2;
 }
 
 #tooltip {
@@ -1096,8 +1516,12 @@ function sameAxisItems(drawn, wanted, span) {
   margin-top: 10px;
 }
 
+/* Titles sit level above the axes; fitAxisTitles keeps them apart. */
 .parcoords /deep/ .label {
-  transform: rotate(10deg) translate(0px, -10px);
+  transform: translate(0px, -10px);
+}
+::v-deep .parcoords g.axis .tick text {
+  font-size: 11px;
 }
 
 </style>
@@ -1111,5 +1535,13 @@ function sameAxisItems(drawn, wanted, span) {
 .pcp-view .parcoords {
   flex: 0 0 auto;
   position: relative;
+}
+</style>
+
+<style>
+/* While a custom-axis knob is dragged, the grabbing hand follows the pointer anywhere. */
+body.ds-knob-grabbing,
+body.ds-knob-grabbing * {
+  cursor: grabbing !important;
 }
 </style>

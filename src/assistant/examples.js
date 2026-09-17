@@ -184,7 +184,7 @@ const EXAMPLES = {
   "view.open": [
     "show the parallel coordinates panel",
     "bring up the scatter panel",
-    "display the matrix panel",
+    "display the gallery panel",
     "open that panel",
   ],
   "view.close": ["hide the gallery panel", "get rid of the clusters panel", "shut that panel"],

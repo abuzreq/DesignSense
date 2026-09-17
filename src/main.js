@@ -18,6 +18,7 @@ import {
   loadState,
 } from "@/data/loader.js";
 import { readShareParams } from "@/data/shareLink.js";
+import { datasetKey } from "@/customDimensions.js";
 
 window.Gkey = "AIzaSyCSrF08UMawxKIb0m4JsA1mYE5NMmP36bY";
 
@@ -42,11 +43,21 @@ function mountApp(data, dataTypesMap, options) {
     ? { inLink: link, url: link, DE_PW: "", type: "" }
     : null;
   if (app) app.$destroy();
+  // What is saved per dataset is found again by this key. The placeholder
+  // collection has no options, so nothing is saved for it.
+  let key = options
+    ? datasetKey({
+        link: link,
+        name: options.name,
+        fields: Object.keys(dataTypesMap),
+        ids: data.map((d) => d._id),
+      })
+    : null;
   app = new Vue({
     vuetify,
     vdr,
     router,
-    store: store(data, dataTypesMap, loadLayouts(), {}),
+    store: store(data, dataTypesMap, loadLayouts(), {}, { datasetKey: key }),
     el: "#app",
     render: (h) => h(App),
   });
@@ -68,7 +79,6 @@ function loadDefaultDataset() {
       // Null when a dataset the user chose meanwhile took over.
       if (!dataset) return null;
       sessionStorage.clear();
-      app.$store.commit("setIsOpeningDialogOn", { value: true });
       return dataset;
     }
   );
@@ -109,6 +119,30 @@ function isTypingTarget(e) {
   );
 }
 
+/**
+ * While a dialog or menu is open its keys are its own: Esc closes the dialog
+ * and must not also clear every filter behind it.
+ */
+function isOverlayOpen(e) {
+  let el = e.target;
+  if (el && el.closest && el.closest(".v-dialog, .menuable__content__active")) {
+    return true;
+  }
+  return !!document.querySelector(
+    ".v-dialog--active, .menuable__content__active"
+  );
+}
+
+/** Space and Enter press a focused button, link or checkbox as usual. */
+function isPressableTarget(e) {
+  let el = e.target;
+  return !!(
+    el &&
+    el.closest &&
+    el.closest("button, a[href], [role=button], [role=checkbox], [role=menuitem], label")
+  );
+}
+
 function modifierOperation(state) {
   if (state.isShiftKey && state.isCtrlKey) return operations.INTERSECT;
   if (state.isShiftKey) return operations.ADD;
@@ -143,7 +177,7 @@ function syncModifiers(e) {
 document.addEventListener("keydown", function(e) {
   // Modifiers are tracked even while typing, so a release is never missed.
   syncModifiers(e);
-  if (isTypingTarget(e)) return;
+  if (isTypingTarget(e) || isOverlayOpen(e)) return;
 
   let store = app.$store;
 
@@ -175,7 +209,7 @@ document.addEventListener("keydown", function(e) {
     }
   }
 
-  if (e.key === " " && !store.state.isAltKey) {
+  if (e.key === " " && !store.state.isAltKey && !isPressableTarget(e)) {
     e.preventDefault();
     e.stopPropagation();
     store.dispatch("updateAltKey", { value: true });
@@ -188,14 +222,17 @@ document.addEventListener("keyup", function(e) {
   if (isTypingTarget(e)) return;
 
   let store = app.$store;
-  if (e.key === " ") {
+  // Released even over a dialog, so inspection never sticks on.
+  if (e.key === " " && store.state.isAltKey) {
     e.preventDefault();
     e.stopPropagation();
     store.dispatch("updateAltKey", { value: false });
     store.commit("toggleInspectionMode", { value: false });
     if (!store.state.isInspectionPinned) {
-      store.dispatch("clearInspection");
+      store.dispatch("clearInspection", { keepShown: true });
     }
+  } else if (isOverlayOpen(e) || e.key === " ") {
+    return;
   } else if (
     (e.key === "p" || e.key === "P") &&
     store.getters.can("inspectionControls")

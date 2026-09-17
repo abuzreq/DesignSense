@@ -1,0 +1,553 @@
+<template>
+  <v-dialog
+    v-model="open"
+    max-width="1400"
+    width="95%"
+    scrollable
+    @keydown="onDialogKey"
+  >
+    <!-- Built only while shown: every row reads every compared option, and
+         would otherwise be rebuilt as values change anywhere. -->
+    <v-card v-if="contentShown" class="cmp-card">
+      <v-card-title class="cmp-title">
+        <span class="cmp-title-text">Compare</span>
+        <span class="cmp-count">{{ countText }}</span>
+        <v-spacer />
+        <v-btn icon small class="ml-2" @click="open = false">
+          <v-icon>mdi-close</v-icon>
+        </v-btn>
+      </v-card-title>
+      <div v-if="overflowText" class="cmp-overflow">{{ overflowText }}</div>
+      <v-divider />
+
+      <v-card-text class="cmp-body">
+        <div v-if="columns.length === 0" class="cmp-empty">
+          <p class="mb-3">No options left to compare.</p>
+          <v-btn small depressed color="primary" @click="open = false"
+            >Close</v-btn
+          >
+        </div>
+
+        <div v-else class="cmp-grid" :style="gridStyle">
+          <!-- Names, and the two controls that change what the comparison holds -->
+          <div class="cmp-label cmp-head"></div>
+          <div v-for="col in columns" :key="'head-' + col.id" class="cmp-head">
+            <div class="cmp-head-line">
+              <span class="cmp-name" :title="col.name">{{ col.name }}</span>
+              <TipButton
+                small
+                small-icon
+                :icon="
+                  isInCart(col.id)
+                    ? 'mdi-bookmark-check'
+                    : 'mdi-bookmark-plus-outline'
+                "
+                :tooltip="
+                  isInCart(col.id) ? 'On the shortlist' : 'Add to the shortlist'
+                "
+                @click="toggleCart(col.id)"
+              />
+              <TipButton
+                small
+                small-icon
+                icon="mdi-close"
+                :tooltip="removeTooltip"
+                @click="remove(col.id)"
+              />
+            </div>
+          </div>
+
+          <div class="cmp-label"></div>
+          <!-- One wrapper per option: the image switcher and the 3D toggle
+               attach here once the compare view offers them. -->
+          <div
+            v-for="col in columns"
+            :key="'image-' + col.id"
+            class="cmp-cell cmp-image"
+          >
+            <v-img
+              contain
+              height="150"
+              :src="failedIds[col.id] ? fallbackImage : imageOf(col)"
+              :alt="col.name"
+              @error="noteImageFailed(col.id)"
+            />
+            <!-- Each column keeps its own view, so two options can be compared
+                 from the same angle. -->
+            <ImageSwitcher
+              v-if="viewsOf(col).length > 1"
+              :images="viewsOf(col)"
+              :index="viewIndex(col)"
+              @change="setViewIndex(col.id, $event)"
+            />
+          </div>
+
+          <div class="cmp-label">Your rating</div>
+          <div
+            v-for="col in columns"
+            :key="'rating-' + col.id"
+            class="cmp-cell cmp-rating"
+          >
+            <StarRating :item="col.row" @onRatingChanged="rate(col.row, $event)" />
+          </div>
+
+          <template v-for="block in blocks">
+            <div :key="block.key + '-block'" class="cmp-block">
+              <button
+                v-if="block.collapsible"
+                type="button"
+                class="cmp-block-text cmp-block-toggle"
+                @click="toggleBlock(block.key)"
+              >
+                <v-icon x-small>{{
+                  openBlocks[block.key]
+                    ? "mdi-chevron-down"
+                    : "mdi-chevron-right"
+                }}</v-icon>
+                {{ block.title }} ({{ block.rows.length }})
+              </button>
+              <span v-else class="cmp-block-text">{{ block.title }}</span>
+            </div>
+
+            <template v-for="row in rowsOf(block)">
+              <div
+                :key="row.dim + '-label'"
+                class="cmp-label"
+                :class="{ 'cmp-same': row.same }"
+                :title="row.label"
+              >
+                {{ row.label }}
+              </div>
+              <div
+                v-for="(text, i) in row.texts"
+                :key="row.dim + '-' + i"
+                class="cmp-cell cmp-value"
+                :class="{ 'cmp-same': row.same }"
+              >
+                <span class="cmp-text">{{ text }}</span>
+                <v-tooltip v-if="row.summary.maxIndex === i" bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-icon x-small class="cmp-mark-high" v-on="on"
+                      >mdi-arrow-up</v-icon
+                    >
+                  </template>
+                  <span>highest</span>
+                </v-tooltip>
+                <v-tooltip v-else-if="row.summary.minIndex === i" bottom>
+                  <template v-slot:activator="{ on }">
+                    <v-icon x-small class="cmp-mark-low" v-on="on"
+                      >mdi-arrow-down</v-icon
+                    >
+                  </template>
+                  <span>lowest</span>
+                </v-tooltip>
+              </div>
+            </template>
+          </template>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+</template>
+
+<script>
+import { mapGetters, mapState } from "vuex";
+import StarRating from "@/components/StarRating.vue";
+import TipButton from "@/components/TipButton.vue";
+import ImageSwitcher from "@/components/ImageSwitcher.vue";
+import { FALLBACK_IMAGE } from "@/components/constants.js";
+import {
+  CUSTOM,
+  INPUT,
+  OUTPUT,
+  WEIGHTED,
+  columnKind,
+  displayName,
+} from "@/columns.js";
+import { formatValue } from "@/store/filters.js";
+import {
+  COMPARE_LIMIT,
+  DETAIL_BLACKLIST,
+  isLinkColumn,
+  rowSummary,
+} from "@/store/compare.js";
+
+/** Dimensions the user built here, rather than columns the file carried. */
+function isDerived(kind) {
+  return kind === CUSTOM || kind === WEIGHTED;
+}
+
+// A little longer than the dialog's fade-out.
+const CLOSE_TRANSITION_MS = 400;
+
+/** Names the option by its own ID column when the data has one. */
+function optionName(item) {
+  let id = item.ID;
+  if (id === undefined || id === null || id === "") id = item.id;
+  if (id === undefined || id === null || id === "") id = item._id;
+  return "Option " + id;
+}
+
+/**
+ * Several options side by side, a column each: picture, then the outputs, then
+ * the inputs. The workspace shows one option at a time, so choosing between a
+ * handful of them otherwise means remembering the ones already looked at.
+ *
+ * Opened through the store's `compareDialog`, over ids resolved when it opened:
+ * filtering or zooming underneath never changes what is being compared.
+ */
+export default {
+  name: "CompareDialog",
+  components: { ImageSwitcher, StarRating, TipButton },
+  data() {
+    return {
+      // Whether the dialog's content exists: while open, and through the
+      // closing transition.
+      contentShown: false,
+      // Which collapsible blocks are open: the leftovers and the dimensions
+      // the user built are the rarer question, so they start folded away.
+      openBlocks: { other: false, derived: false },
+      // Ids whose picture failed to load, so only those fall back.
+      failedIds: {},
+      // Which view each column shows, by option id.
+      viewIndexById: {},
+      fallbackImage: FALLBACK_IMAGE,
+    };
+  },
+  beforeDestroy() {
+    clearTimeout(this.hideContentTimer);
+  },
+  computed: {
+    ...mapState({
+      dialogState: (state) => state.compareDialog,
+      allDimensions: (state) => state.allDimensions,
+      dimensionValuesVersion: (state) => state.dimensionValuesVersion,
+    }),
+    ...mapGetters(["rawDataMap", "isInCart", "fixedBoundsOf"]),
+    open: {
+      get() {
+        return this.dialogState.open;
+      },
+      set(value) {
+        if (!value) this.$store.dispatch("closeCompare");
+      },
+    },
+    /** The compared options, over the whole collection so a zoom keeps them. */
+    resolved() {
+      let map = this.rawDataMap;
+      let rows = [];
+      this.dialogState.ids.forEach((id) => {
+        let row = map[id];
+        // An id saved against another dataset has no row; it drops out quietly.
+        if (row) rows.push(row);
+      });
+      return rows;
+    },
+    columns() {
+      return this.resolved.slice(0, COMPARE_LIMIT).map((row) => ({
+        id: String(row._id),
+        row: row,
+        name: optionName(row),
+      }));
+    },
+    gridStyle() {
+      return {
+        gridTemplateColumns:
+          "160px repeat(" + this.columns.length + ", 220px)",
+      };
+    },
+    countText() {
+      let count = this.columns.length;
+      return count === 1 ? "1 option" : count + " options";
+    },
+    overflowText() {
+      let total = this.resolved.length;
+      if (total <= COMPARE_LIMIT) return "";
+      return (
+        "Showing the first " +
+        COMPARE_LIMIT +
+        " of " +
+        total +
+        ". Remove a column to bring in the next."
+      );
+    },
+    removeTooltip() {
+      return this.dialogState.source === "cart"
+        ? "Remove from the shortlist"
+        : "Remove from this comparison";
+    },
+    /** One row a dimension, with its values already read and formatted. */
+    rows() {
+      // A rating given in this dialog moves the weighted dimensions it feeds.
+      void this.dimensionValuesVersion;
+      let columns = this.columns;
+      return this.allDimensions
+        .filter((dim) => DETAIL_BLACKLIST.indexOf(dim) === -1)
+        .filter(
+          (dim) => !isLinkColumn(dim, columns.map((col) => col.row[dim]))
+        )
+        .map((dim) => {
+          let summary = rowSummary(columns.map((col) => col.row[dim]));
+          return {
+            dim: dim,
+            kind: columnKind(dim),
+            label: displayName(dim),
+            texts: columns.map((col) => this.formatParam(col.row, dim)),
+            summary: summary,
+            // One column agrees with itself; there is nothing to play down.
+            same: columns.length > 1 && summary.allEqual,
+          };
+        });
+    },
+    /**
+     * Outputs first, since they are what an option is judged on, then the
+     * inputs that produced them. Anything unprefixed falls to "Other", so a
+     * file without in:/out: columns still compares.
+     */
+    blocks() {
+      let rows = this.rows;
+      let blocks = [
+        {
+          key: "derived",
+          title: "Custom & weighted",
+          // The dimensions the user built are the ones they came to weigh up,
+          // so they sit first; folded away until asked for, since most
+          // comparisons are about the file's own columns.
+          rows: rows.filter((row) => isDerived(row.kind)),
+          collapsible: true,
+        },
+        {
+          key: "outputs",
+          title: "Outputs",
+          rows: rows.filter((row) => row.kind === OUTPUT),
+          collapsible: false,
+        },
+        {
+          key: "inputs",
+          title: "Inputs",
+          rows: rows.filter((row) => row.kind === INPUT),
+          collapsible: false,
+        },
+        {
+          key: "other",
+          title: "Other",
+          rows: rows.filter(
+            (row) =>
+              row.kind !== OUTPUT && row.kind !== INPUT && !isDerived(row.kind)
+          ),
+          // Collapsed only when it is the sideshow. A file without "in:" and
+          // "out:" columns has nothing else, so folding it away would leave
+          // the comparison blank.
+          collapsible: rows.some(
+            (row) => row.kind === OUTPUT || row.kind === INPUT
+          ),
+        },
+      ];
+      return blocks.filter((block) => block.rows.length > 0);
+    },
+  },
+  watch: {
+    dialogState(next, previous) {
+      let wasOpen = !!previous && previous.open;
+      clearTimeout(this.hideContentTimer);
+      if (next.open) {
+        this.contentShown = true;
+        if (!wasOpen) {
+          this.failedIds = {};
+          this.viewIndexById = {};
+        }
+      } else if (wasOpen) {
+        this.hideContentTimer = setTimeout(() => {
+          if (!this.dialogState.open) this.contentShown = false;
+        }, CLOSE_TRANSITION_MS);
+      }
+    },
+  },
+  methods: {
+    onDialogKey(e) {
+      // The dialog handles Escape itself; keep keys from workspace shortcuts.
+      e.stopPropagation();
+    },
+    rowsOf(block) {
+      if (!block.collapsible) return block.rows;
+      return this.openBlocks[block.key] ? block.rows : [];
+    },
+    toggleBlock(key) {
+      this.$set(this.openBlocks, key, !this.openBlocks[key]);
+    },
+    /** A value as the gallery's details list shows it; custom and weighted values are rounded. */
+    formatParam(item, param) {
+      let value = item ? item[param] : undefined;
+      let bounds = this.fixedBoundsOf(param);
+      if (bounds) {
+        return typeof value === "number" && isFinite(value)
+          ? formatValue(value, bounds[1] - bounds[0])
+          : "—";
+      }
+      return value;
+    },
+    viewsOf(col) {
+      return col.row.images || [];
+    },
+    viewIndex(col) {
+      let index = this.viewIndexById[col.id] || 0;
+      return Math.min(index, Math.max(0, this.viewsOf(col).length - 1));
+    },
+    imageOf(col) {
+      return this.viewsOf(col)[this.viewIndex(col)] || col.row.image;
+    },
+    setViewIndex(id, index) {
+      this.$set(this.viewIndexById, id, index);
+      // The new view gets a fresh try at loading.
+      this.$set(this.failedIds, id, false);
+    },
+    noteImageFailed(id) {
+      this.$set(this.failedIds, id, true);
+    },
+    toggleCart(id) {
+      this.$store.dispatch("toggleInCart", { id: id });
+    },
+    remove(id) {
+      this.$store.dispatch("removeFromCompare", { id: id });
+    },
+    rate(row, rating) {
+      this.$store.dispatch("rateAlt", { item: row, rating: rating });
+    },
+  },
+};
+</script>
+
+<style scoped>
+.cmp-title {
+  flex-wrap: nowrap;
+  padding: 8px 12px 8px 16px !important;
+}
+.cmp-title-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+.cmp-count {
+  margin-left: 10px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #546e7a;
+}
+.cmp-overflow {
+  padding: 0 16px 8px;
+  font-size: 12px;
+  color: #546e7a;
+}
+/* The columns scroll sideways in here, never the workspace behind. */
+.cmp-body {
+  max-height: 78vh;
+  padding: 0 !important;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+.cmp-empty {
+  padding: 48px 16px;
+  text-align: center;
+  color: #546e7a;
+}
+
+.cmp-grid {
+  display: grid;
+  /* Fixed columns, so the grid is wider than the card and scrolls. */
+  width: max-content;
+  min-width: 100%;
+  font-size: 13px;
+}
+/* The names stay put while the options scroll past them. */
+.cmp-label {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fff;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #546e7a;
+  border-right: 1px solid #e3e8ee;
+  border-bottom: 1px solid #eceff1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cmp-cell {
+  padding: 6px 10px;
+  border-bottom: 1px solid #eceff1;
+  border-left: 1px solid #eceff1;
+}
+.cmp-value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.cmp-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Nothing to choose between on this row, so it recedes. */
+.cmp-same {
+  opacity: 0.45;
+}
+/* Which direction is good is the reader's to decide, so neither is coloured. */
+.cmp-mark-high {
+  color: #546e7a;
+}
+.cmp-mark-low {
+  color: #b0bec5;
+}
+
+.cmp-head {
+  padding: 6px 4px 6px 10px;
+  background: #fff;
+  border-bottom: 1px solid #e3e8ee;
+}
+.cmp-head-line {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.cmp-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cmp-image {
+  padding: 4px;
+  background: #fafbfc;
+}
+.cmp-rating {
+  display: flex;
+  justify-content: center;
+}
+
+.cmp-block {
+  grid-column: 1 / -1;
+  padding: 4px 10px;
+  background: #f5f7f8;
+  border-top: 1px solid #e3e8ee;
+  border-bottom: 1px solid #e3e8ee;
+}
+.cmp-block-text {
+  position: sticky;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #546e7a;
+}
+.cmp-block-toggle {
+  cursor: pointer;
+}
+</style>

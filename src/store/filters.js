@@ -23,6 +23,8 @@
  * Kept free of Vue and d3 so it can be exercised on its own.
  */
 
+import { displayName } from "@/columns.js";
+
 const RANGE_PREFIX = "range:";
 const SCOPE_PREFIX = "scope:";
 
@@ -239,24 +241,25 @@ function describeBox(filter, box) {
 function describeRange(dim, range, bounds) {
   let lo = range[0];
   let hi = range[1];
+  let name = displayName(dim);
   if (lo > hi) {
     return {
-      text: dim + ": none",
-      title: "No " + dim + " values fall inside this brush",
+      text: name + ": none",
+      title: "No " + name + " values fall inside this brush",
     };
   }
   let span = bounds ? bounds[1] - bounds[0] : hi - lo;
   let from = formatValue(lo, span);
   let to = formatValue(hi, span);
   if (from === to) {
-    return { text: dim + " = " + from, title: dim + " is exactly " + from };
+    return { text: name + " = " + from, title: name + " is exactly " + from };
   }
   let text = from + " – " + to;
   if (bounds && lo <= bounds[0]) text = "≤ " + to;
   else if (bounds && hi >= bounds[1]) text = "≥ " + from;
   return {
-    text: dim + " " + text,
-    title: dim + " between " + from + " and " + to,
+    text: name + " " + text,
+    title: name + " between " + from + " and " + to,
   };
 }
 

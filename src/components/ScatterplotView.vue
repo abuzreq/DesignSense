@@ -8,7 +8,7 @@
       <span class="ph-label">X</span>
       <v-autocomplete
         :value="xColumn"
-        :items="numericDimensions"
+        :items="axisItems"
         dense
         outlined
         hide-details
@@ -38,7 +38,7 @@
       <span class="ph-label ph-label--gap">Y</span>
       <v-autocomplete
         :value="yColumn"
-        :items="numericDimensions"
+        :items="axisItems"
         dense
         outlined
         hide-details
@@ -65,23 +65,47 @@
             : "Values increase upward. Click to reverse."
         }}</span>
       </v-tooltip>
+      <v-tooltip v-if="lockedAxes.length > 0" bottom max-width="300">
+        <template v-slot:activator="{ on }">
+          <span v-on="on" class="ph-meta ph-label--gap">No brushing</span>
+        </template>
+        <span
+          >{{ lockedAxes.map(label).join(" and ") }}
+          {{
+            lockedAxes.length === 1
+              ? "is a custom or weighted dimension"
+              : "are custom or weighted dimensions"
+          }}, which can't be filtered or brushed.
+          {{
+            isLite
+              ? "Click points to inspect them."
+              : "Hold Space and hover to inspect them."
+          }}</span
+        >
+      </v-tooltip>
 
       <template v-slot:actions>
         <v-tooltip v-if="can('lassoBrush')" bottom>
           <template v-slot:activator="{ on }">
-            <v-btn
-              v-on="on"
-              icon
-              small
-              class="ph-btn"
-              :class="{ 'ph-btn--on': useLassoBrush }"
-              @click="useLassoBrush = !useLassoBrush"
-            >
-              <v-icon small>mdi-lasso</v-icon>
-            </v-btn>
+            <!-- A disabled button swallows pointer events, so the tooltip
+                 listens on a wrapper instead. -->
+            <span v-on="on" class="d-inline-block">
+              <v-btn
+                icon
+                small
+                class="ph-btn"
+                :class="{ 'ph-btn--on': useLassoBrush && !lassoUnavailable }"
+                :disabled="lassoUnavailable"
+                @click="useLassoBrush = !useLassoBrush"
+              >
+                <v-icon small>mdi-lasso</v-icon>
+              </v-btn>
+            </span>
           </template>
           <span>{{
-            useLassoBrush
+            lassoUnavailable
+              ? "The lasso isn't available above 2,000 points; drag a rectangle instead."
+              : useLassoBrush
               ? "Lasso selection is on. Click for rectangular selection."
               : "Select with a free-form lasso"
           }}</span>
@@ -162,8 +186,8 @@
   height: 18px;
   fill: currentColor;
 }
-::v-deep .x.axis .tick text {
-  transform: rotate(35deg);
+::v-deep .axis .tick text {
+  font-size: 11px;
 }
 
 div ::v-deep .axis line {
@@ -254,14 +278,24 @@ import { lasso } from "d3-lasso";
 d3.lasso = lasso;
 
 //import ScatterPlot from "@/components/Scatterplot.js";
-import { mapState } from "vuex";
+import { mapGetters, mapState } from "vuex";
 import { operations } from "@/components/operations.js";
 import TemplateView from "@/components/TemplateView.vue";
 import PanelHeader from "@/components/PanelHeader.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
 import { formatValue } from "@/store/filters.js";
+import { dimensionItems, displayName } from "@/columns.js";
+import { RATING_DIMENSION } from "@/ratings.js";
 import ClusterIcon from "-!vue-svg-loader!/src/assets/cluster_icon.svg";
 import ClusterView from "@/components/ClusterView.vue";
+
+// SVG circles become the bottleneck past a couple thousand points: each is a
+// DOM node, and highlight() re-sorts the lot. Above this many plotted points
+// the chart draws on a canvas instead, which also rules out the lasso.
+const CANVAS_THRESHOLD = 2000;
+// Roughly how much room each tick label gets along each axis.
+const X_TICK_SPACING = 70;
+const Y_TICK_SPACING = 45;
 
 export default {
   mixins: [TemplateView],
@@ -281,7 +315,6 @@ export default {
       mirrored: false,
       isShowingParetoFrontier: false,
       headerHeight: PANEL_HEADER_HEIGHT,
-      numTicks: 20,
     };
   },
   computed: {
@@ -321,11 +354,51 @@ export default {
     },
     ...mapState({
       isClusteringPanelOpen: (state) => state.isClusteringPanelOpen,
+      dimensionValuesVersion: (state) => state.dimensionValuesVersion,
     }),
+    ...mapGetters(["dimensionStructure", "unfilterableDimensions"]),
+    axisItems() {
+      return dimensionItems(this.numericDimensions);
+    },
+    /**
+     * Past CANVAS_THRESHOLD plotted points the chart draws on a canvas and
+     * falls back to a rectangle brush, so the lasso toggle would do nothing.
+     */
+    lassoUnavailable() {
+      let x = this.xColumn;
+      let y = this.yColumn;
+      let plotted = 0;
+      for (let d of this.chartData || []) {
+        if (Number.isFinite(d[x]) && Number.isFinite(d[y])) plotted++;
+        if (plotted > CANVAS_THRESHOLD) return true;
+      }
+      return false;
+    },
+    /** The plotted custom and weighted dimensions, which can't be brushed. */
+    lockedAxes() {
+      let dims = this.xColumn === this.yColumn ? [this.xColumn] : [this.xColumn, this.yColumn];
+      return dims.filter((dim) => this.unfilterableDimensions.includes(dim));
+    },
   },
   watch: {
     // Opening or closing the clusters panel resizes the plot.
     showClusters: function() {
+      this.scheduleRefresh();
+    },
+    // Custom values or ratings changed in place; redraw if this plot shows them.
+    dimensionValuesVersion: function() {
+      let shown = [this.xColumn, this.yColumn, this.colorColumn];
+      if (
+        shown.some(
+          (dim) =>
+            dim === RATING_DIMENSION || this.unfilterableDimensions.includes(dim)
+        )
+      ) {
+        this.scheduleRefresh();
+      }
+    },
+    // Custom dimensions were added, removed or given a new range.
+    dimensionStructure: function() {
       this.scheduleRefresh();
     },
     // Set from outside (the assistant), not only through the dropdowns.
@@ -361,6 +434,7 @@ export default {
       : this.numericDimensions[1];
   },
   methods: {
+    label: displayName,
     toggleClustering: function() {
       this.$store.commit("setClusteringPanelOpen", {
         value: !this.isClusteringPanelOpen,
@@ -419,6 +493,11 @@ export default {
     onLiteBrush: function(rects) {
       let x = this.xColumn;
       let y = this.yColumn;
+      // Custom dimensions can't be filtered by; take the rectangle back.
+      if (this.lockedAxes.length > 0) {
+        if (rects && rects.length > 0) this.clearDrawnBrush();
+        return;
+      }
       let boxes = (rects || []).map((rect) => {
         // A dimension plotted against itself gives two readings of one range.
         if (x === y) {
@@ -447,8 +526,12 @@ export default {
       if (!this.isLite || !this.chart || !this.chart.showBrush) return;
       let x = this.xColumn;
       let y = this.yColumn;
-      let boxes = this.$store.getters.boxesFor(this.plotDims());
       this.mirrored = false;
+      if (this.lockedAxes.length > 0) {
+        this.chart.showBrush([]);
+        return;
+      }
+      let boxes = this.$store.getters.boxesFor(this.plotDims());
       if (boxes.length === 0 && x !== y) {
         let xs = this.$store.getters.boxesFor([x]);
         let ys = this.$store.getters.boxesFor([y]);
@@ -500,6 +583,12 @@ export default {
       }
       return false;
     },
+    /** Removes a rectangle just drawn, once the brush has finished its gesture. */
+    clearDrawnBrush: function() {
+      setTimeout(() => {
+        if (this.chart && this.chart.showBrush) this.chart.showBrush([]);
+      }, 0);
+    },
     hoverHandler: function() {
       //this.chart.cleanTooltip();
 
@@ -510,18 +599,26 @@ export default {
     },
     Chart: function() {
       var scatterPlot = new ScatterPlot();
+      // The left margin fits a compact tick label (up to ~5 characters at
+      // 11px) plus the rotated y title beyond it; the bottom one fits a row of
+      // tick labels with the x title below.
+      var margin = { left: 54, top: 10, right: 12, bottom: 45 };
+      var innerWidth = this.plotWidth - margin.left - margin.right;
+      var innerHeight = this.plotHeight - margin.top - margin.bottom;
       scatterPlot
         .outerWidth(this.plotWidth)
         .outerHeight(this.plotHeight)
-        .margin({ left: 45, top: 10, right: 10, bottom: 50 })
+        .margin(margin)
         .xColumn(this.xColumn)
-        .xAxisLabel(this.xColumn)
-        .xAxisLabelOffset(35)
-        .xTicks(this.numTicks)
+        .xAxisLabel(displayName(this.xColumn))
+        .xAxisLabelOffset(36)
+        // One tick per ~70px across and ~45px up; d3 rounds to nice steps, so
+        // these are upper bounds more than exact counts.
+        .xTicks(Math.max(2, Math.floor(innerWidth / X_TICK_SPACING)))
         .yColumn(this.yColumn)
-        .yAxisLabel(this.yColumn)
-        .yAxisLabelOffset(35)
-        .yTicks(this.numTicks)
+        .yAxisLabel(displayName(this.yColumn))
+        .yAxisLabelOffset(42)
+        .yTicks(Math.max(2, Math.floor(innerHeight / Y_TICK_SPACING)))
         .isXAxisIncremental(this.isXAxisIncremental)
         .isYAxisIncremental(this.isYAxisIncremental)
         .useLassoBrush(this.useLassoBrush && this.can("lassoBrush"))
@@ -532,9 +629,18 @@ export default {
         )
         .colorColumn(this.colorColumn)
         .colorScale(this.colorScale)
+        // Custom and weighted axes span their fixed range.
+        .xDomain(this.$store.getters.fixedBoundsOf(this.xColumn))
+        .yDomain(this.$store.getters.fixedBoundsOf(this.yColumn))
         .onBrushed((brushedIDs, extent) => {
           if (this.isLite) {
             this.onLiteBrush(extent);
+            return;
+          }
+          // Brushing custom dimensions would select by values still being
+          // decided; an empty brush still clears the selection.
+          if (this.lockedAxes.length > 0 && brushedIDs.length > 0) {
+            this.clearDrawnBrush();
             return;
           }
           // An empty brush (clicking empty space, or clearing the brush) clears
@@ -566,6 +672,25 @@ export default {
     },
   },
 };
+/**
+ * A tick formatter for a scale: thousands and up shrink to SI suffixes
+ * ("12k", "1.5M"), smaller values use formatValue's span-aware rounding so
+ * fractions don't turn into "250m".
+ */
+function compactTickFormat(scale) {
+  var domain = scale.domain();
+  var span = Math.abs(domain[1] - domain[0]);
+  var si = d3.format("~s");
+  return function(value) {
+    return Math.abs(value) >= 1000 ? si(value) : formatValue(value, span);
+  };
+}
+
+/** An extent with no values in it becomes 0-1, so the axes still draw. */
+function fallbackDomain(extent) {
+  return extent[0] === undefined ? [0, 1] : extent;
+}
+
 class ScatterPlot {
   constructor() {
     var outerWidth = 0;
@@ -590,6 +715,9 @@ class ScatterPlot {
 
     var xScale = d3.scaleLinear();
     var yScale = d3.scaleLinear();
+    // Fixed domains, or null to span the plotted values.
+    var xDomain = null;
+    var yDomain = null;
     var colorScale = d3.scaleOrdinal();
 
     var xAxis = d3
@@ -619,13 +747,15 @@ class ScatterPlot {
     var CLICK_SLOP = 3;
 
     var keyFunc;
-    // SVG circles become the bottleneck past a couple thousand points: each
-    // is a DOM node, and highlight() re-sorts the lot. Canvas draws the same
-    // points in one pass; axes, brush, and the inspection ring stay in SVG.
-    var CANVAS_THRESHOLD = 2000;
+    // Past CANVAS_THRESHOLD (module level, shared with the lasso toggle) the
+    // points go on a canvas, drawn in one pass; axes, brush, and the
+    // inspection ring stay in SVG.
     function chart(selection) {
-      var innerWidth = outerWidth - margin.left - margin.right;
-      var innerHeight = outerHeight - margin.top - margin.bottom;
+      // A panel still being laid out has no room yet; drawing then would set
+      // negative SVG sizes, which the browser rejects.
+      if (outerWidth <= 0 || outerHeight <= 0) return;
+      var innerWidth = Math.max(0, outerWidth - margin.left - margin.right);
+      var innerHeight = Math.max(0, outerHeight - margin.top - margin.bottom);
       var offset = 15;
       xScale.range(
         isXAxisIncremental
@@ -662,14 +792,20 @@ class ScatterPlot {
         div.style("position", "relative");
 
         xScale.domain(
-          d3.extent(data, function(d) {
-            return d[xColumn];
-          })
+          xDomain ||
+            fallbackDomain(
+              d3.extent(data, function(d) {
+                return d[xColumn];
+              })
+            )
         );
         yScale.domain(
-          d3.extent(data, function(d) {
-            return d[yColumn];
-          })
+          yDomain ||
+            fallbackDomain(
+              d3.extent(data, function(d) {
+                return d[yColumn];
+              })
+            )
         );
 
         var canvasSel = div.select("canvas.points-canvas");
@@ -777,7 +913,13 @@ class ScatterPlot {
 
         g.select(".x.axis")
           .attr("transform", "translate(0," + innerHeight + ")")
-          .call(d3.axisBottom(xScale).ticks(xTicks))
+          .call(
+            d3
+              .axisBottom(xScale)
+              .ticks(xTicks)
+              .tickFormat(compactTickFormat(xScale))
+          )
+          // The title was appended before the ticks, so it is the first text.
           .select("text")
           .attr("x", innerWidth / 2)
           .attr("y", xAxisLabelOffset)
@@ -785,7 +927,12 @@ class ScatterPlot {
           .text(xAxisLabel)
           .style("font-size", "12px");
         g.select(".y.axis")
-          .call(d3.axisLeft(yScale).ticks(yTicks))
+          .call(
+            d3
+              .axisLeft(yScale)
+              .ticks(yTicks)
+              .tickFormat(compactTickFormat(yScale))
+          )
           .select("text")
           .attr(
             "transform",
@@ -859,7 +1006,7 @@ class ScatterPlot {
           var domain = scale.domain();
           var span = Math.abs(domain[1] - domain[0]);
           return (
-            column + " " + formatValue(range[0], span) + " – " + formatValue(range[1], span)
+            displayName(column) + " " + formatValue(range[0], span) + " – " + formatValue(range[1], span)
           );
         }
 
@@ -1205,7 +1352,11 @@ class ScatterPlot {
         };
 
         var mark = function(item) {
-          if (item) {
+          if (
+            item &&
+            Number.isFinite(item[xColumn]) &&
+            Number.isFinite(item[yColumn])
+          ) {
             markCircle
               .attr("stroke", colorScale(item[colorColumn]))
               .attr("opacity", 1)
@@ -1334,6 +1485,16 @@ class ScatterPlot {
     chart.onBrushed = function(_) {
       if (!arguments.length) return onBrushed;
       onBrushed = _;
+      return chart;
+    };
+    chart.xDomain = function(_) {
+      if (!arguments.length) return xDomain;
+      xDomain = _;
+      return chart;
+    };
+    chart.yDomain = function(_) {
+      if (!arguments.length) return yDomain;
+      yDomain = _;
       return chart;
     };
     chart.onHovered = function(_) {

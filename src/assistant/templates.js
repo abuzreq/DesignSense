@@ -98,7 +98,7 @@ export const SLOT_OPTIONS = {
   percent: ["10", "25", "50"],
   order: ["descending", "ascending"],
   stat: ["average", "median", "minimum", "maximum", "range", "standard deviation"],
-  panel: ["scatter", "parallel", "splom", "gallery", "sets", "clusters"],
+  panel: ["scatter", "parallel", "gallery", "sets", "clusters"],
   mode: ["expert", "lite"],
   ordinal: ["first", "second", "third", "fourth", "fifth", "last"],
 };

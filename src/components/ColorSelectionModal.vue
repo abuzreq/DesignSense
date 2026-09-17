@@ -13,12 +13,12 @@
                 v-on="Object.assign({}, tooltipOn, dialogOn)"
               >
                 <v-icon left small>mdi-palette</v-icon>
-                <span class="color-by-label">{{ colorColumn || "Color" }}</span>
+                <span class="color-by-label">{{ colorColumn ? label(colorColumn) : "Color" }}</span>
               </v-btn>
             </template>
             <span>{{
               colorColumn
-                ? "Options are colored by " + colorColumn + ". Click to change."
+                ? "Options are colored by " + label(colorColumn) + ". Click to change."
                 : "Color the options by a category"
             }}</span>
           </v-tooltip>
@@ -165,6 +165,7 @@
 
 import * as d3 from "d3";
 import SingleDimensionSelect from "@/components/SingleDimensionSelect.vue";
+import { displayName } from "@/columns.js";
 import { mapState } from "vuex";
 
 export default {
@@ -185,6 +186,7 @@ export default {
     }),
   },
   methods: {
+    label: displayName,
     OnColorReset: function () {
       this.$store.commit("changeColorColumn", "");
     },

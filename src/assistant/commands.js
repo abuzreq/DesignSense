@@ -59,11 +59,29 @@ function resultRows(ctx) {
 }
 
 function label(dim) {
-  return String(dim).replace(/^(in|out)\s*:\s*/i, "");
+  return String(dim).replace(/^(in|out|custom|weighted)\s*:\s*/i, "");
 }
 
 function count(n, noun) {
   return n + " " + noun + (n === 1 ? "" : "s");
+}
+
+/** Custom and weighted dimensions hold values still being decided, so nothing filters by them. */
+function isUnfilterable(ctx, dim) {
+  return (ctx.schema.unfilterable || []).includes(dim);
+}
+
+function refuseFilter(dim) {
+  return {
+    message:
+      label(dim) +
+      " is a custom or weighted dimension, so it can't be filtered by. Sort the gallery by it, or plot it, instead.",
+  };
+}
+
+/** The numeric dimensions an analysis runs on by default: not the custom ones, which are often blank. */
+function analysisDims(ctx) {
+  return ctx.schema.numeric.filter((dim) => !isUnfilterable(ctx, dim));
 }
 
 /** Resolves the several ways an utterance can point at one option. */
@@ -156,6 +174,7 @@ export const COMMANDS = {
     title: "Filter by a range",
     group: "Filter",
     run(ctx, args) {
+      if (isUnfilterable(ctx, args.dim)) return refuseFilter(args.dim);
       // "not equal" is two ranges, which the range filter cannot hold; it is
       // a members filter over everything else instead.
       if (args.op === "ne") {
@@ -184,6 +203,7 @@ export const COMMANDS = {
     title: "Keep the best few",
     group: "Filter",
     run(ctx, args) {
+      if (isUnfilterable(ctx, args.dim)) return refuseFilter(args.dim);
       return narrowToExtreme(ctx, args.dim, args.direction, args.k);
     },
   },
@@ -191,6 +211,7 @@ export const COMMANDS = {
     title: "Keep a percentile band",
     group: "Filter",
     run(ctx, args) {
+      if (isUnfilterable(ctx, args.dim)) return refuseFilter(args.dim);
       let rows = resultRows(ctx);
       let count = Math.max(1, Math.round((rows.length * args.percent) / 100));
       return narrowToExtreme(ctx, args.dim, args.direction === "bottom" ? "min" : "max", count);
@@ -301,7 +322,7 @@ export const COMMANDS = {
       if (rows.length === ctx.state.data.length) {
         return { message: "Narrow the collection first, then I can say what stands out." };
       }
-      let traits = describeGroup(ctx.state.data, rows.map((r) => r._id), ctx.schema.numeric);
+      let traits = describeGroup(ctx.state.data, rows.map((r) => r._id), analysisDims(ctx));
       if (traits.length === 0) return { message: "Nothing stands out numerically." };
       let parts = traits.map(
         (t) =>
@@ -326,7 +347,7 @@ export const COMMANDS = {
       let inB = new Set(b.map(String));
       let shared = a.filter((id) => inB.has(String(id))).length;
       let pool = ctx.state.data.filter((row) => inA.has(String(row._id)) || inB.has(String(row._id)));
-      let traits = describeGroup(pool, a, ctx.schema.numeric);
+      let traits = describeGroup(pool, a, analysisDims(ctx));
       let nameB = args.b === "rest" ? "the rest" : args.b;
       let head = args.a + " has " + a.length + ", " + nameB + " has " + b.length +
         (shared ? ", " + shared + " in both" : "") + ". ";
@@ -342,7 +363,7 @@ export const COMMANDS = {
     title: "What trades off against what",
     group: "Ask",
     run(ctx, args) {
-      let dims = args.dims && args.dims.length >= 2 ? args.dims : ctx.schema.numeric;
+      let dims = args.dims && args.dims.length >= 2 ? args.dims : analysisDims(ctx);
       let pairs = correlations(ctx.state.data, dims).slice(0, 3);
       if (pairs.length === 0) return { message: "No strong relationships between those." };
       return {
@@ -378,6 +399,9 @@ export const COMMANDS = {
     title: "Best trade-offs",
     group: "Analyse",
     run(ctx, args) {
+      // The front becomes a filter chip, which custom values would outdate.
+      let locked = args.dims.find((dim) => isUnfilterable(ctx, dim));
+      if (locked) return refuseFilter(locked);
       let rows = resultRows(ctx).filter((row) =>
         args.dims.every((d) => Number.isFinite(Number(row[d])))
       );
@@ -402,7 +426,7 @@ export const COMMANDS = {
     title: "Group into clusters",
     group: "Analyse",
     run(ctx, args) {
-      let dims = args.dims && args.dims.length ? args.dims : ctx.schema.numeric;
+      let dims = args.dims && args.dims.length ? args.dims : analysisDims(ctx);
       let k = args.k || 4;
       let rows = resultRows(ctx);
       let groups = cluster(rows, dims, k);
@@ -432,10 +456,11 @@ export const COMMANDS = {
       let item = resolveItem(ctx, args.item);
       if (!item) return { message: "Inspect an option first, then ask for similar ones." };
       let n = args.n || 5;
-      let like = nearest(resultRows(ctx), ctx.schema.numeric, item, n);
+      let dims = analysisDims(ctx);
+      let like = nearest(resultRows(ctx), dims, item, n);
       if (like.length === 0) return { message: "Nothing else has values on every dimension." };
       members(ctx, "assistant:similar", count(like.length, "option") + " like " + item._id, like.map((r) => r._id).concat([item._id]));
-      return { message: "The " + like.length + " nearest on " + ctx.schema.numeric.length + " dimensions, plus the one you inspected." };
+      return { message: "The " + like.length + " nearest on " + dims.length + " dimensions, plus the one you inspected." };
     },
   },
   "analysis.representatives": {
@@ -484,6 +509,17 @@ export const COMMANDS = {
         if (!ctx.getters.can("clustering")) return { message: "The clusters panel is an Expert-mode feature; say \"switch to expert mode\" first." };
         ctx.store.commit("setClusteringPanelOpen", { value: true });
         return;
+      }
+      // Not a panel but a reading over the whole collection, so it opens as
+      // its own view rather than joining the layout.
+      if (args.view === "Sensitivity") {
+        if (!ctx.getters.can("sensitivity")) return { message: "The sensitivity reading is an Expert-mode feature; say \"switch to expert mode\" first." };
+        ctx.store.dispatch("openSensitivity");
+        return;
+      }
+      // Only the panels this app offers; the old SPLOM is not one of them.
+      if (["Grid", "ScatterPlot", "ParallelCoordinatesPlot", "Sets"].indexOf(args.view) < 0) {
+        return { message: "I can open the gallery, scatterplot, parallel coordinates, sets or clusters panel, or the sensitivity reading." };
       }
       ctx.store.commit("openLayout", { type: args.view });
     },

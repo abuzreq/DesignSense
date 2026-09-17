@@ -2,7 +2,7 @@
   <div :id="viewID" class="clusters-panel" :style="{ height: `${height}px` }">
     <PanelHeader icon="mdi-chart-bubble" title="Clusters" :compact="width < 420">
       <template v-if="useKMeans">
-        <span class="ph-label">Groups</span>
+        <span class="ph-label">Count</span>
         <v-select
           v-model="numClusters"
           :items="numClustersLabels"
@@ -85,7 +85,7 @@
     <div class="clusters-dimensions">
       <v-autocomplete
         :value="dimensions"
-        :items="numericDimensions"
+        :items="dimensionChoices"
         multiple
         small-chips
         deletable-chips
@@ -97,14 +97,21 @@
         @change="onDimensionChange"
       />
     </div>
-    <p class="clusters-hint">Click a group to select its options.</p>
+    <p class="clusters-hint">
+      Click a group to {{ clickPhrase }}.
+      <v-icon v-if="showsOperation" x-small class="clusters-hint-icon">{{
+        operationIcon
+      }}</v-icon>
+    </p>
 
     <div class="clusters-grid">
       <div v-if="sortedReps.length === 0" class="clusters-empty">
         {{
-          areDimensionsValid()
-            ? "Not enough options to form groups."
-            : "Choose at least one dimension to group options."
+          !areDimensionsValid()
+            ? "Choose at least one dimension to group options."
+            : clusterError
+            ? "Grouping failed. Try other dimensions."
+            : "Not enough options to form groups."
         }}
       </div>
       <v-row dense class="ma-0">
@@ -124,9 +131,20 @@
             @click="toggle(item, $event, index)"
             @mouseover="hover(item)"
           >
+            <!-- Clicking a group applies the current selection operation, the
+                 same as brushing a chart, so the card shows which one. -->
+            <v-tooltip v-if="showsOperation" bottom>
+              <template v-slot:activator="{ on }">
+                <span v-on="on" class="cluster-op">
+                  <v-icon x-small>{{ operationIcon }}</v-icon>
+                </span>
+              </template>
+              <span>{{ currentSelectionOperation }}: click to {{ clickPhrase }}</span>
+            </v-tooltip>
             <v-img
               contain
               :src="item.image"
+              :alt="'Group ' + (index + 1) + ' representative'"
               :aspect-ratio="4 / 3"
               class="cluster-image"
             />
@@ -155,7 +173,7 @@
 }
 .clusters-info.v-icon {
   margin: 0 4px 0 2px;
-  color: #90a4ae;
+  color: #78909c;
   cursor: help;
 }
 .clusters-dimensions {
@@ -181,7 +199,7 @@
   flex: 0 0 auto;
   margin: 6px 10px 2px;
   font-size: 12px;
-  color: #78909c;
+  color: #546e7a;
 }
 .clusters-grid {
   flex: 1 1 auto;
@@ -193,10 +211,11 @@
 .clusters-empty {
   margin: 16px 8px;
   font-size: 13px;
-  color: #78909c;
+  color: #546e7a;
   text-align: center;
 }
 .cluster-card {
+  position: relative;
   overflow: hidden;
   border: 1px solid #e3e8ee;
   border-radius: 8px;
@@ -221,6 +240,30 @@
 .cluster-image {
   background: #f5f7fa;
 }
+/* The operation badge sits over the image, and firms up on hover. */
+.cluster-op {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: rgba(21, 101, 192, 0.75);
+  opacity: 0.8;
+}
+.cluster-op .v-icon {
+  color: #fff;
+}
+.cluster-card:hover .cluster-op {
+  opacity: 1;
+}
+.clusters-hint-icon.v-icon {
+  color: #546e7a;
+}
 .cluster-meta {
   display: flex;
   align-items: center;
@@ -238,19 +281,20 @@
 .cluster-size {
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #607d8b;
+  color: #546e7a;
 }
 </style>
 
 <script>
-//https://hujiulong.github.io/vue-3d-model/#/demo-gltf
-import { ModelGltf } from "vue-3d-model";
 import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import * as kmeans from "node-kmeans";
 
 import * as nj from "numjs";
 import PanelHeader from "@/components/PanelHeader.vue";
+import { dimensionItems } from "@/columns.js";
+import { RATING_DIMENSION } from "@/ratings.js";
+import { operationIcon, operationPhrase } from "@/components/operationIcons.js";
 
 //import  * as PNGImage from 'pngjs-image';
 import * as pixelmatch from "pixelmatch";
@@ -262,7 +306,6 @@ const EPSILONS = [0.05, 0.1, 0.2, 0.4];
 export default {
   name: "ClusterView",
   components: {
-    ModelGltf,
     PanelHeader,
   },
   props: [
@@ -304,6 +347,8 @@ export default {
       epsilon: 0.1,
       numClusters: 4,
       isComputingVisualSimilarity: false,
+      // Why the last grouping failed, or null. Shown as a generic message.
+      clusterError: null,
     };
   },
   computed: {
@@ -312,10 +357,25 @@ export default {
     },
     ...mapState({
       rawChartData: (state) => state.data,
+      dimensionValuesVersion: (state) => state.dimensionValuesVersion,
       numericDimensions: (state) => state.numericDimensions,
+      dimensionChoices: (state) => dimensionItems(state.numericDimensions),
       hovered: (state) => state.hovered,
+      currentSelectionOperation: (state) => state.currentSelectionOperation,
     }),
-    ...mapGetters(["isHoveringEnabled"]),
+    ...mapGetters(["isHoveringEnabled", "can"]),
+    // Only Expert combines selections, so only there does an operation apply.
+    showsOperation() {
+      return this.can("selectionOperations");
+    },
+    operationIcon() {
+      return operationIcon(this.currentSelectionOperation);
+    },
+    clickPhrase() {
+      return this.showsOperation
+        ? operationPhrase(this.currentSelectionOperation)
+        : "select its options";
+    },
     epsilonLabel() {
       return this.epsilonValues[EPSILONS.indexOf(this.epsilon)];
     },
@@ -387,6 +447,8 @@ export default {
       this.clusterReps.splice(0, this.clusterReps.length);
       this.clustersMap = {};
       this.clustersSize = {};
+      // Set again below if this attempt fails too.
+      this.clusterError = null;
 
       if (!this.useKMeans) {
         const dbscan = require("@cdxoo/dbscan");
@@ -414,12 +476,23 @@ export default {
           this.clustersSize[id] = this.clustersMap[id].length;
         });
       } else {
-        if(matrix.length < this.numClusters || matrix[0] === NaN || matrix[0] === null) return;
+        if (matrix.length < this.numClusters) return;
+        // k-means can't place rows holding NaN or infinite values.
+        if (
+          matrix.some(
+            (row) => !Array.isArray(row) || row.some((v) => !Number.isFinite(v))
+          )
+        ) {
+          this.clusterError = "invalid-values";
+          return;
+        }
         console.log(matrix)
 
         kmeans.clusterize(matrix, { k: this.numClusters }, (err, res) => {
-          if (err) console.error(err);
-          else {
+          if (err) {
+            console.error(err);
+            this.clusterError = String((err && err.message) || err);
+          } else {
             var centroids = res.map((c) => c.centroid);
             var closest = res.map((c, i) => {
               let smallestInClusterIndex = indexOfSmallest(
@@ -429,6 +502,12 @@ export default {
             });
 
             for (var i = 0; i < closest.length; i++) {
+              // With few options to group (a sparsely filled custom
+              // dimension, say), a group can come back empty or share its
+              // representative with another.
+              if (!rows[closest[i]] || this.clustersMap[rows[closest[i]]._id]) {
+                continue;
+              }
               this.clusterReps.push(rows[closest[i]]);
               const id = rows[closest[i]]._id;
               this.clustersMap[id] = res[i].clusterInd.map((idx) => rows[idx]);
@@ -626,6 +705,13 @@ export default {
         this.compute();
       },
       //deep: true
+    },
+    // Ratings change in place; regroup when they are grouped by. Custom
+    // values are left alone, since dragging a knob changes them continuously.
+    dimensionValuesVersion: function() {
+      if (this.dimensions && this.dimensions.includes(RATING_DIMENSION)) {
+        this.compute();
+      }
     },
     useKMeans: {
       handler: function(newValue, oldValue) {

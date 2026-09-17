@@ -50,7 +50,7 @@ export default {
   white-space: nowrap;
 }
 .panel-header-icon.v-icon {
-  color: #607d8b;
+  color: #546e7a;
 }
 .panel-header-main {
   display: flex;
@@ -68,7 +68,7 @@ export default {
 
 /* Controls placed in the header. */
 .panel-header ::v-deep .ph-label {
-  color: #78909c;
+  color: #546e7a;
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
@@ -81,7 +81,7 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #607d8b;
+  color: #546e7a;
   font-size: 12px;
 }
 .panel-header ::v-deep .ph-divider {
@@ -123,7 +123,7 @@ export default {
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  color: #607d8b;
+  color: #546e7a;
 }
 .panel-header ::v-deep .ph-btn--on.v-btn--icon {
   color: #1565c0;

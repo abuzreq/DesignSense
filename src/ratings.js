@@ -7,3 +7,6 @@ export const RATING_BOUNDS = [0, 5];
 export function isRated(item) {
   return item[RATING_DIMENSION] > 0;
 }
+
+/** The star range a rating spans once given, for scaling it against other criteria. */
+export const RATING_STARS = [1, 5];

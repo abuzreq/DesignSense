@@ -37,6 +37,8 @@ const FEATURES = {
   inspectionControls: [false, true],
   // The clusters panel beside the scatterplot.
   clustering: [false, true],
+  // Reading which inputs drive which outputs.
+  sensitivity: [false, true],
   // Clicking a point or line inspects it. In both modes hovering inspects only
   // while Space is held.
   clickToInspect: [true, false],
