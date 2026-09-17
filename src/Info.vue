@@ -30,11 +30,6 @@
         <div class="materials">
           <div class="heading">Materials</div>
           <div class="links">
-            <!--          <a
-              href="../assets/design-sense-case-study-massing-2.pdf"
-              target="_blank"
-              >Supplementary (Case Study)</a
-            >| -->
             <router-link to="/demo">Demo</router-link> |
             <a target="_blank"  href="https://journals.sagepub.com/doi/10.1177/14780771241260854" class="link at">Paper</a> |
             

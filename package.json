@@ -1,11 +1,26 @@
 {
-    "name": "empty-project",
-    "version": "1.0.0",
-    "description": "Empty project.",
-    "main": "index.js",
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
+    "name": "designsense",
+    "version": "1.2.0-beta.1",
+    "description": "A design space exploration interface: browse, filter, compare and make sense of generated design options.",
+    "keywords": [
+        "design-space-exploration",
+        "generative-design",
+        "parametric-design",
+        "data-visualization",
+        "architecture",
+        "vue"
+    ],
+    "homepage": "https://github.com/abuzreq/DesignSense#readme",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/abuzreq/DesignSense.git"
+    },
+    "bugs": {
+        "url": "https://github.com/abuzreq/DesignSense/issues"
+    },
+    "author": "Ahmed Abuzuraiq <abuzreq@gmail.com>",
+    "license": "MIT",
+    "private": true,
     "scripts": {
         "clean": "rm dist/bundle.js",
         "start": "webpack-dev-server --open --port 8080 --mode development --inline --hot",

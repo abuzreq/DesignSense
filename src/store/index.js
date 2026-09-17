@@ -7,7 +7,6 @@ import utils from "@/components/utils.js";
 import * as d3 from "d3";
 import * as d3Chromatic from "d3-scale-chromatic";
 
-import createLogger from "./logger";
 import { encodeUrl } from "@/data/shareLink.js";
 import {
   saveLayouts,
@@ -102,7 +101,6 @@ function builder(
   // Custom and weighted dimensions go onto the rows before Vue observes them.
   const dimensions = createDimensionsStore(new_data, dataTypesMap, options);
   const store = new Vuex.Store({
-    plugins: [createLogger],
     state: {
       // What a brush applies right now: the sticky operation, or a held modifier's.
       currentSelectionOperation: operations.REPLACE,
