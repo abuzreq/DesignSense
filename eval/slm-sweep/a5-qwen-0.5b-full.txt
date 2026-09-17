@@ -1,0 +1,39 @@
+Evaluating 1 approach(es) over 221 items.
+  warming up a5 ... [25/221] [50/221] [75/221] [100/221] [125/221] [150/221] [175/221] [200/221] 1736.3s
+
+==========================================================================
+A5 — Qwen2.5-0.5B-Instruct emitting JSON
+==========================================================================
+
+  overall       intent 5%   exact 3%   harmful 7%   no-parse 87%
+  declining     recall 0% (0/24)   precision 0% (0/6)
+  latency       p50 2us   p95 5us   total 2ms
+  model         onnx-community/Qwen2.5-0.5B-Instruct (q4, cpu)
+  generate      7840ms mean, 14491ms p95
+  invalid       192 completions rejected by validation
+  rejected      unknown_arg 89, unknown_command 51, unknown_column 18, no_json 14, bad_enum 13, missing_arg 5, bad_scalar 2
+                (structural 174, column-enum 18; 100% a constrained decoder could prevent)
+
+  by tier       n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  medium       80       3%       1%        5%       91%
+  easy         75      12%       8%        9%       79%
+  hard         66       0%       0%        8%       91%
+
+  by entity       n   intent    exact   harmful   no-parse
+  -------------------------------------------------------
+  exact          64       8%       3%       11%       86%
+  none           54      11%       9%       11%       69%
+  synonym        34       0%       0%        6%       94%
+  tokenized      30       0%       0%        0%      100%
+  abbreviation   23       0%       0%        0%      100%
+  ambiguous      13       0%       0%        8%       92%
+  typo            2       0%       0%        0%      100%
+  absent          1       0%       0%        0%      100%
+
+  by clauses    n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  1           193       5%       4%        8%       86%
+  2            21       5%       0%        5%       95%
+  3             5       0%       0%        0%       80%
+  4             2       0%       0%        0%      100%

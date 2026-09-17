@@ -1,0 +1,29 @@
+round-trip: 56/56 templates parse back to their command
+
+lexical only (before the encoder arrives)
+  intent        n   top-1   top-3      keystrokes: within 3   mean   never
+  easy         75   100%   100%
+  medium       80    94%    99%
+  hard         49   100%   100%
+  all         204    98%   100%                   67%    5.6     0%
+  column        n   top-1   top-3
+  exact        65    94%   100%
+  tokenized    30    87%   100%
+  synonym      29    69%    72%
+  abbreviation 22    82%   100%
+  typo          2    50%    50%
+
+fused: lexical + MiniLM + intent head
+  intent        n   top-1   top-3      keystrokes: within 3   mean   never
+  easy         75   100%   100%
+  medium       80    95%    99%
+  hard         49    98%   100%
+  all         204    98%   100%                   67%    5.2     0%
+  column        n   top-1   top-3
+  exact        65    97%   100%
+  tokenized    30    83%   100%
+  synonym      29    86%    97%
+  abbreviation 22    86%   100%
+  typo          2    50%    50%
+
+encoder: all-MiniLM-L6-v2 (int8), 2613us per text

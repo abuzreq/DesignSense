@@ -1,0 +1,327 @@
+Evaluating 8 approach(es) over 221 items.
+  warming up a2 ... 1.3s
+  warming up a3 ... 0.8s
+  warming up a4 ... 2.9s
+  warming up a5 ... [25/221] [50/221] [75/221] [100/221] [125/221] [150/221] [175/221] [200/221] 1500.6s
+  warming up a6 ... (14/221 deferred) 5.3s
+
+==========================================================================
+A0 — keyword and regex baseline
+==========================================================================
+
+  overall       intent 37%   exact 34%   harmful 15%   no-parse 51%
+  declining     recall 0% (0/24)   precision - (0/0)
+  latency       p50 21us   p95 62us   total 27ms
+
+  by tier       n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  medium       80      16%      11%       16%       73%
+  easy         75      83%      83%        0%       17%
+  hard         66      11%       8%       30%       62%
+
+  by entity       n   intent    exact   harmful   no-parse
+  -------------------------------------------------------
+  exact          64      77%      77%        8%       16%
+  none           54      24%      24%        9%       67%
+  synonym        34       9%       3%       21%       76%
+  tokenized      30      33%      33%       13%       53%
+  abbreviation   23      30%      13%       39%       48%
+  ambiguous      13       0%       0%       23%       77%
+  typo            2       0%       0%        0%      100%
+  absent          1       0%       0%        0%      100%
+
+  by clauses    n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  1           193      42%      39%        6%       54%
+  2            21       0%       0%       67%       33%
+  3             5       0%       0%      100%        0%
+  4             2       0%       0%      100%        0%
+
+==========================================================================
+A1 — grammar for slots, BM25 for intent
+==========================================================================
+
+  overall       intent 84%   exact 79%   harmful 13%   no-parse 5%
+  declining     recall 13% (3/24)   precision 38% (3/8)
+  latency       p50 141us   p95 799us   total 50ms
+
+  by tier       n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  medium       80      91%      89%        8%        0%
+  easy         75      99%      97%        3%        0%
+  hard         66      58%      47%       32%       18%
+
+  by entity       n   intent    exact   harmful   no-parse
+  -------------------------------------------------------
+  exact          64      97%      95%        5%        0%
+  none           54      83%      80%       13%        7%
+  synonym        34      76%      74%        9%        6%
+  tokenized      30      90%      83%       17%        0%
+  abbreviation   23      91%      74%       22%        0%
+  ambiguous      13      23%      23%       38%       38%
+  typo            2      50%      50%        0%       50%
+  absent          1       0%       0%      100%        0%
+
+  by clauses    n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  1           193      86%      83%       11%        5%
+  2            21      67%      62%       19%       10%
+  3             5      80%      40%       60%        0%
+  4             2      50%       0%       50%        0%
+
+==========================================================================
+A1G — A1 plus confidence and refusal guards
+==========================================================================
+
+  overall       intent 85%   exact 79%   harmful 10%   no-parse 5%
+  declining     recall 33% (8/24)   precision 50% (8/16)
+  latency       p50 158us   p95 670us   total 56ms
+
+  by tier       n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  medium       80      91%      89%        6%        1%
+  easy         75      97%      96%        3%        0%
+  hard         66      62%      48%       23%       17%
+
+  by entity       n   intent    exact   harmful   no-parse
+  -------------------------------------------------------
+  exact          64      98%      97%        3%        0%
+  none           54      81%      78%       11%        7%
+  synonym        34      76%      71%        6%        6%
+  tokenized      30      93%      87%       13%        0%
+  abbreviation   23      87%      74%       17%        0%
+  ambiguous      13      38%      23%       31%       31%
+  typo            2      50%      50%        0%       50%
+  absent          1       0%       0%        0%      100%
+
+  by clauses    n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  1           193      87%      83%        8%        6%
+  2            21      71%      62%       10%        5%
+  3             5      80%      40%       60%        0%
+  4             2      50%       0%       50%        0%
+
+==========================================================================
+A2 — A1G with potion static embeddings
+==========================================================================
+
+  overall       intent 85%   exact 80%   harmful 11%   no-parse 4%
+  declining     recall 38% (9/24)   precision 53% (9/17)
+  latency       p50 137us   p95 541us   total 45ms
+  model         potion-base-8M
+  download      30 MB
+  encode        83us per text
+  column-fb     on
+  head          nearest example
+
+  by tier       n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  medium       80      91%      89%        6%        1%
+  easy         75      97%      96%        3%        0%
+  hard         66      64%      50%       27%       11%
+
+  by entity       n   intent    exact   harmful   no-parse
+  -------------------------------------------------------
+  exact          64      98%      97%        3%        0%
+  none           54      83%      80%       15%        2%
+  synonym        34      76%      71%        6%        6%
+  tokenized      30      93%      87%       13%        0%
+  abbreviation   23      87%      74%       17%        0%
+  ambiguous      13      38%      23%       31%       31%
+  typo            2      50%      50%       50%        0%
+  absent          1       0%       0%        0%      100%
+
+  by clauses    n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  1           193      87%      83%       10%        4%
+  2            21      71%      62%       10%        5%
+  3             5      80%      40%       60%        0%
+  4             2      50%       0%       50%        0%
+
+==========================================================================
+A3 — A1G with all-MiniLM-L6-v2 embeddings
+==========================================================================
+
+  overall       intent 86%   exact 81%   harmful 9%   no-parse 5%
+  declining     recall 46% (11/24)   precision 58% (11/19)
+  latency       p50 114us   p95 621us   total 41ms
+  model         all-MiniLM-L6-v2 (int8)
+  download      23 MB
+  encode        1263us per text
+  column-fb     on
+  head          nearest example
+
+  by tier       n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  medium       80      91%      89%        6%        1%
+  easy         75      99%      97%        1%        0%
+  hard         66      67%      53%       21%       14%
+
+  by entity       n   intent    exact   harmful   no-parse
+  -------------------------------------------------------
+  exact          64      98%      97%        3%        0%
+  none           54      89%      85%        7%        4%
+  synonym        34      76%      71%        6%        6%
+  tokenized      30      93%      87%       13%        0%
+  abbreviation   23      87%      74%       17%        0%
+  ambiguous      13      38%      23%       31%       31%
+  typo            2      50%      50%        0%       50%
+  absent          1       0%       0%        0%      100%
+
+  by clauses    n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  1           193      89%      85%        7%        5%
+  2            21      71%      62%       10%        5%
+  3             5      80%      40%       60%        0%
+  4             2      50%       0%       50%        0%
+
+==========================================================================
+A4 — A3 plus a trained linear intent head
+==========================================================================
+
+  overall       intent 87%   exact 81%   harmful 9%   no-parse 4%
+  declining     recall 54% (13/24)   precision 59% (13/22)
+  latency       p50 112us   p95 480us   total 37ms
+  model         all-MiniLM-L6-v2 (int8)
+  download      23 MB
+  encode        1044us per text
+  column-fb     on
+  head          logreg, 14245 params
+
+  by tier       n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  medium       80      91%      89%        6%        1%
+  easy         75      97%      96%        1%        0%
+  hard         66      70%      53%       21%       11%
+
+  by entity       n   intent    exact   harmful   no-parse
+  -------------------------------------------------------
+  exact          64      98%      97%        3%        0%
+  none           54      91%      83%        7%        0%
+  synonym        34      76%      71%        6%        6%
+  tokenized      30      93%      87%       13%        0%
+  abbreviation   23      87%      74%       17%        0%
+  ambiguous      13      38%      23%       31%       31%
+  typo            2      50%      50%        0%       50%
+  absent          1       0%       0%        0%      100%
+
+  by clauses    n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  1           193      89%      84%        7%        4%
+  2            21      71%      62%       10%        5%
+  3             5      80%      40%       60%        0%
+  4             2      50%       0%       50%        0%
+
+==========================================================================
+A5 — Qwen2.5-0.5B-Instruct emitting JSON
+==========================================================================
+
+  overall       intent 5%   exact 3%   harmful 7%   no-parse 87%
+  declining     recall 0% (0/24)   precision 0% (0/6)
+  latency       p50 1us   p95 2us   total 0ms
+  model         onnx-community/Qwen2.5-0.5B-Instruct (q4)
+  generate      6766ms mean, 12446ms p95
+  invalid       192 completions rejected by validation
+
+  by tier       n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  medium       80       3%       1%        5%       91%
+  easy         75      12%       8%        9%       79%
+  hard         66       0%       0%        8%       91%
+
+  by entity       n   intent    exact   harmful   no-parse
+  -------------------------------------------------------
+  exact          64       8%       3%       11%       86%
+  none           54      11%       9%       11%       69%
+  synonym        34       0%       0%        6%       94%
+  tokenized      30       0%       0%        0%      100%
+  abbreviation   23       0%       0%        0%      100%
+  ambiguous      13       0%       0%        8%       92%
+  typo            2       0%       0%        0%      100%
+  absent          1       0%       0%        0%      100%
+
+  by clauses    n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  1           193       5%       4%        8%       86%
+  2            21       5%       0%        5%       95%
+  3             5       0%       0%        0%       80%
+  4             2       0%       0%        0%      100%
+
+==========================================================================
+A6 — A4, falling back to Qwen only where A4 has nothing
+==========================================================================
+
+  overall       intent 86%   exact 80%   harmful 10%   no-parse 3%
+  declining     recall 46% (11/24)   precision 55% (11/20)
+  latency       p50 123us   p95 470us   total 40ms
+  cascade       14 of 221 utterances reached the model (6%)
+  rescued       4 of those produced a valid command
+
+  by tier       n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  medium       80      91%      89%        6%        1%
+  easy         75      97%      96%        1%        0%
+  hard         66      67%      52%       26%        9%
+
+  by entity       n   intent    exact   harmful   no-parse
+  -------------------------------------------------------
+  exact          64      98%      97%        3%        0%
+  none           54      87%      81%       11%        0%
+  synonym        34      76%      71%        6%        6%
+  tokenized      30      93%      87%       13%        0%
+  abbreviation   23      87%      74%       17%        0%
+  ambiguous      13      38%      23%       38%       23%
+  typo            2      50%      50%        0%       50%
+  absent          1       0%       0%        0%      100%
+
+  by clauses    n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  1           193      88%      84%        9%        3%
+  2            21      71%      62%       10%        5%
+  3             5      80%      40%       60%        0%
+  4             2      50%       0%       50%        0%
+
+==========================================================================
+SIDE BY SIDE
+==========================================================================
+
+  approach      n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  a0          221      37%      34%       15%       51%
+  a1          221      84%      79%       13%        5%
+  a1g         221      85%      79%       10%        5%
+  a2          221      85%      80%       11%        4%
+  a3          221      86%      81%        9%        5%
+  a4          221      87%      81%        9%        4%
+  a5          221       5%       3%        7%       87%
+  a6          221      86%      80%       10%        3%
+
+  easy
+    a0         75      83%      83%        0%       17%
+    a1         75      99%      97%        3%        0%
+    a1g        75      97%      96%        3%        0%
+    a2         75      97%      96%        3%        0%
+    a3         75      99%      97%        1%        0%
+    a4         75      97%      96%        1%        0%
+    a5         75      12%       8%        9%       79%
+    a6         75      97%      96%        1%        0%
+
+  medium
+    a0         80      16%      11%       16%       73%
+    a1         80      91%      89%        8%        0%
+    a1g        80      91%      89%        6%        1%
+    a2         80      91%      89%        6%        1%
+    a3         80      91%      89%        6%        1%
+    a4         80      91%      89%        6%        1%
+    a5         80       3%       1%        5%       91%
+    a6         80      91%      89%        6%        1%
+
+  hard
+    a0         66      11%       8%       30%       62%
+    a1         66      58%      47%       32%       18%
+    a1g        66      62%      48%       23%       17%
+    a2         66      64%      50%       27%       11%
+    a3         66      67%      53%       21%       14%
+    a4         66      70%      53%       21%       11%
+    a5         66       0%       0%        8%       91%
+    a6         66      67%      52%       26%        9%

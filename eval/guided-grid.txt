@@ -1,0 +1,41 @@
+round-trip: 47/48 templates parse back to their command
+  FAIL "invert the selection"  wanted select.invert  got scope.reset {}
+
+lexical only (before the encoder arrives)
+  intent        n   top-1   top-3      keystrokes: within 3   mean   never
+  easy         75    95%    96%
+  medium       80    86%    89%
+  hard         42    60%    64%
+  all         197    84%    86%                   57%    7.9     2%
+  column        n   top-1   top-3
+  exact        62    94%   100%
+  tokenized    30    87%   100%
+  synonym      28    68%    71%
+  abbreviation 22    82%   100%
+  typo          2    50%    50%
+
+fused: lexical + MiniLM + intent head
+  intent        n   top-1   top-3      keystrokes: within 3   mean   never
+  easy         75    95%    96%
+  medium       80    88%    90%
+  hard         42    57%    64%
+  all         197    84%    87%                   57%    7.7     2%
+  column        n   top-1   top-3
+  exact        62    95%   100%
+  tokenized    30    83%   100%
+  synonym      28    86%    93%
+  abbreviation 22    86%   100%
+  typo          2    50%    50%
+
+weight grid (intent top-3, all tiers) -- for information; defaults are kept unless a cell wins clearly
+  semantic 0.5  head 0  top-3  87%
+  semantic 0.5  head 1  top-3  87%
+  semantic 0.5  head 2  top-3  87%
+  semantic 1  head 0  top-3  87%
+  semantic 1  head 1  top-3  87%
+  semantic 1  head 2  top-3  87%
+  semantic 2  head 0  top-3  87%
+  semantic 2  head 1  top-3  87%
+  semantic 2  head 2  top-3  86%
+
+encoder: all-MiniLM-L6-v2 (int8), 2357us per text

@@ -1,0 +1,36 @@
+Evaluating 1 approach(es) over 20 items.
+  warming up a5 ... 452.1s
+
+==========================================================================
+A5 — Qwen2.5-0.5B-Instruct emitting JSON
+==========================================================================
+
+  overall       intent 10%   exact 0%   harmful 30%   no-parse 70%
+  declining     recall 0% (0/3)   precision - (0/0)
+  latency       p50 8us   p95 96us   total 1ms
+  model         onnx-community/Llama-3.2-1B-Instruct (q4, cpu)
+  generate      18209ms mean, 30075ms p95
+  invalid       14 completions rejected by validation
+  rejected      unknown_arg 8, no_json 3, bad_enum 2, unknown_command 1
+                (structural 14; 100% a constrained decoder could prevent)
+
+  by tier       n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  easy          7      29%       0%       57%       43%
+  medium        7       0%       0%       14%       86%
+  hard          6       0%       0%       17%       83%
+
+  by entity       n   intent    exact   harmful   no-parse
+  -------------------------------------------------------
+  exact           5      20%       0%       60%       40%
+  none            5       0%       0%        0%      100%
+  tokenized       4      25%       0%       50%       50%
+  ambiguous       2       0%       0%        0%      100%
+  abbreviation    2       0%       0%       50%       50%
+  synonym         2       0%       0%        0%      100%
+
+  by clauses    n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  1            18      11%       0%       33%       67%
+  2             1       0%       0%        0%      100%
+  3             1       0%       0%        0%      100%

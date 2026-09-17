@@ -1,0 +1,36 @@
+Evaluating 1 approach(es) over 20 items.
+  warming up a5 ... 399.7s
+
+==========================================================================
+A5 — Qwen2.5-0.5B-Instruct emitting JSON
+==========================================================================
+
+  overall       intent 20%   exact 0%   harmful 40%   no-parse 25%
+  declining     recall 67% (2/3)   precision 29% (2/7)
+  latency       p50 5us   p95 52us   total 1ms
+  model         Xenova/TinyLlama-1.1B-Chat-v1.0 (q4, cpu)
+  generate      15482ms mean, 20335ms p95
+  invalid       5 completions rejected by validation
+  rejected      unknown_command 2, unknown_column 2, no_json 1
+                (structural 3, column-enum 2; 100% a constrained decoder could prevent)
+
+  by tier       n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  easy          7      29%       0%       43%       29%
+  medium        7       0%       0%       43%       43%
+  hard          6      33%       0%       33%        0%
+
+  by entity       n   intent    exact   harmful   no-parse
+  -------------------------------------------------------
+  exact           5      20%       0%       20%       20%
+  none            5       0%       0%       60%       40%
+  tokenized       4      25%       0%       75%       25%
+  ambiguous       2     100%       0%        0%        0%
+  abbreviation    2       0%       0%        0%       50%
+  synonym         2       0%       0%       50%        0%
+
+  by clauses    n   intent    exact   harmful   no-parse
+  -----------------------------------------------------
+  1            18      17%       0%       39%       28%
+  2             1     100%       0%        0%        0%
+  3             1       0%       0%      100%        0%
