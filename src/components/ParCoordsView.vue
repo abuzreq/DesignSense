@@ -16,7 +16,10 @@
               Dimensions
             </v-btn>
           </template>
-          <span>Add criteria of your own and weigh them into weighted dimensions</span>
+          <span
+            >Say which way is better for each output, add criteria of your
+            own, and weigh them into weighted dimensions</span
+          >
         </v-tooltip>
         <v-menu offset-y left :close-on-content-click="false">
           <template v-slot:activator="{ on: menu }">
@@ -80,7 +83,14 @@ import { axisTickFormat } from "@/components/axisFormat.js";
 import { operations } from "@/components/operations.js";
 import { RATING_BOUNDS, RATING_DIMENSION } from "@/ratings.js";
 import { snapValue } from "@/customDimensions.js";
-import { CUSTOM, KIND_MARKS, WEIGHTED, displayName } from "@/columns.js";
+import {
+  CUSTOM,
+  GOAL_MARKS,
+  KIND_MARKS,
+  MIN,
+  WEIGHTED,
+  displayName,
+} from "@/columns.js";
 import { isAssetColumn } from "@/data/assets.js";
 
 // About one tick per this many pixels of axis height.
@@ -122,6 +132,8 @@ export default {
       "weightedDimensionNames",
       "unfilterableDimensions",
       "dimensionStructure",
+      "goalOf",
+      "goalSignature",
     ]),
     /** Axes drawn over a fixed range rather than their data's extent. */
     fixedAxisBounds() {
@@ -133,14 +145,29 @@ export default {
     },
     /**
      * Axis titles: names without their column prefix, with custom axes marked
-     * as editable and weighted ones as sums.
+     * as editable and weighted ones as sums, then ↑ or ↓ for a goal.
      */
     axisTitles() {
       let titles = {};
       this.numericDimensions.forEach((dim) => (titles[dim] = displayName(dim)));
       this.customDimensionNames.forEach((dim) => (titles[dim] += " \u270e"));
       this.weightedDimensionNames.forEach((dim) => (titles[dim] += " \u03a3"));
+      this.numericDimensions.forEach((dim) => {
+        let mark = GOAL_MARKS[this.goalOf(dim)];
+        if (mark) titles[dim] += " " + mark.mark;
+      });
       return titles;
+    },
+    /** What hovering an axis title says beyond its name: why a ↓ axis runs downward. */
+    axisHints() {
+      let hints = {};
+      this.numericDimensions.forEach((dim) => {
+        if (this.goalOf(dim) === MIN) {
+          hints[dim] =
+            "Lower is better, so this axis runs from high at the foot to low at the top.";
+        }
+      });
+      return hints;
     },
     // Rating is offered once something is rated, since only then has it an axis.
     // Picture and model columns are never axes, however they were typed.
@@ -196,6 +223,10 @@ export default {
   watch: {
     // The Rating axis appears with the first rating.
     hasRatings: function() {
+      this.scheduleRefresh();
+    },
+    // A goal changed: a title's mark, and which way its axis runs.
+    goalSignature: function() {
       this.scheduleRefresh();
     },
     // Custom and weighted dimensions were added, removed or given new bounds.
@@ -579,6 +610,7 @@ export default {
       });
       let titleOf = (dim) =>
         (dimensions[dim] && dimensions[dim].title) || "" + dim;
+      let hints = this.axisHints;
       let keys = Object.keys(positions);
       let key =
         innerWidth +
@@ -615,10 +647,13 @@ export default {
         let node = label.node();
         let width = node.getComputedTextLength();
         if (width === 0 && full.length > 0) measured = false;
+        let hover = [];
         if (width > room) {
-          // Keep the custom (✎) or weighted (Σ) mark; cut the name before it.
-          let mark = /\s[✎Σ]$/.test(full) ? full.slice(-2) : "";
-          let name = mark ? full.slice(0, -2) : full;
+          // Keep the custom (✎), weighted (Σ) and goal (↑ ↓) marks; cut the
+          // name before them.
+          let marks = /(\s[✎Σ↑↓])+$/.exec(full);
+          let mark = marks ? marks[0] : "";
+          let name = full.slice(0, full.length - mark.length);
           let shortened = (n) => name.slice(0, n).trim() + "…" + mark;
           // The longest prefix that fits with the ellipsis.
           let lo = 0;
@@ -631,8 +666,10 @@ export default {
           }
           node.textContent = shortened(lo);
           width = node.getComputedTextLength();
-          label.append("title").text(full);
+          hover.push(full);
         }
+        if (hints[dim]) hover.push(hints[dim]);
+        if (hover.length > 0) label.append("title").text(hover.join(": "));
         // Centred on the axis unless that would cross the room's edges.
         let center = x;
         if (center - width / 2 < left) center = left + width / 2;
@@ -874,7 +911,9 @@ export default {
       Object.keys(this.liteBrushes).forEach((dim) => {
         let wanted = this.axisItemsFor(dim);
         let domain = this.liteBrushes[dim].yscale.domain();
-        if (sameAxisItems(drawn[dim] || [], wanted, domain[1] - domain[0])) {
+        // A goal can run an axis downward, so its span is taken either way.
+        let span = Math.abs(domain[1] - domain[0]);
+        if (sameAxisItems(drawn[dim] || [], wanted, span)) {
           return;
         }
         this.writeAxisBrushes(dim, wanted);
@@ -1218,6 +1257,7 @@ export default {
       chart.hideAxis(this.hiddenAxes());
       applyNumericTypes(chart, this.numericDimensions);
       applyFixedScales(chart, this.fixedAxisBounds, this.axisTitles);
+      applyGoalOrientation(chart, this.goalOf);
       applyTickCounts(chart);
 
       chart.createAxes();
@@ -1428,6 +1468,26 @@ function applyFixedScales(chart, boundsByDim, titles) {
       .scaleLinear()
       .domain(bounds.slice())
       .range(range);
+  });
+}
+
+/**
+ * Puts better at the top: an axis whose dimension has "lower is better" for
+ * its goal runs from its highest value at the foot to its lowest at the top.
+ * The library makes a scale only for an axis without one, and keeps it
+ * through renders, so the axes are scaled first and the reversed ones stay
+ * reversed; a double-click still flips an axis until the chart is rebuilt.
+ */
+function applyGoalOrientation(chart, goalOf) {
+  let dimensions = chart.dimensions();
+  if (!dimensions) return;
+  let reversed = Object.keys(dimensions).filter((dim) => goalOf(dim) === MIN);
+  if (reversed.length === 0) return;
+  chart.autoscale();
+  reversed.forEach((dim) => {
+    let yscale = dimensions[dim].yscale;
+    if (!yscale || typeof yscale.invert !== "function") return;
+    yscale.domain(yscale.domain().slice().reverse());
   });
 }
 
