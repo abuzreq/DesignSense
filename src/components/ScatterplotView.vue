@@ -77,12 +77,8 @@
             lockedAxes.length === 1
               ? "is a custom or weighted dimension"
               : "are custom or weighted dimensions"
-          }}, which can't be filtered or brushed.
-          {{
-            isLite
-              ? "Click points to inspect them."
-              : "Hold Space and hover to inspect them."
-          }}</span
+          }}, which can't be filtered or brushed. Click points to inspect
+          them.</span
         >
       </v-tooltip>
 
@@ -584,16 +580,17 @@ export default {
       }
     },
     /**
-     * A click that barely moved. Lite inspects the point; in Expert, clicking
-     * the inspected point stops inspecting. Returning false lets the click act
-     * as a brush.
+     * A click that barely moved. On a point it inspects it, or stops
+     * inspecting the inspected one. Elsewhere, Lite clears or keeps its
+     * filters (see onLiteClick), and Expert lets the click act as a brush by
+     * returning false, which under Replace clears the selection.
      */
     onChartClick: function(item, pressedOnOverlay) {
       if (this.isLite) {
         this.onLiteClick(item, pressedOnOverlay);
         return true;
       }
-      if (item && this.hovered && item._id === this.hovered._id) {
+      if (item) {
         this.$store.dispatch("inspectByClick", { item: item });
         return true;
       }
@@ -1138,8 +1135,9 @@ class ScatterPlot {
           var pressed = press;
           press = null;
           // d3 keeps an unmoved brush's selection (and nulls it on the overlay),
-          // so a click is recognised by how little the pointer moved.
-          if (onClicked && useRect && pressed && d3.event.sourceEvent) {
+          // so a click is recognised by how little the pointer moved, on the
+          // lasso as on the rectangle.
+          if (onClicked && pressed && d3.event.sourceEvent) {
             var p = d3.mouse(g.node());
             var moved = Math.hypot(
               p[0] - pressed.point[0],

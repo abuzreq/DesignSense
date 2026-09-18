@@ -968,8 +968,8 @@ export default {
       return lines[0];
     },
     /**
-     * A click on a line (not on an axis, not a drag) inspects it in Lite. In
-     * either mode, clicking the inspected line stops inspecting.
+     * A click on a line (not on an axis, not a drag) inspects it; clicking
+     * the inspected line stops inspecting.
      */
     onChartClick(pos, evt) {
       let press = this.press;

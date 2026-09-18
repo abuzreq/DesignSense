@@ -39,9 +39,9 @@ const FEATURES = {
   clustering: [false, true],
   // Reading which inputs drive which outputs.
   sensitivity: [false, true],
-  // Clicking a point or line inspects it. In both modes hovering inspects only
-  // while Space is held.
-  clickToInspect: [true, false],
+  // Clicking a point or line inspects it. Hovering inspects only while Space
+  // is held, or in Expert while continuous inspection is on.
+  clickToInspect: [true, true],
 };
 
 // Lite is the default; only an explicit "expert" selects Expert.

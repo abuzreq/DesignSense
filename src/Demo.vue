@@ -160,9 +160,9 @@
         :actions="actions"
         :disabled="actionDisabled"
       />
-      <!-- Lite inspects by clicking and stops with Esc or the inspector's
-           close button, so only Expert has inspection controls and the
-           analysis tools. -->
+      <!-- Both modes inspect by clicking and stop with Esc or the
+           inspector's close button; pinning and inspecting on hover, and the
+           analysis tools, are Expert's. -->
       <template v-if="isExpert">
         <v-divider vertical class="ds-divider" />
         <ToolbarGroup
@@ -1021,7 +1021,7 @@ export default {
           "Clusters group options that are similar on the dimensions you choose. Each image stands for a group. Click it to select the whole group.",
           "left", () => this.$store.commit("setClusteringPanelOpen", { value: true })),
         tourStep(this, "expert", "#inspection-bar", "Inspection",
-          "Hold Space and move over any option to inspect it. Pin keeps it inspected after you let go, and the last button inspects without holding Space.",
+          "Click any option to inspect it, or hold Space and move over options. Pin keeps it inspected after you let go, and the last button inspects on hover without holding Space.",
           "bottom"),
         dialogTourStep(this, "expert", ".sx-card", "Analysis",
           "The whole collection at a glance, rather than what is on screen. At the top, every dimension's average, standard deviation and spread. Below, which inputs move which outputs: name the parameters and the results, or start their columns with in: and out: and the file names them for you. Each of the three measures answers a different question, and the panel says in the open that a reading is only as good as the sampling behind it.",
@@ -1404,7 +1404,7 @@ export default {
       ];
     },
     inspectionActions() {
-      // Pinning and continuous inspection are Expert's; Lite inspects by clicking.
+      // Pinning and continuous inspection are Expert's; both inspect by clicking.
       return this.can("inspectionControls")
         ? ["togglePinInspection", "clearInspection", "toggleInspectionMode"]
         : ["clearInspection"];
