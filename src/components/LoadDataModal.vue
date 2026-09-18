@@ -19,7 +19,16 @@
           </v-btn>
         </template>
 
-        <v-card>
+        <!-- A file can be dropped anywhere on the dialog. Enter and leave
+             fire for every element crossed, so a depth count says when the
+             file has really left. -->
+        <v-card
+          :class="{ 'load-card--drop': dragDepth > 0 }"
+          @dragenter.prevent="dragDepth += 1"
+          @dragleave="dragDepth = Math.max(0, dragDepth - 1)"
+          @dragover.prevent
+          @drop.prevent="onDrop"
+        >
           <v-card-title class="headline grey lighten-2">Load data</v-card-title>
           <v-progress-linear
             :active="loadState.loading"
@@ -73,6 +82,33 @@
             </p>
 
             <v-expansion-panels flat class="load-help">
+              <v-expansion-panel>
+                <v-expansion-panel-header>
+                  How the columns are read
+                </v-expansion-panel-header>
+                <v-expansion-panel-content>
+                  <p>
+                    <strong>Inputs and outputs</strong> — start a design
+                    parameter's column with <code>in:</code> and a result's
+                    with <code>out:</code>, as in <code>in:width</code> or
+                    <code>out:cost</code>. The prefix doesn't show in the
+                    interface. The parallel coordinates draw outputs in blue,
+                    and Sensitivity reads how the inputs move the outputs;
+                    without the prefixes it asks you to pick them each time.
+                  </p>
+                  <p>
+                    <strong>Your own criteria</strong> — <code>custom:</code>
+                    and <code>weighted:</code> columns come back as custom and
+                    weighted dimensions, which is how DesignSense writes them
+                    when it saves a file.
+                  </p>
+                  <p class="mb-0">
+                    <strong>Everything else</strong> is kept as it is: numbers
+                    become axes to filter by, text shows in the details and in
+                    Compare. An <code>ID</code> column names each option.
+                  </p>
+                </v-expansion-panel-content>
+              </v-expansion-panel>
               <v-expansion-panel>
                 <v-expansion-panel-header>
                   Naming images and 3D files
@@ -176,7 +212,9 @@
               hide-details
               prepend-icon=""
               prepend-inner-icon="mdi-paperclip"
-              placeholder="Choose a CSV file"
+              :placeholder="
+                dragDepth > 0 ? 'Drop it to load' : 'Choose a CSV file, or drop one here'
+              "
               :disabled="loadState.loading"
               :loading="isLoading('file')"
               @change="loadFile"
@@ -283,6 +321,9 @@ export default {
       url: "",
       // Remounting the file input lets the same file be chosen again.
       fileInputKey: 0,
+      // How many elements of the dialog a dragged file is over; above zero
+      // while it is over the dialog at all.
+      dragDepth: 0,
     };
   },
   computed: {
@@ -307,6 +348,12 @@ export default {
     loadPreset() {
       if (!this.selectedPreset || loadState.loading) return;
       this.load(this.selectedPreset.url, "preset");
+    },
+    /** A file dropped on the dialog loads as one chosen with the input would. */
+    onDrop(event) {
+      this.dragDepth = 0;
+      let files = event.dataTransfer && event.dataTransfer.files;
+      if (files && files.length > 0) this.loadFile(files[0]);
     },
     loadFile(file) {
       // Clearing the input reports no file.
@@ -365,6 +412,11 @@ export default {
   margin: 8px 0 0;
   font-size: 12px;
   color: #546e7a;
+}
+/* A file is being dragged over the dialog. */
+.load-card--drop {
+  outline: 2px dashed #1976d2;
+  outline-offset: -6px;
 }
 .preset-info {
   max-width: 620px;
