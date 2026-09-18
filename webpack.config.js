@@ -36,6 +36,11 @@ module.exports = (env, argv) => {
     cache: {
       type: 'filesystem',
       buildDependencies: { config: [__filename] },
+      // A served build compiles hot-reload code into its modules and a
+      // written one must not. Sharing a cache, `npm run start-prod` left
+      // modules that `npm run build-prod` then failed on: "No template for
+      // dependency: ModuleHotAcceptDependency".
+      name: (isServed ? 'serve-' : 'build-') + (isProduction ? 'production' : 'development'),
     },
 
     resolve: {
