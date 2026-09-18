@@ -35,6 +35,19 @@ export function displayName(name) {
   return label === "" ? text : label;
 }
 
+/**
+ * What an option is called wherever it is named -- a gallery card, the
+ * inspector, a column in Compare: its own ID column when the data has one,
+ * otherwise the id the app gave it.
+ */
+export function optionName(item) {
+  if (!item) return "";
+  let id = item.ID;
+  if (id === undefined || id === null || id === "") id = item.id;
+  if (id === undefined || id === null || id === "") id = item._id;
+  return "Option " + id;
+}
+
 /** The column name for a shown name of this kind: "custom:looks". */
 export function prefixedName(kind, label) {
   return kind + ":" + label;

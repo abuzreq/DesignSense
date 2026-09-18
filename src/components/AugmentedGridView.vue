@@ -116,6 +116,14 @@
               />
             </template>
           </div>
+          <!-- Which option this is: a picture alone doesn't say, and the ID is
+               what the rest of the study refers to it by. -->
+          <span
+            v-if="inspectedItem"
+            class="inspected-name"
+            :title="inspectedName"
+            >{{ inspectedName }}</span
+          >
           <div style="display: flex;">
             <StarRating
               v-if="inspectedItem"
@@ -448,9 +456,21 @@
 .inspected_item_top_bar {
   display: flex;
   flex-direction: row;
+  align-items: center;
   position: relative;
   justify-content: space-between;
   width: 100%;
+}
+.inspected-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: #37474f;
 }
 .showing-selection-note {
   position: relative;
@@ -521,7 +541,7 @@ import { isAssetColumn } from "@/data/assets.js";
 import TipButton from "@/components/TipButton.vue";
 import { formatValue } from "@/store/filters.js";
 import { asRows } from "@/store/rows.js";
-import { dimensionItems, displayName } from "@/columns.js";
+import { dimensionItems, displayName, optionName } from "@/columns.js";
 
 import PanelHeader from "@/components/PanelHeader.vue";
 
@@ -788,13 +808,16 @@ export default {
     inspectedImage() {
       return this.inspectedImages[this.inspectedImageIndex];
     },
+    inspectedName() {
+      return optionName(this.inspectedItem);
+    },
     inspectedAlt() {
       let item = this.inspectedItem;
       if (!item) return "";
       let view = this.inspectedImages.length > 1
         ? " view " + (this.inspectedImageIndex + 1)
         : "";
-      return "Option " + item._id + view;
+      return optionName(item) + view;
     },
     inspectedModels() {
       let item = this.inspectedItem;

@@ -198,6 +198,7 @@ import {
   WEIGHTED,
   columnKind,
   displayName,
+  optionName,
 } from "@/columns.js";
 import { formatValue } from "@/store/filters.js";
 import {
@@ -217,14 +218,6 @@ function isDerived(kind) {
 
 // A little longer than the dialog's fade-out.
 const CLOSE_TRANSITION_MS = 400;
-
-/** Names the option by its own ID column when the data has one. */
-function optionName(item) {
-  let id = item.ID;
-  if (id === undefined || id === null || id === "") id = item.id;
-  if (id === undefined || id === null || id === "") id = item._id;
-  return "Option " + id;
-}
 
 /**
  * Several options side by side, a column each: picture, then the outputs, then

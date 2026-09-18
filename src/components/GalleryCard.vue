@@ -110,7 +110,7 @@
 
 <script>
 import { formatValue } from "@/store/filters.js";
-import { displayName } from "@/columns.js";
+import { displayName, optionName } from "@/columns.js";
 import { FALLBACK_IMAGE } from "@/components/constants.js";
 
 /**
@@ -173,13 +173,8 @@ export default {
     );
   },
   computed: {
-    /** Names the option by its own ID column when the data has one. */
     altText() {
-      let item = this.item;
-      let id = item.ID;
-      if (id === undefined || id === null || id === "") id = item.id;
-      if (id === undefined || id === null || id === "") id = item._id;
-      return "Option " + id;
+      return optionName(this.item);
     },
     viewCount() {
       return this.item.images ? this.item.images.length : 0;
