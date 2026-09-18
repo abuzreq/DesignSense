@@ -15,39 +15,9 @@
         </template>
         <span>{{ saveTooltip }}</span>
       </v-tooltip>
-      <v-menu bottom left offset-y>
-        <template v-slot:activator="{ on }">
-          <v-btn icon small v-on="on" aria-label="More set actions">
-            <v-icon small>mdi-dots-vertical</v-icon>
-          </v-btn>
-        </template>
-        <v-list dense>
-          <v-list-item @click="confirmClear = true">
-            <v-list-item-title>Clear saved work…</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+      <!-- Clearing the saved work is in the help menu, where the rest of what
+           is kept for a dataset is looked after. -->
     </div>
-
-    <v-dialog v-model="confirmClear" max-width="460px">
-      <v-card>
-        <v-card-title>Clear saved work?</v-card-title>
-        <v-card-text>
-          This will permanently delete the saved sets, notes, shortlist,
-          ratings, and custom dimension values for this dataset from this
-          browser. This cannot be undone.
-        </v-card-text>
-        <v-card-text class="pt-0">
-          The custom and weighted dimensions will remain, but their values will
-          be cleared.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn text @click="confirmClear = false">Cancel</v-btn>
-          <v-btn color="error" text @click="clearSavedWork">Clear</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
 
     <!-- The shortlist sits above the sets because that is what it becomes. -->
     <div class="cart-section">
@@ -301,7 +271,6 @@ export default {
     return {
       // Sets whose empty note was opened with "Add note".
       openNotes: {},
-      confirmClear: false,
       // The name to save the shortlist under; blank means the next "Set #N".
       cartName: "",
     };
@@ -353,6 +322,16 @@ export default {
         : "No sets yet. Select options, then click New set.";
     },
   },
+  watch: {
+    /*
+     * Which notes are open is keyed by set id, and clearing the saved work
+     * starts the numbering over: "Set #1" left open here would open the note
+     * of the next unrelated set to take that name.
+     */
+    setsIDs(ids) {
+      if (ids.length === 0) this.openNotes = {};
+    },
+  },
   methods: {
     /** An option a zoom left out is still shortlisted, just not on screen. */
     isShown(id) {
@@ -380,11 +359,6 @@ export default {
     },
     compareSet(id) {
       this.$store.dispatch("openCompare", { source: "set", setID: id });
-    },
-    clearSavedWork() {
-      this.confirmClear = false;
-      this.openNotes = {};
-      this.$store.dispatch("clearSavedWork");
     },
     nameOf(id) {
       let metadata = this.setsMetadataMap[id];
