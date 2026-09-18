@@ -57,15 +57,52 @@
               <div v-if="dim.n === 0" class="ax-hist ax-hist--empty">
                 no values
               </div>
-              <div v-else class="ax-hist">
+              <div
+                v-else
+                class="ax-hist"
+                :class="{ 'ax-hist--levels': dim.levels }"
+              >
                 <div class="ax-band" :style="bandStyle(dim)"></div>
-                <div
-                  v-for="(count, i) in dim.bins"
-                  :key="i"
-                  class="ax-bin"
-                  :style="binStyle(dim, count)"
-                ></div>
+                <!-- Few distinct values: a stem at each one's own place, so
+                     uneven levels stay uneven, with its count on top when
+                     there is room and on hover always. -->
+                <div v-if="dim.levels" class="ax-stems">
+                  <div
+                    v-for="level in dim.levels"
+                    :key="level.value"
+                    class="ax-stem"
+                    :style="{ left: histPosition(dim, level.value) + '%' }"
+                    :title="levelTitle(dim, level)"
+                  >
+                    <div
+                      class="ax-stem-bar"
+                      :style="{ height: barHeight(dim, level.count) }"
+                    >
+                      <span v-if="showsCounts(dim)" class="ax-stem-count">{{
+                        level.count.toLocaleString()
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+                <template v-else>
+                  <div
+                    v-for="(count, i) in dim.bins"
+                    :key="i"
+                    class="ax-bin"
+                    :style="{ height: barHeight(dim, count) }"
+                    :title="binTitle(dim, i, count)"
+                  ></div>
+                </template>
                 <div class="ax-mean" :style="meanStyle(dim)"></div>
+              </div>
+              <div v-if="dim.n > 0" class="ax-axis">
+                <span
+                  v-for="(tick, i) in axisTicks(dim)"
+                  :key="i"
+                  class="ax-tick"
+                  :style="tick.style"
+                  >{{ tick.text }}</span
+                >
               </div>
               <div v-if="dim.n > 0" class="ax-dim-stats">
                 <span
@@ -378,6 +415,13 @@ const FEW_OPTIONS = 30;
 const LIGHT_TEXT_ON = 0.6;
 // The panel this dialog plots a pair in.
 const SCATTER_TYPE = "ScatterPlot";
+// How far in from each edge, in percent, a dimension's lowest and highest
+// levels stand.
+const LEVEL_INSET = 8;
+// Up to this many levels, each stem carries its count and each level is
+// labelled; past it, only the ends are, and the counts are on hover.
+const COUNT_LABEL_LEVELS = 6;
+const TICK_LEVELS = 5;
 
 const MEASURES = [
   {
@@ -804,15 +848,84 @@ export default {
         Math.max(Math.abs(dim.min), Math.abs(dim.max))
       );
     },
-    /** Where a value falls across the histogram, in percent. */
+    /**
+     * Where a value falls across the chart, in percent. Bins run edge to
+     * edge; levels sit inset, so the end stems and their labels aren't cut.
+     */
     histPosition(dim, value) {
+      if (dim.levels) {
+        if (dim.max === dim.min) return 50;
+        let span = 100 - 2 * LEVEL_INSET;
+        let at = LEVEL_INSET + ((value - dim.min) / (dim.max - dim.min)) * span;
+        return Math.max(LEVEL_INSET, Math.min(100 - LEVEL_INSET, at));
+      }
       let at = ((value - dim.lo) / (dim.hi - dim.lo)) * 100;
       return Math.max(0, Math.min(100, at));
     },
-    binStyle(dim, count) {
-      if (count === 0) return { height: "0" };
+    barHeight(dim, count) {
+      if (count === 0) return "0";
       // The shortest non-empty bar stays visible beside a tall one.
-      return { height: Math.max(6, (count / dim.peak) * 100) + "%" };
+      return Math.max(6, (count / dim.peak) * 100) + "%";
+    },
+    showsCounts(dim) {
+      return dim.levels.length <= COUNT_LABEL_LEVELS;
+    },
+    optionCount(count) {
+      return count.toLocaleString() + (count === 1 ? " option" : " options");
+    },
+    /**
+     * A level as it is written, to as many decimals as the levels need: the
+     * filters' rounding would turn a level of 3.25 into 3.3.
+     */
+    levelText(dim, value) {
+      let decimals = 0;
+      dim.levels.forEach(function(level) {
+        while (decimals < 4 && Number(level.value.toFixed(decimals)) !== level.value) {
+          decimals += 1;
+        }
+      });
+      return value.toLocaleString("en-US", { maximumFractionDigits: decimals });
+    },
+    levelTitle(dim, level) {
+      return (
+        this.levelText(dim, level.value) +
+        ": " +
+        this.optionCount(level.count) +
+        " (" +
+        Math.round((level.count / dim.n) * 100) +
+        "%)"
+      );
+    },
+    binTitle(dim, i, count) {
+      let width = (dim.hi - dim.lo) / dim.bins.length;
+      let from = dim.lo + i * width;
+      // Whole numbers get a bar per value, centred on it.
+      let range =
+        dim.lo === dim.min - 0.5
+          ? this.statText(dim, from + 0.5)
+          : this.statText(dim, from) + " to " + this.statText(dim, from + width);
+      return range + ": " + this.optionCount(count);
+    },
+    /** The values under the chart: its two ends, or the levels themselves. */
+    axisTicks(dim) {
+      let self = this;
+      if (dim.levels) {
+        let levels = dim.levels;
+        if (levels.length > TICK_LEVELS) levels = [levels[0], levels[levels.length - 1]];
+        return levels.map(function(level) {
+          return {
+            text: self.levelText(dim, level.value),
+            style: {
+              left: self.histPosition(dim, level.value) + "%",
+              transform: "translateX(-50%)",
+            },
+          };
+        });
+      }
+      return [
+        { text: this.statText(dim, dim.min), style: { left: 0 } },
+        { text: this.statText(dim, dim.max), style: { right: 0 } },
+      ];
     },
     bandStyle(dim) {
       let from = this.histPosition(dim, dim.mean - dim.std);
@@ -1212,12 +1325,12 @@ export default {
 .ax-dims {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  grid-auto-rows: 70px;
+  grid-auto-rows: 88px;
   gap: 8px;
 }
 /* Two rows of tiles and the gap between them. */
 .ax-dims--collapsed {
-  max-height: 148px;
+  max-height: 184px;
   overflow: hidden;
 }
 .ax-dim {
@@ -1286,6 +1399,7 @@ export default {
   top: 0;
   bottom: 0;
   background: rgba(25, 118, 210, 0.1);
+  pointer-events: none;
 }
 .ax-bin {
   position: relative;
@@ -1294,6 +1408,10 @@ export default {
   background: #90a4ae;
   border-radius: 1px 1px 0 0;
 }
+.ax-bin:hover,
+.ax-stem:hover .ax-stem-bar {
+  background: #546e7a;
+}
 .ax-mean {
   position: absolute;
   top: -2px;
@@ -1301,6 +1419,64 @@ export default {
   width: 2px;
   margin-left: -1px;
   background: #1565c0;
+  pointer-events: none;
+}
+/* Levels: the top of the chart is kept for the counts over the stems, clear
+   of the average line, which a balanced sweep puts on its middle level. */
+.ax-hist--levels .ax-band,
+.ax-hist--levels .ax-mean {
+  top: 12px;
+}
+.ax-stems {
+  position: absolute;
+  top: 12px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+/* Wider than its bar, so a thin stem is easy to hover for its count. */
+.ax-stem {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  margin-left: -6px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.ax-stem-bar {
+  position: relative;
+  width: 6px;
+  background: #90a4ae;
+  border-radius: 1px 1px 0 0;
+}
+.ax-stem-count {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 1px;
+  font-size: 10px;
+  line-height: 11px;
+  color: #546e7a;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* The chart's two ends, or its levels, under the baseline. */
+.ax-axis {
+  position: relative;
+  flex: 0 0 12px;
+  margin-bottom: 1px;
+  font-size: 10px;
+  line-height: 12px;
+  color: #90a4ae;
+  font-variant-numeric: tabular-nums;
+}
+.ax-tick {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
 }
 .ax-dim-stats {
   display: flex;
