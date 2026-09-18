@@ -273,7 +273,7 @@ function extentsFor(state, schema) {
 
 /*
  * The encoder is not a build dependency. It is imported at runtime from a
- * CDN, through a Function so that webpack 4 leaves the import alone, and
+ * CDN, through a Function so that the bundler leaves the import alone, and
  * the whole thing is optional: while it is loading, or if it never loads,
  * suggestions come from the lexical ranking and nothing in the bar changes.
  */

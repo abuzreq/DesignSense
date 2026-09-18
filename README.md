@@ -48,10 +48,10 @@ npm run build-prod
 
 which writes `dist/`, ready to serve as static files.
 
-**On Node versions:** the build depends on `fibers`, which only compiles on
-older Node — this repo builds on Node 15. Newer Node will fail to install it,
-and webpack 4 additionally needs `NODE_OPTIONS=--openssl-legacy-provider` on
-Node 17 and above.
+**On Node versions:** the repo builds on Node 22 — `.nvmrc` pins 22.14.0, and
+`netlify.toml` gives the deploy the same version. Node 18.12 is the floor the
+build tools ask for. The same Node runs the evaluation harness under `eval/`,
+which needs 18 or newer for `fetch`.
 
 **On the Google key:** listing a Google Drive folder needs a browser API key,
 which `src/main.js` sets as `window.Gkey`. A fork should replace it with its

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Sweeps the article's browser SLMs over the same prompt, validator and metrics.
 #
-# Node is pinned by absolute path: nvm-windows switches the global symlink, and
-# this project's dev server pins Node 15 (fibers), which cannot run the harness.
+# Runs on the project's Node (22.x, see .nvmrc). Override with NODE=... to try
+# the sweep on another build.
 set -u
 
-NODE="C:/Users/abuzr/AppData/Roaming/nvm/v24.19.0/node.exe"
+NODE="${NODE:-node}"
 OUT="eval/slm-sweep"
 mkdir -p "$OUT"
 

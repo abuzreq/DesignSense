@@ -411,8 +411,13 @@ command-surface work.
   untouched and nothing under `src/` depends on it:
 
   ```bash
-  npm install --no-save @huggingface/transformers
+  npm install --no-save @huggingface/transformers onnxruntime-node
   ```
+
+  Because it is unsaved, `npm ci` and a fresh `npm install` remove it again:
+  run that line after either, or a3-a6, `guided.mjs`, `train-head.mjs` and
+  `bench-device.mjs` stop at `ERR_MODULE_NOT_FOUND`. The rule-based ladder
+  (a0, a1, a1c, a1g, a1p) and `validate.mjs` need nothing but Node.
 
   Potion's ONNX is cached in `eval/.cache/` (gitignored). Qwen and MiniLM are
   cached by transformers.js under `node_modules`.
@@ -638,7 +643,7 @@ and a1p is a porting bug.
 # The browser SLM question, settled
 
 ```bash
-bash eval/run-slm-sweep.sh          # the sweep; Node 24 pinned by absolute path
+bash eval/run-slm-sweep.sh          # the sweep; runs on the project's Node
 ```
 
 Prompted by an article recommending seven SLMs runnable in-browser, the

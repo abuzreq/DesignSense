@@ -274,8 +274,10 @@ div ::v-deep svg.scatter-svg.lasso-mode circle.point,
 const pf = require("pareto-frontier");
 
 import * as d3 from "d3";
+// Called as `lasso()`, not `d3.lasso()`: a module namespace is sealed, so the
+// old line that hung it on d3 fails silently under a bundler that keeps them
+// as real modules.
 import { lasso } from "d3-lasso";
-d3.lasso = lasso;
 
 //import ScatterPlot from "@/components/Scatterplot.js";
 import { mapGetters, mapState } from "vuex";
@@ -286,7 +288,7 @@ import { PANEL_HEADER_HEIGHT } from "@/layout.js";
 import { formatValue } from "@/store/filters.js";
 import { dimensionItems, displayName } from "@/columns.js";
 import { RATING_DIMENSION } from "@/ratings.js";
-import ClusterIcon from "-!vue-svg-loader!/src/assets/cluster_icon.svg";
+import ClusterIcon from "@/assets/cluster_icon.svg?component";
 import ClusterView from "@/components/ClusterView.vue";
 
 // SVG circles become the bottleneck past a couple thousand points: each is a
@@ -892,8 +894,7 @@ class ScatterPlot {
             .attr("height", innerHeight)
             .style("opacity", 0);
 
-          lassoBrush = d3
-            .lasso()
+          lassoBrush = lasso()
             .closePathDistance(120)
             .closePathSelect(true)
             .hoverSelect(false)

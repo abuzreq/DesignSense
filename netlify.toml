@@ -1,0 +1,9 @@
+# Netlify builds this site from the repository, so the build lives here rather
+# than in the site's settings.
+[build]
+  command = "npm run build-prod"
+  publish = "dist"
+
+[build.environment]
+  # Kept the same as .nvmrc, which is what a local nvm/fnm reads.
+  NODE_VERSION = "22.14.0"

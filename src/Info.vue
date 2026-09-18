@@ -14,7 +14,9 @@
         </div>
         <div class="figure">
           
-          <router-link to="/demo"> <img src="assets/design_sense_teaser.jpg" /></router-link>
+          <router-link to="/demo">
+            <img :src="teaser" alt="The interface of DesignSense" />
+          </router-link>
 
          
           <div class="caption">
@@ -52,20 +54,11 @@
 </template>
 <script>
 
-import Teaser from "@/assets/design_sense_teaser.jpg";
+import teaser from "@/assets/design_sense_teaser.jpg";
 
 export default {
-  components: {
-    Teaser
-  },
   data() {
-    return {
-      publicPath: process.env.BASE_URL,
-    };
-  },
-  created() {
-    console.log(Teaser)
-    console.log(this.publicPath, process.env);
+    return { teaser };
   },
   methods: {
     disableTracking: function() {

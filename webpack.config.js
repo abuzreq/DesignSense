@@ -1,144 +1,157 @@
-const webpack = require('webpack');
 const path = require('path');
+const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
-const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
-const HtmlWebpackPlugin = require('vue-html-webpack-plugin')
-const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
+const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin');
 
+// Where the app is served from. Netlify serves it at the domain root.
 const ASSET_PATH = process.env.ASSET_PATH || '/';
 
+module.exports = (env, argv) => {
+  const isProduction = argv.mode === 'production';
 
-const config = {
-  entry: './src/main.js',
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js',
-    publicPath: ASSET_PATH,
-  },
-  devtool: 'source-map',
-  module: {
-    rules: [
-      {
-        test: /\.vue$/,
-        loader: 'vue-loader'
-      },
-      {
-        test: /\.jpg$/,
-        use: [
-          {
-            loader: 'vue-loader',
-            options: {
-              mimetype: 'image/jpg',
-              esModule: false,
-            }
-          }
-        ]
-      },
-      {
-        test: /\.svg$/,
-        use: [
-          'vue-svg-loader',
+  return {
+    // Named explicitly so the "@" alias and every relative path resolve
+    // against this file rather than whichever directory npm was run from.
+    context: __dirname,
+    entry: './src/main.js',
 
-          'babel-loader',
-        ],
-      },
-      {
-        test: /\.(png|jpe?g|gif|eot|ttf|woff|woff2|svg)(\?.+)?$/,
-        use: [
-          {
-            loader: 'url-loader',
-            options: {
-              limit: 10000,
+    output: {
+      path: path.resolve(__dirname, 'dist'),
+      filename: 'bundle.js',
+      assetModuleFilename: 'assets/[name].[contenthash:8][ext][query]',
+      publicPath: ASSET_PATH,
+      clean: true,
+    },
+
+    devtool: isProduction ? 'source-map' : 'eval-cheap-module-source-map',
+
+    cache: {
+      type: 'filesystem',
+      buildDependencies: { config: [__filename] },
+    },
+
+    resolve: {
+      extensions: ['.js', '.vue'],
+      alias: { '@': path.resolve(__dirname, 'src') },
+    },
+
+    module: {
+      rules: [
+        {
+          test: /\.vue$/,
+          loader: 'vue-loader',
+        },
+
+        // An .svg is either a Vue component or a URL, never both: `oneOf`
+        // stops a second rule from claiming a file the first already took,
+        // which is how the teaser image ended up being JavaScript.
+        {
+          test: /\.svg$/i,
+          oneOf: [
+            { resourceQuery: /component/, use: ['vue-svg-loader'] },
+            { type: 'asset' },
+          ],
+        },
+
+        // Under 10 kB becomes a data URI, as url-loader's old limit did.
+        {
+          test: /\.(png|jpe?g|gif|webp)$/i,
+          type: 'asset',
+          parser: { dataUrlCondition: { maxSize: 10 * 1024 } },
+        },
+
+        // Always files: the smallest icon font here is 60 kB.
+        {
+          test: /\.(woff2?|eot|ttf|otf)$/i,
+          type: 'asset/resource',
+        },
+
+        // `sourceMap` follows devtool unless it is said here, and these
+        // loaders write their maps into the stylesheet as base64 -- which put
+        // 1.2 MB of mappings inside the production bundle. Worth having while
+        // developing, worth nothing to a visitor.
+        {
+          test: /\.css$/i,
+          use: [
+            'vue-style-loader',
+            // vue-style-loader reads CommonJS, not ES modules.
+            {
+              loader: 'css-loader',
+              options: { esModule: false, sourceMap: !isProduction },
             },
-            
-          },
-        ],
-      },
-      {
-        test: /\.css$/i,
-        use: [ 'style-loader','css-loader'],
-      },
-      {
-        test: /\.s[a|c]ss$/,
- 
-        use: [
-          'vue-style-loader',
-          'css-loader',
-          {
-            loader: 'sass-loader',
-            
-            // Requires sass-loader@^7.0.0
-            options: {
-              implementation: require('sass'),
-              fiber: require('fibers'),
-              indentedSyntax: true // optional
-            },
-            // Requires sass-loader@^8.0.0
-            options: {
-              implementation: require('sass'),
-              sassOptions: {
-                fiber: require('fibers'),
-                indentedSyntax: true // optional
+          ],
+        },
+
+        // Vuetify ships its components' styles as indented .sass; sass-loader
+        // picks the syntax from the extension, so nothing has to say so here.
+        {
+          test: /\.s[ac]ss$/i,
+          use: [
+            'vue-style-loader',
+            {
+              loader: 'css-loader',
+              options: {
+                esModule: false,
+                importLoaders: 1,
+                sourceMap: !isProduction,
               },
             },
-          },
-        ],
-      },
-      {
-        test: /\.(jpe?g|png|gif|svg)$/i,
-        use: [
-          {
-            loader: "file-loader",
-            options: {
-              name: "[name].[ext]",
-              outputPath: "assets/",
-              publicPath: "assets/"
-            }
-          }
-        ]
-      },
-      {
-        test: /\.png$/,
-        use: [
-          {
-            loader: 'url-loader',
-            options: {
-              mimetype: 'image/png'
-            }
-          }
-        ]
-      },
-      {
-        test: /\.jpg$/,
-        use: [
-          {
-            loader: 'url-loader',
-            options: {
-              mimetype: 'image/jpg'
-            }
-          }
-        ]
-      },
-    ]
-  },
-  resolve: {
-    extensions: [
-      '.js',
-      '.vue'
+            {
+              loader: 'sass-loader',
+              options: {
+                implementation: require('sass'),
+                sourceMap: !isProduction,
+              },
+            },
+          ],
+        },
+      ],
+    },
+
+    plugins: [
+      // A few dependencies reach for Node's `process` -- node-kmeans calls
+      // process.nextTick, vue-tour and vue-3d-model read process.env. webpack 4
+      // shimmed it silently; webpack 5 does not, and the first sign is a
+      // ReferenceError deep inside a feature. This is the whole shim: nothing
+      // in src/ asks for it.
+      new webpack.ProvidePlugin({ process: 'process/browser' }),
+      new VueLoaderPlugin(),
+      // src/plugins/vuetify.js imports vuetify/lib, which registers nothing on
+      // its own: this is what turns each <v-btn> in a template into an import
+      // of that component. Without it every Vuetify tag renders as an unknown
+      // element. It has to come after VueLoaderPlugin, which is what rewrites
+      // the .vue rule into the shape this one looks for.
+      new VuetifyLoaderPlugin(),
+      new HtmlWebpackPlugin({
+        template: path.resolve(__dirname, 'public/index.html'),
+        title: 'DesignSense',
+      }),
     ],
-    alias: {
-      '@': path.resolve('src')
-    }
-  },
-  plugins: [
-    new VueLoaderPlugin(),
-    new VuetifyLoaderPlugin(),
-    new LodashModuleReplacementPlugin,
 
-    new HtmlWebpackPlugin({
-      vue: true
-    })
-  ]
+    devServer: {
+      port: 8080,
+      hot: true,
+      // The bundle and index.html are served from memory. This is only so a
+      // study in testdata/ can be opened by link while developing.
+      static: [
+        {
+          directory: path.resolve(__dirname, 'testdata'),
+          publicPath: '/testdata',
+        },
+      ],
+      client: { overlay: { errors: true, warnings: false } },
+      // The router is in hash mode, so no history fallback is needed.
+    },
+
+    // vue-loader 15 writes `import style0 from "...type=style"` for every
+    // block of styles in a component, while vue-style-loader hands back a
+    // CommonJS module whose exports webpack cannot see through. The styles are
+    // injected by the import itself, so the missing binding is harmless -- but
+    // it is one warning per styled component, which buries real ones.
+    ignoreWarnings: [/export 'default' \(imported as 'style\d+'\) was not found/],
+
+    // The bundle is large and known to be; the warning says nothing new.
+    performance: { hints: false },
+  };
 };
-
-module.exports = config;
