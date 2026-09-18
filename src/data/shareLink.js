@@ -55,6 +55,24 @@ export function readShareParams(location) {
   return id === null ? null : decodeUrl(id);
 }
 
+/**
+ * The page's address with its query naming `link` as a share link does, or
+ * naming no dataset when `link` is null. The path, the hash route and any
+ * other parameters stay as they are.
+ */
+export function addressFor(location, link) {
+  let params = location.search
+    .replace(/^\?/, "")
+    .split("&")
+    .filter((part) => part !== "" && !/^(ID|GFOLDER)=/.test(part));
+  if (link) params.push("ID=" + encodeURIComponent(encodeUrl(link)));
+  return (
+    location.pathname +
+    (params.length > 0 ? "?" + params.join("&") : "") +
+    location.hash
+  );
+}
+
 function readParam(query, name) {
   let match = query.match(new RegExp("[?&]" + name + "=([^&#]*)"));
   if (!match) return null;

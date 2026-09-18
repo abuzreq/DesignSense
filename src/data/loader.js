@@ -1,6 +1,7 @@
 import Vue from "vue";
 import { buildDataset } from "./table.js";
 import { fetchSource, resolveSource } from "./sources.js";
+import { addressFor } from "./shareLink.js";
 
 export const DEFAULT_DATASET_URL =
   "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv";
@@ -23,6 +24,23 @@ export const loadState = Vue.observable({
 let mount = null;
 let latestLoad = 0;
 const STALE = { stale: true };
+
+/**
+ * Keeps the address bar naming the dataset on screen, in the form a share link
+ * uses, so that reloading the page or bookmarking it reopens this dataset
+ * rather than the sample. Replaced rather than pushed: Back has no dataset of
+ * its own to return to. A local file has no link to name, and the sample
+ * needs none, so for those the address names nothing.
+ */
+function rememberInAddressBar(link) {
+  if (typeof window === "undefined" || !window.history) return;
+  let named = link && link !== DEFAULT_DATASET_URL ? link : null;
+  let current =
+    window.location.pathname + window.location.search + window.location.hash;
+  let next = addressFor(window.location, named);
+  // The router keeps its own key in the history state; it stays.
+  if (next !== current) window.history.replaceState(window.history.state, "", next);
+}
 
 /** `options.mount(data, dataTypesMap, { link, name })` shows a loaded dataset. */
 export function configureLoader(options) {
@@ -69,6 +87,7 @@ export function loadDataset(input, options) {
       });
       loadState.warnings = dataset.warnings;
       loadState.link = fetched.link || null;
+      rememberInAddressBar(loadState.link);
       let source = loadState.source;
       if (source === "url" || source === "preset" || source === "file") {
         let n = dataset.data.length;
