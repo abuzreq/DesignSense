@@ -969,7 +969,7 @@ export default {
           "<b>Lite</b> keeps things simple: you narrow the options with filters. <b>Expert</b> adds " + EXPERT_ADDS + ". The tour starts in Lite.",
           "bottom"),
         tourStep(this, "lite", "#loading-data-bar", "Load your data",
-          "Open a collection from your computer or from a shared folder. This tour uses a small set of used cars.",
+          "Open one of the prepared datasets, a link or shared folder, or a file from your computer. This tour uses a small set of used cars.",
           "bottom"),
         tourStep(this, "lite", '.v-card[type="Grid"]', "Gallery",
           "Every option appears here as an image. Sort them from the menu at the top and change the image size on the right. Click an image to inspect it, and click it again to stop.",

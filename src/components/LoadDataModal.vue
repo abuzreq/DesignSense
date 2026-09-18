@@ -49,6 +49,41 @@
               >{{ loadState.error }}</v-alert
             >
 
+            <!-- First, as the quickest way to something to explore. -->
+            <div class="load-label">A prepared dataset</div>
+            <div class="load-row">
+              <v-select
+                v-model="selectedPreset"
+                :items="presets"
+                item-text="name"
+                return-object
+                dense
+                outlined
+                hide-details
+                placeholder="Choose a dataset"
+                :disabled="loadState.loading"
+              >
+                <template v-slot:item="{ item }">
+                  <v-list-item-content>
+                    <v-list-item-title>{{ item.name }}</v-list-item-title>
+                    <v-list-item-subtitle v-if="item.info" class="preset-info">{{
+                      item.info
+                    }}</v-list-item-subtitle>
+                  </v-list-item-content>
+                </template>
+              </v-select>
+              <v-btn
+                color="primary"
+                depressed
+                :disabled="!selectedPreset || loadState.loading"
+                :loading="isLoading('preset')"
+                @click="loadPreset"
+                >Load</v-btn
+              >
+            </div>
+
+            <v-divider class="my-4" />
+
             <div class="load-label">From a link</div>
             <div class="load-row">
               <v-text-field
@@ -167,40 +202,6 @@
                 </v-expansion-panel-content>
               </v-expansion-panel>
             </v-expansion-panels>
-
-            <v-divider class="my-4" />
-
-            <div class="load-label">A prepared dataset</div>
-            <div class="load-row">
-              <v-select
-                v-model="selectedPreset"
-                :items="presets"
-                item-text="name"
-                return-object
-                dense
-                outlined
-                hide-details
-                placeholder="Choose a dataset"
-                :disabled="loadState.loading"
-              >
-                <template v-slot:item="{ item }">
-                  <v-list-item-content>
-                    <v-list-item-title>{{ item.name }}</v-list-item-title>
-                    <v-list-item-subtitle v-if="item.info" class="preset-info">{{
-                      item.info
-                    }}</v-list-item-subtitle>
-                  </v-list-item-content>
-                </template>
-              </v-select>
-              <v-btn
-                color="primary"
-                depressed
-                :disabled="!selectedPreset || loadState.loading"
-                :loading="isLoading('preset')"
-                @click="loadPreset"
-                >Load</v-btn
-              >
-            </div>
 
             <v-divider class="my-4" />
 
