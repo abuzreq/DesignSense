@@ -1,27 +1,41 @@
 <template>
-  <v-card
+  <!-- Plain elements, not v-card, v-img and v-icon: a screen of cards is a
+       hundred of each, and a filter that changes which options are shown
+       builds or patches all of them. The classes keep the v-card look. -->
+  <div
     class="thumbnail_card"
-    :class="{ hovered: isHovered, 'thumbnail_card--shortlisted': inCart }"
+    :class="{
+      hovered: isHovered,
+      'thumbnail_card--shortlisted': inCart,
+      'thumbnail_card--loading': !isLoaded,
+    }"
     :id="cardId"
   >
     <!-- A button to the keyboard as well as the mouse: Tab reaches it, and
          Enter or Space inspects, as a click does. Space is stopped here so it
          doesn't also start the hold-Space inspection the workspace listens for. -->
-    <v-img
+    <div
+      class="card-image"
       :class="imageClasses"
-      :src="failed ? fallbackImage : item.image"
-      :lazy-src="lazySrc"
-      :alt="altText"
       tabindex="0"
       role="button"
       :aria-label="'Inspect ' + altText"
       @mouseover="$emit('hover', item)"
       @click="$emit('inspect', item)"
-      @keydown.native.enter.prevent="$emit('inspect', item)"
-      @keydown.native.space.prevent.stop="$emit('inspect', item)"
-      @load="$emit('load')"
-      @error="failed = true"
+      @keydown.enter.prevent="$emit('inspect', item)"
+      @keydown.space.prevent.stop="$emit('inspect', item)"
     >
+      <!-- Until it loads, a grey 4:3 box fills the column; then the card is
+           as wide as the picture, up to the column, and as tall as its
+           proportions make it. -->
+      <img
+        class="card-image__img"
+        :src="shownSrc"
+        :alt="altText"
+        loading="lazy"
+        @load="onLoad"
+        @error="onError"
+      />
       <button
         v-if="control === 'gallery'"
         class="gallery-toggle"
@@ -29,9 +43,9 @@
         @mousedown.stop
         @click.stop="$emit('toggle-gallery', item)"
       >
-        <v-icon small color="white">{{
-          inGallery ? "mdi-minus" : "mdi-plus"
-        }}</v-icon>
+        <svg class="card-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path :d="inGallery ? icons.minus : icons.plus" />
+        </svg>
       </button>
       <input
         v-else-if="control === 'checkbox'"
@@ -52,7 +66,9 @@
       <!-- Cards always show the first view, so scrolling and the clusters
            stay put; the badge says there is more to see in the inspector. -->
       <span v-if="viewCount > 1" class="view-badge" :title="viewCount + ' views'">
-        <v-icon x-small color="white">mdi-image-multiple</v-icon>
+        <svg class="card-icon card-icon--x-small" viewBox="0 0 24 24" aria-hidden="true">
+          <path :d="icons.views" />
+        </svg>
         {{ viewCount }}
       </span>
       <!-- The shortlist is not the selection: it keeps an option aside while
@@ -70,11 +86,11 @@
         @mousedown.stop
         @click.stop="$emit('toggle-cart', item)"
       >
-        <v-icon small color="white">{{
-          inCart ? "mdi-bookmark-check" : "mdi-bookmark-plus-outline"
-        }}</v-icon>
+        <svg class="card-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path :d="inCart ? icons.inCart : icons.addToCart" />
+        </svg>
       </button>
-    </v-img>
+    </div>
 
     <!-- Only the details layout shows a card's values, and only once opened. -->
     <v-expansion-panels v-if="showDetails" v-model="openPanel">
@@ -105,13 +121,28 @@
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
-  </v-card>
+  </div>
 </template>
 
 <script>
+import {
+  mdiBookmarkCheck,
+  mdiBookmarkPlusOutline,
+  mdiImageMultiple,
+  mdiMinus,
+  mdiPlus,
+} from "@mdi/js";
 import { formatValue } from "@/store/filters.js";
 import { displayName, optionName } from "@/columns.js";
 import { FALLBACK_IMAGE } from "@/components/constants.js";
+
+const ICONS = Object.freeze({
+  plus: mdiPlus,
+  minus: mdiMinus,
+  views: mdiImageMultiple,
+  inCart: mdiBookmarkCheck,
+  addToCart: mdiBookmarkPlusOutline,
+});
 
 /**
  * One gallery thumbnail. A card of its own so that it re-renders only when
@@ -124,7 +155,6 @@ export default {
   props: {
     item: { type: Object, required: true },
     cardId: { type: String, required: true },
-    lazySrc: { type: String, default: undefined },
     // Which selection control the card offers: "gallery" (Lite's -/+),
     // "checkbox", "xbutton" or none.
     control: { type: String, default: null },
@@ -142,14 +172,17 @@ export default {
   data() {
     return {
       failed: false,
+      // The source the image last finished loading. A card handed another
+      // option keeps it, so a picture the two share counts as loaded at once.
+      loadedSrc: null,
       // The details panel's open index; undefined while closed.
       openPanel: undefined,
-      fallbackImage: FALLBACK_IMAGE,
       isHovered: false,
       inCart: false,
     };
   },
   created() {
+    this.icons = ICONS;
     // Every card checks the hovered option, but only the two whose answer
     // changes re-render; a prop would re-render the whole gallery instead.
     this.$watch(
@@ -176,6 +209,14 @@ export default {
     altText() {
       return optionName(this.item);
     },
+    // An option with no picture shows the fallback, as one whose picture
+    // failed does.
+    shownSrc() {
+      return this.failed || !this.item.image ? FALLBACK_IMAGE : this.item.image;
+    },
+    isLoaded() {
+      return this.loadedSrc !== null && this.loadedSrc === this.shownSrc;
+    },
     viewCount() {
       return this.item.images ? this.item.images.length : 0;
     },
@@ -198,6 +239,14 @@ export default {
   },
   methods: {
     label: displayName,
+    onLoad() {
+      this.loadedSrc = this.shownSrc;
+      this.$emit("load");
+    },
+    // The fallback is inline, so it can't fail in turn.
+    onError() {
+      this.failed = true;
+    },
     /** Custom and weighted values are rounded; "—" when missing. */
     formatParam(param) {
       // Rows are not reactive (see store/rows.js): the version redraws edits.
@@ -214,41 +263,95 @@ export default {
 </script>
 
 <style scoped>
+/* What v-card and v-img gave the card: a raised white sheet whose picture
+   fills its width, corners rounded, with the controls laid over it. */
+.thumbnail_card {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  border-radius: 4px;
+  background-color: #fff;
+  color: rgba(0, 0, 0, 0.87);
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+    0 1px 5px 0 rgba(0, 0, 0, 0.12);
+}
+
+.card-image {
+  position: relative;
+  overflow: hidden;
+  border-radius: inherit;
+  cursor: pointer;
+}
+
+/* The details panel below it takes the bottom corners. */
+.card-image:not(:last-child) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.card-image__img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* The column is a flex box, so the card's width follows the picture; with no
+   picture yet that is nothing, and a box of no size is never loaded lazily. */
+.thumbnail_card--loading {
+  width: 100%;
+}
+
+.thumbnail_card--loading .card-image__img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background-color: #eceff1;
+}
+
+.card-icon {
+  width: 16px;
+  height: 16px;
+  fill: #fff;
+}
+
+.card-icon--x-small {
+  width: 12px;
+  height: 12px;
+}
+
 .details-hint {
   text-align: center;
   font-size: smaller;
 }
 
-.thumbnail_card:not(.hovered) .v-image.under_drag_selection {
+.thumbnail_card:not(.hovered) .card-image.under_drag_selection {
   border: 2px dashed rgb(33, 119, 180);
 }
 
-.thumbnail_card:not(.hovered) .v-image.outlined {
+.thumbnail_card:not(.hovered) .card-image.outlined {
   border: 3px solid rgb(33, 119, 180);
   background-color: lightgray;
 }
 
-.thumbnail_card:not(.hovered) .v-image.outlined ::v-deep > div {
+.thumbnail_card:not(.hovered) .card-image.outlined > .card-image__img {
   scale: 0.9;
 }
 
-.thumbnail_card.hovered .v-image.outlined {
+.thumbnail_card.hovered .card-image.outlined {
   margin: 2px;
   border: 3px solid rgb(33, 119, 180);
 }
 
-.thumbnail_card .v-image:not(.transparent) {
+.thumbnail_card .card-image:not(.transparent) {
   opacity: 1;
 }
 
-.thumbnail_card .v-image.transparent {
+.thumbnail_card .card-image.transparent {
   opacity: 0.35;
 }
 
 /* Lite: unselected options stay in the pool, dimmed. Only the picture fades,
    so the card's select button stays readable. */
-.v-image.gallery-dimmed ::v-deep .v-image__image,
-.v-image.gallery-dimmed ::v-deep .v-image__placeholder {
+.card-image.gallery-dimmed > .card-image__img {
   opacity: 0.3;
 }
 
@@ -337,7 +440,7 @@ export default {
 }
 
 .xbtn {
-  position: relative;
+  position: absolute;
   top: -6%;
   left: -4%;
   height: 18px;

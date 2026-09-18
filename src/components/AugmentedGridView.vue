@@ -276,7 +276,6 @@
                       <GalleryCard
                         :item="card.item"
                         :card-id="cardSelector + card.item._id"
-                        :lazy-src="lazyImageSrc"
                         :control="cardControl"
                         :show-details="possibleColSpans[colSpan] > 3"
                         :detail-keys="filteredKeys"
@@ -545,10 +544,6 @@ import { dimensionItems, displayName, optionName } from "@/columns.js";
 
 import PanelHeader from "@/components/PanelHeader.vue";
 
-// What a thumbnail shows while its image loads: a light-grey 4x3 rectangle.
-const LAZY_PLACEHOLDER =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='3'%3E%3Crect width='4' height='3' fill='%23eceff1'/%3E%3C/svg%3E";
-
 // The largest share of the gallery panel's height the inspector may take.
 const INSPECTOR_SHARE = 0.45;
 // The inspector's top bar (buttons, stars) and its details strip, in px.
@@ -651,7 +646,6 @@ export default {
       dragSelection: {},
       numLoadedImages: 0,
       scrollLabel: null,
-      lazyImageSrc: undefined,
       // --- Windowing. Only large collections are virtualized so that the
       // small datasets this tool ships with behave exactly as before. ---
       virtualizeAbove: 150,
@@ -928,9 +922,6 @@ export default {
     // Both modes open on every option; the eye narrows to the selection.
     this.enableContext = true;
     this.updateContext();
-    // Nothing is inspected until the user inspects an option. Loading
-    // thumbnails show a neutral grey, not some other option's picture.
-    this.lazyImageSrc = LAZY_PLACEHOLDER;
 
     this.sortFallback =
       this.keys.find((k) => !isNaN(this.chartData[0][k])) || this.keys[0];
@@ -1039,15 +1030,14 @@ export default {
       let nodes = this.$el
         ? this.$el.querySelectorAll(".images-container > .thumbnail_container")
         : [];
-      // A card whose image has not arrived yet collapses to a few pixels; a
-      // collapsed estimate would window hundreds of cards onto the page. So
-      // only cards with a loaded image count, the tallest of a sample, and
-      // with none loaded yet the current estimate stands.
+      // A card whose image has not arrived yet holds a 4:3 placeholder, not
+      // its real height; a wrong estimate windows too few or too many cards
+      // onto the page. So only cards with a loaded image count, the tallest
+      // of a sample, and with none loaded yet the current estimate stands.
       let h = 0;
       let seen = 0;
       for (let i = 0; i < nodes.length && seen < 24; i++) {
-        if (nodes[i].querySelector(".v-image__image--preload")) continue;
-        if (!nodes[i].querySelector(".v-image__image")) continue;
+        if (nodes[i].querySelector(".thumbnail_card--loading")) continue;
         seen += 1;
         h = Math.max(h, nodes[i].offsetHeight);
       }
