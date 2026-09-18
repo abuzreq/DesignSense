@@ -301,6 +301,16 @@ function notify() {
   });
 }
 
+/**
+ * Stops `onChange` hearing about status changes. The listeners outlive any one
+ * dataset, so a bar that stays subscribed keeps its whole app alive -- store,
+ * rows and charts -- and is asked to index a dataset nobody has open.
+ */
+export function unwatchSemantic(onChange) {
+  let at = semantic.listeners.indexOf(onChange);
+  if (at >= 0) semantic.listeners.splice(at, 1);
+}
+
 /** Starts loading the encoder once; `onChange` hears about status changes. */
 export function warmSemantic(onChange) {
   if (onChange && semantic.listeners.indexOf(onChange) < 0) semantic.listeners.push(onChange);

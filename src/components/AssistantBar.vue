@@ -131,6 +131,7 @@ import {
   suggest,
   acceptSuggestion,
   warmSemantic,
+  unwatchSemantic,
   prepareSemantic,
   semanticStatus,
   requestVector,
@@ -287,13 +288,18 @@ export default {
     // The encoder loads in the background; the bar works before it arrives,
     // and the table's index is built while the page is idle so the first
     // click does not wait for it.
-    warmSemantic((status) => {
+    // Kept, so beforeDestroy can take the same function off again: the
+    // encoder's listeners outlive this bar, and one left behind would keep
+    // this whole app alive after the next dataset replaces it.
+    this.onEncoderStatus = (status) => {
       this.encoder = status;
       if (status === "ready") prepareSemantic(this.$store);
       if (this.open) this.refresh();
-    });
+    };
+    warmSemantic(this.onEncoderStatus);
   },
   beforeDestroy() {
+    unwatchSemantic(this.onEncoderStatus);
     clearInterval(this.hintTimer);
     clearTimeout(this.vectorTimer);
     clearTimeout(this.blurTimer);

@@ -154,7 +154,6 @@ export default {
     initH: "applyLayout",
   },
   created() {
-    console.log("editingMode", this.currentEditingMode);
     this.applyLayout();
   },
   methods: {

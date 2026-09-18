@@ -506,7 +506,7 @@
 //https://hujiulong.github.io/vue-3d-model/#/demo-gltf
 import Vue from "vue";
 
-import imageZoom from "vue-image-zoomer";
+import imageZoom from "@/components/ImageZoom.js";
 
 import { operations } from "@/components/operations.js";
 import { mapState, mapGetters } from "vuex";
@@ -592,7 +592,6 @@ export default {
       isParamsPanelOpen: false,
       chartData: [],
       cards: [],
-      selectionMap: {},
       // Markings change in place, out of Vue's sight; bumped on every change
       // so the cards' selection state is read again.
       markingVersion: 0,
@@ -866,8 +865,14 @@ export default {
     // rendering writes it.
     this.cardKeys = null;
     this.nextCardKey = 0;
+    // The store's marking for this view, read as the selection changes. Kept
+    // off data() as well: made reactive, all of its entries -- one per option
+    // -- would be observed, though the store mutates it in place and the cards
+    // follow markingVersion instead.
+    this.selectionMap = {};
 
-    this.$store.subscribe((mutation, state) => {
+    // Kept, so beforeDestroy can unsubscribe.
+    this.unsubscribeStore = this.$store.subscribe((mutation, state) => {
       if (
         mutation.type === "update" ||
         mutation.type === "reverseUpdate" ||
@@ -1525,6 +1530,8 @@ export default {
     if (this._measureTimer) clearTimeout(this._measureTimer);
     if (this._scrollRaf) cancelAnimationFrame(this._scrollRaf);
     window.removeEventListener("keydown", this.onWindowKeydown);
+    if (this.unsubscribeStore) this.unsubscribeStore();
+    this.$store.commit("removeView", { view: this.viewID });
   },
 
   watch: {

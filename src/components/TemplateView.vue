@@ -57,7 +57,9 @@ export default {
   created() {
     this.viewID = "id" + this._uid;
 
-    this.$store.subscribe((mutation, state) => {
+    // Kept, so beforeDestroy can unsubscribe: the store outlives a panel
+    // that a layout change removes, and would otherwise keep calling it.
+    this.unsubscribeStore = this.$store.subscribe((mutation, state) => {
       if (MARKING_MUTATIONS.includes(mutation.type)) {
         if (this.hasOwnProperty("markingChangeHandler"))
           this.markingChangeHandler(mutation.type === "resetMarking");
@@ -119,6 +121,8 @@ export default {
       clearTimeout(this._refreshTimer);
       this._refreshTimer = null;
     }
+    if (this.unsubscribeStore) this.unsubscribeStore();
+    this.$store.commit("removeView", { view: this.viewID });
   },
   watch: {
     hovered: function (newValue, oldValue) {

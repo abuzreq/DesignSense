@@ -393,7 +393,6 @@ export default {
     },
   },
   mounted() {
-    console.log(this.dimensions);
     this.$store.dispatch("createDefaultView", {
       view: this.viewID,
       vueComponent: this,
@@ -406,30 +405,16 @@ export default {
         ? [this.numericDimensions[0], this.numericDimensions[1]]
         : [this.numericDimensions[0]];
     this.viewID = "id" + this._uid;
-    this.$store.subscribe((mutation, state) => {
-      if (
-        mutation.type === "update" ||
-        mutation.type === "reverseUpdate" ||
-        mutation.type === "resetMarking"
-      ) {
-        /*
-        this.updateContext();
-        this.selectionMap = this.$store.getters.getMarking(this.viewID);
-        this.chartData.forEach(d => {
-          d.selected = this.selectionMap[d._id];
-        });
-        console.log("this.chartData ", this.chartData);
-        this.numSelected = this.countSelected(this.selectionMap);
-        */
-      }
-    });
+  },
+  beforeDestroy() {
+    // The store holds every view by id; a destroyed one lets go of it.
+    this.$store.commit("removeView", { view: this.viewID });
   },
   methods: {
     compute() {
       if (!this.areDimensionsValid()) {
         return;
       }
-      console.log("clustering dimensions", this.dimensions);
       // An option missing any clustering dimension can't be placed in a group.
       let rows = this.chartData.filter((d) =>
         this.dimensions.every((dim) => Number.isFinite(d[dim]))
@@ -490,7 +475,6 @@ export default {
           this.clusterError = "invalid-values";
           return;
         }
-        console.log(matrix)
 
         kmeans.clusterize(matrix, { k: this.numClusters }, (err, res) => {
           if (err) {
@@ -624,9 +608,7 @@ export default {
     },
     highlight(selection) {
       let count = 0;
-      console.log(selection);
       for (var s in selection) {
-        console.log(s, d3.select("#" + this.cardSelector + s));
         d3.select("#" + this.viewID)
           .select("#" + this.cardSelector + s)
           .classed("transparent", false)
@@ -641,13 +623,6 @@ export default {
       }
     },
     unhighlightAll() {
-      console.log(
-        "SIZE",
-        d3
-          .select("#" + this.viewID)
-          .selectAll(".v-card")
-          .size()
-      );
       d3.select("#" + this.viewID)
         .selectAll(".v-card")
         .classed("outlined", false)
@@ -692,7 +667,6 @@ export default {
       immediate: true,
       deep: true,
       handler: function(newValue) {
-        console.log("dims parent");
         this.onDimensionChange(newValue);
       },
     },
@@ -779,7 +753,6 @@ function to2DVisualSimilarityMatrix(data, imgKey, normalize) {
     fetchImage(obj1[imgKey]).then((img1, err) => {
       for (var j = 0; j < i; j++) {
         var obj2 = data[j];
-        console.log(i, j);
         fetchImage(obj2[imgKey]).then((img2, err) => {
           const w = img1.width;
           const h = img1.height;

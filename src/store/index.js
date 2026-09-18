@@ -510,6 +510,10 @@ function builder(
         let vueComponent = payload.vueComponent;
         state.viewsMap[viewID] = vueComponent;
       },
+      /** A destroyed view lets go of its component, which the map would keep. */
+      removeView(state, payload) {
+        delete state.viewsMap[payload.view];
+      },
       createMarkingEntry(state, args) {
         let ID = "";
         if (Object.entries(state.markingsMap).length == 0) {
@@ -661,9 +665,7 @@ function builder(
         let ID = payload.setID;
 
         let setMarking = setToMarking(state.setsMap[ID], state.rawData);
-        console.log(ID, state.setsMap[ID], setMarking);
         setMarking = operate(setMarking, payload.members, payload.operation);
-        console.log(getSelectedIDs(setMarking));
         Vue.set(state.setsMap, ID, getSelectedIDs(setMarking));
         // Edited by hand, so the filters it was saved from no longer describe it.
         Vue.set(state.setsCriteriaMap, ID, null);
@@ -1104,7 +1106,6 @@ function builder(
         let view = payload.view;
         let vueComponent = payload.vueComponent;
         let markingID = context.state.defaultMarkingID;
-        console.log("createDefaultView", payload);
         context.commit("addMarking", { view: view, markingID: markingID });
         context.commit("addView", { view: view, markingID: markingID });
         context.commit("createView", {
@@ -1116,7 +1117,6 @@ function builder(
         context,
         payload // {commit}, payload
       ) {
-        console.log("createDetailsView", payload);
         let master_view = payload.master_view;
         let details_view = payload.details_view;
         //Make sure the details view is not linked to anything else first

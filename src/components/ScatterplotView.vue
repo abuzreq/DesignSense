@@ -464,7 +464,6 @@ export default {
         .map((d) => [d[this.xColumn], d[this.yColumn], d._id]);
       //https://github.com/justinormont/pareto-frontier/pull/2
       const out = pf.getParetoFrontier(graph, { optimize: "topRight" }); //topLeft topRight bottomRight bottomLeft
-      console.log(out, this.$store);
       this.$store.dispatch("update", {
         view: this.viewID,
         selection: out.map((d) => d[2]),

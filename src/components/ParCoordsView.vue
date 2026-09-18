@@ -1299,7 +1299,6 @@ export default {
       let outputLabelColor = "steelblue";
       let inputLabelColor = "black";
       let colorSet = [];
-      console.log("OUTPUT DIMS", this.outputDimensions)
       // Coloring axes titles and lines based on whether dimensions were inputs (prefixed with "in:") or outputs (prefixed with "out:")
       d3.selectAll(".parcoords text.label").style("fill", (d) => {
         // change colors for inputs vs outputs
