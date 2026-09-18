@@ -109,7 +109,7 @@
               <div class="assistant-group-name">{{ section.group }}</div>
               <div
                 v-for="row in section.rows"
-                :key="row.entry.insert"
+                :key="row.index"
                 class="assistant-group-item"
                 :class="{ 'assistant-group-item--on': row.index === helpAt }"
                 :title="row.entry.title"
