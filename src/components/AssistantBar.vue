@@ -76,7 +76,14 @@
           @mouseenter="highlighted = i"
           @click="pick(item)"
         >
-          <span class="assistant-item-label">{{ item.label }}</span>
+          <span class="assistant-item-label" :aria-label="item.label"
+            ><span
+              v-for="(part, k) in labelParts(item)"
+              :key="k"
+              :class="{ 'assistant-blank': part.open }"
+              >{{ part.text }}</span
+            ></span
+          >
           <span class="assistant-item-hint">{{ i === highlighted ? item.hint : "" }}</span>
           <span class="assistant-item-why" :title="whyTitle(item.why)">{{ whyMark(item.why) }}</span>
         </div>
@@ -109,7 +116,14 @@
                 @mouseenter="helpAt = row.index"
                 @click="start(row.entry)"
               >
-                <span class="assistant-group-item-text">{{ row.entry.label }}</span>
+                <span class="assistant-group-item-text" :aria-label="row.entry.label"
+                  ><span
+                    v-for="(part, k) in labelParts(row.entry)"
+                    :key="k"
+                    :class="{ 'assistant-blank': part.open }"
+                    >{{ part.text }}</span
+                  ></span
+                >
                 <span class="assistant-group-item-hint">{{ row.entry.hint }}</span>
               </div>
             </div>
@@ -137,6 +151,7 @@ import {
   requestVector,
   wantsVector,
 } from "@/assistant";
+import { SLOT_WORDS, previewParts } from "@/assistant/templates.js";
 
 /* Shown one at a time while the box is empty and focused, so the vocabulary is
  * discoverable without a manual. */
@@ -174,11 +189,6 @@ function narrowQuery() {
   return narrowList;
 }
 
-const SLOT_WORDS = {
-  dim: "column", op: "comparison", value: "number", values: "value", k: "how many",
-  n: "how many", percent: "percent", order: "order", stat: "statistic", panel: "view",
-  set: "set", mode: "mode", name: "name", ordinal: "which",
-};
 
 export default {
   name: "AssistantBar",
@@ -316,6 +326,11 @@ export default {
     },
     slotWord(name) {
       return SLOT_WORDS[name] || name;
+    },
+    /** A suggestion's text in parts, its open slots marked to show as blanks. */
+    labelParts(item) {
+      if (!item.template) return [{ text: item.label }];
+      return previewParts(item.template, item.filled || []);
     },
     whyMark(why) {
       return { parser: "↵", semantic: "≈", both: "≈" }[why] || "";
@@ -770,6 +785,14 @@ export default {
 .assistant-item-label {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* An open slot: a blank to fill in, named by what goes there. */
+.assistant-blank {
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgba(144, 202, 249, 0.16);
+  color: #90caf9;
+  font-style: italic;
 }
 .assistant-item-hint {
   margin-left: auto;
