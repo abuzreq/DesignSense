@@ -43,6 +43,7 @@ import { RATING_BOUNDS, RATING_DIMENSION, isRated } from "@/ratings.js";
 import { createDimensionsStore } from "./dimensions.js";
 import { emptySets, openSession } from "./session.js";
 import { addIds, removeIds, uniqueSetName } from "./cart.js";
+import { asRows } from "./rows.js";
 import { isDerivedAssetKey } from "@/data/assets.js";
 import { INPUT, OUTPUT, columnKind } from "@/columns.js";
 import Papa from "papaparse";
@@ -110,8 +111,9 @@ function builder(
       // The preset the layout came from, or null once panels were moved.
       layoutPreset: loadPresetId(),
       defaultMarkingID: utils.generateID(), //"_lqpkb07gn"
-      rawData: new_data,
-      data: new_data,
+      // Frozen arrays, so Vue leaves the rows alone: see store/rows.js.
+      rawData: asRows(new_data),
+      data: asRows(new_data),
       dataStack: [],
       view2markingIDs: new Map(),
       markingID2views: new Map(),
@@ -317,7 +319,9 @@ function builder(
         let criteria = state.setsCriteriaMap[setID];
         return criteria ? criteria.map(describeChip) : null;
       },
-      hasRatings: (state) => state.rawData.some(isRated),
+      // Rows are not reactive, so the version is what says a rating changed.
+      hasRatings: (state) =>
+        state.dimensionValuesVersion >= 0 && state.rawData.some(isRated),
       selectionCount: (state, getters) => {
         void state.selectionVersion;
         return Object.keys(getters.selectedInMarking(state.defaultMarkingID))
@@ -326,6 +330,8 @@ function builder(
       // The gallery ignores its own selection, as crossfilter views do, so
       // unselected options stay in its pool (dimmed) and can be reselected.
       galleryPool: (state) => {
+        // A filter on Rating reads a value that changes in place.
+        void state.dimensionValuesVersion;
         let others = removeFilterByKey(
           narrowingFilters(state.filters),
           GALLERY_KEY
@@ -408,7 +414,7 @@ function builder(
         state.dataStack = [];
       },
       setScopedData(state, payload) {
-        state.data = payload.data;
+        state.data = asRows(payload.data);
         state.appliedScopeSignature = payload.signature;
       },
       updateLayout(state, payload) {
@@ -484,7 +490,7 @@ function builder(
       },
 
       setData(state, payload) {
-        state.data = payload.newData;
+        state.data = asRows(payload.newData);
       },
       resetMarking(state, payload) {
         let marking = state.markingsMap[payload.markingID];
@@ -604,7 +610,7 @@ function builder(
       },
       pushDataStack(state, payload) {
         //TODO put a limit on the depth of the stack
-        state.dataStack.push(payload.data);
+        state.dataStack.push(asRows(payload.data));
       },
 
       setSetMetadata(state, payload) {
@@ -744,8 +750,8 @@ function builder(
         state.isAltKey = payload.value;
       },
       updateData(state, payload) {
-        state.rawData = payload.data;
-        state.data = payload.data;
+        state.rawData = asRows(payload.data);
+        state.data = asRows(payload.data);
 
         state.dataTypesMap = payload.dataTypesMap;
         (state.numericDimensions = getNumericDimensions(payload.dataTypesMap)),

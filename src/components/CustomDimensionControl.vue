@@ -189,10 +189,7 @@ export default {
         : this.customDefs.find((def) => def.name === this.editing) || null;
     },
     hasAnyValue() {
-      return (
-        !!this.item &&
-        this.customDefs.some((def) => isNumber(this.item[def.name]))
-      );
+      return this.customDefs.some((def) => this.hasValue(def));
     },
   },
   watch: {
@@ -206,7 +203,10 @@ export default {
   methods: {
     stepFor: stepFor,
     label: displayName,
+    // Every read of a value goes through here. Rows are not reactive (see
+    // store/rows.js), so reading the version is what redraws after an edit.
     hasValue(def) {
+      void this.$store.state.dimensionValuesVersion;
       return !!this.item && isNumber(this.item[def.name]);
     },
     display(def) {

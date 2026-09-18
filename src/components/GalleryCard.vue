@@ -197,6 +197,8 @@ export default {
     label: displayName,
     /** Custom and weighted values are rounded; "—" when missing. */
     formatParam(param) {
+      // Rows are not reactive (see store/rows.js): the version redraws edits.
+      void this.$store.state.dimensionValuesVersion;
       let value = this.item[param];
       let bounds = this.$store.getters.fixedBoundsOf(param);
       if (!bounds) return value;

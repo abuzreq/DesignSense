@@ -201,18 +201,13 @@
         </div>
       </v-card>
 
-      <v-data-iterator
-        :items="chartData"
-        hide-default-footer
-        :items-per-page="maxPerPage"
-        :sort-by="sortByVar"
-        :sort-desc="isSortDesc"
-        :custom-sort="gallerySort"
-      >
-        <template v-slot:no-data>
-          <div class="gallery-empty">{{ emptyMessage }}</div>
-        </template>
-        <template v-slot:default="items">
+      <!-- A plain list rather than Vuetify's v-data-iterator: that kept its own
+           copy of every option in reactive data, which made Vue track every
+           value of every row, and re-sorted all of them on each selection. -->
+      <div v-if="galleryItems.length === 0" class="gallery-empty">
+        {{ emptyMessage }}
+      </div>
+      <template v-else>
           <drag-select-container
             selectorClass="thumbnail_card"
             :scrollAccessor="dragScrollAccessor"
@@ -254,15 +249,15 @@
                   <div id="gallery_axis"></div>
                   <v-row dense class="images-container" id="images-container">
                     <v-col
-                      v-if="leadingSpacerHeight(items.items.length) > 0"
+                      v-if="leadingSpacerHeight(galleryItems.length) > 0"
                       cols="12"
                       class="virtual-spacer"
                       :style="{
-                        height: leadingSpacerHeight(items.items.length) + 'px',
+                        height: leadingSpacerHeight(galleryItems.length) + 'px',
                       }"
                     />
                     <v-col
-                      v-for="card in windowedCards(items.items)"
+                      v-for="card in windowedCards(galleryItems)"
                       :key="card.key"
                       :cols="possibleColSpans[colSpan]"
                       :class="[
@@ -287,11 +282,11 @@
                       />
                     </v-col>
                     <v-col
-                      v-if="trailingSpacerHeight(items.items.length) > 0"
+                      v-if="trailingSpacerHeight(galleryItems.length) > 0"
                       cols="12"
                       class="virtual-spacer"
                       :style="{
-                        height: trailingSpacerHeight(items.items.length) + 'px',
+                        height: trailingSpacerHeight(galleryItems.length) + 'px',
                       }"
                     />
                   </v-row>
@@ -311,8 +306,7 @@
               </v-flex>
             </v-layout>
           </drag-select-container>
-        </template>
-      </v-data-iterator>
+      </template>
     </v-container>
   </v-container>
 </template>
@@ -527,6 +521,7 @@ import { isAssetColumn } from "@/data/assets.js";
 import ModelViewer from "@/components/ModelViewer.vue";
 import TipButton from "@/components/TipButton.vue";
 import { formatValue } from "@/store/filters.js";
+import { asRows } from "@/store/rows.js";
 import { dimensionItems, displayName } from "@/columns.js";
 
 import PanelHeader from "@/components/PanelHeader.vue";
@@ -609,7 +604,6 @@ export default {
       ],
       labels: ["S", "M", "L", "XL"],
       icons: ["mdi-snowflake", "mdi-leaf", "mdi-fire", "mdi-water"],
-      maxPerPage: 100000,
       sortFallback: "",
       enableContext: this.defaultEnableContext,
       inspectedItem: null,
@@ -669,6 +663,19 @@ export default {
     },
     chartDataLength() {
       return this.chartData.length;
+    },
+    /**
+     * The gallery in the order it is shown; options with no value go last in
+     * either direction. Rows are not reactive (see store/rows.js), so a rating
+     * or custom value set while sorted by it re-sorts through the version.
+     */
+    galleryItems() {
+      void this.$store.state.dimensionValuesVersion;
+      let list = this.chartData.slice();
+      if (!this.sortByVar) return list;
+      let dim = this.sortByVar;
+      let desc = this.isSortDesc;
+      return list.sort((a, b) => compareForSort(a[dim], b[dim], desc));
     },
     ...mapState({
       currentSelectionOperation: (state) => state.currentSelectionOperation,
@@ -1150,23 +1157,14 @@ export default {
           : Math.round(value);
       }
     },
-    /** The gallery's items in the order the iterator renders them. */
+    /** The gallery's items in the order they are shown. */
     sortedItems() {
-      let list = this.chartData.slice();
-      if (!this.sortByVar) return list;
-      let dim = this.sortByVar;
-      let desc = this.isSortDesc;
-      return list.sort((a, b) => compareForSort(a[dim], b[dim], desc));
-    },
-    /** The iterator's sort: options with no value go last, whichever the direction. */
-    gallerySort(items, sortBy, sortDesc) {
-      let dim = Array.isArray(sortBy) ? sortBy[0] : sortBy;
-      if (!dim) return items;
-      let desc = Array.isArray(sortDesc) ? !!sortDesc[0] : !!sortDesc;
-      return items.sort((a, b) => compareForSort(a[dim], b[dim], desc));
+      return this.galleryItems;
     },
     /** A value as the details list shows it; custom and weighted values are rounded. */
     formatParam(item, param) {
+      // Rows are not reactive; this is what redraws the list after an edit.
+      void this.$store.state.dimensionValuesVersion;
       let value = item ? item[param] : undefined;
       let bounds = this.$store.getters.fixedBoundsOf(param);
       if (bounds) {
@@ -1504,7 +1502,7 @@ export default {
       }
       // Toggling one option rebuilds the pool with the same items; keep the
       // array so cards do not re-render.
-      if (!this.sameItems(next, this.chartData)) this.chartData = next;
+      if (!this.sameItems(next, this.chartData)) this.chartData = asRows(next);
     },
     countSelected(selectionMap) {
       let count = 0;

@@ -29,30 +29,33 @@
     props: ["item"],
     data() {
       return {
-        rating: this.item.Rating,
         hoverRatingValue: 0,
         stars: [1, 2, 3, 4, 5],
       };
     },
-    watch: {
-        item: {
-            handler: function(newValue)
-            {
-                this.rating = newValue.Rating;
-            }
-        }
+    computed: {
+      /*
+       * Read from the row every time rather than copied: the same option can
+       * be rated from the inspector and from Compare at once, and a copy only
+       * one of them made would disagree with the other. Rows are not reactive
+       * (see store/rows.js), so the version is what says the rating changed.
+       * Number(): ratings loaded from a file may arrive as strings.
+       */
+      rating() {
+        void this.$store.state.dimensionValuesVersion;
+        return Number(this.item.Rating) || 0;
+      },
     },
     methods: {
       // Clicking the star of the current rating clears it.
       setRating(value) {
-        // Number(): ratings loaded from a file may arrive as strings.
-        this.rating = value === Number(this.rating) ? 0 : value;
+        let next = value === this.rating ? 0 : value;
         // Otherwise the hover keeps the cleared stars lit until the mouse leaves.
-        if (this.rating === 0) this.resetHover();
-        this.$emit('onRatingChanged', this.rating);
+        if (next === 0) this.resetHover();
+        this.$emit('onRatingChanged', next);
       },
       starTitle(value) {
-        if (value === Number(this.rating)) return "Clear rating";
+        if (value === this.rating) return "Clear rating";
         return value === 1 ? "Rate 1 star" : "Rate " + value + " stars";
       },
       hoverRating(value) {
