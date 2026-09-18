@@ -307,6 +307,22 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
       );
       state.dimensionValuesVersion += 1;
     },
+    /**
+     * Empties every dimension without removing any: what was entered here
+     * goes, and a dimension the file brought holds the file's values again.
+     * Weighted ones are read again from whatever their terms still hold.
+     */
+    clearEnteredValues(state) {
+      state.customDimensions.filter(isCustom).forEach((def) => {
+        state.rawData.forEach((row) => {
+          row[def.name] = def.fromFile ? fileValue(def.name, row) : undefined;
+        });
+      });
+      state.customDimensions
+        .filter(isWeighted)
+        .forEach((def) => recomputeWeighted(state, def));
+      state.dimensionValuesVersion += 1;
+    },
     /** A value outside the custom dimensions changed, such as a rating. */
     refreshDerivedValues(state, payload) {
       let row = rowById.get(String(payload.id));
@@ -446,6 +462,17 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
         return { error: "Only custom dimensions hold entered values." };
       }
       context.commit("clearDimensionValues", { name: payload.name });
+      persist(context);
+      return { ok: true };
+    },
+    /**
+     * Clearing the saved work empties the dimensions rather than removing
+     * them: the criteria a user set up are theirs to keep, the values they
+     * filled in are the work. What is saved afterwards is the definitions
+     * alone.
+     */
+    clearEnteredValues(context) {
+      context.commit("clearEnteredValues");
       persist(context);
       return { ok: true };
     },

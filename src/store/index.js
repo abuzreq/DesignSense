@@ -1445,10 +1445,13 @@ function builder(
           if (!(row[RATING_DIMENSION] > 0)) return;
           context.dispatch("rateAlt", { item: row, rating: 0 });
         });
+        // After the ratings, so a weighted dimension that weighs one is read
+        // again from what is left rather than from a rating about to go.
+        context.dispatch("clearEnteredValues");
         session.clear();
         context.commit("showNotice", {
           text:
-            "Cleared the saved sets, notes, ratings and shortlist for this dataset.",
+            "Cleared the saved sets, notes, ratings, shortlist and entered values for this dataset.",
         });
       },
       rateAlt(context, payload) {
