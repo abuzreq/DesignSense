@@ -230,15 +230,20 @@
                 @input="setWeightText(term, $event)"
                 @blur="term.weightText = String(term.weight)"
               />
+              <!-- Weights count relative to each other, so the slider
+                   runs on a log scale with the weight every dimension starts
+                   with, 1, in the middle (see weightToSlider). -->
               <v-slider
-                :value="Math.min(term.weight, sliderMax(term))"
-                :max="sliderMax(term)"
+                :value="weightToSlider(term.weight)"
                 min="0"
-                step="0.5"
+                :max="SLIDER_END"
+                step="0"
                 dense
                 hide-details
                 class="term-slider"
-                @input="setWeight(term, $event)"
+                aria-label="Weight"
+                title="Left of the middle weighs less, right weighs more. The far left leaves it out."
+                @input="slideWeight(term, $event)"
               />
               <span class="term-share">{{ shareText(i) }}</span>
             </div>
@@ -349,6 +354,31 @@ import { RATING_DIMENSION } from "@/ratings.js";
 const PAPER_URL = "https://www.itcon.org/papers/2018_08-ITcon-Haymaker.pdf";
 // A little longer than the dialog's fade-out.
 const CLOSE_TRANSITION_MS = 400;
+// The weight slider's positions run from 0 to this; its middle is weight 1.
+const SLIDER_END = 100;
+// Its ends, either side of 1: a tenth of the weight, and ten times it.
+const SLIDER_REACH = 10;
+
+/**
+ * Where a weight sits along the slider: 1 in the middle, a tenth and ten
+ * times either end, evenly by ratio, so halving a weight moves the knob as far
+ * as doubling it. Zero, which leaves a dimension out, is the left end, as is
+ * anything below a tenth; anything past ten is the right end.
+ */
+function weightToSlider(weight) {
+  if (!(weight > 0)) return 0;
+  let middle = SLIDER_END / 2;
+  let at = middle + (middle * Math.log(weight)) / Math.log(SLIDER_REACH);
+  return Math.max(0, Math.min(SLIDER_END, at));
+}
+
+/** The weight at a slider position, to two significant figures: 0.25, 1.4, 6.3. */
+function sliderToWeight(position) {
+  if (!(position > 0)) return 0;
+  let middle = SLIDER_END / 2;
+  let weight = Math.pow(SLIDER_REACH, (position - middle) / middle);
+  return Number(weight.toPrecision(2));
+}
 
 function quoted(name) {
   return "“" + displayName(name) + "”";
@@ -370,6 +400,7 @@ export default {
   components: { DimensionPicker },
   data() {
     return {
+      SLIDER_END: SLIDER_END,
       view: "manage",
       // The dimension being edited; null while creating one.
       editingName: null,
@@ -574,9 +605,16 @@ export default {
       term.weight = weight;
       term.weightText = String(weight);
     },
-    /** The slider reaches 10, or further when a larger weight was typed. */
-    sliderMax(term) {
-      return Math.max(10, Math.ceil(Number(term.weight) || 0));
+    weightToSlider: weightToSlider,
+    /**
+     * A move of the slider. It also reports back the position it is given,
+     * which for a typed weight between its positions or past its ends is not
+     * where that weight is, so a report of the weight's own position is no
+     * move at all.
+     */
+    slideWeight(term, position) {
+      if (Math.abs(position - weightToSlider(term.weight)) < 1e-9) return;
+      this.setWeight(term, sliderToWeight(position));
     },
     startCustom(name) {
       this.finishLiveEdit();
@@ -888,6 +926,16 @@ export default {
 .term-slider {
   flex: 1 1 auto;
   min-width: 80px;
+}
+/* A tick at the middle of the track: weight 1. */
+.term-slider ::v-deep .v-slider__track-container::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  width: 1px;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.35);
 }
 .term-share {
   font-size: 12px;
