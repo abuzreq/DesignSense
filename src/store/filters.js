@@ -249,8 +249,9 @@ function describeRange(dim, range, bounds) {
     };
   }
   let span = bounds ? bounds[1] - bounds[0] : hi - lo;
-  let from = formatValue(lo, span);
-  let to = formatValue(hi, span);
+  let magnitude = Math.max(Math.abs(lo), Math.abs(hi));
+  let from = formatValue(lo, span, magnitude);
+  let to = formatValue(hi, span, magnitude);
   if (from === to) {
     return { text: name + " = " + from, title: name + " is exactly " + from };
   }
@@ -266,11 +267,20 @@ function describeRange(dim, range, bounds) {
 /**
  * Rounds to a precision that suits the dimension's spread, so a brushed year
  * reads 2005.4 rather than 2005.3719, and large values compact (1.25M).
+ *
+ * `magnitude` is how large the numbers shown alongside this one are. Values
+ * read together -- the two ends of a range, the ticks of one axis -- pass the
+ * same one, so they are written the same way: "5,000 – 15,000" rather than
+ * "5000 – 15,000". Without it, the value is its own measure.
  */
-export function formatValue(value, span) {
+export function formatValue(value, span, magnitude) {
   if (!isFinite(value)) return String(value);
   let abs = Math.abs(value);
-  if (abs >= 1e5) {
+  let scale =
+    typeof magnitude === "number" && isFinite(magnitude)
+      ? Math.abs(magnitude)
+      : abs;
+  if (scale >= 1e5 && abs >= 1e3) {
     let unit = COMPACT_UNITS.find((u) => abs >= u[0]);
     return Number((value / unit[0]).toPrecision(3)) + unit[1];
   }
@@ -279,7 +289,7 @@ export function formatValue(value, span) {
       ? Math.min(4, Math.max(0, Math.ceil(-Math.log10(span / 50))))
       : 2;
   let rounded = Number(value.toFixed(decimals));
-  return abs >= 1e4 ? rounded.toLocaleString("en-US") : String(rounded);
+  return scale >= 1e4 ? rounded.toLocaleString("en-US") : String(rounded);
 }
 
 /*

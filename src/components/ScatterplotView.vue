@@ -286,6 +286,7 @@ import TemplateView from "@/components/TemplateView.vue";
 import PanelHeader from "@/components/PanelHeader.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
 import { formatValue } from "@/store/filters.js";
+import { axisTickFormat } from "@/components/axisFormat.js";
 import { dimensionItems, displayName } from "@/columns.js";
 import { RATING_DIMENSION } from "@/ratings.js";
 import ClusterIcon from "@/assets/cluster_icon.svg?component";
@@ -674,20 +675,6 @@ export default {
     },
   },
 };
-/**
- * A tick formatter for a scale: thousands and up shrink to SI suffixes
- * ("12k", "1.5M"), smaller values use formatValue's span-aware rounding so
- * fractions don't turn into "250m".
- */
-function compactTickFormat(scale) {
-  var domain = scale.domain();
-  var span = Math.abs(domain[1] - domain[0]);
-  var si = d3.format("~s");
-  return function(value) {
-    return Math.abs(value) >= 1000 ? si(value) : formatValue(value, span);
-  };
-}
-
 /** An extent with no values in it becomes 0-1, so the axes still draw. */
 function fallbackDomain(extent) {
   return extent[0] === undefined ? [0, 1] : extent;
@@ -918,7 +905,7 @@ class ScatterPlot {
             d3
               .axisBottom(xScale)
               .ticks(xTicks)
-              .tickFormat(compactTickFormat(xScale))
+              .tickFormat(axisTickFormat(xScale, xTicks))
           )
           // The title was appended before the ticks, so it is the first text.
           .select("text")
@@ -932,7 +919,7 @@ class ScatterPlot {
             d3
               .axisLeft(yScale)
               .ticks(yTicks)
-              .tickFormat(compactTickFormat(yScale))
+              .tickFormat(axisTickFormat(yScale, yTicks))
           )
           .select("text")
           .attr(
@@ -1006,8 +993,14 @@ class ScatterPlot {
         function rangeText(column, range, scale) {
           var domain = scale.domain();
           var span = Math.abs(domain[1] - domain[0]);
+          // Both ends share a magnitude, so they are written alike.
+          var magnitude = Math.max(Math.abs(range[0]), Math.abs(range[1]));
           return (
-            displayName(column) + " " + formatValue(range[0], span) + " – " + formatValue(range[1], span)
+            displayName(column) +
+            " " +
+            formatValue(range[0], span, magnitude) +
+            " – " +
+            formatValue(range[1], span, magnitude)
           );
         }
 

@@ -75,6 +75,7 @@ import PanelHeader from "@/components/PanelHeader.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
 import { round } from "@/components/utils.js";
 import { formatValue, sameRange } from "@/store/filters.js";
+import { axisTickFormat } from "@/components/axisFormat.js";
 import { operations } from "@/components/operations.js";
 import { RATING_BOUNDS, RATING_DIMENSION } from "@/ratings.js";
 import { snapValue } from "@/customDimensions.js";
@@ -1406,7 +1407,23 @@ function applyTickCounts(chart) {
     chart.height() - margin.top - margin.bottom - padding.bottom - padding.top;
   let ticks = Math.max(2, Math.round(axisHeight / AXIS_TICK_SPACING));
   Object.keys(dimensions).forEach((dim) => {
-    dimensions[dim].ticks = ticks;
+    let axis = dimensions[dim];
+    axis.ticks = ticks;
+    // Ratings are whole stars, so their axis has no half-star ticks.
+    if (dim === RATING_DIMENSION) {
+      axis.tickValues = d3.range(RATING_BOUNDS[0], RATING_BOUNDS[1] + 1);
+    }
+    // Left unset, d3 writes a year axis "1,950 … 2,000". The format is worked
+    // out from this axis's own scale and count each time its ticks are drawn,
+    // so it follows a flip or a resize.
+    if (axis.type === "number") {
+      axis.tickFormat = function(value) {
+        if (!axis.yscale) return String(value);
+        // Whole stars need no decimals, whatever the scale would tick.
+        if (axis.tickValues) return d3.format(",")(value);
+        return axisTickFormat(axis.yscale, axis.ticks)(value);
+      };
+    }
   });
 }
 
