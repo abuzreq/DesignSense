@@ -262,9 +262,9 @@ const PRESETS = [
     info: "Procedurally generated game puzzles",
   },
   {
-    name: "Covid",
+    name: "Molecules",
     url:
-      "https://drive.google.com/drive/folders/1FtHuhukPhaD8Fk9o8cjUH65Pr8ryBmcY?usp=sharing",
+      "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/molecules/data.csv",
     info: "Molecular designs from the Postera.ai crowdsourcing project",
   },
 ];
