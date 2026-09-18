@@ -1,8 +1,10 @@
 <template>
+  <!-- Most of the window, so the charts have room to be read. -->
   <v-dialog
     v-model="open"
-    max-width="1400"
-    width="95%"
+    width="96vw"
+    max-width="none"
+    content-class="sx-dialog"
     scrollable
     @keydown="onDialogKey"
   >
@@ -43,10 +45,11 @@
               v-for="dim in summary"
               :key="dim.dim"
               class="ax-dim"
+              :class="'ax-dim--' + (kindOf(dim.dim) || 'other')"
               :title="dimTitle(dim)"
             >
               <div class="ax-dim-head">
-                <span class="ax-dim-name">{{ label(dim.dim) }}</span>
+                <DimensionName class="ax-dim-name" :name="dim.dim" truncate />
                 <span
                   v-if="kindOf(dim.dim)"
                   class="ax-kind"
@@ -216,7 +219,7 @@
           </div>
 
         <div class="sx-pickers">
-          <v-autocomplete
+          <DimensionPicker
             v-model="inputs"
             :items="dimensionChoices"
             label="Inputs"
@@ -228,7 +231,7 @@
             hide-details
             class="sx-picker"
           />
-          <v-autocomplete
+          <DimensionPicker
             v-model="outputs"
             :items="dimensionChoices"
             label="Outputs"
@@ -306,7 +309,7 @@
                       class="sx-colhead"
                       :title="output"
                     >
-                      <div class="sx-colname">{{ label(output) }}</div>
+                      <DimensionName class="sx-colname" :name="output" />
                       <div class="sx-r2">{{ r2Text(output) }}</div>
                       <div v-if="modelNote(output)" class="sx-colwarn">
                         {{ modelNote(output) }}
@@ -319,7 +322,7 @@
                         class="sx-rowhead"
                         :title="rowTitle(input)"
                       >
-                        <span class="sx-rowname">{{ label(input) }}</span>
+                        <DimensionName class="sx-rowname" :name="input" truncate />
                         <span v-if="isFewValues(input)" class="sx-few">few</span>
                       </div>
                       <div
@@ -342,7 +345,7 @@
               <div class="sx-view sx-view--bars">
                 <div class="sx-bars-head">
                   <span class="sx-bars-label">Output</span>
-                  <v-select
+                  <DimensionPicker
                     v-model="focusOutput"
                     :items="outputChoices"
                     dense
@@ -366,9 +369,12 @@
                   :title="cellTitle(bar.input, focusOutput)"
                   @click="pickPair(bar.input, focusOutput)"
                 >
-                  <div class="sx-bar-label" :title="bar.input">
-                    {{ label(bar.input) }}
-                  </div>
+                  <DimensionName
+                    class="sx-bar-label"
+                    :name="bar.input"
+                    :title="bar.input"
+                    truncate
+                  />
                   <div class="sx-bar-track">
                     <div class="sx-bar-zero"></div>
                     <div class="sx-bar-fill" :style="barStyle(bar)"></div>
@@ -394,6 +400,8 @@ import { INPUT, OUTPUT, columnKind, dimensionItems, displayName } from "@/column
 import { isMissingFor } from "@/store/dimensions.js";
 import { formatValue } from "@/store/filters.js";
 import { RATING_DIMENSION } from "@/ratings.js";
+import DimensionName from "@/components/DimensionName.vue";
+import DimensionPicker from "@/components/DimensionPicker.vue";
 
 // A little longer than the dialog's fade-out.
 const CLOSE_TRANSITION_MS = 400;
@@ -420,8 +428,8 @@ const SCATTER_TYPE = "ScatterPlot";
 const LEVEL_INSET = 8;
 // Up to this many levels, each stem carries its count and each level is
 // labelled; past it, only the ends are, and the counts are on hover.
-const COUNT_LABEL_LEVELS = 6;
-const TICK_LEVELS = 5;
+const COUNT_LABEL_LEVELS = 8;
+const TICK_LEVELS = 6;
 
 const MEASURES = [
   {
@@ -469,6 +477,7 @@ function fixed(value) {
  */
 export default {
   name: "SensitivityDialog",
+  components: { DimensionName, DimensionPicker },
   data() {
     return {
       // Whether the dialog's content exists: while open, and through the
@@ -605,7 +614,7 @@ export default {
       let columns = this.result ? this.result.outputs.length : 0;
       return {
         gridTemplateColumns:
-          "minmax(120px, 180px) repeat(" + columns + ", minmax(80px, 1fr))",
+          "minmax(140px, 220px) repeat(" + columns + ", minmax(88px, 1fr))",
       };
     },
     /** The caveats that belong beside the numbers rather than inside a tooltip. */
@@ -1205,8 +1214,8 @@ export default {
   background: rgba(21, 101, 192, 0.12);
 }
 .sx-select {
-  flex: 0 0 200px;
-  max-width: 200px;
+  flex: 0 0 240px;
+  max-width: 240px;
   font-size: 13px;
 }
 .sx-select ::v-deep .v-input__control > .v-input__slot {
@@ -1220,7 +1229,6 @@ export default {
 
 .sx-body {
   flex: 1 1 auto;
-  max-height: 78vh;
   padding: 12px 16px 16px !important;
   color: #263238;
   font-size: 13px;
@@ -1302,7 +1310,7 @@ export default {
   margin-bottom: 8px;
 }
 .ax-head-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #263238;
 }
@@ -1322,49 +1330,57 @@ export default {
 }
 
 /* --- Dimensions: a tile each, two rows until asked for the rest --------- */
+/* Tiles grow with the window's height, so a tall screen reads them larger. */
 .ax-dims {
+  --tile-height: clamp(120px, 16vh, 176px);
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  grid-auto-rows: 88px;
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-auto-rows: var(--tile-height);
+  gap: 10px;
 }
 /* Two rows of tiles and the gap between them. */
 .ax-dims--collapsed {
-  max-height: 184px;
+  max-height: calc(2 * var(--tile-height) + 10px);
   overflow: hidden;
 }
 .ax-dim {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 5px 8px 4px;
+  padding: 7px 10px 6px;
   border: 1px solid #e3e8ee;
   border-radius: 6px;
   background: #fbfcfd;
 }
+/* The dimensions a user made, in their colours (see KIND_MARKS). */
+.ax-dim--custom {
+  border-left: 3px solid #6a1b9a;
+  background: #fbf8fc;
+}
+.ax-dim--weighted {
+  border-left: 3px solid #00796b;
+  background: #f7fbfa;
+}
 .ax-dim-head {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 13px;
+  line-height: 18px;
+  color: #37474f;
 }
 .ax-dim-name {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-weight: 600;
-  color: #37474f;
 }
 .ax-kind {
   flex: 0 0 auto;
-  padding: 0 4px;
+  padding: 0 5px;
   border-radius: 3px;
-  font-size: 10px;
-  line-height: 14px;
+  font-size: 11px;
+  line-height: 16px;
   background: #eceff1;
   color: #607d8b;
 }
@@ -1377,20 +1393,28 @@ export default {
   background: #e3eef8;
   color: #2f6a9e;
 }
+.ax-kind--custom {
+  background: rgba(106, 27, 154, 0.12);
+  color: #6a1b9a;
+}
+.ax-kind--weighted {
+  background: rgba(0, 121, 107, 0.12);
+  color: #00796b;
+}
 .ax-hist {
   position: relative;
   display: flex;
   align-items: flex-end;
-  gap: 1px;
+  gap: 2px;
   flex: 1 1 auto;
-  margin: 3px 0 2px;
+  margin: 6px 0 3px;
   border-bottom: 1px solid #cfd8dc;
 }
 .ax-hist--empty {
   align-items: center;
   justify-content: center;
   border-bottom: none;
-  font-size: 11px;
+  font-size: 12px;
   color: #90a4ae;
 }
 /* One standard deviation either side of the average, behind the bars. */
@@ -1412,6 +1436,22 @@ export default {
 .ax-stem:hover .ax-stem-bar {
   background: #546e7a;
 }
+.ax-dim--custom .ax-bin,
+.ax-dim--custom .ax-stem-bar {
+  background: #ba8fcf;
+}
+.ax-dim--weighted .ax-bin,
+.ax-dim--weighted .ax-stem-bar {
+  background: #7fbdb5;
+}
+.ax-dim--custom .ax-bin:hover,
+.ax-dim--custom .ax-stem:hover .ax-stem-bar {
+  background: #6a1b9a;
+}
+.ax-dim--weighted .ax-bin:hover,
+.ax-dim--weighted .ax-stem:hover .ax-stem-bar {
+  background: #00796b;
+}
 .ax-mean {
   position: absolute;
   top: -2px;
@@ -1425,11 +1465,11 @@ export default {
    of the average line, which a balanced sweep puts on its middle level. */
 .ax-hist--levels .ax-band,
 .ax-hist--levels .ax-mean {
-  top: 12px;
+  top: 15px;
 }
 .ax-stems {
   position: absolute;
-  top: 12px;
+  top: 15px;
   right: 0;
   bottom: 0;
   left: 0;
@@ -1439,15 +1479,15 @@ export default {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 12px;
-  margin-left: -6px;
+  width: 16px;
+  margin-left: -8px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
 }
 .ax-stem-bar {
   position: relative;
-  width: 6px;
+  width: 9px;
   background: #90a4ae;
   border-radius: 1px 1px 0 0;
 }
@@ -1456,9 +1496,9 @@ export default {
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-bottom: 1px;
-  font-size: 10px;
-  line-height: 11px;
+  margin-bottom: 2px;
+  font-size: 11px;
+  line-height: 13px;
   color: #546e7a;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1466,11 +1506,11 @@ export default {
 /* The chart's two ends, or its levels, under the baseline. */
 .ax-axis {
   position: relative;
-  flex: 0 0 12px;
-  margin-bottom: 1px;
-  font-size: 10px;
-  line-height: 12px;
-  color: #90a4ae;
+  flex: 0 0 15px;
+  margin-bottom: 2px;
+  font-size: 11px;
+  line-height: 15px;
+  color: #78909c;
   font-variant-numeric: tabular-nums;
 }
 .ax-tick {
@@ -1482,8 +1522,8 @@ export default {
   display: flex;
   justify-content: space-between;
   gap: 6px;
-  font-size: 11px;
-  line-height: 14px;
+  font-size: 12px;
+  line-height: 16px;
   color: #78909c;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1535,26 +1575,27 @@ export default {
   border-bottom: 1px solid #e3e8ee;
 }
 .sx-colhead {
-  padding: 4px 6px;
+  padding: 6px 8px;
   border-right: 1px solid #e3e8ee;
   border-bottom: 1px solid #e3e8ee;
   background: #f7f9fb;
+  color: #37474f;
 }
 .sx-colname {
-  font-size: 12px;
+  display: block;
+  font-size: 13px;
   font-weight: 600;
-  color: #37474f;
   line-height: 1.3;
 }
 .sx-r2 {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: #546e7a;
 }
 .sx-colwarn {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
   color: #b26500;
 }
@@ -1562,17 +1603,15 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 8px;
-  min-height: 24px;
+  padding: 0 10px;
+  min-height: 34px;
   border-right: 1px solid #e3e8ee;
   border-bottom: 1px solid #e3e8ee;
-  font-size: 12px;
+  font-size: 13px;
   color: #37474f;
 }
 .sx-rowname {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
 }
 .sx-few {
   flex: 0 0 auto;
@@ -1580,16 +1619,16 @@ export default {
   border-radius: 3px;
   background: #eceff1;
   color: #78909c;
-  font-size: 10px;
+  font-size: 11px;
 }
 .sx-cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 24px;
+  min-height: 34px;
   border-right: 1px solid #e3e8ee;
   border-bottom: 1px solid #e3e8ee;
-  font-size: 12px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
@@ -1620,18 +1659,20 @@ export default {
 .sx-view {
   min-width: 0;
 }
+/* The matrix takes most of the room a wide dialog gives, so it can show every
+   output without scrolling; the bars read fine at half its width. */
 .sx-view--matrix {
-  flex: 1 1 520px;
+  flex: 3 1 600px;
 }
 .sx-view--bars {
-  flex: 1 1 360px;
-  max-width: 560px;
+  flex: 1 1 380px;
+  max-width: 640px;
   padding-top: 2px;
 }
 .sx-view-head {
   margin-bottom: 6px;
   color: #546e7a;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   /* The bars carry a select on their heading line; this keeps the two
      headings on the same line as each other. */
@@ -1645,32 +1686,30 @@ export default {
 }
 .sx-bars-label {
   color: #546e7a;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
 }
 .sx-bar-row {
   display: grid;
-  grid-template-columns: minmax(100px, 160px) 1fr 44px;
+  grid-template-columns: minmax(120px, 220px) 1fr 52px;
   align-items: center;
-  gap: 8px;
-  padding: 1px 0;
+  gap: 10px;
+  padding: 3px 0;
+  color: #37474f;
   cursor: pointer;
 }
 .sx-bar-row:hover {
   background: #f4f7fa;
 }
 .sx-bar-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  color: #37474f;
+  min-width: 0;
+  font-size: 13px;
 }
 .sx-bar-track {
   position: relative;
-  height: 12px;
+  height: 20px;
   background: #f4f6f8;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 .sx-bar-zero {
   position: absolute;
@@ -1682,14 +1721,22 @@ export default {
 }
 .sx-bar-fill {
   position: absolute;
-  top: 2px;
-  bottom: 2px;
+  top: 3px;
+  bottom: 3px;
   border-radius: 2px;
 }
 .sx-bar-value {
   text-align: right;
-  font-size: 12px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
   color: #37474f;
+}
+</style>
+
+<style>
+/* The dialog's box lives outside this component, so this can't be scoped.
+   Taller than Vuetify's 90%, to give the charts the window. */
+.v-dialog.sx-dialog {
+  max-height: 96vh;
 }
 </style>
