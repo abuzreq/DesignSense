@@ -513,13 +513,13 @@ export const COMMANDS = {
       // Not a panel but a reading over the whole collection, so it opens as
       // its own view rather than joining the layout.
       if (args.view === "Sensitivity") {
-        if (!ctx.getters.can("sensitivity")) return { message: "The sensitivity reading is an Expert-mode feature; say \"switch to expert mode\" first." };
+        if (!ctx.getters.can("sensitivity")) return { message: "The analysis panel is an Expert-mode feature; say \"switch to expert mode\" first." };
         ctx.store.dispatch("openSensitivity");
         return;
       }
       // Only the panels this app offers; the old SPLOM is not one of them.
       if (["Grid", "ScatterPlot", "ParallelCoordinatesPlot", "Sets"].indexOf(args.view) < 0) {
-        return { message: "I can open the gallery, scatterplot, parallel coordinates, sets or clusters panel, or the sensitivity reading." };
+        return { message: "I can open the gallery, scatterplot, parallel coordinates, sets or clusters panel, or the analysis panel." };
       }
       ctx.store.commit("openLayout", { type: args.view });
     },

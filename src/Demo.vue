@@ -174,13 +174,13 @@
           :disabled="actionDisabled"
         />
         <v-divider vertical class="ds-divider" />
-        <!-- Reading the collection as a whole rather than acting on it.
-             Sensitivity is the first of these; others will join it. -->
+        <!-- Reading the collection as a whole rather than acting on it: one
+             dialog with each dimension's summary and the sensitivity reading. -->
         <ToolbarGroup id="analysis-bar" label="Analysis" :actions="actions">
           <v-tooltip v-if="can('sensitivity')" bottom>
             <template v-slot:activator="{ on }">
               <v-btn
-                id="sensitivity-button"
+                id="analysis-button"
                 v-on="on"
                 icon
                 :aria-label="accessibleName(actions['openSensitivity'].tooltip())"
@@ -880,7 +880,7 @@ function isFirstVisit() {
   return true;
 }
 const EXPERT_ADDS =
-  "selection operations and the lasso, clusters, coloring, editing sets, inspection controls, the sensitivity reading, and layout editing";
+  "selection operations and the lasso, clusters, coloring, editing sets, inspection controls, the analysis panel, and layout editing";
 import { applySelectionCursor } from "@/components/selectionCursors.js";
 
 import AssistantBar from "@/components/AssistantBar.vue";
@@ -1013,8 +1013,8 @@ export default {
         tourStep(this, "expert", "#inspection-bar", "Inspection",
           "Hold Space and move over any option to inspect it. Pin keeps it inspected after you let go, and the last button inspects without holding Space.",
           "bottom"),
-        dialogTourStep(this, "expert", ".sx-card", "Sensitivity",
-          "Which inputs move which outputs, read over the whole collection rather than over what is on screen. Name the parameters and the results here, or start their columns with in: and out: and the file names them for you. Each of the three measures answers a different question, explained beside its numbers, and the panel says in the open that a reading is only as good as the sampling behind it.",
+        dialogTourStep(this, "expert", ".sx-card", "Analysis",
+          "The whole collection at a glance, rather than what is on screen. At the top, every dimension's average, standard deviation and spread. Below, which inputs move which outputs: name the parameters and the results, or start their columns with in: and out: and the file names them for you. Each of the three measures answers a different question, and the panel says in the open that a reading is only as good as the sampling behind it.",
           () => this.openTourSensitivity()),
         tourStep(this, "expert", "#editing-mode", "Your layout",
           "Turn on editing to move and resize the panels.",
@@ -1139,9 +1139,9 @@ export default {
         },
         openSensitivity: {
           clickAction: () => this.$store.dispatch("openSensitivity"),
-          icon: "mdi-tune-variant",
+          icon: "mdi-chart-box-outline",
           tooltip: () =>
-            "Sensitivity: which inputs move which outputs, across the whole collection",
+            "Analysis: each dimension's average, spread and distribution, and which inputs move which outputs",
           type: "misc",
         },
         toggleEditingMode: {

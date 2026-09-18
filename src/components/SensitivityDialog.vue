@@ -10,65 +10,174 @@
          collection, and would otherwise recompute as values change anywhere. -->
     <v-card v-if="contentShown" class="sx-card">
       <v-toolbar flat dense class="sx-bar">
-        <span class="sx-title">Sensitivity</span>
+        <span class="sx-title">Analysis</span>
         <span class="sx-meta" :title="denominatorText">{{ denominatorText }}</span>
-        <v-tooltip bottom max-width="420">
-          <template v-slot:activator="{ on }">
-            <v-icon v-on="on" small class="sx-info"
-              >mdi-information-outline</v-icon
-            >
-          </template>
-          <span class="sx-tip">
-            <span class="sx-tip-line"
-              >Linear r is how closely two dimensions move together in a
-              straight line, from -1 to 1. Rank ρ is the same on rank order, so
-              it also catches relationships that bend. Influence β is how much
-              an output goes up per input, with the other inputs held still.
-              R² is how much of an output all the chosen inputs explain
-              together.</span
-            >
-            <span class="sx-tip-line"
-              >These are patterns in the options you loaded, not proof of cause.
-              An input can look influential only because it moves with another
-              one.</span
-            >
-            <span class="sx-tip-line"
-              >They also assume the options sample the design space: a full,
-              space-filling or otherwise sound design of experiments. Nothing
-              in the numbers can tell an even sweep from a lopsided one, so
-              how the options were generated decides what these mean.</span
-            >
-            <span class="sx-tip-line"
-              >If the options came from an optimiser, the inputs are already
-              related to each other, and these numbers reflect that search as
-              much as the design.</span
-            >
-          </span>
-        </v-tooltip>
-
         <v-spacer />
-
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <v-btn
-              icon
-              small
-              v-on="on"
-              class="sx-btn ml-1"
-              :disabled="!result"
-              @click="download"
-            >
-              <v-icon small>mdi-download</v-icon>
-            </v-btn>
-          </template>
-          <span>Download these numbers as CSV</span>
-        </v-tooltip>
         <v-btn icon small class="ml-1" aria-label="Close" @click="open = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-toolbar>
 
       <v-card-text class="sx-body">
+        <!-- Each dimension on its own, before any pair of them: where its
+             values sit and how far they spread. Two rows of tiles, and the
+             rest on request, so the sensitivity reading stays in view. -->
+        <section class="ax-section">
+          <div class="ax-head">
+            <span class="ax-head-title">Dimensions</span>
+            <span class="ax-head-meta"
+              >Average, standard deviation and how the values spread; the band
+              is one standard deviation either side of the average.</span
+            >
+          </div>
+          <div v-if="summary.length === 0" class="sx-guide-line">
+            This collection has no numeric dimensions.
+          </div>
+          <div
+            v-else
+            ref="dims"
+            class="ax-dims"
+            :class="{ 'ax-dims--collapsed': !showAllDims }"
+          >
+            <div
+              v-for="dim in summary"
+              :key="dim.dim"
+              class="ax-dim"
+              :title="dimTitle(dim)"
+            >
+              <div class="ax-dim-head">
+                <span class="ax-dim-name">{{ label(dim.dim) }}</span>
+                <span
+                  v-if="kindOf(dim.dim)"
+                  class="ax-kind"
+                  :class="'ax-kind--' + kindOf(dim.dim)"
+                  >{{ kindOf(dim.dim) }}</span
+                >
+              </div>
+              <div v-if="dim.n === 0" class="ax-hist ax-hist--empty">
+                no values
+              </div>
+              <div v-else class="ax-hist">
+                <div class="ax-band" :style="bandStyle(dim)"></div>
+                <div
+                  v-for="(count, i) in dim.bins"
+                  :key="i"
+                  class="ax-bin"
+                  :style="binStyle(dim, count)"
+                ></div>
+                <div class="ax-mean" :style="meanStyle(dim)"></div>
+              </div>
+              <div v-if="dim.n > 0" class="ax-dim-stats">
+                <span
+                  >avg <strong>{{ statText(dim, dim.mean) }}</strong></span
+                >
+                <span
+                  >std <strong>{{ statText(dim, dim.std) }}</strong></span
+                >
+              </div>
+            </div>
+          </div>
+          <button
+            v-if="dimsOverflow || showAllDims"
+            type="button"
+            class="ax-more"
+            @click="showAllDims = !showAllDims"
+          >
+            {{
+              showAllDims
+                ? "Show fewer"
+                : "Show all " + summary.length + " dimensions"
+            }}
+          </button>
+        </section>
+
+        <section class="ax-section">
+          <div class="ax-head">
+            <span class="ax-head-title">Sensitivity</span>
+            <v-tooltip bottom max-width="420">
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on" small class="sx-info"
+                  >mdi-information-outline</v-icon
+                >
+              </template>
+              <span class="sx-tip">
+                <span class="sx-tip-line"
+                  >Linear r is how closely two dimensions move together in a
+                  straight line, from -1 to 1. Rank ρ is the same on rank
+                  order, so it also catches relationships that bend. Influence
+                  β is how much an output goes up per input, with the other
+                  inputs held still. R² is how much of an output all the chosen
+                  inputs explain together.</span
+                >
+                <span class="sx-tip-line"
+                  >All three run from -1 to 1, and the sign says which way the
+                  output goes. Influence weighs the chosen inputs together,
+                  while rank and linear read one pair at a time: where
+                  influence is small but linear is large, another input is
+                  carrying that relationship, and where rank beats linear, the
+                  relationship is steady but not straight.</span
+                >
+                <span class="sx-tip-line"
+                  >These are patterns in the options you loaded, not proof of
+                  cause. An input can look influential only because it moves
+                  with another one.</span
+                >
+                <span class="sx-tip-line"
+                  >They also assume the options sample the design space: a
+                  full, space-filling or otherwise sound design of experiments.
+                  Nothing in the numbers can tell an even sweep from a lopsided
+                  one, so how the options were generated decides what these
+                  mean.</span
+                >
+                <span class="sx-tip-line"
+                  >If the options came from an optimiser, the inputs are
+                  already related to each other, and these numbers reflect that
+                  search as much as the design.</span
+                >
+              </span>
+            </v-tooltip>
+            <span class="ax-head-meta">Which inputs move which outputs</span>
+            <v-spacer />
+            <!-- The three measures, each explained in its tooltip; the one
+                 shown is explained under the pickers too. -->
+            <v-btn-toggle
+              v-model="measure"
+              mandatory
+              dense
+              class="ax-measures"
+            >
+              <v-tooltip
+                v-for="choice in measureChoices"
+                :key="choice.value"
+                bottom
+                max-width="320"
+              >
+                <template v-slot:activator="{ on }">
+                  <v-btn v-on="on" small :value="choice.value">{{
+                    choice.text
+                  }}</v-btn>
+                </template>
+                <span>{{ choice.note }}</span>
+              </v-tooltip>
+            </v-btn-toggle>
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on }">
+                <v-btn
+                  icon
+                  small
+                  v-on="on"
+                  class="sx-btn ml-1"
+                  :disabled="!result"
+                  aria-label="Download the sensitivity numbers as CSV"
+                  @click="download"
+                >
+                  <v-icon small>mdi-download</v-icon>
+                </v-btn>
+              </template>
+              <span>Download the sensitivity numbers as CSV</span>
+            </v-tooltip>
+          </div>
+
         <div class="sx-pickers">
           <v-autocomplete
             v-model="inputs"
@@ -111,28 +220,10 @@
             describes itself.</span
           >
         </p>
-
-        <!-- What the three numbers are. The select names them; this says
-             what each one answers and where they part company. -->
-        <div class="sx-legend">
-          <div
-            v-for="choice in measureChoices"
-            :key="choice.value"
-            class="sx-legend-item"
-            :class="{ 'sx-legend-item--on': choice.value === measure }"
-            :title="'Show ' + choice.text"
-            @click="measure = choice.value"
-          >
-            <div class="sx-legend-name">{{ choice.text }}</div>
-            <div class="sx-legend-text">{{ choice.note }}</div>
-          </div>
-        </div>
-        <p class="sx-legend-diff">
-          All three run from -1 to 1, and the sign says which way the output
-          goes. Influence weighs the chosen inputs together, while rank and
-          linear read one pair at a time: where influence is small but linear
-          is large, another input is carrying that relationship, and where rank
-          beats linear, the relationship is steady but not straight.
+        <!-- What the number on show answers; the other two say so in their
+             tooltips, and the info icon says where the three part company. -->
+        <p class="ax-measure-note">
+          <strong>{{ currentMeasure.text }}:</strong> {{ currentMeasure.note }}
         </p>
 
         <!-- Nothing to read yet: the file never said which columns are which,
@@ -251,6 +342,7 @@
             </div>
           </template>
         </template>
+        </section>
       </v-card-text>
     </v-card>
   </v-dialog>
@@ -260,8 +352,10 @@
 import { mapGetters, mapState } from "vuex";
 import { interpolateRdBu } from "d3-scale-chromatic";
 import { sensitivity, sensitivityCsv } from "@/analysis/sensitivity.js";
+import { summarize } from "@/analysis/summary.js";
 import { INPUT, OUTPUT, columnKind, dimensionItems, displayName } from "@/columns.js";
 import { isMissingFor } from "@/store/dimensions.js";
+import { formatValue } from "@/store/filters.js";
 import { RATING_DIMENSION } from "@/ratings.js";
 
 // A little longer than the dialog's fade-out.
@@ -317,15 +411,17 @@ function fixed(value) {
 }
 
 /**
- * Which inputs move which outputs, over the whole collection.
+ * The analysis dialog: every dimension on its own, then which inputs move
+ * which outputs, over the whole collection.
  *
  * Deliberately reads `rawData` rather than `data`: the question is what the
  * design space does, not what the current zoom happens to hold, and a
  * correlation over a brushed corner of the space is a different claim.
  *
- * The arithmetic lives in analysis/sensitivity.js; this is the reading of it.
- * Both views are plain DOM on a CSS grid rather than d3-drawn SVG -- about a
- * hundred cells of text, which stay selectable and need no resize lifecycle.
+ * The arithmetic lives in analysis/summary.js and analysis/sensitivity.js;
+ * this is the reading of it. Everything is plain DOM rather than d3-drawn SVG
+ * -- small histograms and about a hundred cells of text, which stay
+ * selectable and need no resize lifecycle.
  */
 export default {
   name: "SensitivityDialog",
@@ -341,14 +437,24 @@ export default {
       focusOutput: null,
       result: null,
       measureChoices: MEASURES,
+      // One frozen entry per numeric dimension (see analysis/summary.js).
+      summary: [],
+      showAllDims: false,
+      // Whether the tiles run past the two rows shown until asked.
+      dimsOverflow: false,
     };
   },
   created() {
     this.applyDefaults();
+    this.onResize = () => {
+      if (this.contentShown) this.measureDims();
+    };
+    window.addEventListener("resize", this.onResize);
   },
   beforeDestroy() {
     clearTimeout(this.hideContentTimer);
     clearTimeout(this.computeTimer);
+    window.removeEventListener("resize", this.onResize);
   },
   computed: {
     ...mapState({
@@ -381,6 +487,14 @@ export default {
     },
     outputChoices() {
       return dimensionItems(this.outputs);
+    },
+    currentMeasure() {
+      let self = this;
+      return (
+        MEASURES.find(function(choice) {
+          return choice.value === self.measure;
+        }) || MEASURES[0]
+      );
     },
     /** Whether the file itself says which columns are inputs and which outputs. */
     hasPrefixes() {
@@ -447,7 +561,7 @@ export default {
       let columns = this.result ? this.result.outputs.length : 0;
       return {
         gridTemplateColumns:
-          "minmax(150px, 220px) repeat(" + columns + ", minmax(104px, 1fr))",
+          "minmax(120px, 180px) repeat(" + columns + ", minmax(80px, 1fr))",
       };
     },
     /** The caveats that belong beside the numbers rather than inside a tooltip. */
@@ -550,8 +664,9 @@ export default {
         this.hideContentTimer = setTimeout(() => {
           if (!this.dialogState.open) {
             this.contentShown = false;
-            // Nothing on screen needs it, and it holds a copy of the columns.
+            // Nothing on screen needs these, and they hold copies of the columns.
             this.result = null;
+            this.summary = [];
           }
         }, CLOSE_TRANSITION_MS);
       }
@@ -571,9 +686,16 @@ export default {
     rawData() {
       this.scheduleCompute();
     },
-    // Ratings and custom values change in place; recompute only when one of
-    // the dimensions being read is one of them.
+    // The rating joins the dimensions once anything is rated.
+    candidates() {
+      this.scheduleCompute();
+    },
+    // Ratings and custom values change in place. The summary covers every
+    // dimension, so it follows them; the sensitivity reading only when one of
+    // the dimensions it reads is one of them.
     dimensionValuesVersion() {
+      if (!this.contentShown) return;
+      this.computeSummary();
       if (this.readsEditableValues) this.scheduleCompute();
     },
   },
@@ -632,7 +754,13 @@ export default {
       }, COMPUTE_DELAY_MS);
     },
     compute() {
-      if (!this.contentShown || !this.hasPair) {
+      if (!this.contentShown) {
+        this.result = null;
+        this.summary = [];
+        return;
+      }
+      this.computeSummary();
+      if (!this.hasPair) {
         this.result = null;
         return;
       }
@@ -642,6 +770,83 @@ export default {
         maxRows: MAX_ROWS,
         maxInputs: MAX_INPUTS,
       });
+    },
+    /**
+     * A single pass over the rows per dimension: a few milliseconds at ten
+     * thousand options. Frozen, so Vue doesn't watch every bin.
+     */
+    computeSummary() {
+      // Every row has a rating column; until something is rated it is empty.
+      let dims = this.candidates.filter(
+        (dim) => dim !== RATING_DIMENSION || this.hasRatings
+      );
+      this.summary = Object.freeze(
+        summarize(this.rawData, dims, { isMissing: isMissingFor }).map(
+          Object.freeze
+        )
+      );
+      this.$nextTick(this.measureDims);
+    },
+    /** Whether the tiles run past the two rows the collapsed grid shows. */
+    measureDims() {
+      let el = this.$refs.dims;
+      if (!el || this.showAllDims) return;
+      this.dimsOverflow = el.scrollHeight > el.clientHeight + 1;
+    },
+    kindOf(dim) {
+      return columnKind(dim);
+    },
+    /** A value in the dimension's own precision, as the filters show it. */
+    statText(dim, value) {
+      return formatValue(
+        value,
+        dim.max - dim.min,
+        Math.max(Math.abs(dim.min), Math.abs(dim.max))
+      );
+    },
+    /** Where a value falls across the histogram, in percent. */
+    histPosition(dim, value) {
+      let at = ((value - dim.lo) / (dim.hi - dim.lo)) * 100;
+      return Math.max(0, Math.min(100, at));
+    },
+    binStyle(dim, count) {
+      if (count === 0) return { height: "0" };
+      // The shortest non-empty bar stays visible beside a tall one.
+      return { height: Math.max(6, (count / dim.peak) * 100) + "%" };
+    },
+    bandStyle(dim) {
+      let from = this.histPosition(dim, dim.mean - dim.std);
+      let to = this.histPosition(dim, dim.mean + dim.std);
+      return { left: from + "%", width: to - from + "%" };
+    },
+    meanStyle(dim) {
+      return { left: this.histPosition(dim, dim.mean) + "%" };
+    },
+    dimTitle(dim) {
+      let name = this.label(dim.dim);
+      if (dim.n === 0) return name + ": no values in this collection.";
+      let text =
+        name +
+        ": " +
+        dim.n.toLocaleString() +
+        (dim.n === 1 ? " value" : " values") +
+        " from " +
+        this.statText(dim, dim.min) +
+        " to " +
+        this.statText(dim, dim.max) +
+        ", average " +
+        this.statText(dim, dim.mean) +
+        ", standard deviation " +
+        this.statText(dim, dim.std) +
+        ".";
+      if (dim.missing > 0) {
+        text +=
+          " " +
+          dim.missing.toLocaleString() +
+          (dim.missing === 1 ? " option has" : " options have") +
+          " no value.";
+      }
+      return text;
     },
     /** How strongly an input moves the focused output, for ordering rows. */
     rankStrength(input) {
@@ -892,7 +1097,7 @@ export default {
   font-size: 13px;
 }
 .sx-select ::v-deep .v-input__control > .v-input__slot {
-  min-height: 30px !important;
+  min-height: 28px !important;
   padding: 0 4px 0 8px !important;
   background: #fff;
 }
@@ -903,15 +1108,15 @@ export default {
 .sx-body {
   flex: 1 1 auto;
   max-height: 78vh;
-  padding: 14px 16px 24px !important;
+  padding: 12px 16px 16px !important;
   color: #263238;
   font-size: 13px;
 }
 .sx-pickers {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 .sx-picker {
   flex: 1 1 320px;
@@ -945,9 +1150,9 @@ export default {
   display: flex;
   align-items: flex-start;
   gap: 6px;
-  margin: 0 0 14px;
+  margin: 0 0 6px;
   max-width: 880px;
-  padding: 8px 10px;
+  padding: 4px 8px;
   border-left: 3px solid #cfd8dc;
   background: #f7f9fa;
   font-size: 12px;
@@ -958,46 +1163,170 @@ export default {
   margin-top: 2px;
   color: #90a4ae;
 }
-.sx-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 0 0 8px;
-}
-.sx-legend-item {
-  flex: 1 1 250px;
-  min-width: 210px;
-  padding: 8px 10px;
-  border: 1px solid #e0e6ea;
-  border-radius: 6px;
-  background: #fff;
-  cursor: pointer;
-}
-.sx-legend-item:hover {
-  border-color: #b0bec5;
-}
-/* The one the numbers are showing; clicking another switches to it. */
-.sx-legend-item--on {
-  border-color: #1976d2;
-  background: #f3f8fd;
-}
-.sx-legend-name {
-  margin-bottom: 2px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #37474f;
-}
-.sx-legend-text {
+.ax-measure-note {
+  margin: 0 0 10px;
+  max-width: 880px;
   font-size: 12px;
   line-height: 1.45;
   color: #607d8b;
 }
-.sx-legend-diff {
-  margin: 0 0 16px;
-  max-width: 880px;
+.ax-measure-note strong {
+  color: #37474f;
+  font-weight: 600;
+}
+
+/* --- The two sections -------------------------------------------------- */
+.ax-section + .ax-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e3e8ee;
+}
+.ax-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-bottom: 8px;
+}
+.ax-head-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #263238;
+}
+.ax-head-meta {
   font-size: 12px;
-  line-height: 1.5;
   color: #78909c;
+}
+.ax-measures.v-btn-toggle {
+  border-radius: 6px;
+}
+.ax-measures .v-btn.v-btn {
+  height: 26px !important;
+  padding: 0 10px;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* --- Dimensions: a tile each, two rows until asked for the rest --------- */
+.ax-dims {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-auto-rows: 70px;
+  gap: 8px;
+}
+/* Two rows of tiles and the gap between them. */
+.ax-dims--collapsed {
+  max-height: 148px;
+  overflow: hidden;
+}
+.ax-dim {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 5px 8px 4px;
+  border: 1px solid #e3e8ee;
+  border-radius: 6px;
+  background: #fbfcfd;
+}
+.ax-dim-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 16px;
+}
+.ax-dim-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #37474f;
+}
+.ax-kind {
+  flex: 0 0 auto;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 10px;
+  line-height: 14px;
+  background: #eceff1;
+  color: #607d8b;
+}
+/* As the parallel coordinates colour them: inputs black, outputs steel blue. */
+.ax-kind--in {
+  background: #e0e4e7;
+  color: #263238;
+}
+.ax-kind--out {
+  background: #e3eef8;
+  color: #2f6a9e;
+}
+.ax-hist {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  flex: 1 1 auto;
+  margin: 3px 0 2px;
+  border-bottom: 1px solid #cfd8dc;
+}
+.ax-hist--empty {
+  align-items: center;
+  justify-content: center;
+  border-bottom: none;
+  font-size: 11px;
+  color: #90a4ae;
+}
+/* One standard deviation either side of the average, behind the bars. */
+.ax-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(25, 118, 210, 0.1);
+}
+.ax-bin {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  background: #90a4ae;
+  border-radius: 1px 1px 0 0;
+}
+.ax-mean {
+  position: absolute;
+  top: -2px;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: #1565c0;
+}
+.ax-dim-stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 14px;
+  color: #78909c;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ax-dim-stats strong {
+  font-weight: 600;
+  color: #37474f;
+}
+.ax-more {
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #1565c0;
+  font-size: 12px;
+  cursor: pointer;
+}
+.ax-more:hover {
+  text-decoration: underline;
 }
 .sx-note {
   margin: 0 0 6px;
@@ -1030,13 +1359,13 @@ export default {
   border-bottom: 1px solid #e3e8ee;
 }
 .sx-colhead {
-  padding: 6px 8px;
+  padding: 4px 6px;
   border-right: 1px solid #e3e8ee;
   border-bottom: 1px solid #e3e8ee;
   background: #f7f9fb;
 }
 .sx-colname {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #37474f;
   line-height: 1.3;
@@ -1058,10 +1387,10 @@ export default {
   align-items: center;
   gap: 6px;
   padding: 0 8px;
-  min-height: 28px;
+  min-height: 24px;
   border-right: 1px solid #e3e8ee;
   border-bottom: 1px solid #e3e8ee;
-  font-size: 13px;
+  font-size: 12px;
   color: #37474f;
 }
 .sx-rowname {
@@ -1081,7 +1410,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 28px;
+  min-height: 24px;
   border-right: 1px solid #e3e8ee;
   border-bottom: 1px solid #e3e8ee;
   font-size: 12px;
@@ -1110,7 +1439,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 28px;
+  gap: 20px;
 }
 .sx-view {
   min-width: 0;
@@ -1119,24 +1448,24 @@ export default {
   flex: 1 1 520px;
 }
 .sx-view--bars {
-  flex: 1 1 400px;
-  max-width: 620px;
+  flex: 1 1 360px;
+  max-width: 560px;
   padding-top: 2px;
 }
 .sx-view-head {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   color: #546e7a;
   font-size: 12px;
   font-weight: 500;
   /* The bars carry a select on their heading line; this keeps the two
      headings on the same line as each other. */
-  line-height: 40px;
+  line-height: 32px;
 }
 .sx-bars-head {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 .sx-bars-label {
   color: #546e7a;
@@ -1145,10 +1474,10 @@ export default {
 }
 .sx-bar-row {
   display: grid;
-  grid-template-columns: minmax(120px, 190px) 1fr 56px;
+  grid-template-columns: minmax(100px, 160px) 1fr 44px;
   align-items: center;
-  gap: 10px;
-  padding: 3px 0;
+  gap: 8px;
+  padding: 1px 0;
   cursor: pointer;
 }
 .sx-bar-row:hover {
@@ -1158,12 +1487,12 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 12px;
   color: #37474f;
 }
 .sx-bar-track {
   position: relative;
-  height: 16px;
+  height: 12px;
   background: #f4f6f8;
   border-radius: 2px;
 }

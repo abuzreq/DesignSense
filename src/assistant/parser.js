@@ -43,7 +43,7 @@ export const PANELS = [
   ["parallel", "ParallelCoordinatesPlot"], ["pcp", "ParallelCoordinatesPlot"],
   ["scatter", "ScatterPlot"], ["gallery", "Grid"], ["grid", "Grid"], ["sets", "Sets"],
   ["clusters", "Clusters"],
-  ["sensitivity", "Sensitivity"], ["drivers", "Sensitivity"],
+  ["sensitivity", "Sensitivity"], ["drivers", "Sensitivity"], ["analysis", "Sensitivity"],
 ];
 /** Columns that a person wants less of, when no direction is stated. */
 const LOWER_IS_BETTER = /cost|price|cooling|heating|deviation|energy|odometer|emission/;

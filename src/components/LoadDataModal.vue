@@ -93,7 +93,8 @@
                     with <code>out:</code>, as in <code>in:width</code> or
                     <code>out:cost</code>. The prefix doesn't show in the
                     interface. The parallel coordinates draw outputs in blue,
-                    and Sensitivity reads how the inputs move the outputs;
+                    and the Analysis panel reads how the inputs move the
+                    outputs;
                     without the prefixes it asks you to pick them each time.
                   </p>
                   <p>
