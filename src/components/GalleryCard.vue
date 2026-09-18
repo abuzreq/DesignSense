@@ -107,9 +107,9 @@
               :key="param"
               style="min-height: 28px;"
             >
-              <v-list-item-content style="font-weight: bold; padding: 6px 0;">{{
-                label(param)
-              }}</v-list-item-content>
+              <v-list-item-content style="font-weight: bold; padding: 6px 0;"
+                ><DimensionName :name="param"
+              /></v-list-item-content>
               <v-list-item-content
                 style="padding: 6px 0;"
                 class="justify-center"
@@ -133,8 +133,9 @@ import {
   mdiPlus,
 } from "@mdi/js";
 import { formatValue } from "@/store/filters.js";
-import { displayName, optionName } from "@/columns.js";
+import { optionName } from "@/columns.js";
 import { FALLBACK_IMAGE } from "@/components/constants.js";
+import DimensionName from "@/components/DimensionName.vue";
 
 const ICONS = Object.freeze({
   plus: mdiPlus,
@@ -152,6 +153,7 @@ const ICONS = Object.freeze({
  */
 export default {
   name: "GalleryCard",
+  components: { DimensionName },
   props: {
     item: { type: Object, required: true },
     cardId: { type: String, required: true },
@@ -238,7 +240,6 @@ export default {
     },
   },
   methods: {
-    label: displayName,
     onLoad() {
       this.loadedSrc = this.shownSrc;
       this.$emit("load");

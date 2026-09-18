@@ -6,7 +6,7 @@
       :compact="compactHeader"
     >
       <span class="ph-label">X</span>
-      <v-autocomplete
+      <DimensionPicker
         :value="xColumn"
         :items="axisItems"
         dense
@@ -37,7 +37,7 @@
         }}</span>
       </v-tooltip>
       <span class="ph-label ph-label--gap">Y</span>
-      <v-autocomplete
+      <DimensionPicker
         :value="yColumn"
         :items="axisItems"
         dense
@@ -302,6 +302,7 @@ import { dimensionItems, displayName } from "@/columns.js";
 import { RATING_DIMENSION } from "@/ratings.js";
 import ClusterIcon from "@/assets/cluster_icon.svg?component";
 import ClusterView from "@/components/ClusterView.vue";
+import DimensionPicker from "@/components/DimensionPicker.vue";
 
 // SVG circles become the bottleneck past a couple thousand points: each is a
 // DOM node, and highlight() re-sorts the lot. Above this many plotted points
@@ -314,7 +315,7 @@ const Y_TICK_SPACING = 45;
 export default {
   mixins: [TemplateView],
   name: "ScatterplotView",
-  components: { PanelHeader, ClusterIcon, ClusterView },
+  components: { PanelHeader, ClusterIcon, ClusterView, DimensionPicker },
   data: function() {
     return {
       // Only the defaults; the axes themselves live in the store so that the

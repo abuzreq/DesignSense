@@ -90,7 +90,7 @@
     </PanelHeader>
 
     <div class="clusters-dimensions">
-      <v-autocomplete
+      <DimensionPicker
         :value="dimensions"
         :items="dimensionChoices"
         multiple
@@ -298,6 +298,7 @@ import * as d3 from "d3";
 import * as kmeans from "node-kmeans";
 
 import PanelHeader from "@/components/PanelHeader.vue";
+import DimensionPicker from "@/components/DimensionPicker.vue";
 import { dimensionItems } from "@/columns.js";
 import { RATING_DIMENSION } from "@/ratings.js";
 import { operationIcon, operationPhrase } from "@/components/operationIcons.js";
@@ -311,6 +312,7 @@ export default {
   name: "ClusterView",
   components: {
     PanelHeader,
+    DimensionPicker,
   },
   props: [
     "defaultEnableContext",

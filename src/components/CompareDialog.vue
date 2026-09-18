@@ -148,7 +148,12 @@
                 :title="sortTitle(row.label, row.dim)"
                 @click="sortBy(row.dim)"
               >
-                <span class="cmp-label-text">{{ row.label }}</span>
+                <DimensionName
+                  class="cmp-label-text"
+                  :name="row.dim"
+                  :text="row.label"
+                  truncate
+                />
                 <v-icon x-small class="cmp-sort-mark">{{
                   sortMark(row.dim)
                 }}</v-icon>
@@ -190,6 +195,7 @@ import { mapGetters, mapState } from "vuex";
 import StarRating from "@/components/StarRating.vue";
 import TipButton from "@/components/TipButton.vue";
 import ImageSwitcher from "@/components/ImageSwitcher.vue";
+import DimensionName from "@/components/DimensionName.vue";
 import { FALLBACK_IMAGE } from "@/components/constants.js";
 import {
   CUSTOM,
@@ -229,7 +235,7 @@ const CLOSE_TRANSITION_MS = 400;
  */
 export default {
   name: "CompareDialog",
-  components: { ImageSwitcher, StarRating, TipButton },
+  components: { DimensionName, ImageSwitcher, StarRating, TipButton },
   data() {
     return {
       // Whether the dialog's content exists: while open, and through the

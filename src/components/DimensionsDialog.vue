@@ -206,7 +206,7 @@
             :key="term.key"
             class="term-row"
           >
-            <v-autocomplete
+            <DimensionPicker
               v-model="term.dim"
               :items="itemsFor(term)"
               label="Dimension"
@@ -342,6 +342,7 @@ import {
   withoutDimension,
 } from "@/customDimensions.js";
 import { dimensionItems, displayName } from "@/columns.js";
+import DimensionPicker from "@/components/DimensionPicker.vue";
 import { isMissingFor } from "@/store/dimensions.js";
 import { RATING_DIMENSION } from "@/ratings.js";
 
@@ -366,6 +367,7 @@ function formatBound(value, span) {
  */
 export default {
   name: "DimensionsDialog",
+  components: { DimensionPicker },
   data() {
     return {
       view: "manage",

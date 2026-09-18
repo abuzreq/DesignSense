@@ -48,6 +48,28 @@ export function optionName(item) {
   return "Option " + id;
 }
 
+/**
+ * How the interface sets apart the dimensions a user makes from the file's
+ * own columns, wherever one is named: a colour and a sign after the name.
+ */
+export const KIND_MARKS = {
+  [CUSTOM]: {
+    mark: "✎",
+    color: "#6a1b9a",
+    title: "Custom dimension: values you enter",
+  },
+  [WEIGHTED]: {
+    mark: "Σ",
+    color: "#00796b",
+    title: "Weighted dimension: a weighted sum of other dimensions",
+  },
+};
+
+/** The column's mark (see KIND_MARKS) when it is custom or weighted, else null. */
+export function kindMark(name) {
+  return KIND_MARKS[columnKind(name)] || null;
+}
+
 /** The column name for a shown name of this kind: "custom:looks". */
 export function prefixedName(kind, label) {
   return kind + ":" + label;

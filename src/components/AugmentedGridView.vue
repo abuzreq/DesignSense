@@ -9,7 +9,7 @@
       >
         <template v-slot:default>
           <span class="ph-label">Sort</span>
-          <v-autocomplete
+          <DimensionPicker
             v-model="sortByVar"
             :items="sortItems"
             dense
@@ -170,8 +170,8 @@
                 <v-list-item-content
                   plain
                   style="font-weight: bold; padding: 4px 0;"
-                  >{{ label(param) }}</v-list-item-content
-                >
+                  ><DimensionName :name="param"
+                /></v-list-item-content>
                 <v-list-item-content
                   plain
                   style="padding: 4px 0;"
@@ -538,9 +538,11 @@ import ImageSwitcher from "@/components/ImageSwitcher.vue";
 import { DETAIL_BLACKLIST } from "@/store/compare.js";
 import { isAssetColumn } from "@/data/assets.js";
 import TipButton from "@/components/TipButton.vue";
+import DimensionName from "@/components/DimensionName.vue";
+import DimensionPicker from "@/components/DimensionPicker.vue";
 import { formatValue } from "@/store/filters.js";
 import { asRows } from "@/store/rows.js";
-import { dimensionItems, displayName, optionName } from "@/columns.js";
+import { dimensionItems, optionName } from "@/columns.js";
 
 import PanelHeader from "@/components/PanelHeader.vue";
 
@@ -598,6 +600,8 @@ export default {
     ImageSwitcher,
     ModelViewer,
     TipButton,
+    DimensionName,
+    DimensionPicker,
     "drag-select-container": DragSelect,
     imageZoom,
   },
@@ -940,7 +944,6 @@ export default {
     window.addEventListener("keydown", this.onWindowKeydown);
   },
   methods: {
-    label: displayName,
     toggleSortOrder() {
       this.isSortDesc = !this.isSortDesc;
     },

@@ -49,7 +49,7 @@
                     : "mdi-checkbox-blank-outline"
                 }}</v-icon>
               </v-list-item-icon>
-              <v-list-item-title>{{ axisTitles[dim] || dim }}</v-list-item-title>
+              <v-list-item-title><DimensionName :name="dim" /></v-list-item-title>
             </v-list-item>
           </v-list>
         </v-menu>
@@ -72,6 +72,7 @@ import * as d3 from "d3";
 import { mapGetters, mapState } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import PanelHeader from "@/components/PanelHeader.vue";
+import DimensionName from "@/components/DimensionName.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
 import { round } from "@/components/utils.js";
 import { formatValue, sameRange } from "@/store/filters.js";
@@ -79,11 +80,9 @@ import { axisTickFormat } from "@/components/axisFormat.js";
 import { operations } from "@/components/operations.js";
 import { RATING_BOUNDS, RATING_DIMENSION } from "@/ratings.js";
 import { snapValue } from "@/customDimensions.js";
-import { displayName } from "@/columns.js";
+import { CUSTOM, KIND_MARKS, WEIGHTED, displayName } from "@/columns.js";
 import { isAssetColumn } from "@/data/assets.js";
 
-const CUSTOM_AXIS_COLOR = "#6a1b9a";
-const WEIGHTED_AXIS_COLOR = "#00796b";
 // About one tick per this many pixels of axis height.
 const AXIS_TICK_SPACING = 40;
 // Room kept between neighbouring axis titles.
@@ -91,7 +90,7 @@ const TITLE_PADDING = 8;
 
 export default {
   mixins: [TemplateView],
-  components: { PanelHeader },
+  components: { PanelHeader, DimensionName },
   name: "ParCoordsView",
   data() {
     return {
@@ -510,24 +509,44 @@ export default {
       else if (this.hovered) this.addTooltip([this.hovered]);
       this.drawKnobs();
     },
-    /** Marks custom and weighted axes: no brushes, their own label colours. */
+    /**
+     * Marks custom and weighted axes: no brushes, their own colours, and a
+     * tinted column behind each, from its title to its foot, so they stand
+     * apart from the file's own dimensions.
+     */
     decorateAxes(chart) {
       let custom = new Set(this.customDimensionNames);
       let weighted = new Set(this.weightedDimensionNames);
+      let band = axisBand(chart);
       chart.svg.selectAll("g.dimension").each(function(dim) {
         let group = d3.select(this);
         group
           .classed("ds-unfilterable", custom.has(dim) || weighted.has(dim))
           .classed("ds-custom-axis", custom.has(dim))
           .classed("ds-weighted-axis", weighted.has(dim));
-        let color = custom.has(dim)
-          ? CUSTOM_AXIS_COLOR
+        let mark = custom.has(dim)
+          ? KIND_MARKS[CUSTOM]
           : weighted.has(dim)
-          ? WEIGHTED_AXIS_COLOR
+          ? KIND_MARKS[WEIGHTED]
           : null;
-        if (!color) return;
-        group.select("text.label").style("fill", color);
-        group.select("path.domain").style("stroke", color);
+        let rect = group
+          .selectAll("rect.ds-axis-band")
+          .data(mark ? [mark] : []);
+        rect.exit().remove();
+        rect
+          .enter()
+          .insert("rect", ":first-child")
+          .attr("class", "ds-axis-band")
+          .merge(rect)
+          .attr("x", -band.width / 2)
+          .attr("width", band.width)
+          .attr("y", band.top)
+          .attr("height", band.height)
+          .attr("rx", 4)
+          .style("fill", (d) => d.color);
+        if (!mark) return;
+        group.select("text.label").style("fill", mark.color);
+        group.select("path.domain").style("stroke", mark.color);
       });
     },
     scheduleTitleFit(chart) {
@@ -1368,6 +1387,25 @@ function declareNumberAxes(chart, data, numericDimensions) {
 }
 
 /**
+ * Where the tint behind a custom or weighted axis goes, in the axis's own
+ * coordinates: from above its title to its foot, as wide as the axes' spacing
+ * allows without touching a neighbour's.
+ */
+function axisBand(chart) {
+  let margin = chart.margin();
+  let h = chart.height() - margin.top - margin.bottom;
+  let xs = Object.keys(chart.dimensions())
+    .map((dim) => chart.xscale(dim))
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b);
+  let spacing = Infinity;
+  for (let i = 1; i < xs.length; i++) spacing = Math.min(spacing, xs[i] - xs[i - 1]);
+  let width = Math.max(10, Math.min(28, spacing - 8));
+  let top = -Math.min(margin.top - 1, 24);
+  return { width: width, top: top, height: h - top + 2 };
+}
+
+/**
  * Draws these axes over fixed bounds (`{ dim: [min, max] }`) rather than their
  * values' extent, with a linear scale even when every value is the same or
  * missing, so they stay put while values change and knobs can be dragged.
@@ -1483,6 +1521,11 @@ function sameAxisItems(drawn, wanted, span) {
   fill: rgba(40, 40, 40, 0.3);
 }
 
+/* Behind a custom or weighted axis; the lines and the title stay clickable. */
+::v-deep .parcoords rect.ds-axis-band {
+  fill-opacity: 0.08;
+  pointer-events: none;
+}
 /* Custom and weighted axes can't be brushed; the library reinstalls its brushes, so hide them. */
 ::v-deep .parcoords g.dimension.ds-unfilterable > g.brush {
   display: none;

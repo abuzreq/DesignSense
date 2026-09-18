@@ -72,7 +72,9 @@
               @click="startEdit(def)"
             >
               <v-list-item-content>
-                <v-list-item-title>{{ label(def.name) }}</v-list-item-title>
+                <v-list-item-title
+                  ><DimensionName :name="def.name"
+                /></v-list-item-title>
                 <v-list-item-subtitle
                   >{{ def.bounds[0] }}&ndash;{{
                     def.bounds[1]
@@ -92,7 +94,9 @@
             <v-subheader>Weighted dimensions</v-subheader>
             <v-list-item v-for="def in weightedDefs" :key="def.name" inactive>
               <v-list-item-content>
-                <v-list-item-title>{{ label(def.name) }}</v-list-item-title>
+                <v-list-item-title
+                  ><DimensionName :name="def.name"
+                /></v-list-item-title>
                 <v-progress-linear
                   class="mt-1"
                   height="4"
@@ -156,6 +160,7 @@ import {
   stepFor,
 } from "@/customDimensions.js";
 import { displayName } from "@/columns.js";
+import DimensionName from "@/components/DimensionName.vue";
 
 /**
  * Beside the star rating: the inspected option's values on custom dimensions,
@@ -163,6 +168,7 @@ import { displayName } from "@/columns.js";
  */
 export default {
   name: "CustomDimensionControl",
+  components: { DimensionName },
   props: ["item"],
   data() {
     return {
