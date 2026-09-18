@@ -322,7 +322,7 @@ export default {
   },
   methods: {
     short(column) {
-      return String(column).replace(/^(in|out|custom|weighted)\s*:\s*/i, "");
+      return String(column).replace(/^(in|out|min|max|custom|weighted)\s*:\s*/i, "");
     },
     slotWord(name) {
       return SLOT_WORDS[name] || name;

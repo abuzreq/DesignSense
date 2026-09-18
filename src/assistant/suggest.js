@@ -35,7 +35,7 @@ const VOCAB = vocabulary();
 /* ------------------------------------------------------------- helpers -- */
 
 function labelOf(column) {
-  return String(column).replace(/^(in|out|custom|weighted)\s*:\s*/i, "");
+  return String(column).replace(/^(in|out|min|max|custom|weighted)\s*:\s*/i, "");
 }
 
 /** The text a column is inserted as: its normalised name, which the parser resolves. */

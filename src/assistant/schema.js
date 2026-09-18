@@ -9,6 +9,7 @@
 
 import { buildColumnIndex } from "./lexicon.js";
 import { isAssetColumn } from "../data/assets.js";
+import { goalFor, goalSourceFor } from "../store/goals.js";
 
 /**
  * Columns a question is never about. Pictures and models are left to
@@ -37,13 +38,25 @@ function signature(state) {
     "#" +
     (state.data ? state.data.length : 0) +
     "#" +
-    unfilterableOf(state).join("|")
+    unfilterableOf(state).join("|") +
+    "#" +
+    JSON.stringify(state.goalChoices || {})
   );
 }
 
 /** Custom and weighted dimensions: numeric, but never filtered by. */
 function unfilterableOf(state) {
   return (state.customDimensions || []).map((def) => def.name);
+}
+
+/** `{ dim: "max" | "min" }` for the columns that have a goal (see store/goals.js). */
+function goalsOf(state, numeric) {
+  let goals = {};
+  numeric.forEach((dim) => {
+    let goal = goalFor(dim, state.goalChoices);
+    if (goal) goals[dim] = goal;
+  });
+  return goals;
 }
 
 /** Distinct values of each non-numeric column, for "only toyotas". */
@@ -64,7 +77,12 @@ function categoryValues(data, dimensions) {
   return values;
 }
 
-/** `{ index, values, columns, numeric, unfilterable }`, rebuilt only when the data changes. */
+/**
+ * `{ index, values, columns, numeric, unfilterable, goals, goalDims }`,
+ * rebuilt only when the data or the goals change. `goals` is `{ dim: "max" |
+ * "min" }` for every numeric column with one; `goalDims` those the user or
+ * the file set, which "best trade-offs" uses when it names no columns.
+ */
 export function buildSchema(state) {
   let current = signature(state);
   if (cached && cachedSignature === current) return cached;
@@ -77,6 +95,14 @@ export function buildSchema(state) {
     columns: columns,
     numeric: numeric,
     unfilterable: unfilterableOf(state).filter((c) => columns.includes(c)),
+    goals: goalsOf(state, numeric),
+    goalDims: numeric.filter((c) => {
+      let source = goalSourceFor(c, state.goalChoices);
+      return (
+        (source === "user" || source === "file") &&
+        goalFor(c, state.goalChoices) !== null
+      );
+    }),
     index: buildColumnIndex(columns),
     values: categoryValues(state.data || [], categorical),
   };

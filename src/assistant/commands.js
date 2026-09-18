@@ -13,6 +13,15 @@
  */
 
 import { GALLERY_KEY, makeMembersFilter, rangeKey } from "@/store/filters.js";
+import { isMissingFor } from "@/store/dimensions.js";
+import {
+  PARETO_FILTER_KEY,
+  PARETO_LABEL,
+  frontCaveats,
+  frontWarning,
+  paretoFront,
+  rowsWithValues,
+} from "@/analysis/pareto.js";
 import { operations } from "@/components/operations.js";
 import {
   cluster,
@@ -59,7 +68,7 @@ function resultRows(ctx) {
 }
 
 function label(dim) {
-  return String(dim).replace(/^(in|out|custom|weighted)\s*:\s*/i, "");
+  return String(dim).replace(/^(in|out|min|max|custom|weighted)\s*:\s*/i, "");
 }
 
 function count(n, noun) {
@@ -402,24 +411,31 @@ export const COMMANDS = {
       // The front becomes a filter chip, which custom values would outdate.
       let locked = args.dims.find((dim) => isUnfilterable(ctx, dim));
       if (locked) return refuseFilter(locked);
-      let rows = resultRows(ctx).filter((row) =>
-        args.dims.every((d) => Number.isFinite(Number(row[d])))
-      );
-      let sign = args.directions.map((d) => (d === "min" ? -1 : 1));
-      let front = rows.filter((row) =>
-        !rows.some((other) => {
-          let better = false;
-          for (let i = 0; i < args.dims.length; i++) {
-            let a = Number(other[args.dims[i]]) * sign[i];
-            let b = Number(row[args.dims[i]]) * sign[i];
-            if (a < b) return false;
-            if (a > b) better = true;
-          }
-          return better;
-        })
-      );
-      members(ctx, "assistant:pareto", "Best trade-offs", front.map((r) => r._id));
-      return { message: count(front.length, "option") + " are not beaten on both." };
+      // The current result, less a front kept before, so asking again
+      // doesn't look only inside the last answer.
+      let all = ctx.getters.tradeOffRows;
+      let values = rowsWithValues(all, args.dims, isMissingFor);
+      let front = paretoFront(values.rows, args.dims, args.directions);
+      if (front.length === 0) {
+        return { message: "No options have a value for all of those." };
+      }
+      members(ctx, PARETO_FILTER_KEY, PARETO_LABEL, front.map((r) => r._id));
+      let goals = ctx.schema.goals || {};
+      let caveats = frontCaveats({
+        dims: args.dims,
+        directions: args.directions,
+        rows: values.rows,
+        front: front,
+        missing: values.missing,
+        scoped: all.length < ctx.state.rawData.length,
+        unset: args.dims.filter((dim) => !goals[dim]),
+      });
+      let message =
+        count(front.length, "option") +
+        (front.length === 1 ? " is" : " are") +
+        (args.dims.length === 2 ? " not beaten on both." : " not beaten on every goal.");
+      let warning = frontWarning(caveats);
+      return { message: warning ? message + " " + warning : message };
     },
   },
   "analysis.cluster": {

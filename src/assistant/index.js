@@ -59,7 +59,7 @@ const REFUSALS = {
 };
 
 function labelOf(dim) {
-  return String(dim).replace(/^(in|out|custom|weighted)\s*:\s*/i, "");
+  return String(dim).replace(/^(in|out|min|max|custom|weighted)\s*:\s*/i, "");
 }
 
 /** A short echo of what was understood, so a misreading is visible. */

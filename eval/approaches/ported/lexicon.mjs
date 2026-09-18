@@ -38,7 +38,7 @@ export function tokens(s) {
  */
 export function normalizeColumn(name) {
   let s = String(name).trim();
-  s = s.replace(/^(in|out|custom|weighted)\s*:\s*/i, "");
+  s = s.replace(/^(in|out|min|max|custom|weighted)\s*:\s*/i, "");
   s = s.replace(/\([^)]*\)/g, " ").replace(/\[[^\]]*\]/g, " ");
   s = s.replace(/([a-z0-9])([A-Z])/g, "$1 $2"); // camelCase
   s = s.replace(/[_/\\]+/g, " ");
@@ -127,7 +127,7 @@ export function buildColumnIndex(columns) {
       // camelCase splitting turns "sDa" into "s da", which nobody types.
       // Index the unsplit spelling alongside it.
       let joined = String(column)
-        .replace(/^(in|out|custom|weighted)\s*:\s*/i, "")
+        .replace(/^(in|out|min|max|custom|weighted)\s*:\s*/i, "")
         .replace(/\([^)]*\)/g, "")
         .replace(/\[[^\]]*\]/g, "")
         .toLowerCase()

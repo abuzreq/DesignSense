@@ -83,6 +83,24 @@
       </v-tooltip>
 
       <template v-slot:actions>
+        <!-- Only when both axes have a goal: then the plot has a front. -->
+        <v-tooltip v-if="frontGoals" bottom max-width="320">
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              small
+              class="ph-btn"
+              :class="{ 'ph-btn--on': showFront }"
+              aria-label="Best trade-offs"
+              :aria-pressed="String(showFront)"
+              @click="showFront = !showFront"
+            >
+              <v-icon small>mdi-vector-polyline</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ frontTip }}</span>
+        </v-tooltip>
         <v-tooltip v-if="can('lassoBrush')" bottom>
           <template v-slot:activator="{ on }">
             <!-- A disabled button swallows pointer events, so the tooltip
@@ -201,6 +219,21 @@ div ::v-deep .axis line {
   stroke: #ddd;
 }
 
+/* The best trade-offs of the plotted pair, when both axes have a goal. */
+div ::v-deep .front-line {
+  fill: none;
+  stroke: #263238;
+  stroke-width: 1.5px;
+  stroke-dasharray: 5 3;
+  pointer-events: none;
+}
+div ::v-deep .front-point {
+  fill: none;
+  stroke: #263238;
+  stroke-width: 1.5px;
+  pointer-events: none;
+}
+
 div ::v-deep .axis path {
   display: none;
 }
@@ -278,8 +311,6 @@ div ::v-deep svg.scatter-svg.lasso-mode circle.point,
 }
 </style>
 <script>
-const pf = require("pareto-frontier");
-
 import * as d3 from "d3";
 // Called as `lasso()`, not `d3.lasso()`: a module namespace is sealed, so the
 // old line that hung it on d3 fails silently under a bundler that keeps them
@@ -294,7 +325,15 @@ import PanelHeader from "@/components/PanelHeader.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
 import { formatValue } from "@/store/filters.js";
 import { axisTickFormat } from "@/components/axisFormat.js";
-import { dimensionItems, displayName } from "@/columns.js";
+import { GOAL_MARKS, dimensionItems, displayName } from "@/columns.js";
+import {
+  frontCaveats,
+  frontSteps,
+  frontWarning,
+  paretoFront,
+  rowsWithValues,
+} from "@/analysis/pareto.js";
+import { isMissingFor } from "@/store/dimensions.js";
 import { RATING_DIMENSION } from "@/ratings.js";
 import ClusterIcon from "@/assets/cluster_icon.svg?component";
 import ClusterView from "@/components/ClusterView.vue";
@@ -324,7 +363,10 @@ export default {
       // Lite: whether the drawn rectangle is a lone axis brush mirrored here
       // rather than one of the plot's own boxes.
       mirrored: false,
-      isShowingParetoFrontier: false,
+      // Whether the front of the plotted pair is drawn, when both have goals.
+      showFront: true,
+      // `{ count, of, caveats }` for the front last drawn, for its tooltip.
+      frontInfo: null,
       headerHeight: PANEL_HEADER_HEIGHT,
     };
   },
@@ -369,7 +411,38 @@ export default {
       isClusteringPanelOpen: (state) => state.isClusteringPanelOpen,
       dimensionValuesVersion: (state) => state.dimensionValuesVersion,
     }),
-    ...mapGetters(["dimensionStructure", "unfilterableDimensions"]),
+    ...mapGetters([
+      "dimensionStructure",
+      "unfilterableDimensions",
+      "goalOf",
+      "goalSignature",
+    ]),
+    /** The plotted pair's goals when both have one, else null: no front to draw. */
+    frontGoals() {
+      if (this.xColumn === this.yColumn) return null;
+      let goals = [this.goalOf(this.xColumn), this.goalOf(this.yColumn)];
+      return goals[0] && goals[1] ? goals : null;
+    },
+    frontTip() {
+      if (!this.frontGoals) return "";
+      let pair =
+        this.axisLabel(this.xColumn) + " and " + this.axisLabel(this.yColumn);
+      if (!this.showFront) {
+        return "Show the best trade-offs of " + pair + ".";
+      }
+      let info = this.frontInfo;
+      let text = "The line marks the best trade-offs of " + pair;
+      if (info) {
+        text += ": " + info.count + " of " + info.of + " options no other beats on both.";
+        let warning = frontWarning(info.caveats);
+        let trade = info.caveats.find((caveat) => caveat.key === "trade");
+        if (warning) text += " " + warning;
+        else if (trade) text += " " + trade.detail[0];
+      } else {
+        text += ".";
+      }
+      return text + " Click to hide.";
+    },
     axisItems() {
       return dimensionItems(this.numericDimensions);
     },
@@ -414,6 +487,13 @@ export default {
     dimensionStructure: function() {
       this.scheduleRefresh();
     },
+    // A goal changed: the axis titles' marks, and whether there is a front.
+    goalSignature: function() {
+      this.scheduleRefresh();
+    },
+    showFront: function() {
+      this.drawFront();
+    },
     // Set from outside (the assistant), not only through the dropdowns.
     xColumn: function() {
       this.scheduleRefresh();
@@ -453,21 +533,45 @@ export default {
         value: !this.isClusteringPanelOpen,
       });
     },
-    calculateParetoFrontier: function(event) {
-      this.isShowingParetoFrontier = true;
-      let graph = this.chartData
-        .filter(
-          (d) =>
-            Number.isFinite(d[this.xColumn]) && Number.isFinite(d[this.yColumn])
-        )
-        .map((d) => [d[this.xColumn], d[this.yColumn], d._id]);
-      //https://github.com/justinormont/pareto-frontier/pull/2
-      const out = pf.getParetoFrontier(graph, { optimize: "topRight" }); //topLeft topRight bottomRight bottomLeft
-      this.$store.dispatch("update", {
-        view: this.viewID,
-        selection: out.map((d) => d[2]),
-        operation: this.$store.state.currentSelectionOperation,
+    /** An axis's title: its name, and ↑ or ↓ when it has a goal. */
+    axisLabel: function(dim) {
+      let mark = GOAL_MARKS[this.goalOf(dim)];
+      return displayName(dim) + (mark ? " " + mark.mark : "");
+    },
+    /**
+     * Draws the front of the plotted pair over the current result (see the
+     * store's tradeOffRows), or takes it away when either axis has no goal
+     * or it is hidden.
+     */
+    drawFront: function() {
+      if (!this.chart || typeof this.chart.showFront !== "function") return;
+      let goals = this.frontGoals;
+      if (!goals || !this.showFront) {
+        this.chart.showFront(null);
+        this.frontInfo = null;
+        return;
+      }
+      let dims = [this.xColumn, this.yColumn];
+      let values = rowsWithValues(
+        this.$store.getters.tradeOffRows,
+        dims,
+        isMissingFor
+      );
+      let front = paretoFront(values.rows, dims, goals);
+      this.chart.showFront({
+        steps: frontSteps(front, dims, goals),
+        points: front.map((row) => [row[dims[0]], row[dims[1]]]),
       });
+      this.frontInfo = {
+        count: front.length,
+        of: values.rows.length,
+        caveats: frontCaveats({
+          dims: dims,
+          directions: goals,
+          rows: values.rows,
+          front: front,
+        }),
+      };
     },
 
     onXChange: function(newXColumn) {
@@ -486,9 +590,12 @@ export default {
         this.chart.highlight(result, this.isFilterActive);
         this.syncLiteBrush();
       }
+      // The front is of the current result, which a filter changes.
+      this.drawFront();
     },
     afterChartRebuilt: function() {
       this.syncLiteBrush();
+      this.drawFront();
     },
     /** The dimensions this plot's rectangles constrain: the pair, or one plotted against itself. */
     plotDims: function() {
@@ -623,13 +730,13 @@ export default {
         .outerHeight(this.plotHeight)
         .margin(margin)
         .xColumn(this.xColumn)
-        .xAxisLabel(displayName(this.xColumn))
+        .xAxisLabel(this.axisLabel(this.xColumn))
         .xAxisLabelOffset(36)
         // One tick per ~70px across and ~45px up; d3 rounds to nice steps, so
         // these are upper bounds more than exact counts.
         .xTicks(Math.max(2, Math.floor(innerWidth / X_TICK_SPACING)))
         .yColumn(this.yColumn)
-        .yAxisLabel(displayName(this.yColumn))
+        .yAxisLabel(this.axisLabel(this.yColumn))
         .yAxisLabelOffset(42)
         .yTicks(Math.max(2, Math.floor(innerHeight / Y_TICK_SPACING)))
         .isXAxisIncremental(this.isXAxisIncremental)
@@ -1431,6 +1538,39 @@ class ScatterPlot {
         chart.mark = mark;
         chart.createTooltip = createTooltip;
         chart.cleanTooltip = cleanTooltip;
+        // The front of the plotted pair, `{ steps, points }` in data units
+        // (see frontSteps): a stepped line and a ring on each option on it,
+        // over the points and letting the pointer through. Null clears it.
+        chart.showFront = function(front) {
+          let line = g
+            .selectAll("path.front-line")
+            .data(front && front.steps.length > 1 ? [front.steps] : []);
+          line.exit().remove();
+          line
+            .enter()
+            .append("path")
+            .attr("class", "front-line")
+            .merge(line)
+            .attr(
+              "d",
+              d3
+                .line()
+                .x((p) => xScale(p[0]))
+                .y((p) => yScale(p[1]))
+            );
+          let rings = g
+            .selectAll("circle.front-point")
+            .data(front ? front.points : []);
+          rings.exit().remove();
+          rings
+            .enter()
+            .append("circle")
+            .attr("class", "front-point")
+            .attr("r", 5)
+            .merge(rings)
+            .attr("cx", (p) => xScale(p[0]))
+            .attr("cy", (p) => yScale(p[1]));
+        };
 
         if (multiBrush && useRect) {
           brushLayer = g.append("g").attr("class", "brushes");

@@ -45,7 +45,7 @@ export const PANELS = [
   ["clusters", "Clusters"],
   ["sensitivity", "Sensitivity"], ["drivers", "Sensitivity"], ["analysis", "Sensitivity"],
 ];
-/** Columns that a person wants less of, when no direction is stated. */
+/** Columns that a person wants less of, when no direction is stated and no goal is set. */
 const LOWER_IS_BETTER = /cost|price|cooling|heating|deviation|energy|odometer|emission/;
 
 function asset(result) {
@@ -261,12 +261,21 @@ const SHAPES = [
 
   // --- analysis -------------------------------------------------------------
   function pareto(text, ctx) {
-    if (!/pareto|frontier|trade ?off|non dominated|minimi[sz]e|maximi[sz]e/.test(text)) return null;
+    if (!/pareto|frontier|trade[ -]?off|non dominated|minimi[sz]e|maximi[sz]e/.test(text)) return null;
     let dims = manyColumns(text, 2);
+    // "Best trade-offs" naming no columns: every goal that was set.
+    let goalDims = SCHEMA.goalDims || [];
+    if (dims.length === 0 && goalDims.length >= 2 && /pareto|frontier|trade[ -]?off|non dominated/.test(text)) {
+      dims = goalDims.slice();
+    }
     if (dims.length < 2) return null;
     let explicitMin = /minimi[sz]e|minimi[sz]ed/.test(text);
     let explicitMax = /maximi[sz]e|maximi[sz]ed/.test(text);
-    let directions = dims.map((d) => (LOWER_IS_BETTER.test(d.toLowerCase()) ? "min" : "max"));
+    // A goal says which way is better; without one, the name is a guess.
+    let goals = SCHEMA.goals || {};
+    let directions = dims.map(
+      (d) => goals[d] || (LOWER_IS_BETTER.test(d.toLowerCase()) ? "min" : "max")
+    );
     if (explicitMin && explicitMax) {
       // "X minimized and Y maximized" pairs by position in the sentence.
       let at = (needle) => text.indexOf(needle);
