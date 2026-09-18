@@ -43,7 +43,10 @@
 
         <div v-else class="cmp-grid" :style="gridStyle">
           <!-- Names, and the two controls that change what the comparison holds -->
-          <div class="cmp-label cmp-head"></div>
+          <div class="cmp-label cmp-head cmp-sort-hint">
+            <v-icon x-small>mdi-cursor-default-click-outline</v-icon>
+            Sort by a row
+          </div>
           <div v-for="col in columns" :key="'head-' + col.id" class="cmp-head">
             <div class="cmp-head-line">
               <span class="cmp-name" :title="col.name">{{ col.name }}</span>
@@ -103,8 +106,8 @@
             @click="sortBy(ratingDimension)"
           >
             <span class="cmp-label-text">Your rating</span>
-            <v-icon v-if="sortDim === ratingDimension" x-small>{{
-              sortDesc ? "mdi-arrow-down" : "mdi-arrow-up"
+            <v-icon x-small class="cmp-sort-mark">{{
+              sortMark(ratingDimension)
             }}</v-icon>
           </button>
           <div
@@ -146,8 +149,8 @@
                 @click="sortBy(row.dim)"
               >
                 <span class="cmp-label-text">{{ row.label }}</span>
-                <v-icon v-if="sortDim === row.dim" x-small>{{
-                  sortDesc ? "mdi-arrow-down" : "mdi-arrow-up"
+                <v-icon x-small class="cmp-sort-mark">{{
+                  sortMark(row.dim)
                 }}</v-icon>
               </button>
               <div
@@ -477,6 +480,14 @@ export default {
       this.sortDim = null;
       this.sortDesc = false;
     },
+    /**
+     * Every row carries the mark, faint until it is the one sorting: a handle
+     * nobody can see is a handle nobody uses.
+     */
+    sortMark(dim) {
+      if (this.sortDim !== dim) return "mdi-unfold-more-horizontal";
+      return this.sortDesc ? "mdi-arrow-down" : "mdi-arrow-up";
+    },
     sortTitle(label, dim) {
       if (this.sortDim !== dim) return "Sort the options by " + label;
       return this.sortDesc
@@ -585,6 +596,30 @@ export default {
 .cmp-sortable:focus-visible {
   outline: 2px solid #1976d2;
   outline-offset: -2px;
+}
+/* Visible on every row, quiet until it matters. */
+.cmp-sort-mark {
+  margin-left: auto;
+  flex: 0 0 auto;
+  opacity: 0.32;
+  transition: opacity 120ms ease;
+}
+.cmp-sortable:hover .cmp-sort-mark {
+  opacity: 0.75;
+}
+.cmp-sorted .cmp-sort-mark {
+  opacity: 1;
+}
+/* Heads the column of row names, so the rows read as handles. */
+.cmp-sort-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #90a4ae;
+}
+.cmp-sort-hint .v-icon {
+  color: #b0bec5;
 }
 .cmp-label-text {
   overflow: hidden;
