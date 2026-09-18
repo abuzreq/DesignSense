@@ -39,7 +39,6 @@
     "dependencies": {
         "@cdxoo/dbscan": "^1.1.1",
         "@jwalsh/tsnejs": "^0.1.3",
-        "@mdi/font": "^7.4.47",
         "@mdi/js": "7.4.47",
         "d3": "^5.15.0",
         "d3-lasso": "github:abuzreq/d3-lasso",
