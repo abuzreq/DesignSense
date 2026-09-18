@@ -266,21 +266,8 @@ const OPERATION_ITEMS = [
   };
 });
 
-import ReplaceIcon from "-!vue-svg-loader!/src/assets/replace_icon.svg";
-import AddIcon from "-!vue-svg-loader!/src/assets/add_icon.svg";
-import SubtractIcon from "-!vue-svg-loader!/src/assets/subtract_icon.svg";
-import ToggleIcon from "-!vue-svg-loader!/src/assets/toggle_icon.svg";
-import IntersectIcon from "-!vue-svg-loader!/src/assets/intersect_icon.svg";
-
 export default {
   name: "SelectionOperationsBar",
-  components: {
-    ReplaceIcon,
-    AddIcon,
-    SubtractIcon,
-    ToggleIcon,
-    IntersectIcon,
-  },
   data: function() {
     return {
       operationsList: operations,

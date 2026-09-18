@@ -290,15 +290,12 @@ import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import * as kmeans from "node-kmeans";
 
-import * as nj from "numjs";
 import PanelHeader from "@/components/PanelHeader.vue";
 import { dimensionItems } from "@/columns.js";
 import { RATING_DIMENSION } from "@/ratings.js";
 import { operationIcon, operationPhrase } from "@/components/operationIcons.js";
 
-//import  * as PNGImage from 'pngjs-image';
 import * as pixelmatch from "pixelmatch";
-const PNG = require("pngjs").PNG;
 
 // DBSCAN neighbourhood radii, finest first, matching epsilonValues.
 const EPSILONS = [0.05, 0.1, 0.2, 0.4];
