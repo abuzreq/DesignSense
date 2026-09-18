@@ -1,9 +1,9 @@
 <template>
   <v-dialog
     v-model="open"
-    fullscreen
+    max-width="1400"
+    width="95%"
     scrollable
-    transition="dialog-bottom-transition"
     @keydown="onDialogKey"
   >
     <!-- Built only while shown: the reading walks every row of the whole
@@ -902,6 +902,7 @@ export default {
 
 .sx-body {
   flex: 1 1 auto;
+  max-height: 78vh;
   padding: 14px 16px 24px !important;
   color: #263238;
   font-size: 13px;
