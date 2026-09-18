@@ -8,7 +8,7 @@
  * the browser.
  *
  * Regenerate the copies under approaches/ported/ whenever src/assistant
- * changes; `node eval/port-check.mjs` does it.
+ * changes; `python eval/port-check.py` does it.
  */
 
 import { parse } from "./ported/parser.mjs";

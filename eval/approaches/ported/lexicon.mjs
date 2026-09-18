@@ -9,6 +9,8 @@
  * takes a `schema` built by schema.js from the live store.
  */
 
+import { isAssetColumn } from "./assets.mjs";
+
 /* ------------------------------------------------------------------ text -- */
 
 export function normalizeText(s) {
@@ -106,10 +108,14 @@ function aliasMatchesColumn(target, norm) {
 
 /** One searchable entry per column: its own words plus every alias phrase. */
 export function buildColumnIndex(columns) {
-  // Images, geometry and raw urls are never what a question is about.
-  let skip = ["img", "images", "image", "image_url", "threed", "json", "url", "region_url", "_id", "lat", "long"];
+  // Raw urls and coordinates are never what a question is about. Pictures and
+  // models are isAssetColumn's, which also covers "img_2"; a "model" column
+  // holding car models is not one, so questions about it still resolve.
+  let skip = ["image_url", "url", "region_url", "_id", "lat", "long"];
   return columns
-    .filter((c) => !skip.includes(String(c).trim().toLowerCase()))
+    .filter(
+      (c) => !skip.includes(String(c).trim().toLowerCase()) && !isAssetColumn(c)
+    )
     .map((column) => {
       let norm = normalizeColumn(column);
       let phrases = [norm];

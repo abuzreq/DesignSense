@@ -153,16 +153,32 @@ export function render(template, filled) {
   return out.replace(/\s+$/, "") + (i < slots(template).length ? " " : "");
 }
 
-/** A readable preview: filled slots as text, open slots as their kind. */
-export function preview(template, filled) {
+/** What an open slot is called where the interface shows it. */
+export const SLOT_WORDS = {
+  dim: "column", op: "comparison", value: "number", values: "value", k: "how many",
+  n: "how many", percent: "percent", order: "order", stat: "statistic", panel: "view",
+  set: "set", mode: "mode", name: "name", ordinal: "which",
+};
+
+/**
+ * The preview as parts, `{ text, open }`, so that the bar can show an open
+ * slot as a blank to fill rather than as template syntax: "filter price
+ * between 10000 and {value}" read like a bug.
+ */
+export function previewParts(template, filled) {
   let i = 0;
-  return parts(template)
-    .map((part) => {
-      if (part.literal) return part.literal;
-      if (i < filled.length) return filled[i++];
-      i++;
-      return "{" + (part.slot === "dim" ? "column" : part.slot) + "}";
-    })
+  return parts(template).map((part) => {
+    if (part.literal) return { text: part.literal };
+    if (i < filled.length) return { text: filled[i++] };
+    i++;
+    return { text: SLOT_WORDS[part.slot] || part.slot, open: true };
+  });
+}
+
+/** The preview as one line of text, open slots as ‹the word for them›. */
+export function preview(template, filled) {
+  return previewParts(template, filled)
+    .map((part) => (part.open ? "‹" + part.text + "›" : part.text))
     .join("")
     .replace(/\s+/g, " ")
     .trim();

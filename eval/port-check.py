@@ -9,11 +9,17 @@ import io, os, re
 OUT = "eval/approaches/ported"
 os.makedirs(OUT, exist_ok=True)
 
-for name in ["lexicon", "composition", "bm25", "examples", "parser", "templates", "semantic", "suggest"]:
-    s = io.open("src/assistant/" + name + ".js", encoding="utf-8").read()
-    s = re.sub(r'from "\./([a-z0-9]+)\.js"', r'from "./\1.mjs"', s)
+# The parser files, and the one module outside src/assistant they import
+# (which column holds pictures or models); all land flat in OUT.
+SOURCES = [("src/assistant/", name) for name in
+           ["lexicon", "composition", "bm25", "examples", "parser", "templates", "semantic", "suggest"]]
+SOURCES.append(("src/data/", "assets"))
+
+for folder, name in SOURCES:
+    s = io.open(folder + name + ".js", encoding="utf-8").read()
+    s = re.sub(r'from "\.\.?/(?:data/)?([a-z0-9]+)\.js"', r'from "./\1.mjs"', s)
     io.open(OUT + "/" + name + ".mjs", "w", encoding="utf-8", newline="\n").write(
-        "/* GENERATED from src/assistant/" + name + ".js by the eval harness. Do not edit. */\n" + s
+        "/* GENERATED from " + folder + name + ".js by the eval harness. Do not edit. */\n" + s
     )
 
 io.open("eval/approaches/a1p-ported.mjs", "w", encoding="utf-8", newline="\n").write(
@@ -27,7 +33,7 @@ io.open("eval/approaches/a1p-ported.mjs", "w", encoding="utf-8", newline="\n").w
  * the browser.
  *
  * Regenerate the copies under approaches/ported/ whenever src/assistant
- * changes; `node eval/port-check.mjs` does it.
+ * changes; `python eval/port-check.py` does it.
  */
 
 import { parse } from "./ported/parser.mjs";
