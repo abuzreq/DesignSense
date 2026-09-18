@@ -178,8 +178,7 @@
             </v-tooltip>
             <span class="ax-head-meta">Which inputs move which outputs</span>
             <v-spacer />
-            <!-- The three measures, each explained in its tooltip; the one
-                 shown is explained under the pickers too. -->
+            <!-- The three measures, each explained in its tooltip. -->
             <v-btn-toggle
               v-model="measure"
               mandatory
@@ -245,26 +244,40 @@
           />
         </div>
 
-        <!-- The first thing to say about a sensitivity reading is what it
-             rests on. Nothing in the numbers reveals how the options were
-             generated, so it is stated in the open rather than left to the
-             tooltip. -->
-        <p class="sx-sampling">
-          <v-icon x-small class="sx-sampling-icon"
-            >mdi-information-outline</v-icon
+        <!-- What a reading rests on and what to doubt in it: a few words
+             each, in view beside the numbers, and the whole of it on hover. -->
+        <div class="sx-caveats">
+          <v-tooltip
+            v-for="caveat in caveats"
+            :key="caveat.key"
+            bottom
+            max-width="380"
           >
-          <span
-            >The analysis here is only as good as the sampling behind it, i.e.,
-            adequate sample size and reasonable representation of the design
-            space. A hand-picked set, or the path an optimiser took, mostly
-            describes itself.</span
-          >
-        </p>
-        <!-- What the number on show answers; the other two say so in their
-             tooltips, and the info icon says where the three part company. -->
-        <p class="ax-measure-note">
-          <strong>{{ currentMeasure.text }}:</strong> {{ currentMeasure.note }}
-        </p>
+            <template v-slot:activator="{ on }">
+              <span
+                v-on="on"
+                class="sx-caveat"
+                :class="{ 'sx-caveat--warn': caveat.warn }"
+                tabindex="0"
+              >
+                <v-icon x-small class="sx-caveat-icon">{{
+                  caveat.warn
+                    ? "mdi-alert-circle-outline"
+                    : "mdi-information-outline"
+                }}</v-icon
+                >{{ caveat.text }}
+              </span>
+            </template>
+            <span class="sx-tip">
+              <span
+                v-for="(line, i) in caveat.detail"
+                :key="i"
+                class="sx-tip-line"
+                >{{ line }}</span
+              >
+            </span>
+          </v-tooltip>
+        </div>
 
         <!-- Nothing to read yet: the file never said which columns are which,
              or a picker was emptied. -->
@@ -291,15 +304,12 @@
           </div>
 
           <template v-else>
-            <p v-for="note in notes" :key="note" class="sx-note">{{ note }}</p>
-
             <!-- Both readings at once: the grid answers "what moves what"
                  across every pair, the bars rank one output's inputs. Plain
                  DOM rather than SVG -- a hundred cells of text that stay
                  selectable, and no resize lifecycle to manage. -->
             <div class="sx-views">
               <div class="sx-view sx-view--matrix">
-                <div class="sx-view-head">Every input against every output</div>
                 <div class="sx-scroll">
                   <div class="sx-matrix" :style="matrixStyle">
                     <div class="sx-corner"></div>
@@ -541,14 +551,6 @@ export default {
     outputChoices() {
       return dimensionItems(this.outputs);
     },
-    currentMeasure() {
-      let self = this;
-      return (
-        MEASURES.find(function(choice) {
-          return choice.value === self.measure;
-        }) || MEASURES[0]
-      );
-    },
     /** Whether the file itself says which columns are inputs and which outputs. */
     hasPrefixes() {
       return this.allDimensions.some((dim) => {
@@ -617,33 +619,87 @@ export default {
           "minmax(140px, 220px) repeat(" + columns + ", minmax(88px, 1fr))",
       };
     },
-    /** The caveats that belong beside the numbers rather than inside a tooltip. */
-    notes() {
-      if (!this.result) return [];
-      let notes = [];
-      let total = this.rawData.length;
-      if (this.result.sampled) {
-        notes.push(
-          "Read over " +
-            this.result.rows.toLocaleString() +
-            " evenly spaced options of " +
-            total.toLocaleString() +
-            ", to keep this quick."
-        );
-      }
-      if (this.result.inputs.length > this.shownInputs.length) {
-        notes.push(
-          "Showing the top " +
-            this.shownInputs.length +
+    /**
+     * What a reading rests on and what to doubt in it, as `{ key, text,
+     * detail, warn }`: a few words to show, and the whole of it, a line each,
+     * for hovering. The sampling one always stands: nothing in the numbers
+     * reveals how the options were generated.
+     */
+    caveats() {
+      let caveats = [
+        {
+          key: "sampling",
+          text: "Only as good as the sampling",
+          detail: [
+            "The analysis is only as good as the sampling behind it: enough " +
+              "options, spread fairly over the design space.",
+            "A hand-picked set, or the path an optimiser took, mostly " +
+              "describes itself.",
+          ],
+        },
+      ];
+      let result = this.result;
+      if (!result || !this.hasPair || this.allInputsConstant) return caveats;
+      if (result.sampled) {
+        caveats.push({
+          key: "sampled",
+          text:
+            "Read over " +
+            result.rows.toLocaleString() +
             " of " +
-            this.result.inputs.length +
-            " inputs, ranked by how strongly they move with " +
-            this.label(this.focusOutput) +
-            "."
-        );
+            this.rawData.length.toLocaleString(),
+          detail: [
+            "Read over " +
+              result.rows.toLocaleString() +
+              " evenly spaced options of " +
+              this.rawData.length.toLocaleString() +
+              ", to keep this quick.",
+          ],
+        });
       }
-      notes = notes.concat(this.collinearNotes, this.ridgedNote, this.fewValuesNote);
-      return notes.filter(Boolean);
+      if (result.inputs.length > this.shownInputs.length) {
+        caveats.push({
+          key: "top",
+          text:
+            "Top " + this.shownInputs.length + " of " + result.inputs.length + " inputs",
+          detail: [
+            "Showing the top " +
+              this.shownInputs.length +
+              " of " +
+              result.inputs.length +
+              " inputs, ranked by how strongly they move with " +
+              this.label(this.focusOutput) +
+              ".",
+          ],
+        });
+      }
+      let alike = this.collinearNotes.concat(this.ridgedNote);
+      if (alike.length > 0) {
+        caveats.push({
+          key: "alike",
+          text: "Inputs that move together",
+          detail: alike,
+          warn: true,
+        });
+      }
+      let few = this.fewValueDims;
+      if (few.length > 0) {
+        caveats.push({
+          key: "few",
+          text:
+            few.length === 1
+              ? this.label(few[0]) + " has few values"
+              : few.length + " dimensions with few values",
+          detail: [
+            this.joinNames(few) +
+              (few.length === 1 ? " has" : " have") +
+              " only a few distinct values: read the rank number, not the " +
+              "linear one.",
+          ],
+          warn: true,
+        });
+      }
+      return caveats;
     },
     /** Pairs of inputs too alike to be told apart, named once each. */
     collinearNotes() {
@@ -684,19 +740,12 @@ export default {
           "not by the data.",
       ];
     },
-    fewValuesNote() {
+    /** The dimensions read with only a few distinct values. */
+    fewValueDims() {
       let flags = this.result.flags;
-      let dims = this.shownInputs
-        .concat(this.result.outputs)
-        .filter(function(dim) {
-          return flags[dim] && flags[dim].fewValues;
-        });
-      if (dims.length === 0) return [];
-      return [
-        this.joinNames(dims) +
-          (dims.length === 1 ? " has" : " have") +
-          " only a few distinct values — read the rank number, not the linear one.",
-      ];
+      return this.shownInputs.concat(this.result.outputs).filter(function(dim) {
+        return flags[dim] && flags[dim].fewValues;
+      });
     },
     /** Whether a value the user can edit is being read, so edits must recompute. */
     readsEditableValues() {
@@ -1267,33 +1316,31 @@ export default {
   color: #455a64;
   font-size: 12px;
 }
-.sx-sampling {
+/* One line of caveats under the pickers; each says the rest on hover. */
+.sx-caveats {
   display: flex;
-  align-items: flex-start;
+  flex-wrap: wrap;
   gap: 6px;
-  margin: 0 0 6px;
-  max-width: 880px;
-  padding: 4px 8px;
-  border-left: 3px solid #cfd8dc;
-  background: #f7f9fa;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #546e7a;
-}
-.sx-sampling-icon.v-icon {
-  margin-top: 2px;
-  color: #90a4ae;
-}
-.ax-measure-note {
   margin: 0 0 10px;
-  max-width: 880px;
-  font-size: 12px;
-  line-height: 1.45;
-  color: #607d8b;
 }
-.ax-measure-note strong {
-  color: #37474f;
-  font-weight: 600;
+.sx-caveat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 9px 1px 7px;
+  border-radius: 11px;
+  background: #f1f4f6;
+  color: #546e7a;
+  font-size: 12px;
+  line-height: 20px;
+  cursor: help;
+}
+.sx-caveat--warn {
+  background: #fff4e5;
+  color: #8a5300;
+}
+.sx-caveat-icon.v-icon {
+  color: inherit;
 }
 
 /* --- The two sections -------------------------------------------------- */
@@ -1544,13 +1591,6 @@ export default {
 .ax-more:hover {
   text-decoration: underline;
 }
-.sx-note {
-  margin: 0 0 6px;
-  max-width: 880px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #546e7a;
-}
 
 /* The matrix scrolls sideways inside the dialog, never the page. */
 .sx-scroll {
@@ -1667,16 +1707,6 @@ export default {
 .sx-view--bars {
   flex: 1 1 380px;
   max-width: 640px;
-  padding-top: 2px;
-}
-.sx-view-head {
-  margin-bottom: 6px;
-  color: #546e7a;
-  font-size: 13px;
-  font-weight: 500;
-  /* The bars carry a select on their heading line; this keeps the two
-     headings on the same line as each other. */
-  line-height: 32px;
 }
 .sx-bars-head {
   display: flex;
