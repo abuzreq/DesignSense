@@ -100,3 +100,23 @@ function sameValue(a, b) {
   let bMissing = b === null || b === undefined || b === "";
   return aMissing && bMissing;
 }
+
+/** Whether a cell has nothing to order by: blank, or a number that isn't one. */
+export function isMissingValue(value) {
+  if (value === null || value === undefined || value === "") return true;
+  return typeof value === "number" && !isFinite(value);
+}
+
+/**
+ * Orders two values of one dimension: numbers by size, text by text, and
+ * digits inside text by their number, so "opt_2" sorts before "opt_10".
+ * Missing values are not ordered here -- the caller keeps them last whichever
+ * way the sort runs, since "no value" is not smaller than every value.
+ */
+export function compareValues(a, b) {
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  return String(a).localeCompare(String(b), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+}

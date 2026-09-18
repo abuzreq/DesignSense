@@ -9,6 +9,10 @@ const ASSET_PATH = process.env.ASSET_PATH || '/';
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
+  // `webpack serve` sets this. It is the difference between a development
+  // build that is about to be served with hot reloading and one being written
+  // to disk, which must not carry hot-accept code it has no runtime for.
+  const isServed = !!(env && env.WEBPACK_SERVE);
 
   return {
     // Named explicitly so the "@" alias and every relative path resolve
@@ -41,6 +45,7 @@ module.exports = (env, argv) => {
         {
           test: /\.vue$/,
           loader: 'vue-loader',
+          options: { hotReload: isServed },
         },
 
         // An .svg is either a Vue component or a URL, never both: `oneOf`

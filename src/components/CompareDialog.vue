@@ -12,6 +12,19 @@
       <v-card-title class="cmp-title">
         <span class="cmp-title-text">Compare</span>
         <span class="cmp-count">{{ countText }}</span>
+        <button
+          v-if="sortDim"
+          type="button"
+          class="cmp-sort-chip"
+          title="Back to the order they were picked in"
+          @click="clearSort()"
+        >
+          Sorted by {{ sortLabel }}
+          <v-icon x-small>{{
+            sortDesc ? "mdi-arrow-down" : "mdi-arrow-up"
+          }}</v-icon>
+          <v-icon x-small>mdi-close</v-icon>
+        </button>
         <v-spacer />
         <v-btn icon small class="ml-2" @click="open = false">
           <v-icon>mdi-close</v-icon>
@@ -82,7 +95,18 @@
             />
           </div>
 
-          <div class="cmp-label">Your rating</div>
+          <button
+            type="button"
+            class="cmp-label cmp-sortable"
+            :class="{ 'cmp-sorted': sortDim === ratingDimension }"
+            :title="sortTitle('Your rating', ratingDimension)"
+            @click="sortBy(ratingDimension)"
+          >
+            <span class="cmp-label-text">Your rating</span>
+            <v-icon v-if="sortDim === ratingDimension" x-small>{{
+              sortDesc ? "mdi-arrow-down" : "mdi-arrow-up"
+            }}</v-icon>
+          </button>
           <div
             v-for="col in columns"
             :key="'rating-' + col.id"
@@ -110,14 +134,22 @@
             </div>
 
             <template v-for="row in rowsOf(block)">
-              <div
+              <button
                 :key="row.dim + '-label'"
-                class="cmp-label"
-                :class="{ 'cmp-same': row.same }"
-                :title="row.label"
+                type="button"
+                class="cmp-label cmp-sortable"
+                :class="{
+                  'cmp-same': row.same,
+                  'cmp-sorted': sortDim === row.dim,
+                }"
+                :title="sortTitle(row.label, row.dim)"
+                @click="sortBy(row.dim)"
               >
-                {{ row.label }}
-              </div>
+                <span class="cmp-label-text">{{ row.label }}</span>
+                <v-icon v-if="sortDim === row.dim" x-small>{{
+                  sortDesc ? "mdi-arrow-down" : "mdi-arrow-up"
+                }}</v-icon>
+              </button>
               <div
                 v-for="(text, i) in row.texts"
                 :key="row.dim + '-' + i"
@@ -168,9 +200,12 @@ import { formatValue } from "@/store/filters.js";
 import {
   COMPARE_LIMIT,
   DETAIL_BLACKLIST,
+  compareValues,
   isLinkColumn,
+  isMissingValue,
   rowSummary,
 } from "@/store/compare.js";
+import { RATING_DIMENSION } from "@/ratings.js";
 
 /** Dimensions the user built here, rather than columns the file carried. */
 function isDerived(kind) {
@@ -211,6 +246,11 @@ export default {
       failedIds: {},
       // Which view each column shows, by option id.
       viewIndexById: {},
+      // Which dimension orders the columns, and which way. Null is the order
+      // the options were picked in, which is what the comparison opens on.
+      sortDim: null,
+      sortDesc: false,
+      ratingDimension: RATING_DIMENSION,
       fallbackImage: FALLBACK_IMAGE,
     };
   },
@@ -243,12 +283,53 @@ export default {
       });
       return rows;
     },
+    /**
+     * The columns, in the order they are drawn. Sorting rearranges the options
+     * already here rather than reaching past the limit for others: which
+     * options are compared is decided by what was picked, and by removing a
+     * column to let the next one in.
+     */
     columns() {
-      return this.resolved.slice(0, COMPARE_LIMIT).map((row) => ({
+      // A rating sorted on is a value that changes while the dialog is open.
+      void this.dimensionValuesVersion;
+      let columns = this.resolved.slice(0, COMPARE_LIMIT).map((row) => ({
         id: String(row._id),
         row: row,
         name: optionName(row),
       }));
+      let dim = this.sortDim;
+      if (!dim) return columns;
+      let direction = this.sortDesc ? -1 : 1;
+      // A rating of 0 is an option nobody has rated, not an option rated zero,
+      // so it belongs with the blanks rather than at the bottom of the scale.
+      let unratedIsMissing = dim === RATING_DIMENSION;
+      let missing = (value) =>
+        isMissingValue(value) || (unratedIsMissing && !(value > 0));
+      return columns
+        .map((column, index) => ({ column: column, index: index }))
+        .sort((a, b) => {
+          let left = a.column.row[dim];
+          let right = b.column.row[dim];
+          let leftMissing = missing(left);
+          let rightMissing = missing(right);
+          // An option with no value there sits at the end either way: it is
+          // not the smallest, it is unknown.
+          if (leftMissing || rightMissing) {
+            if (leftMissing && rightMissing) return a.index - b.index;
+            return leftMissing ? 1 : -1;
+          }
+          let order = compareValues(left, right) * direction;
+          // Ties keep the order they came in, so sorting never shuffles.
+          return order !== 0 ? order : a.index - b.index;
+        })
+        .map((entry) => entry.column);
+    },
+    /** What the title bar calls the dimension the columns are ordered by. */
+    sortLabel() {
+      if (!this.sortDim) return "";
+      return this.sortDim === RATING_DIMENSION
+        ? "your rating"
+        : displayName(this.sortDim);
     },
     gridStyle() {
       return {
@@ -355,6 +436,8 @@ export default {
         if (!wasOpen) {
           this.failedIds = {};
           this.viewIndexById = {};
+          this.sortDim = null;
+          this.sortDesc = false;
         }
       } else if (wasOpen) {
         this.hideContentTimer = setTimeout(() => {
@@ -374,6 +457,31 @@ export default {
     },
     toggleBlock(key) {
       this.$set(this.openBlocks, key, !this.openBlocks[key]);
+    },
+    /**
+     * Clicking a row orders the columns by it: first smallest, then largest,
+     * then back to the order they were picked in -- so the same handle that
+     * sorts also undoes it.
+     */
+    sortBy(dim) {
+      if (this.sortDim !== dim) {
+        this.sortDim = dim;
+        this.sortDesc = false;
+      } else if (!this.sortDesc) {
+        this.sortDesc = true;
+      } else {
+        this.clearSort();
+      }
+    },
+    clearSort() {
+      this.sortDim = null;
+      this.sortDesc = false;
+    },
+    sortTitle(label, dim) {
+      if (this.sortDim !== dim) return "Sort the options by " + label;
+      return this.sortDesc
+        ? "Back to the order they were picked in"
+        : "Sort by " + label + ", largest first";
     },
     /** A value as the gallery's details list shows it; custom and weighted values are rounded. */
     formatParam(item, param) {
@@ -458,6 +566,56 @@ export default {
   font-size: 13px;
 }
 /* The names stay put while the options scroll past them. */
+/* A label is a button when it sorts, so it has to give back the look of the
+   text it replaced. */
+.cmp-sortable {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 0;
+}
+.cmp-sortable:hover {
+  background: #f4f7fa;
+  color: #37474f;
+}
+.cmp-sortable:focus-visible {
+  outline: 2px solid #1976d2;
+  outline-offset: -2px;
+}
+.cmp-label-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cmp-sorted {
+  color: #1565c0;
+  font-weight: 500;
+}
+.cmp-sorted .v-icon {
+  color: #1565c0;
+}
+/* Says what the order is, and clears it. */
+.cmp-sort-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 12px;
+  padding: 2px 8px;
+  border: 1px solid #cfd8dc;
+  border-radius: 12px;
+  background: #f5f8fa;
+  font-size: 12px;
+  color: #546e7a;
+  cursor: pointer;
+}
+.cmp-sort-chip:hover {
+  border-color: #90a4ae;
+  color: #37474f;
+}
 .cmp-label {
   position: sticky;
   left: 0;

@@ -48,14 +48,6 @@
 
         <v-spacer />
 
-        <v-select
-          v-model="measure"
-          :items="measureChoices"
-          dense
-          outlined
-          hide-details
-          class="sx-select sx-select--measure"
-        />
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
             <v-btn
@@ -228,7 +220,7 @@
                     dense
                     outlined
                     hide-details
-                    class="sx-select sx-select--focus"
+                    class="sx-select"
                   />
                   <span v-if="modelNote(focusOutput)" class="sx-colwarn ml-3">{{
                     modelNote(focusOutput)
@@ -895,13 +887,9 @@ export default {
   background: rgba(21, 101, 192, 0.12);
 }
 .sx-select {
-  flex: 0 0 150px;
-  max-width: 150px;
-  font-size: 13px;
-}
-.sx-select--focus {
   flex: 0 0 200px;
   max-width: 200px;
+  font-size: 13px;
 }
 .sx-select ::v-deep .v-input__control > .v-input__slot {
   min-height: 30px !important;
