@@ -330,7 +330,7 @@
             <a href="https://abuzreq.netlify.app/" target="_blank"
               >Ahmed Abuzuraiq</a
             >
-            · v1.1.2
+            · v1.2.0 beta
           </div>
         </v-card-text>
       </v-card>
@@ -863,7 +863,7 @@ function isFirstVisit() {
   return true;
 }
 const EXPERT_ADDS =
-  "selection operations and the lasso, clusters, coloring, editing sets, inspection controls, and layout editing";
+  "selection operations and the lasso, clusters, coloring, editing sets, inspection controls, the sensitivity reading, and layout editing";
 import { applySelectionCursor } from "@/components/selectionCursors.js";
 
 import AssistantBar from "@/components/AssistantBar.vue";
@@ -879,7 +879,8 @@ import {
 /**
  * One onboarding step. `mode` is the UI mode whose controls the step points
  * at; the tour switches to it first, so stepping back and forth still finds
- * its target. `setup` prepares an example for the step.
+ * its target. `setup` prepares an example for the step, and may return the
+ * milliseconds its work needs before the target is in place.
  */
 function tourStep(vm, mode, target, title, content, placement, setup) {
   return {
@@ -887,6 +888,28 @@ function tourStep(vm, mode, target, title, content, placement, setup) {
     header: { title: title },
     content: content,
     params: { enableScrolling: false, placement: placement },
+    before: () => vm.prepareTourStep(mode, setup),
+  };
+}
+
+/**
+ * A step about a dialog. A dialog leaves no room beside it, so the step is
+ * clamped into view over its top rather than pushed off the screen, and the
+ * dialog's own scrim does the dimming a highlight would otherwise do.
+ */
+function dialogTourStep(vm, mode, target, title, content, setup) {
+  return {
+    target: target,
+    header: { title: title },
+    content: content,
+    params: {
+      enableScrolling: false,
+      placement: "top",
+      highlight: false,
+      modifiers: [
+        { name: "preventOverflow", options: { altAxis: true, padding: 12 } },
+      ],
+    },
     before: () => vm.prepareTourStep(mode, setup),
   };
 }
@@ -917,13 +940,13 @@ export default {
     return {
       onboardingCallbacks: {
         onStart: () => (document.body.style.pointerEvents = "all"),
-        onSkip: () => (document.body.style.pointerEvents = "all"),
-        onFinish: () => (document.body.style.pointerEvents = "all"),
+        onSkip: () => this.endTour(),
+        onFinish: () => this.endTour(),
       },
       // Lite first, then what Expert adds. Each step names the mode it needs.
       onboardingStudyTourSteps: [
         tourStep(this, "lite", "#designsense-title", "Welcome to DesignSense",
-          "Explore a collection of design options through their images and data. This tour takes about two minutes. Use the arrow keys or the buttons below.",
+          "Explore a collection of design options through their images and data. This tour takes about three minutes. Use the arrow keys or the buttons below.",
           "bottom"),
         tourStep(this, "lite", "#ui-mode-toggle", "Lite and Expert",
           "<b>Lite</b> keeps things simple: you narrow the options with filters. <b>Expert</b> adds " + EXPERT_ADDS + ". The tour starts in Lite.",
@@ -934,6 +957,9 @@ export default {
         tourStep(this, "lite", '.v-card[type="Grid"]', "Gallery",
           "Every option appears here as an image. Sort them from the menu at the top and change the image size on the right. Click an image to inspect it, and click it again to stop.",
           "right"),
+        tourStep(this, "lite", ".inspector_card", "A closer look",
+          "A bigger look at the option you clicked. The first button lists its values beside the image; an option with more than one view is switched there too, and one with a 3D model opens it with the cube button. On the right you can rate it, and keep it aside on the shortlist.",
+          "right", () => this.inspectTourOption()),
         tourStep(this, "lite", ".v-card[type='ScatterPlot']", "Scatterplot",
           "Each dot is an option. Drag a box to filter by both axes, and choose the axes at the top. Click a dot to inspect it.",
           "left", () => this.showTourFilter()),
@@ -949,6 +975,12 @@ export default {
         tourStep(this, "lite", '.v-card[type="Sets"]', "Saved sets",
           "Save the current results along with their filters. Restore a set later to bring those filters back.",
           "right", () => this.saveTourSet()),
+        tourStep(this, "lite", "#cart-chip", "Your shortlist",
+          "Options you set aside gather here, and the badge counts them. The shortlist outlasts filtering, zooming and switching modes, so it is where a few candidates wait while you keep looking. This menu shortlists everything currently shown, saves the shortlist as a set, or compares it.",
+          "bottom", () => this.fillTourCart()),
+        dialogTourStep(this, "lite", ".cmp-card", "Compare",
+          "Up to eight options side by side, each column with its image, its rating and its own shortlist button. Rows that read the same everywhere are dimmed, and in a numeric row the highest and lowest values are marked. Click a row name to sort the columns by it.",
+          () => this.openTourCompare()),
         tourStep(this, "expert", "#ui-mode-toggle", "Expert mode",
           "Expert keeps everything you have seen and adds " + EXPERT_ADDS + ". Instead of filtering, you build a selection.",
           "bottom"),
@@ -964,12 +996,15 @@ export default {
         tourStep(this, "expert", "#inspection-bar", "Inspection",
           "Hold Space and move over any option to inspect it. Pin keeps it inspected after you let go, and the last button inspects without holding Space.",
           "bottom"),
+        dialogTourStep(this, "expert", ".sx-card", "Sensitivity",
+          "Which inputs move which outputs, read over the whole collection rather than over what is on screen. Name the parameters and the results here, or start their columns with in: and out: and the file names them for you. Each of the three measures answers a different question, explained beside its numbers, and the panel says in the open that a reading is only as good as the sampling behind it.",
+          () => this.openTourSensitivity()),
         tourStep(this, "expert", "#editing-mode", "Your layout",
           "Turn on editing to move and resize the panels.",
           "bottom"),
         tourStep(this, "lite", "#designsense-title", "You're ready",
           "You're back in Lite. Switch to Expert whenever you need more control, and right-click the workspace for quick actions. The help menu has this tour and every shortcut. Feedback is welcome at abuzreq@gmail.com.",
-          "bottom", () => this.$store.dispatch("clearFilters")),
+          "bottom", () => this.clearTourExample()),
       ],
       operationsList: operations,
       actions: {
@@ -1150,6 +1185,7 @@ export default {
     document.removeEventListener("click", this.onDocumentClick);
     clearTimeout(this.resizeTimer);
     clearTimeout(this.copiedTimer);
+    clearTimeout(this.tourDialogTimer);
   },
   created() {
     document.title = "DesignSense";
@@ -1520,11 +1556,25 @@ export default {
     prepareTourStep(mode, setup) {
       let store = this.$store;
       store.commit("toggleEditingMode", { value: false });
+      // The two steps that read a dialog open it themselves; every other step
+      // is about the workspace, which those dialogs cover. Closing here also
+      // means stepping backwards past one leaves nothing behind.
+      store.dispatch("closeCompare");
+      store.dispatch("closeSensitivity");
       let switching = store.state.uiMode !== mode;
       if (switching) store.dispatch("setUiMode", mode);
-      if (setup) setup();
-      // Give the panels time to re-render, so the step finds its target.
-      return new Promise((resolve) => setTimeout(resolve, switching ? 400 : 50));
+      // Give the panels time to re-render, so the step finds its target. A
+      // setup that needs longer than that says so by returning the time.
+      let wait = switching ? 400 : 50;
+      let setupWait = setup ? setup() : 0;
+      if (typeof setupWait === "number" && setupWait > wait) wait = setupWait;
+      return new Promise((resolve) => setTimeout(resolve, wait));
+    },
+    /** Leaves nothing the tour opened behind when it is finished or skipped. */
+    endTour() {
+      document.body.style.pointerEvents = "all";
+      this.$store.dispatch("closeCompare");
+      this.$store.dispatch("closeSensitivity");
     },
     /** Filters the tour's used-car data, so the filter chips have something to show. */
     showTourFilter() {
@@ -1538,6 +1588,51 @@ export default {
       if (this.$store.state.setsIDs.length === 0) {
         this.$store.dispatch("createSet");
       }
+    },
+    /** Inspects one option, so the inspector is there to point at. */
+    inspectTourOption() {
+      let rows = this.$store.state.data;
+      if (!rows || rows.length === 0) return 0;
+      // An option with several views shows the switcher the step talks about.
+      let several = rows.filter((row) => row.images && row.images.length > 1);
+      this.$store.commit("hover", { hovered: several[0] || rows[0] });
+      return 0;
+    },
+    /** A few options set aside, so the shortlist and Compare have content. */
+    fillTourCart() {
+      if (this.$store.state.cart.length > 0) return 0;
+      let rows = this.$store.state.data || [];
+      let ids = rows.slice(0, 4).map((row) => row._id);
+      if (ids.length > 0) this.$store.commit("addToCart", { ids: ids });
+      return 0;
+    },
+    openTourCompare() {
+      this.fillTourCart();
+      this.$store.dispatch("openCompare", { source: "cart" });
+      return this.settleTourDialog();
+    },
+    openTourSensitivity() {
+      this.$store.dispatch("openSensitivity");
+      return this.settleTourDialog();
+    },
+    /**
+     * A dialog grows into place over 0.3s, and the step is put beside whatever
+     * size it has by then. The step follows its target on a window resize, so
+     * one is sent once the dialog has stopped moving.
+     */
+    settleTourDialog() {
+      clearTimeout(this.tourDialogTimer);
+      this.tourDialogTimer = setTimeout(
+        () => window.dispatchEvent(new Event("resize")),
+        700
+      );
+      return 400;
+    },
+    /** The last step hands back a clear workspace, minus the tour's filters. */
+    clearTourExample() {
+      this.$store.dispatch("clearFilters");
+      this.$store.dispatch("clearInspection");
+      return 0;
     },
     measureWorkspace() {
       let el = this.$refs.workspace;
