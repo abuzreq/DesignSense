@@ -4,14 +4,23 @@
   <div class="tip-button">
     <v-tooltip bottom :max-width="maxWidth">
       <template v-slot:activator="{ on }">
-        <!-- A disabled button swallows pointer events, so the span carries the tooltip. -->
-        <span v-on="on" class="tip-button-activator">
+        <!-- A disabled button swallows pointer events, so the span carries the
+             tooltip. Focus doesn't reach a span, so focusin and focusout are
+             passed on: the tooltip opens for the keyboard too. -->
+        <span
+          v-on="on"
+          class="tip-button-activator"
+          @focusin="on.focus"
+          @focusout="on.blur"
+        >
           <v-btn
             icon
             :small="small"
             :disabled="disabled"
             :color="color"
             :class="btnClass"
+            :aria-label="label"
+            :aria-keyshortcuts="shortcut"
             @click="$emit('click', $event)"
           >
             <v-icon :small="smallIcon" :color="iconColor">{{ icon }}</v-icon>
@@ -24,6 +33,8 @@
 </template>
 
 <script>
+import { accessibleName, keyShortcut } from "@/components/a11y.js";
+
 /**
  * An icon button with a tooltip, taking only plain values. A Vuetify tooltip
  * re-renders whenever the component around it does; inside a component of its
@@ -44,6 +55,15 @@ export default {
     iconColor: { type: String, default: undefined },
     btnClass: { type: String, default: undefined },
     maxWidth: { type: [String, Number], default: undefined },
+  },
+  computed: {
+    // The button's name for a screen reader: the tooltip without its shortcut.
+    label() {
+      return accessibleName(this.tooltip);
+    },
+    shortcut() {
+      return keyShortcut(this.tooltip);
+    },
   },
 };
 </script>

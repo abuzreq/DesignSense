@@ -4,13 +4,21 @@
     :class="{ hovered: isHovered, 'thumbnail_card--shortlisted': inCart }"
     :id="cardId"
   >
+    <!-- A button to the keyboard as well as the mouse: Tab reaches it, and
+         Enter or Space inspects, as a click does. Space is stopped here so it
+         doesn't also start the hold-Space inspection the workspace listens for. -->
     <v-img
       :class="imageClasses"
       :src="failed ? fallbackImage : item.image"
       :lazy-src="lazySrc"
       :alt="altText"
+      tabindex="0"
+      role="button"
+      :aria-label="'Inspect ' + altText"
       @mouseover="$emit('hover', item)"
       @click="$emit('inspect', item)"
+      @keydown.native.enter.prevent="$emit('inspect', item)"
+      @keydown.native.space.prevent.stop="$emit('inspect', item)"
       @load="$emit('load')"
       @error="failed = true"
     >

@@ -28,7 +28,23 @@ export default {
 };
 </script>
 <style>
-
+/*
+ * Where keyboard focus is. Vuetify only tints a focused button, by 12% on a
+ * light panel and 24% on the dark bar, which is easy to lose among a row of
+ * icons. :focus-visible leaves mouse clicks without a ring; the keyboard gets
+ * one on everything it can reach.
+ */
+.v-application button:focus-visible,
+.v-application a:focus-visible,
+.v-application [role="button"]:focus-visible,
+.v-application [tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}
+.v-application .v-app-bar button:focus-visible,
+.v-application .v-app-bar [role="button"]:focus-visible {
+  outline-color: #fff;
+}
 
 a {
   color: #000;

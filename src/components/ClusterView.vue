@@ -33,6 +33,11 @@
               icon
               small
               class="ph-btn"
+              :aria-label="
+                useKMeans
+                  ? 'Grouping with k-means; switch to DBSCAN'
+                  : 'Grouping with DBSCAN; switch to k-means'
+              "
               @click="useKMeans = !useKMeans"
             >
               <v-icon small>{{
@@ -59,6 +64,8 @@
               small
               class="ph-btn"
               :class="{ 'ph-btn--on': colSpan === index }"
+              :aria-label="size.label"
+              :aria-pressed="String(colSpan === index)"
               @click="colSpan = index"
             >
               <v-icon small>{{ size.icon }}</v-icon>

@@ -23,35 +23,18 @@
 
       <!-- Getting data in and out -->
       <LoadDataModal id="loading-data-bar" compact> </LoadDataModal>
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <span v-on="on">
-            <v-btn
-              icon
-              :disabled="actionDisabled('saveToFile')"
-              @click="actions['saveToFile'].clickAction"
-            >
-              <v-icon>{{ actions["saveToFile"].icon }}</v-icon>
-            </v-btn>
-          </span>
-        </template>
-        <span>{{ actions["saveToFile"].tooltip() }}</span>
-      </v-tooltip>
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <!-- A disabled button swallows pointer events, so the span carries the tooltip. -->
-          <span v-on="on">
-            <v-btn
-              :disabled="!isStudySharable"
-              icon
-              @click="actions['shareStaticLink'].clickAction"
-            >
-              <v-icon>{{ actions["shareStaticLink"].icon }}</v-icon>
-            </v-btn>
-          </span>
-        </template>
-        <span>{{ actions["shareStaticLink"].tooltip() }}</span>
-      </v-tooltip>
+      <TipButton
+        :icon="actions['saveToFile'].icon"
+        :tooltip="actions['saveToFile'].tooltip()"
+        :disabled="actionDisabled('saveToFile')"
+        @click="actions['saveToFile'].clickAction"
+      />
+      <TipButton
+        :icon="actions['shareStaticLink'].icon"
+        :tooltip="actions['shareStaticLink'].tooltip()"
+        :disabled="!isStudySharable"
+        @click="actions['shareStaticLink'].clickAction"
+      />
       <v-divider vertical class="ds-divider" />
 
       <!-- Arranging the panels is about the workspace as a whole rather than
@@ -116,8 +99,18 @@
         <template v-slot:activator="{ on: menu }">
           <v-tooltip bottom>
             <template v-slot:activator="{ on: tooltip }">
-              <span v-on="tooltip">
-                <v-btn id="cart-chip" icon v-on="menu">
+              <span
+                v-on="tooltip"
+                @focusin="tooltip.focus"
+                @focusout="tooltip.blur"
+              >
+                <v-btn
+                  id="cart-chip"
+                  icon
+                  :aria-label="cartTooltip"
+                  aria-haspopup="menu"
+                  v-on="menu"
+                >
                   <v-badge
                     :value="cartCount > 0"
                     :content="cartCount"
@@ -190,6 +183,7 @@
                 id="sensitivity-button"
                 v-on="on"
                 icon
+                :aria-label="accessibleName(actions['openSensitivity'].tooltip())"
                 @click="actions['openSensitivity'].clickAction"
               >
                 <v-icon>{{ actions["openSensitivity"].icon }}</v-icon>
@@ -204,8 +198,18 @@
         <template v-slot:activator="{ on: menu }">
           <v-tooltip bottom>
             <template v-slot:activator="{ on: tooltip }">
-              <span v-on="tooltip">
-                <v-btn id="help-menu" icon v-on="menu">
+              <span
+                v-on="tooltip"
+                @focusin="tooltip.focus"
+                @focusout="tooltip.blur"
+              >
+                <v-btn
+                  id="help-menu"
+                  icon
+                  aria-label="Help, the tour, and shortcuts"
+                  aria-haspopup="menu"
+                  v-on="menu"
+                >
                   <v-icon>mdi-help-circle-outline</v-icon>
                 </v-btn>
               </span>
@@ -508,6 +512,7 @@
               :color="actionType2Color(actions[item].type)"
               v-on="on"
               icon
+              :aria-label="accessibleName(actions[item].tooltip())"
               @click="actions[item].clickAction"
             >
               <v-icon>{{ actions[item].icon }}</v-icon>
@@ -841,6 +846,7 @@ import SelectionOperationsBar from "@/components/SelectionOperationsBar.vue";
 import FilterBar from "@/components/FilterBar.vue";
 import ToolbarGroup from "@/components/ToolbarGroup.vue";
 import TipButton from "@/components/TipButton.vue";
+import { accessibleName } from "@/components/a11y.js";
 import { LAYOUT_COLUMNS, LAYOUT_PRESETS, LAYOUT_ROWS } from "@/layout.js";
 
 // Short names for the panels drawn in a preset's thumbnail.
@@ -1440,6 +1446,7 @@ export default {
     },
   },
   methods: {
+    accessibleName: accessibleName,
     track() {
       this.$gtag.pageview("/");
     },

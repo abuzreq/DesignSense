@@ -80,37 +80,22 @@
       No matches. Remove a filter.
     </span>
 
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
-        <!-- A disabled button swallows pointer events, so the span carries the tooltip. -->
-        <span v-on="on">
-          <v-btn
-            icon
-            small
-            :disabled="filterHistory.length === 0"
-            @click="$store.dispatch('undo')"
-          >
-            <v-icon small>mdi-undo</v-icon>
-          </v-btn>
-        </span>
-      </template>
-      <span>Undo the last filter change [Ctrl+Z]</span>
-    </v-tooltip>
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
-        <span v-on="on">
-          <v-btn
-            icon
-            small
-            :disabled="filterFuture.length === 0"
-            @click="$store.dispatch('redo')"
-          >
-            <v-icon small>mdi-redo</v-icon>
-          </v-btn>
-        </span>
-      </template>
-      <span>Redo [Ctrl+Y]</span>
-    </v-tooltip>
+    <TipButton
+      small
+      small-icon
+      icon="mdi-undo"
+      tooltip="Undo the last filter change [Ctrl+Z]"
+      :disabled="filterHistory.length === 0"
+      @click="$store.dispatch('undo')"
+    />
+    <TipButton
+      small
+      small-icon
+      icon="mdi-redo"
+      tooltip="Redo [Ctrl+Y]"
+      :disabled="filterFuture.length === 0"
+      @click="$store.dispatch('redo')"
+    />
     <v-tooltip v-if="isFilterActive" bottom>
       <template v-slot:activator="{ on }">
         <v-btn v-on="on" small text @click="$store.dispatch('clearFilters')">
@@ -128,6 +113,7 @@
 
 <script>
 import { mapGetters, mapState } from "vuex";
+import TipButton from "@/components/TipButton.vue";
 
 const CHIP_COLORS = {
   range: "blue darken-2",
@@ -138,6 +124,7 @@ const CHIP_COLORS = {
 
 export default {
   name: "FilterBar",
+  components: { TipButton },
   computed: {
     ...mapState({
       data: (state) => state.data,

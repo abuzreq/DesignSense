@@ -22,6 +22,7 @@
             icon
             small
             class="ph-btn"
+            aria-label="Reverse the X axis"
             @click="isXAxisIncremental = !isXAxisIncremental"
           >
             <v-icon small>{{
@@ -52,6 +53,7 @@
             icon
             small
             class="ph-btn"
+            aria-label="Reverse the Y axis"
             @click="isYAxisIncremental = !isYAxisIncremental"
           >
             <v-icon small>{{
@@ -89,13 +91,20 @@
           <template v-slot:activator="{ on }">
             <!-- A disabled button swallows pointer events, so the tooltip
                  listens on a wrapper instead. -->
-            <span v-on="on" class="d-inline-block">
+            <span
+              v-on="on"
+              class="d-inline-block"
+              @focusin="on.focus"
+              @focusout="on.blur"
+            >
               <v-btn
                 icon
                 small
                 class="ph-btn"
                 :class="{ 'ph-btn--on': useLassoBrush && !lassoUnavailable }"
                 :disabled="lassoUnavailable"
+                aria-label="Lasso selection"
+                :aria-pressed="String(useLassoBrush && !lassoUnavailable)"
                 @click="useLassoBrush = !useLassoBrush"
               >
                 <v-icon small>mdi-lasso</v-icon>
@@ -118,6 +127,8 @@
               small
               class="ph-btn"
               :class="{ 'ph-btn--on': isClusteringPanelOpen }"
+              aria-label="Clusters"
+              :aria-pressed="String(isClusteringPanelOpen)"
               @click="toggleClustering"
             >
               <ClusterIcon class="ph-svg-icon" />
