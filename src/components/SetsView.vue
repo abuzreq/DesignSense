@@ -33,13 +33,13 @@
       <v-card>
         <v-card-title>Clear saved work?</v-card-title>
         <v-card-text>
-          This removes the saved sets, their notes, the shortlist, every rating
-          and every value entered in a custom dimension for this dataset, here
-          and in this browser's storage. It can't be undone.
+          This will permanently delete the saved sets, notes, shortlist,
+          ratings, and custom dimension values for this dataset from this
+          browser. This cannot be undone.
         </v-card-text>
         <v-card-text class="pt-0">
-          The custom and weighted dimensions themselves stay, emptied: a
-          weighted one is read again from whatever its terms still hold.
+          The custom and weighted dimensions will remain, but their values will
+          be cleared.
         </v-card-text>
         <v-card-actions>
           <v-spacer />
