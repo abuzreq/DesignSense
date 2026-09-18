@@ -426,18 +426,16 @@ export default {
   opacity: 1;
 }
 
+/* Inside the selected card's outline, not on it: the same place checked or
+   not, clear of the corner. */
 .image_checkbox {
   width: 18px;
   height: 18px;
   display: inline;
   position: absolute;
-  top: 3%;
-  left: 3%;
-}
-
-.image_checkbox:checked {
-  top: -3%;
-  left: -3%;
+  top: 7px;
+  left: 7px;
+  margin: 0;
 }
 
 .xbtn {
