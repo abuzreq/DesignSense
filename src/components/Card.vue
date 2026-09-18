@@ -5,7 +5,7 @@
       style="border: 1px #80808047 solid;"
       :minWidth="minPanelWidth"
       :minHeight="minPanelHeight"
-      :w="panelWidth"
+      :w="this.width"
       :h="this.height"
       @activated="onActivated"
       @dragging="onDrag"
@@ -27,7 +27,7 @@
 
       <ScatterplotView
         v-if="type == 'ScatterPlot'"
-        :width="panelWidth"
+        :width="this.width"
         :height="this.height"
         :x="this.x"
         :y="this.y"
@@ -83,7 +83,7 @@
 </style>
 <script>
 import vdr from "vue-draggable-resizable-gorkys";
-import { mapState, mapGetters } from "vuex";
+import { mapGetters } from "vuex";
 
 import ParCoordsView from "@/components/ParCoordsView.vue";
 import AugmentedGridView from "@/components/AugmentedGridView.vue";
@@ -93,10 +93,6 @@ import SPLOMView from "@/components/SPLOMView.vue";
 import ScatterplotView from "@/components/ScatterplotView.vue";
 
 import SetsView from "@/components/SetsView.vue";
-import { PANEL_HEADER_HEIGHT } from "@/layout.js";
-
-// Room the scatterplot header needs for its two dimension pickers.
-const SCATTER_MIN_WIDTH = 400;
 
 export default {
   components: {
@@ -122,13 +118,7 @@ export default {
       console.log(val)
       return val;
     }*/
-    ...mapGetters({ currentEditingMode: "getEditingMode", can: "can" }),
-    ...mapState({
-      isClusteringPanelOpen: (state) => state.isClusteringPanelOpen,
-    }),
-    panelWidth() {
-      return this.fitWidth(this.width, this.height);
-    },
+    ...mapGetters({ currentEditingMode: "getEditingMode" }),
     // Minimum sizes only guard resizing by hand. Otherwise they would push a
     // panel over its neighbour whenever the screen gives it less room.
     minPanelWidth() {
@@ -213,33 +203,16 @@ export default {
       if (!panel || !this.$el.parentNode) return;
       let parentWidth = this.$el.parentNode.clientWidth;
       let parentHeight = this.$el.parentNode.clientHeight;
-      let shownWidth = this.fitWidth(width, height);
       Object.assign(panel, {
         parentWidth: parentWidth,
         parentHeight: parentHeight,
         left: left,
         top: top,
-        width: shownWidth,
+        width: width,
         height: height,
-        right: parentWidth - shownWidth - left,
+        right: parentWidth - width - left,
         bottom: parentHeight - height - top,
       });
-    },
-    /**
-     * Without clusters beside it the scatterplot is a square, so its panel
-     * narrows to fit instead of leaving an empty strip. Editing shows the saved
-     * width, so resizing never stores the narrowed one.
-     */
-    fitWidth: function (width, height) {
-      let hasClusters = this.can("clustering") && this.isClusteringPanelOpen;
-      if (this.type !== "ScatterPlot" || hasClusters || this.currentEditingMode) {
-        return width;
-      }
-      // The plot's side is the height below the header; 2px for the border.
-      return Math.min(
-        width,
-        Math.max(height - PANEL_HEADER_HEIGHT + 2, SCATTER_MIN_WIDTH)
-      );
     },
     persistLayout: function () {
       this.$store.commit("updateLayout", {

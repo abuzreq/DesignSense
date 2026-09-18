@@ -355,10 +355,12 @@ export default {
     clusterWidth() {
       return Math.round(this.width * 0.4);
     },
-    // Without clusters the plot stays square instead of stretching across.
+    // Without clusters the plot takes the whole panel. Kept square, it left a
+    // strip beside it that nothing could fill in Lite, where there are no
+    // clusters; the axes add ticks as they get longer.
     plotWidth() {
       if (this.showClusters) return this.width - this.clusterWidth;
-      return Math.min(this.width, this.plotHeight);
+      return this.width;
     },
     plotHeight() {
       return this.height - this.headerHeight;
