@@ -518,7 +518,6 @@ import GalleryCard from "@/components/GalleryCard.vue";
 import ImageSwitcher from "@/components/ImageSwitcher.vue";
 import { DETAIL_BLACKLIST } from "@/store/compare.js";
 import { isAssetColumn } from "@/data/assets.js";
-import ModelViewer from "@/components/ModelViewer.vue";
 import TipButton from "@/components/TipButton.vue";
 import { formatValue } from "@/store/filters.js";
 import { asRows } from "@/store/rows.js";
@@ -565,6 +564,14 @@ function compareForSort(a, b, desc) {
       : textOrder.compare(String(a), String(b));
   return desc ? -order : order;
 }
+
+/*
+ * The 3D viewer brings three.js with it, a quarter of the app's code, for a
+ * view most sessions never open. It is fetched the first time a model is
+ * shown, and the viewer's own "Load 3D model" step covers the wait.
+ */
+const ModelViewer = () =>
+  import(/* webpackChunkName: "model-viewer" */ "@/components/ModelViewer.vue");
 
 export default {
   name: "AugmentedGridCards",

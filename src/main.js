@@ -8,7 +8,6 @@ import vdr from "./plugins/vdr";
 import { loadLayouts } from "./layout.js";
 
 import { operations, getOperationFromKey } from "@/components/operations.js";
-import vuewheel from "vuewheel";
 import VueTour from "vue-tour";
 
 import {
@@ -25,7 +24,6 @@ window.Gkey = "AIzaSyCSrF08UMawxKIb0m4JsA1mYE5NMmP36bY";
 require("vue-tour/dist/vue-tour.css");
 
 Vue.use(VueTour);
-Vue.use(vuewheel);
 
 Vue.config.productionTip = false;
 

@@ -23,6 +23,9 @@ module.exports = (env, argv) => {
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'bundle.js',
+      // Code fetched on demand, such as the 3D viewer. Hashed, so a new
+      // release never serves a chunk cached from the last one.
+      chunkFilename: '[name].[contenthash:8].js',
       assetModuleFilename: 'assets/[name].[contenthash:8][ext][query]',
       publicPath: ASSET_PATH,
       clean: true,
