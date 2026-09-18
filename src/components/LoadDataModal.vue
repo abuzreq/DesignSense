@@ -133,6 +133,16 @@
                     without the prefixes it asks you to pick them each time.
                   </p>
                   <p>
+                    <strong>Goals</strong> — start an output with
+                    <code>min:</code> when lower is better, or
+                    <code>max:</code> when higher is, as in
+                    <code>min:cost</code> or <code>max:daylight</code>. Pareto
+                    fronts, weighted dimensions and the analysis read which way
+                    is better, and the parallel coordinates put better at the
+                    top. You can also set goals, or change them, in the
+                    Dimensions dialog.
+                  </p>
+                  <p>
                     <strong>Your own criteria</strong> — <code>custom:</code>
                     and <code>weighted:</code> columns come back as custom and
                     weighted dimensions, which is how DesignSense writes them

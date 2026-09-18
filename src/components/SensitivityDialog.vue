@@ -244,40 +244,8 @@
           />
         </div>
 
-        <!-- What a reading rests on and what to doubt in it: a few words
-             each, in view beside the numbers, and the whole of it on hover. -->
-        <div class="sx-caveats">
-          <v-tooltip
-            v-for="caveat in caveats"
-            :key="caveat.key"
-            bottom
-            max-width="380"
-          >
-            <template v-slot:activator="{ on }">
-              <span
-                v-on="on"
-                class="sx-caveat"
-                :class="{ 'sx-caveat--warn': caveat.warn }"
-                tabindex="0"
-              >
-                <v-icon x-small class="sx-caveat-icon">{{
-                  caveat.warn
-                    ? "mdi-alert-circle-outline"
-                    : "mdi-information-outline"
-                }}</v-icon
-                >{{ caveat.text }}
-              </span>
-            </template>
-            <span class="sx-tip">
-              <span
-                v-for="(line, i) in caveat.detail"
-                :key="i"
-                class="sx-tip-line"
-                >{{ line }}</span
-              >
-            </span>
-          </v-tooltip>
-        </div>
+        <!-- What a reading rests on and what to doubt in it. -->
+        <CaveatChips class="sx-caveats" :caveats="caveats" />
 
         <!-- Nothing to read yet: the file never said which columns are which,
              or a picker was emptied. -->
@@ -390,6 +358,7 @@
                     <div class="sx-bar-fill" :style="barStyle(bar)"></div>
                   </div>
                   <div class="sx-bar-value">{{ fmt(bar.value) }}</div>
+                  <div class="sx-bar-effect">{{ effectWord(bar.input, focusOutput) }}</div>
                 </div>
               </div>
             </div>
@@ -406,10 +375,18 @@ import { mapGetters, mapState } from "vuex";
 import { interpolateRdBu } from "d3-scale-chromatic";
 import { sensitivity, sensitivityCsv } from "@/analysis/sensitivity.js";
 import { summarize } from "@/analysis/summary.js";
-import { INPUT, OUTPUT, columnKind, dimensionItems, displayName } from "@/columns.js";
+import {
+  INPUT,
+  MIN,
+  OUTPUT,
+  columnKind,
+  dimensionItems,
+  displayName,
+} from "@/columns.js";
 import { isMissingFor } from "@/store/dimensions.js";
 import { formatValue } from "@/store/filters.js";
 import { RATING_DIMENSION } from "@/ratings.js";
+import CaveatChips from "@/components/CaveatChips.vue";
 import DimensionName from "@/components/DimensionName.vue";
 import DimensionPicker from "@/components/DimensionPicker.vue";
 
@@ -431,6 +408,9 @@ const MIN_TRUSTED = 12;
 const FEW_OPTIONS = 30;
 // Above this magnitude a cell's fill is dark enough to need light text.
 const LIGHT_TEXT_ON = 0.6;
+// Below this magnitude an input barely moves an output, so it is said to
+// neither improve nor worsen it.
+const NEGLIGIBLE = 0.05;
 // The panel this dialog plots a pair in.
 const SCATTER_TYPE = "ScatterPlot";
 // How far in from each edge, in percent, a dimension's lowest and highest
@@ -487,7 +467,7 @@ function fixed(value) {
  */
 export default {
   name: "SensitivityDialog",
-  components: { DimensionName, DimensionPicker },
+  components: { CaveatChips, DimensionName, DimensionPicker },
   data() {
     return {
       // Whether the dialog's content exists: while open, and through the
@@ -528,7 +508,7 @@ export default {
       dimensionValuesVersion: (state) => state.dimensionValuesVersion,
       layouts: (state) => state.layouts,
     }),
-    ...mapGetters(["hasRatings", "isUnfilterable"]),
+    ...mapGetters(["hasRatings", "isUnfilterable", "goalOf"]),
     open: {
       get() {
         return this.dialogState.open;
@@ -1017,6 +997,8 @@ export default {
           (dim.missing === 1 ? " option has" : " options have") +
           " no value.";
       }
+      let goal = this.goalOf(dim.dim);
+      if (goal) text += " Goal: " + (goal === MIN ? "lower" : "higher") + " is better.";
       return text;
     },
     /** How strongly an input moves the focused output, for ordering rows. */
@@ -1089,6 +1071,7 @@ export default {
         model && model.ok && model.betas[input] !== undefined
           ? ", influence " + fixed(model.betas[input])
           : "";
+      let effect = this.effectSentence(input, output);
       return (
         names +
         ": rank ρ " +
@@ -1098,8 +1081,57 @@ export default {
         beta +
         ", over " +
         cell.n.toLocaleString() +
-        " options. Click to plot them." +
+        " options." +
+        (effect ? " " + effect : "") +
+        " Click to plot them." +
         thin
+      );
+    },
+    /**
+     * Whether raising the input goes with a better output, by the measure on
+     * show and the output's goal: 1 better, -1 worse, 0 barely either, or
+     * null when the output has no goal or the number can't be read.
+     */
+    effectOf(input, output) {
+      let goal = this.goalOf(output);
+      let value = this.cellValue(input, output);
+      if (!goal || value === null) return null;
+      if (Math.abs(value) < NEGLIGIBLE) return 0;
+      return (value > 0) === (goal !== MIN) ? 1 : -1;
+    },
+    /** "improves" or "worsens" beside a bar, for an output with a goal. */
+    effectWord(input, output) {
+      let effect = this.effectOf(input, output);
+      return effect === 1 ? "improves" : effect === -1 ? "worsens" : "";
+    },
+    /** The effect in words, for a cell's tooltip: "Raising Depth goes with higher Cooling: worse, since lower is better." */
+    effectSentence(input, output) {
+      let effect = this.effectOf(input, output);
+      if (effect === null) return "";
+      let goalText = this.goalOf(output) === MIN ? "lower is better" : "higher is better";
+      if (effect === 0) {
+        return (
+          "Raising " +
+          this.label(input) +
+          " barely moves " +
+          this.label(output) +
+          " (" +
+          goalText +
+          ")."
+        );
+      }
+      let rises = this.cellValue(input, output) > 0;
+      return (
+        "Raising " +
+        this.label(input) +
+        " goes with " +
+        (rises ? "higher " : "lower ") +
+        this.label(output) +
+        ": " +
+        (effect === 1 ? "better" : "worse") +
+        ", since " +
+        goalText +
+        "."
       );
     },
     readable(value) {
@@ -1318,29 +1350,7 @@ export default {
 }
 /* One line of caveats under the pickers; each says the rest on hover. */
 .sx-caveats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
   margin: 0 0 10px;
-}
-.sx-caveat {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 1px 9px 1px 7px;
-  border-radius: 11px;
-  background: #f1f4f6;
-  color: #546e7a;
-  font-size: 12px;
-  line-height: 20px;
-  cursor: help;
-}
-.sx-caveat--warn {
-  background: #fff4e5;
-  color: #8a5300;
-}
-.sx-caveat-icon.v-icon {
-  color: inherit;
 }
 
 /* --- The two sections -------------------------------------------------- */
@@ -1721,7 +1731,7 @@ export default {
 }
 .sx-bar-row {
   display: grid;
-  grid-template-columns: minmax(120px, 220px) 1fr 52px;
+  grid-template-columns: minmax(120px, 220px) 1fr 52px auto;
   align-items: center;
   gap: 10px;
   padding: 3px 0;
@@ -1754,6 +1764,12 @@ export default {
   top: 3px;
   bottom: 3px;
   border-radius: 2px;
+}
+/* Whether raising the input helps or hurts, for an output with a goal. */
+.sx-bar-effect {
+  min-width: 56px;
+  font-size: 12px;
+  color: #78909c;
 }
 .sx-bar-value {
   text-align: right;

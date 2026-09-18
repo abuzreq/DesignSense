@@ -26,7 +26,7 @@ const COLLINEAR = 0.9;
 const IDENTICAL = 0.999;
 // More distinct values than this and a column reads as a measurement rather
 // than a code ("option 1, 2, 3"), for which the linear number is nonsense.
-const FEW_VALUES = 6;
+export const FEW_VALUES = 6;
 
 function isFiniteNumber(value) {
   return typeof value === "number" && isFinite(value);

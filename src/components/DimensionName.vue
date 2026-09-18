@@ -1,6 +1,7 @@
 <template>
   <!-- A custom (✎) or weighted (Σ) dimension in its colour with its sign;
-       any other column as its plain name. -->
+       any other column as its plain name. Either way, its goal (↑ or ↓)
+       follows when it has one. -->
   <span
     class="ds-dim"
     :class="[
@@ -10,14 +11,20 @@
     ><span class="ds-dim-text">{{ shown }}</span
     ><span v-if="mark" class="ds-dim-mark" :title="mark.title">{{
       mark.mark
+    }}</span
+    ><span v-if="goal" class="ds-dim-goal" :title="goal.title">{{
+      goal.mark
     }}</span></span
   >
 </template>
 
 <script>
-import { columnKind, displayName, kindMark } from "@/columns.js";
+import { GOAL_MARKS, columnKind, displayName, kindMark } from "@/columns.js";
 
-/** A column's name as the interface shows it, marked by kind (see KIND_MARKS). */
+/**
+ * A column's name as the interface shows it, marked by kind (see KIND_MARKS)
+ * and by goal (see GOAL_MARKS and store/goals.js).
+ */
 export default {
   name: "DimensionName",
   props: {
@@ -34,6 +41,10 @@ export default {
     },
     mark() {
       return kindMark(this.name);
+    },
+    goal() {
+      let goalOf = this.$store && this.$store.getters.goalOf;
+      return (goalOf && GOAL_MARKS[goalOf(this.name)]) || null;
     },
     shown() {
       return this.text === null ? displayName(this.name) : this.text;
@@ -78,7 +89,14 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.ds-dim--truncate .ds-dim-mark {
+.ds-dim--truncate .ds-dim-mark,
+.ds-dim--truncate .ds-dim-goal {
   flex: 0 0 auto;
+}
+/* Which way is better: quieter than the kind's sign, whatever the colour. */
+.ds-dim-goal {
+  margin-left: 0.25em;
+  color: #607d8b;
+  font-weight: 700;
 }
 </style>

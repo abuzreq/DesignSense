@@ -26,6 +26,7 @@ Columns follow a convention:
 | --- | --- |
 | `in:width` | a design parameter |
 | `out:cost` | a result |
+| `min:cost`, `max:daylight` | a result where lower, or higher, is better |
 | `img`, `img_2`, `image 3` | views of the option, in that order |
 | `model3d` | a 3D model: `.glb`, `.gltf`, `.obj` or `.json` |
 

@@ -65,6 +65,92 @@
             {{ skippedDimensions.map(label).join(", ") }}.
           </v-alert>
 
+          <!-- Which way is better, for what the options are judged on. The
+               file can say so too, with min: and max: columns. -->
+          <section class="goals">
+            <div class="dims-section-head">
+              <span class="dims-section-title">Goals</span>
+              <span class="dims-section-meta"
+                >Which way is better. Pareto fronts, new weighted dimensions,
+                the analysis and the parallel coordinates read these.</span
+              >
+            </div>
+            <div v-if="goalRows.length === 0" class="dims-empty">
+              This collection has no numeric dimensions.
+            </div>
+            <div v-for="dim in goalRows" :key="dim" class="goal-row">
+              <DimensionName class="goal-name" :name="dim" truncate />
+              <span v-if="goalSource(dim) === 'file'" class="dims-origin"
+                >from file</span
+              >
+              <v-spacer />
+              <span v-if="goalSource(dim) === 'fixed'" class="goal-fixed">{{
+                fixedGoalText(dim)
+              }}</span>
+              <v-btn-toggle
+                v-else
+                :value="goalOf(dim) || 'none'"
+                mandatory
+                dense
+                class="goal-toggle"
+                @change="setGoal(dim, $event)"
+              >
+                <v-btn
+                  small
+                  value="max"
+                  :aria-label="'Higher ' + label(dim) + ' is better'"
+                  >&uarr; Higher</v-btn
+                >
+                <v-btn
+                  small
+                  value="min"
+                  :aria-label="'Lower ' + label(dim) + ' is better'"
+                  >&darr; Lower</v-btn
+                >
+                <v-btn
+                  small
+                  value="none"
+                  :aria-label="'No goal for ' + label(dim)"
+                  >None</v-btn
+                >
+              </v-btn-toggle>
+            </div>
+            <button
+              v-if="otherGoalDims.length > 0"
+              type="button"
+              class="goals-more"
+              @click="showOtherGoals = !showOtherGoals"
+            >
+              {{
+                showOtherGoals
+                  ? "Hide inputs"
+                  : "Show inputs (" + otherGoalDims.length + ")"
+              }}
+            </button>
+
+            <!-- The front over every goal, and what to know before keeping it. -->
+            <div class="tradeoffs">
+              <div class="tradeoffs-head">
+                <div class="tradeoffs-text">
+                  <span class="dims-section-title">Best trade-offs</span>
+                  <span class="dims-section-meta">{{ tradeOffText }}</span>
+                </div>
+                <v-btn
+                  small
+                  depressed
+                  color="primary"
+                  :disabled="!best.front || best.front.length === 0"
+                  @click="keepBestTradeOffs"
+                  >Keep the best trade-offs</v-btn
+                >
+              </div>
+              <CaveatChips v-if="best.front" :caveats="best.caveats" />
+            </div>
+          </section>
+
+          <div class="dims-section-head">
+            <span class="dims-section-title">Custom and weighted</span>
+          </div>
           <div v-if="defs.length === 0" class="dims-empty">
             No custom or weighted dimensions yet.
           </div>
@@ -214,6 +300,7 @@
               outlined
               hide-details
               class="term-dim"
+              @change="followGoal(term)"
             />
             <div class="term-weight">
               <v-text-field
@@ -257,7 +344,12 @@
             <v-btn icon small class="term-remove" @click="removeTerm(i)">
               <v-icon small>mdi-close</v-icon>
             </v-btn>
-            <div class="term-scale">{{ scaleText(term) }}</div>
+            <div class="term-scale">
+              {{ scaleText(term) }}
+              <span v-if="goalConflict(term)" class="term-conflict"
+                >Its goal says {{ goalConflict(term) }} is better.</span
+              >
+            </div>
           </div>
           <v-btn small text color="primary" class="mt-1" @click="addTerm">
             <v-icon small left>mdi-plus</v-icon>Add dimension
@@ -346,12 +438,28 @@ import {
   weightShares,
   withoutDimension,
 } from "@/customDimensions.js";
-import { dimensionItems, displayName } from "@/columns.js";
+import {
+  CUSTOM,
+  GOAL_MARKS,
+  INPUT,
+  MIN,
+  OUTPUT,
+  WEIGHTED,
+  columnKind,
+  dimensionItems,
+  displayName,
+} from "@/columns.js";
+import { isAssetColumn } from "@/data/assets.js";
+import CaveatChips from "@/components/CaveatChips.vue";
+import DimensionName from "@/components/DimensionName.vue";
 import DimensionPicker from "@/components/DimensionPicker.vue";
 import { isMissingFor } from "@/store/dimensions.js";
 import { RATING_DIMENSION } from "@/ratings.js";
 
 const PAPER_URL = "https://www.itcon.org/papers/2018_08-ITcon-Haymaker.pdf";
+// Numeric columns that are bookkeeping rather than something an option is
+// judged on, as the parallel coordinates leave them out.
+const BOOKKEEPING = ["index", "selected", "ID", "id", "_id", "collection"];
 // A little longer than the dialog's fade-out.
 const CLOSE_TRANSITION_MS = 400;
 // The weight slider's positions run from 0 to this; its middle is weight 1.
@@ -397,7 +505,7 @@ function formatBound(value, span) {
  */
 export default {
   name: "DimensionsDialog",
-  components: { DimensionPicker },
+  components: { CaveatChips, DimensionName, DimensionPicker },
   data() {
     return {
       SLIDER_END: SLIDER_END,
@@ -418,6 +526,8 @@ export default {
       // Whether the dialog's content exists: while open, and through the
       // closing transition.
       contentShown: false,
+      // Whether the Goals list shows the inputs too.
+      showOtherGoals: false,
     };
   },
   beforeDestroy() {
@@ -431,8 +541,83 @@ export default {
       dimensionStorageError: (state) => state.dimensionStorageError,
       skippedDimensions: (state) => state.skippedDimensions,
       dimensionValuesVersion: (state) => state.dimensionValuesVersion,
+      numericDimensions: (state) => state.numericDimensions,
+      allDimensions: (state) => state.allDimensions,
     }),
-    ...mapGetters(["weightedTermCandidates", "scoringBoundsOf"]),
+    ...mapGetters([
+      "weightedTermCandidates",
+      "scoringBoundsOf",
+      "goalOf",
+      "goalSource",
+      "hasRatings",
+    ]),
+    /** The numeric dimensions that can have a goal: not bookkeeping or pictures. */
+    goalCandidates() {
+      return this.numericDimensions.filter(
+        (dim) =>
+          !isAssetColumn(dim) &&
+          BOOKKEEPING.indexOf(dim) === -1 &&
+          (dim !== RATING_DIMENSION || this.hasRatings)
+      );
+    },
+    /** Whether the file names its inputs and outputs; without, every column is listed. */
+    hasPrefixes() {
+      return this.allDimensions.some((dim) => {
+        let kind = columnKind(dim);
+        return kind === INPUT || kind === OUTPUT;
+      });
+    },
+    /**
+     * The Goals list's rows: the outputs, then custom, weighted and the
+     * rating. The inputs, and in a file without prefixes nothing, wait
+     * behind "Show inputs".
+     */
+    mainGoalDims() {
+      let columns = this.goalCandidates.filter((dim) => dim !== RATING_DIMENSION);
+      let byKind = (kind) => columns.filter((dim) => columnKind(dim) === kind);
+      let fileColumns = this.hasPrefixes
+        ? byKind(OUTPUT)
+        : columns.filter((dim) => {
+            let kind = columnKind(dim);
+            return kind !== CUSTOM && kind !== WEIGHTED;
+          });
+      let rating = this.goalCandidates.filter((dim) => dim === RATING_DIMENSION);
+      return fileColumns.concat(byKind(CUSTOM), byKind(WEIGHTED), rating);
+    },
+    otherGoalDims() {
+      return this.goalCandidates.filter((dim) => this.mainGoalDims.indexOf(dim) === -1);
+    },
+    goalRows() {
+      return this.showOtherGoals
+        ? this.mainGoalDims.concat(this.otherGoalDims)
+        : this.mainGoalDims;
+    },
+    best() {
+      return this.$store.getters.bestTradeOffs;
+    },
+    tradeOffText() {
+      let best = this.best;
+      if (!best.front) {
+        return (
+          "Set goals on two or more outputs to keep the options no other option beats on all of them." +
+          (best.skipped.length > 0
+            ? " Custom dimensions can't be used, since their values can still change."
+            : "")
+        );
+      }
+      let goals = best.dims
+        .map((dim, i) => displayName(dim) + " " + GOAL_MARKS[best.directions[i]].mark)
+        .join(", ");
+      return (
+        "Keeps " +
+        best.front.length +
+        " of " +
+        best.rows.length +
+        " options, by " +
+        goals +
+        "."
+      );
+    },
     open: {
       get() {
         return this.dialogState.open;
@@ -452,7 +637,7 @@ export default {
           ? "Weights of " + this.label(this.editingName)
           : "New Weighted Dimension";
       }
-      return "Custom and Weighted Dimensions";
+      return "Dimensions and Goals";
     },
     /** Whether the weighted dimension being edited is a column of the data file. */
     editingFromFile() {
@@ -539,6 +724,21 @@ export default {
   },
   methods: {
     label: displayName,
+    setGoal(dim, choice) {
+      this.$store.dispatch("setGoal", {
+        dim: dim,
+        goal: choice === "none" ? null : choice,
+      });
+    },
+    fixedGoalText(dim) {
+      return dim === RATING_DIMENSION
+        ? "Higher is better: more stars"
+        : "Higher is better: a weighted score";
+    },
+    keepBestTradeOffs() {
+      this.$store.dispatch("keepBestTradeOffs");
+      this.open = false;
+    },
     start(mode, name) {
       this.error = null;
       this.liveError = null;
@@ -566,10 +766,20 @@ export default {
             terms.push({ dim: null, weight: 1, lowerIsBetter: false });
           }
         } else {
-          // Starts from every custom dimension, equally weighted.
-          terms = this.defs
+          // Starts from every dimension with a goal, each the way its goal
+          // says, then any custom dimension not among them; equally weighted.
+          let withGoals = this.$store.getters.goalDims.filter(
+            (dim) => this.candidates.indexOf(dim) !== -1
+          );
+          let custom = this.defs
             .filter(isCustom)
-            .map((d) => ({ dim: d.name, weight: 1, lowerIsBetter: false }));
+            .map((d) => d.name)
+            .filter((dim) => withGoals.indexOf(dim) === -1);
+          terms = withGoals.concat(custom).map((dim) => ({
+            dim: dim,
+            weight: 1,
+            lowerIsBetter: this.goalOf(dim) === MIN,
+          }));
           if (terms.length < 2) {
             terms.push({ dim: null, weight: 1, lowerIsBetter: false });
           }
@@ -729,7 +939,20 @@ export default {
       let text =
         "Range " + formatBound(bounds[0], span) + "–" + formatBound(bounds[1], span);
       if (term.dim === RATING_DIMENSION) text += " stars; unrated options get no value";
+      let goal = this.goalOf(term.dim);
+      if (goal) text += " · goal: " + (goal === MIN ? "lower" : "higher") + " is better";
       return text;
+    },
+    /** A newly picked dimension weighs the way its goal says, when it has one. */
+    followGoal(term) {
+      let goal = term.dim ? this.goalOf(term.dim) : null;
+      if (goal) term.lowerIsBetter = goal === MIN;
+    },
+    /** "lower" or "higher" when the checkbox disagrees with the dimension's goal, else "". */
+    goalConflict(term) {
+      let goal = term.dim ? this.goalOf(term.dim) : null;
+      if (!goal || (goal === MIN) === !!term.lowerIsBetter) return "";
+      return goal === MIN ? "lower" : "higher";
     },
     summary(def) {
       if (isCustom(def)) {
@@ -877,6 +1100,81 @@ export default {
 .dims-summary {
   white-space: normal;
 }
+.dims-section-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  margin: 14px 0 6px;
+}
+.dims-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #263238;
+}
+.dims-section-meta {
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(0, 0, 0, 0.6);
+}
+.goal-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.goal-name {
+  min-width: 0;
+  font-weight: 500;
+}
+.goal-fixed {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
+}
+.goal-toggle.v-btn-toggle {
+  flex: 0 0 auto;
+  border-radius: 6px;
+}
+.goal-toggle .v-btn.v-btn {
+  height: 26px !important;
+  min-width: 0;
+  padding: 0 9px;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.goals-more {
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #1565c0;
+  font-size: 12px;
+  cursor: pointer;
+}
+.goals-more:hover {
+  text-decoration: underline;
+}
+.tradeoffs {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid #e3e8ee;
+  border-radius: 6px;
+  background: #fbfcfd;
+}
+.tradeoffs-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.tradeoffs-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
 .dims-actions {
   flex-direction: row;
   align-items: center;
@@ -955,5 +1253,9 @@ export default {
   flex: 1 1 100%;
   font-size: 12px;
   color: rgba(0, 0, 0, 0.55);
+}
+.term-conflict {
+  margin-left: 4px;
+  color: #b26500;
 }
 </style>

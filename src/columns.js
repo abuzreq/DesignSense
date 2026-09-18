@@ -4,6 +4,8 @@
  *
  *   in:width         an input parameter of the design
  *   out:area         an output parameter, measured or simulated
+ *   min:cost         an output where lower is better
+ *   max:daylight     an output where higher is better
  *   custom:looks     a custom dimension, with values entered by hand
  *   weighted:score   a weighted dimension, a weighted sum of other dimensions
  *
@@ -19,12 +21,30 @@ export const OUTPUT = "out";
 export const CUSTOM = "custom";
 export const WEIGHTED = "weighted";
 
-const PREFIX = /^\s*(in|out|custom|weighted)\s*:\s*/i;
+// The goals (see GOAL_MARKS) a name's prefix can declare.
+export const MAX = "max";
+export const MIN = "min";
 
-/** "in", "out", "custom" or "weighted" by the name's prefix, or null. */
-export function columnKind(name) {
+const PREFIX = /^\s*(in|out|min|max|custom|weighted)\s*:\s*/i;
+
+function prefixOf(name) {
   let match = PREFIX.exec(String(name));
   return match ? match[1].toLowerCase() : null;
+}
+
+/**
+ * "in", "out", "custom" or "weighted" by the name's prefix, or null. A
+ * "min:" or "max:" column is an output that also says which way is better.
+ */
+export function columnKind(name) {
+  let prefix = prefixOf(name);
+  return prefix === MIN || prefix === MAX ? OUTPUT : prefix;
+}
+
+/** "min" or "max" when the name's prefix declares its goal, else null. */
+export function fileGoal(name) {
+  let prefix = prefixOf(name);
+  return prefix === MIN || prefix === MAX ? prefix : null;
 }
 
 /** The name the interface shows: the column's name without its prefix. */
@@ -69,6 +89,15 @@ export const KIND_MARKS = {
 export function kindMark(name) {
   return KIND_MARKS[columnKind(name)] || null;
 }
+
+/**
+ * Which way is better for a dimension, shown after its name wherever it is
+ * named (see the store's goalOf).
+ */
+export const GOAL_MARKS = {
+  [MAX]: { mark: "↑", title: "Higher is better" },
+  [MIN]: { mark: "↓", title: "Lower is better" },
+};
 
 /** The column name for a shown name of this kind: "custom:looks". */
 export function prefixedName(kind, label) {

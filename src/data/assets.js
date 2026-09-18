@@ -136,7 +136,7 @@ export function classifyColumns(fields, rows, types) {
 // prefixes are a one-line rule.
 function displayNameOf(name) {
   let text = String(name).trim();
-  let stripped = text.replace(/^\s*(in|out|custom|weighted)\s*:\s*/i, "");
+  let stripped = text.replace(/^\s*(in|out|min|max|custom|weighted)\s*:\s*/i, "");
   return stripped === "" ? text : stripped;
 }
 

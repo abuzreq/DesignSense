@@ -135,13 +135,12 @@
             <v-list-item-title>New weighted dimension&hellip;</v-list-item-title>
           </v-list-item>
           <v-list-item
-            v-if="customDefs.length > 0 || weightedDefs.length > 0"
             @click="openDialog('manage')"
           >
             <v-list-item-icon class="mr-3">
               <v-icon small>mdi-cog-outline</v-icon>
             </v-list-item-icon>
-            <v-list-item-title>Manage dimensions&hellip;</v-list-item-title>
+            <v-list-item-title>Goals and dimensions&hellip;</v-list-item-title>
           </v-list-item>
         </v-list>
       </div>

@@ -41,6 +41,7 @@ import {
 } from "./filters.js";
 import { RATING_BOUNDS, RATING_DIMENSION, isRated } from "@/ratings.js";
 import { createDimensionsStore } from "./dimensions.js";
+import { createGoalsStore } from "./goals.js";
 import { emptySets, openSession } from "./session.js";
 import { addIds, removeIds, uniqueSetName } from "./cart.js";
 import { asRows } from "./rows.js";
@@ -100,6 +101,8 @@ function builder(
   const session = openSession(new_data, options && options.datasetKey);
   // Custom and weighted dimensions go onto the rows before Vue observes them.
   const dimensions = createDimensionsStore(new_data, dataTypesMap, options);
+  // Which way is better for each dimension (see store/goals.js).
+  const goals = createGoalsStore(options);
   const store = new Vuex.Store({
     state: {
       // What a brush applies right now: the sticky operation, or a held modifier's.
@@ -204,9 +207,11 @@ function builder(
         scatterY: null,
       },
       ...dimensions.state,
+      ...goals.state,
     },
     getters: {
       ...dimensions.getters,
+      ...goals.getters,
       colorScale: (state) => d3.scaleOrdinal(state.colorRange),
       colorize: (state, getters) => (dataItem) => {
         return getters.colorScale(dataItem[state.colorColumn]);
@@ -356,6 +361,7 @@ function builder(
     },
     mutations: {
       ...dimensions.mutations,
+      ...goals.mutations,
       /* setSimilarityMap(state, payload)
              {   
                  state.similarity_map = payload.similarity_map;
@@ -773,6 +779,7 @@ function builder(
     },
     actions: {
       ...dimensions.actions,
+      ...goals.actions,
       createMarkingEntry(context, payload) {
         context.commit("createMarkingEntry", payload);
       },

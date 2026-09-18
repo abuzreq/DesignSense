@@ -1,7 +1,8 @@
 <template>
   <!-- A v-autocomplete of dimensions (items from dimensionItems) that marks
-       custom and weighted ones as DimensionName does: in the list, in chips,
-       and in a single choice's own text, with its sign after it. -->
+       them as DimensionName does, custom and weighted ones by kind and any
+       with a goal by ↑ or ↓: in the list, in chips, and after a single
+       choice's own text. -->
   <v-autocomplete
     v-bind="$attrs"
     :value="value"
@@ -9,8 +10,8 @@
     :multiple="multiple"
     :small-chips="smallChips"
     :deletable-chips="deletableChips"
-    :suffix="singleMark ? singleMark.mark : undefined"
-    :class="singleMark ? 'ds-picker--' + singleKind : null"
+    :suffix="singleSuffix"
+    :class="singleClass"
     v-on="$listeners"
   >
     <template v-slot:item="{ item, attrs, parent }">
@@ -33,6 +34,11 @@
               class="ds-dim-mark"
               :title="markOf(item.value).title"
               >{{ markOf(item.value).mark }}</span
+            ><span
+              v-if="goalMark(item.value)"
+              class="ds-dim-goal"
+              :title="goalMark(item.value).title"
+              >{{ goalMark(item.value).mark }}</span
             ></span
           >
         </v-list-item-title>
@@ -53,6 +59,9 @@
         >{{ item.text
         }}<span v-if="markOf(item.value)" class="ds-dim-mark">{{
           markOf(item.value).mark
+        }}</span
+        ><span v-if="goalMark(item.value)" class="ds-dim-goal">{{
+          goalMark(item.value).mark
         }}</span></v-chip
       >
       <span
@@ -67,7 +76,7 @@
 </template>
 
 <script>
-import { columnKind, kindMark } from "@/columns.js";
+import { GOAL_MARKS, columnKind, kindMark } from "@/columns.js";
 
 /**
  * Passes everything else to the v-autocomplete, so it takes the same props,
@@ -85,15 +94,24 @@ export default {
     deletableChips: { type: Boolean, default: false },
   },
   computed: {
-    singleKind() {
-      return this.multiple ? null : columnKind(this.value);
+    /** A single choice's signs, after its text: its kind's, then its goal's. */
+    singleSuffix() {
+      if (this.multiple || !this.value) return undefined;
+      let marks = [kindMark(this.value), this.goalMark(this.value)].filter(Boolean);
+      return marks.length > 0 ? marks.map((m) => m.mark).join(" ") : undefined;
     },
-    singleMark() {
-      return this.multiple || !this.value ? null : kindMark(this.value);
+    singleClass() {
+      if (this.multiple || !this.value) return null;
+      if (kindMark(this.value)) return "ds-picker--" + columnKind(this.value);
+      return this.goalMark(this.value) ? "ds-picker--goal" : null;
     },
   },
   methods: {
     markOf: kindMark,
+    goalMark(name) {
+      let goalOf = this.$store && this.$store.getters.goalOf;
+      return (goalOf && GOAL_MARKS[goalOf(name)]) || null;
+    },
     kindClass(name) {
       return kindMark(name) ? "ds-dim--" + columnKind(name) : null;
     },
@@ -124,6 +142,10 @@ export default {
 .ds-picker--weighted .v-text-field__suffix {
   color: #00796b;
   background: rgba(0, 121, 107, 0.12);
+}
+.ds-picker--goal .v-text-field__suffix {
+  color: #607d8b;
+  font-weight: 700;
 }
 /* A chip in the dimension's colour, its sign without a second tint. */
 .v-chip.ds-dim--custom {
