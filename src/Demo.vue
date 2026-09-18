@@ -626,6 +626,13 @@ body {
   margin-top: -5px;
 }
 
+/* The bar's icons are a size below Vuetify's 24px, so the row of buttons
+   reads lighter; the buttons, and so what a click can hit, stay as they are. */
+.v-app-bar .v-btn--icon.v-size--default .v-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
 .ui-mode-toggle {
   margin: 0 2px;
 }

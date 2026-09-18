@@ -227,17 +227,6 @@
   color: white !important;
 }
 
-/* Narrow screens: the outlined icon alone marks the current operation. */
-@media (max-width: 1500px) {
-  .operation-container > div,
-  .held-hint {
-    display: none;
-  }
-  .operation-container {
-    padding-right: 0;
-  }
-}
-
 
 
 
@@ -248,9 +237,10 @@ import { operations } from "@/components/operations.js";
 import { operationIcon } from "@/components/operationIcons.js";
 import { mapState, mapGetters } from "vuex";
 
-// Below this the toolbar has no room for five buttons (the same width at
-// which the assistant bar and the toolbar labels give way).
-const COMPACT_WIDTH = 1500;
+// Up to this width the five operations fold into a pulldown. Spread out they
+// take some 235px more, and below about 2000px that comes out of the
+// assistant's field: at 1920px it was squeezed to half its width.
+const COMPACT_WIDTH = 2000;
 
 const OPERATION_ITEMS = [
   { operation: operations.REPLACE, hint: "1" },
