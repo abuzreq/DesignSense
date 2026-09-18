@@ -27,9 +27,12 @@ Columns follow a convention:
 | `in:width` | a design parameter |
 | `out:cost` | a result |
 | `img`, `img_2`, `image 3` | views of the option, in that order |
-| `model3d` | a 3D model: `.glb`, `.gltf` or `.obj` |
+| `model3d` | a 3D model: `.glb`, `.gltf`, `.obj` or `.json` |
 
-Anything else is read as a plain dimension. `testdata/` holds a small
+Anything else is read as a plain dimension. A study written for
+[Design Explorer](https://tt-acm.github.io/DesignExplorer/) loads as it is:
+the `in:`/`out:` columns and `img` are the same convention, and its `threeD`
+column of three.js `.json` scenes is read too. `testdata/` holds a small
 synthetic study — 24 options, several with more than one view, four with
 models — for trying the media and sensitivity features without a server.
 

@@ -15,8 +15,24 @@
     <template v-else>
       <!-- Built only once the bytes are in hand, so nothing loads on hover. -->
       <div v-if="sourceUrl" class="mv-stage">
+        <ModelJson
+          v-if="isJson"
+          ref="model"
+          :key="model.url"
+          :src="sourceUrl"
+          :lights="lights"
+          :rotation="rotation"
+          :camera-position="cameraPosition"
+          :controls-options="controlsOptions"
+          :output-encoding="srgbEncoding"
+          :background-color="backgroundColor"
+          @on-load="onLoaded"
+          @on-error="onLoaderError"
+        >
+          <div class="mv-webgl">{{ noWebglText }}</div>
+        </ModelJson>
         <ModelGltf
-          v-if="!isObj"
+          v-else-if="!isObj"
           ref="model"
           :key="model.url"
           :src="sourceUrl"
@@ -119,9 +135,10 @@
  * size guard, a real progress percentage, a Cancel button, and an error
  * message that can tell a blocked origin from an expired share link.
  */
-import { ModelGltf, ModelObj } from "vue-3d-model";
+import { ModelGltf, ModelJson, ModelObj } from "vue-3d-model";
 import TipButton from "@/components/TipButton.vue";
 import { assetExtension, folderFileUrl } from "@/data/assets.js";
+import { convertLegacyScene, isLegacyScene } from "@/data/threeLegacy.js";
 
 /*
  * Never `import ... from "three"` in here.
@@ -137,7 +154,7 @@ import { assetExtension, folderFileUrl } from "@/data/assets.js";
 // constant is not worth a second copy of three.js.
 const SRGB_ENCODING = 3001;
 
-const SUPPORTED = ["glb", "gltf", "obj"];
+const SUPPORTED = ["glb", "gltf", "obj", "json"];
 
 // Past this a model takes longer to download and decode than anyone waiting
 // on a gallery will sit through, and a big one can exhaust a laptop's memory.
@@ -302,7 +319,7 @@ function disposeNode(child) {
 
 export default {
   name: "ModelViewer",
-  components: { ModelGltf, ModelObj, TipButton },
+  components: { ModelGltf, ModelJson, ModelObj, TipButton },
   props: {
     // { url, name, format } -- one model. Switching between several is the
     // gallery's job, not this component's.
@@ -358,6 +375,9 @@ export default {
     isObj() {
       return this.format === "obj";
     },
+    isJson() {
+      return this.format === "json";
+    },
     fileName() {
       if (!this.model) return "";
       return this.model.name || fileNameOf(this.model.url);
@@ -369,7 +389,7 @@ export default {
       let opening = extension
         ? "3D file of type ." + extension + "."
         : "This file isn't a 3D model DesignSense can read.";
-      return opening + " DesignSense shows .glb, .gltf and .obj.";
+      return opening + " DesignSense shows .glb, .gltf, .obj and .json.";
     },
     confirmText() {
       let size = this.sizeBytes
@@ -465,7 +485,12 @@ export default {
       this.percent = 100;
       this.state = "parsing";
       this.mtlUrl = mtl;
-      if (this.format === "gltf") {
+      if (this.isJson) {
+        let scene = await this.readScene(bytes);
+        if (this.controller !== controller || scene === null) return;
+        this.blobUrl = URL.createObjectURL(scene);
+        this.sourceUrl = this.blobUrl;
+      } else if (this.format === "gltf") {
         // A .gltf is the text form: it names its .bin and its textures by
         // relative path. A blob: URL has an opaque origin, so those siblings
         // would resolve against nothing and the model would arrive empty --
@@ -477,6 +502,40 @@ export default {
         this.blobUrl = URL.createObjectURL(bytes);
         this.sourceUrl = this.blobUrl;
       }
+    },
+
+    /**
+     * A three.js scene as a Blob the loader can read, or null after failing.
+     *
+     * Design Explorer's files are the format three.js wrote before r99, which
+     * its loader now refuses (see data/threeLegacy.js); they are rewritten
+     * here. A file already in the current format is passed straight through.
+     */
+    async readScene(bytes) {
+      let json;
+      try {
+        json = JSON.parse(await bytes.text());
+      } catch (error) {
+        this.fail("This .json file isn't a 3D scene DesignSense can read.");
+        return null;
+      }
+      if (!json || !json.metadata || json.metadata.type !== "Object") {
+        this.fail(
+          "This .json file holds no three.js scene. Design Explorer's 3D files do; " +
+            "other .json files are data, not geometry."
+        );
+        return null;
+      }
+      let scene = json;
+      if (isLegacyScene(json)) {
+        try {
+          scene = convertLegacyScene(json);
+        } catch (error) {
+          this.fail("This 3D scene is in a form DesignSense couldn't read.");
+          return null;
+        }
+      }
+      return new Blob([JSON.stringify(scene)], { type: "application/json" });
     },
 
     /** The body as a Blob, or null when it was cancelled or hit the cap. */

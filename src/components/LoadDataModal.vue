@@ -87,14 +87,16 @@
                   </p>
                   <p>
                     <strong>3D</strong> — <code>model3d</code> (or
-                    <code>3d</code>) is the first model, then
+                    <code>3d</code>, or Design Explorer's
+                    <code>threeD</code>) is the first model, then
                     <code>model3d_2</code> and so on.
                   </p>
                   <p>
-                    <strong>Formats</strong> — .glb, .gltf and .obj. A .obj
-                    picks up a .mtl of the same name from the same folder; a
-                    .glb is one self-contained file, so it is the one that
-                    always works.
+                    <strong>Formats</strong> — .glb, .gltf, .obj and the .json
+                    scenes Design Explorer shows, as Spectacles exports them
+                    from Grasshopper. A .obj picks up a .mtl of the same name
+                    from the same folder; a .glb is one self-contained file, so
+                    it is the one that always works.
                   </p>
                   <p class="mb-0">
                     In a Google Drive or OneDrive folder you can skip the extra

@@ -422,11 +422,6 @@ export function buildDataset(text, options) {
         " holds 3D files, so it is shown as a 3D view rather than as a dimension."
     );
   }
-  if (assets.legacyJson.length > 0) {
-    warnings.push(
-      "This dataset points to Design Explorer 3D files (.json), which DesignSense can't show. Export the geometry as .glb or .obj instead."
-    );
-  }
   if (resolver.missing > 0) {
     warnings.push(
       plural(resolver.missing, "image or model file", "image or model files") +

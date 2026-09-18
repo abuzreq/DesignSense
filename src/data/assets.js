@@ -20,12 +20,12 @@ export const STRICT_MODEL_NAME = /^(model3d|model_3d|3d|3d_model|threed)(?:[\s_-
 export const LOOSE_MODEL_NAME = /^(model|models|geometry|mesh|glb|gltf|obj)(?:[\s_-]?(\d+))?$/i;
 
 export const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg"];
-export const MODEL_EXTENSIONS = ["glb", "gltf", "obj"];
+// ".json" is a three.js scene, which is what Design Explorer's "threeD"
+// column holds; see data/threeLegacy.js for what reading one takes.
+export const MODEL_EXTENSIONS = ["glb", "gltf", "obj", "json"];
 
 // The app's own columns: added to every row, never shown as dimensions.
 const DERIVED_KEYS = ["image", "images", "_models", "json"];
-// Kept from older datasets: recognised so they stay out of the way.
-const LEGACY_NAME = /^(threed|gltf)$/i;
 
 /** A file's extension, lower-cased, with any query or hash ignored. */
 export function assetExtension(value) {
@@ -36,7 +36,7 @@ export function assetExtension(value) {
   return text.slice(dot + 1).toLowerCase();
 }
 
-/** "glb", "gltf" or "obj" for a model file; null for anything else. */
+/** "glb", "gltf", "obj" or "json" for a model file; null for anything else. */
 export function modelFormat(value) {
   let ext = assetExtension(value);
   return MODEL_EXTENSIONS.indexOf(ext) === -1 ? null : ext;
@@ -87,14 +87,13 @@ function orderColumns(entries) {
  * `types` is the inferred column types, so a loose name such as "model" is
  * judged by what it holds: text naming a .glb is a model, anything else is a
  * dimension. Returns the claimed columns in view order, the loose ones that
- * were taken (the views hide those), what clashed, and any legacy 3D columns.
+ * were taken (the views hide those), and what clashed.
  */
 export function classifyColumns(fields, rows, types) {
   let images = [];
   let models = [];
   let claimed = [];
   let conflicts = [];
-  let legacyJson = [];
   let takenImage = {};
   let takenModel = {};
   (fields || []).forEach(function(field) {
@@ -105,10 +104,6 @@ export function classifyColumns(fields, rows, types) {
       if (takenImage[number]) conflicts.push([takenImage[number], field]);
       else takenImage[number] = field;
       images.push({ name: field, number: number });
-      return;
-    }
-    if (LEGACY_NAME.test(label)) {
-      legacyJson.push(field);
       return;
     }
     let strict = matchOf(label, STRICT_MODEL_NAME);
@@ -134,7 +129,6 @@ export function classifyColumns(fields, rows, types) {
     models: orderColumns(models),
     claimed: claimed,
     conflicts: conflicts,
-    legacyJson: legacyJson,
   };
 }
 
@@ -193,7 +187,7 @@ export function isDerivedAssetKey(name) {
 
 /**
  * Whether a column is about assets rather than about the design: the picture
- * and model columns, the keys the app adds, and the legacy ones. Replaces the
+ * and model columns and the keys the app adds. Replaces the
  * hand-written lists that could never cover "img_2" or "model3d_3".
  */
 export function isAssetColumn(name) {
@@ -202,7 +196,6 @@ export function isAssetColumn(name) {
   return (
     IMAGE_NAME.test(label) ||
     STRICT_MODEL_NAME.test(label) ||
-    LEGACY_NAME.test(label) ||
     isClaimedColumn(name)
   );
 }
