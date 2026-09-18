@@ -94,7 +94,7 @@
       <AssistantBar ref="assistant" id="assistant-bar" />
 
       <v-divider vertical class="ds-divider" />
-      <!-- The shortlist is reachable even when the Sets panel is closed. -->
+      <!-- The shortlist is reachable here too, without opening the sets' drawer. -->
       <v-menu bottom left offset-y>
         <template v-slot:activator="{ on: menu }">
           <v-tooltip bottom>
@@ -464,22 +464,27 @@
     <CompareDialog />
     <SensitivityDialog />
     <v-main id="designsense-workspace" style="padding: 60px 0px 0px">
-      <div
-        ref="workspace"
-        class="ds-workspace"
-        @contextmenu="showContextMenuHandler"
-      >
-        <Card
-          v-for="item in layouts"
-          :key="item.type"
-          :initX="item.x"
-          :initY="item.y"
-          :initW="item.w"
-          :initH="item.h"
-          :unitW="unitW"
-          :unitH="unitH"
-          :type="item.type"
-        />
+      <!-- The saved sets' rail takes a strip at the left; their drawer opens
+           over the workspace from it. -->
+      <div class="ds-work-area">
+        <SetsDrawer />
+        <div
+          ref="workspace"
+          class="ds-workspace"
+          @contextmenu="showContextMenuHandler"
+        >
+          <Card
+            v-for="item in layouts"
+            :key="item.type"
+            :initX="item.x"
+            :initY="item.y"
+            :initW="item.w"
+            :initH="item.h"
+            :unitW="unitW"
+            :unitH="unitH"
+            :type="item.type"
+          />
+        </div>
       </div>
     </v-main>
 
@@ -785,10 +790,16 @@ body {
   box-shadow: none;
   font-size: 13px;
 }
+.ds-work-area {
+  position: relative;
+  display: flex;
+  height: calc(100vh - 60px);
+}
 .ds-workspace {
   position: relative;
-  width: 100%;
-  height: calc(100vh - 60px);
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
 }
 /* Below 1500px Expert's toolbar needs every pixel, so labels give way to icons. */
 @media (max-width: 1500px) {
@@ -837,7 +848,7 @@ import SPLOMView from "@/components/SPLOMView.vue";
 
 import ScatterplotView from "@/components/ScatterplotView.vue";
 
-import SetsView from "@/components/SetsView.vue";
+import SetsDrawer from "@/components/SetsDrawer.vue";
 
 import Card from "@/components/Card.vue";
 
@@ -861,7 +872,6 @@ const PANEL_LABELS = {
   Grid: "Gallery",
   ScatterPlot: "Scatter",
   ParallelCoordinatesPlot: "PCP",
-  Sets: "Sets",
   SPLOM: "SPLOM",
 };
 
@@ -942,7 +952,7 @@ export default {
     AugmentedGridView,
     SPLOMView,
     ScatterplotView,
-    SetsView,
+    SetsDrawer,
     Card,
     RadialMenu,
     RadialMenuItem,
@@ -989,9 +999,9 @@ export default {
         tourStep(this, "lite", "#data-operations-bar", "Zoom",
           "Zoom in on the selected options to focus on them, or exclude them instead. Reset brings back the whole collection.",
           "bottom"),
-        tourStep(this, "lite", '.v-card[type="Sets"]', "Saved sets",
-          "Save the current results along with their filters. Restore a set later to bring those filters back.",
-          "right", () => this.saveTourSet()),
+        tourStep(this, "lite", "#sets-drawer", "Saved sets",
+          "Save the current results along with their filters. Restore a set later to bring those filters back. They wait at the left edge: move the pointer there, or click the tab.",
+          "right", () => this.openTourSets()),
         tourStep(this, "lite", "#cart-chip", "Your shortlist",
           "Options you set aside gather here, and the badge counts them. The shortlist outlasts filtering, zooming and switching modes, so it is where a few candidates wait while you keep looking. This menu shortlists everything currently shown, saves the shortlist as a set, or compares it.",
           "bottom", () => this.fillTourCart()),
@@ -1574,11 +1584,12 @@ export default {
     prepareTourStep(mode, setup) {
       let store = this.$store;
       store.commit("toggleEditingMode", { value: false });
-      // The two steps that read a dialog open it themselves; every other step
-      // is about the workspace, which those dialogs cover. Closing here also
-      // means stepping backwards past one leaves nothing behind.
+      // The steps that read a dialog or the sets' drawer open it themselves;
+      // every other step is about the workspace, which those cover. Closing
+      // here also means stepping backwards past one leaves nothing behind.
       store.dispatch("closeCompare");
       store.dispatch("closeSensitivity");
+      store.commit("setSetsDrawer", { open: false });
       let switching = store.state.uiMode !== mode;
       if (switching) store.dispatch("setUiMode", mode);
       // Give the panels time to re-render, so the step finds its target. A
@@ -1593,6 +1604,7 @@ export default {
       document.body.style.pointerEvents = "all";
       this.$store.dispatch("closeCompare");
       this.$store.dispatch("closeSensitivity");
+      this.$store.commit("setSetsDrawer", { open: false });
     },
     /** Filters the tour's used-car data, so the filter chips have something to show. */
     showTourFilter() {
@@ -1602,10 +1614,14 @@ export default {
         ranges: { price: [4000, 12000], year: [2006, 2015] },
       });
     },
-    saveTourSet() {
+    /** A set to show, in the drawer opened to stay while the step points at it. */
+    openTourSets() {
       if (this.$store.state.setsIDs.length === 0) {
         this.$store.dispatch("createSet");
       }
+      this.$store.commit("setSetsDrawer", { open: true, pinned: true });
+      // The drawer slides in over 0.2s; the step is placed beside it after.
+      return 300;
     },
     /** Inspects one option, so the inspector is there to point at. */
     inspectTourOption() {
@@ -1650,6 +1666,7 @@ export default {
     clearTourExample() {
       this.$store.dispatch("clearFilters");
       this.$store.dispatch("clearInspection");
+      this.$store.commit("setSetsDrawer", { open: false });
       return 0;
     },
     measureWorkspace() {

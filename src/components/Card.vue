@@ -50,14 +50,6 @@
         :y="this.y"
         :type="type"
       />
-      <SetsView
-        v-if="type == 'Sets'"
-        :width="this.width"
-        :height="this.height"
-        :x="this.x"
-        :y="this.y"
-        :type="type"
-      />
       <SPLOMView
         v-if="type == 'SPLOM'"
         :width="this.width"
@@ -92,15 +84,12 @@ import SPLOMView from "@/components/SPLOMView.vue";
 
 import ScatterplotView from "@/components/ScatterplotView.vue";
 
-import SetsView from "@/components/SetsView.vue";
-
 export default {
   components: {
     ParCoordsView,
     AugmentedGridView,
     SPLOMView,
     ScatterplotView,
-    SetsView,
   },
   // initX..initH are grid cells; unitW and unitH are a cell's size in pixels.
   props: ["initX", "initY", "initW", "initH", "unitW", "unitH", "type"],

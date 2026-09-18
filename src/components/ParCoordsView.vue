@@ -721,7 +721,8 @@ export default {
       this.cleanTooltip();
       let raw = d3.event.selection;
       if (!raw || !d3.event.sourceEvent) return;
-      let x = d3.event.sourceEvent.clientX - this.x;
+      // In the coordinates the tooltip is drawn in, wherever the panel sits.
+      let x = d3.mouse(this.chart.svg.node())[0];
       let yscale = this.liteBrushes[dim].yscale;
       this.createTooltip([
         [x, raw[0], round(yscale.invert(raw[0]), 4) + ""],
@@ -1244,7 +1245,7 @@ export default {
           if (args && d3.event.type === "brush") {
             let sel = args.selection;
             if (sel.raw.length > 0) {
-              let x = d3.event.sourceEvent.clientX - this.x;
+              let x = d3.mouse(this.chart.svg.node())[0];
               let rawY = sel.raw;
               let scaledY = sel.scaled;
               // console.log(sel, sel.scaled);

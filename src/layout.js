@@ -12,54 +12,44 @@ export const LAYOUT_ROWS = 24;
 /** Height of the header at the top of each panel (see PanelHeader.vue). */
 export const PANEL_HEADER_HEIGHT = 40;
 
-// Narrow screens give the sets list a larger share so its cards stay readable.
-function setsWidth(viewportWidth) {
-  var w =
-    viewportWidth || (typeof window !== "undefined" ? window.innerWidth : 1920);
-  return w < 1600 ? 8 : 6;
-}
-
-function defaultLayouts(viewportWidth) {
-  var setsW = setsWidth(viewportWidth);
+// The saved sets are not a panel: they live in a drawer at the workspace's
+// left edge (SetsDrawer.vue), so every arrangement gives the grid to the
+// gallery and the charts.
+function defaultLayouts() {
   var chartsW = 22;
-  var galleryW = LAYOUT_COLUMNS - setsW - chartsW;
-  var chartsX = setsW + galleryW;
+  var galleryW = LAYOUT_COLUMNS - chartsW;
   var half = LAYOUT_ROWS / 2;
   return [
-    { type: "ParallelCoordinatesPlot", x: chartsX, y: 0, w: chartsW, h: half },
-    { type: "ScatterPlot", x: chartsX, y: half, w: chartsW, h: half },
-    { type: "Grid", x: setsW, y: 0, w: galleryW, h: LAYOUT_ROWS },
-    { type: "Sets", x: 0, y: 0, w: setsW, h: LAYOUT_ROWS },
+    { type: "ParallelCoordinatesPlot", x: galleryW, y: 0, w: chartsW, h: half },
+    { type: "ScatterPlot", x: galleryW, y: half, w: chartsW, h: half },
+    { type: "Grid", x: 0, y: 0, w: galleryW, h: LAYOUT_ROWS },
   ];
 }
 
 /**
  * Ready-made arrangements, offered when layout editing starts. Each one keeps
- * the same panels; they differ in what gets the room. `build` takes the
- * viewport width, as the default arrangement does.
+ * the same panels; they differ in what gets the room.
  */
 export const LAYOUT_PRESETS = [
   {
     id: "balanced",
     name: "Balanced",
-    description: "Gallery in the middle, both charts stacked on the right.",
+    description: "Gallery on the left, both charts stacked on the right.",
     build: defaultLayouts,
   },
   {
     id: "gallery",
     name: "Gallery first",
     description: "A wide gallery for browsing images, with narrow charts.",
-    build: function (viewportWidth) {
-      var setsW = setsWidth(viewportWidth);
+    build: function () {
       var chartsW = 14;
       var half = LAYOUT_ROWS / 2;
       return [
-        { type: "Sets", x: 0, y: 0, w: setsW, h: LAYOUT_ROWS },
         {
           type: "Grid",
-          x: setsW,
+          x: 0,
           y: 0,
-          w: LAYOUT_COLUMNS - setsW - chartsW,
+          w: LAYOUT_COLUMNS - chartsW,
           h: LAYOUT_ROWS,
         },
         {
@@ -84,48 +74,31 @@ export const LAYOUT_PRESETS = [
     name: "Charts first",
     description:
       "Parallel coordinates across the top, the scatterplot and gallery below.",
-    build: function (viewportWidth) {
-      var setsW = setsWidth(viewportWidth);
-      var rest = LAYOUT_COLUMNS - setsW;
+    build: function () {
+      var half = LAYOUT_COLUMNS / 2;
       var topH = 11;
       return [
-        { type: "Sets", x: 0, y: 0, w: setsW, h: LAYOUT_ROWS },
         {
           type: "ParallelCoordinatesPlot",
-          x: setsW,
+          x: 0,
           y: 0,
-          w: rest,
+          w: LAYOUT_COLUMNS,
           h: topH,
         },
         {
           type: "ScatterPlot",
-          x: setsW,
+          x: 0,
           y: topH,
-          w: Math.round(rest / 2),
+          w: half,
           h: LAYOUT_ROWS - topH,
         },
         {
           type: "Grid",
-          x: setsW + Math.round(rest / 2),
+          x: half,
           y: topH,
-          w: rest - Math.round(rest / 2),
+          w: half,
           h: LAYOUT_ROWS - topH,
         },
-      ];
-    },
-  },
-  {
-    id: "compare",
-    name: "Images and charts",
-    description:
-      "No sets panel: the gallery on the left, both charts on the right.",
-    build: function () {
-      var half = LAYOUT_COLUMNS / 2;
-      var rows = LAYOUT_ROWS / 2;
-      return [
-        { type: "Grid", x: 0, y: 0, w: half, h: LAYOUT_ROWS },
-        { type: "ParallelCoordinatesPlot", x: half, y: 0, w: half, h: rows },
-        { type: "ScatterPlot", x: half, y: rows, w: half, h: rows },
       ];
     },
   },
@@ -178,12 +151,49 @@ function isValidLayouts(parsed) {
   });
 }
 
+/**
+ * A layout saved while the sets were still a panel. Their columns go to the
+ * panels that began at their right edge (or, with none there, ended at their
+ * left), which turns every old preset into its new form and keeps an
+ * arrangement of one's own whole.
+ */
+function withoutSetsPanel(layouts) {
+  var sets = layouts.find(function (p) {
+    return p.type === "Sets";
+  });
+  if (!sets) return layouts;
+  var rest = layouts.filter(function (p) {
+    return p !== sets;
+  });
+  var besideRows = function (p) {
+    return p.y < sets.y + sets.h && p.y + p.h > sets.y;
+  };
+  var right = rest.filter(function (p) {
+    return besideRows(p) && p.x === sets.x + sets.w;
+  });
+  if (right.length > 0) {
+    right.forEach(function (p) {
+      p.x = sets.x;
+      p.w += sets.w;
+    });
+  } else {
+    rest.forEach(function (p) {
+      if (besideRows(p) && p.x + p.w === sets.x) p.w += sets.w;
+    });
+  }
+  return rest;
+}
+
 export function loadLayouts() {
   try {
     var raw = localStorage.getItem(LAYOUT_STORAGE_KEY);
     if (raw) {
       var parsed = JSON.parse(raw);
-      if (isValidLayouts(parsed)) return parsed;
+      if (isValidLayouts(parsed)) {
+        var layouts = withoutSetsPanel(parsed);
+        if (layouts !== parsed) saveLayouts(layouts);
+        if (layouts.length > 0) return layouts;
+      }
     }
   } catch (e) {
     /* ignore quota / private-mode failures */

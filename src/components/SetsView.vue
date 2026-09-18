@@ -1,5 +1,5 @@
 <template>
-  <div class="sets-view" :style="{ height: height + 'px' }">
+  <div class="sets-view">
     <div class="sets-header">
       <div class="sets-title">{{ isLite ? "Saved sets" : "Sets" }}</div>
       <v-tooltip bottom max-width="300">
@@ -14,6 +14,21 @@
           </span>
         </template>
         <span>{{ saveTooltip }}</span>
+      </v-tooltip>
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            v-on="on"
+            icon
+            small
+            class="sets-hide"
+            aria-label="Hide the saved sets"
+            @click="$emit('close')"
+          >
+            <v-icon small>mdi-chevron-left</v-icon>
+          </v-btn>
+        </template>
+        <span>Hide</span>
       </v-tooltip>
       <!-- Clearing the saved work is in the help menu, where the rest of what
            is kept for a dataset is looked after. -->
@@ -266,7 +281,6 @@ import { operations } from "./operations";
 
 export default {
   name: "SetsView",
-  props: ["width", "height", "x", "y", "type"],
   data: function() {
     return {
       // Sets whose empty note was opened with "Add note".
@@ -433,10 +447,15 @@ export default {
 </script>
 
 <style scoped>
+/* Fills the drawer it lives in (SetsDrawer.vue); the list scrolls. */
 .sets-view {
   display: flex;
   flex-direction: column;
+  height: 100%;
   overflow: hidden;
+}
+.sets-hide {
+  margin-right: -4px;
 }
 .sets-header {
   display: flex;

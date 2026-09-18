@@ -79,7 +79,6 @@ const VIEW_TYPE_LABELS = {
   ScatterPlot: "Scatterplot",
   ParallelCoordinatesPlot: "PCP",
   Grid: "Gallery",
-  Sets: "Set",
   SPLOM: "SPLOM",
 };
 
@@ -185,6 +184,10 @@ function builder(
       shareLink: null,
 
       isClusteringPanelOpen: true,
+      // The saved sets' drawer at the workspace's left edge. Always starts
+      // closed. `pinned` is open until closed; unpinned it is open because the
+      // pointer went to it or a set was just saved, and closes by itself.
+      setsDrawer: { open: false, pinned: false },
 
       /*
        * Settings that belong to a view but have to be reachable from outside
@@ -468,6 +471,11 @@ function builder(
         if (payload) {
           state.isClusteringPanelOpen = payload.value;
         }
+      },
+      /** `{ open, pinned }`; closing always unpins. */
+      setSetsDrawer(state, payload) {
+        let open = !!payload.open;
+        state.setsDrawer = { open: open, pinned: open && !!payload.pinned };
       },
       toggleInspectionMode(state, payload) {
         if (payload) {

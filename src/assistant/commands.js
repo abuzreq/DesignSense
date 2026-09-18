@@ -517,9 +517,14 @@ export const COMMANDS = {
         ctx.store.dispatch("openSensitivity");
         return;
       }
+      // The saved sets live in a drawer at the left edge; asked for, it stays.
+      if (args.view === "Sets") {
+        ctx.store.commit("setSetsDrawer", { open: true, pinned: true });
+        return;
+      }
       // Only the panels this app offers; the old SPLOM is not one of them.
-      if (["Grid", "ScatterPlot", "ParallelCoordinatesPlot", "Sets"].indexOf(args.view) < 0) {
-        return { message: "I can open the gallery, scatterplot, parallel coordinates, sets or clusters panel, or the analysis panel." };
+      if (["Grid", "ScatterPlot", "ParallelCoordinatesPlot"].indexOf(args.view) < 0) {
+        return { message: "I can open the gallery, scatterplot, parallel coordinates or clusters panel, the saved sets, or the analysis panel." };
       }
       ctx.store.commit("openLayout", { type: args.view });
     },
@@ -530,6 +535,10 @@ export const COMMANDS = {
     run(ctx, args) {
       if (args.view === "Clusters") {
         ctx.store.commit("setClusteringPanelOpen", { value: false });
+        return;
+      }
+      if (args.view === "Sets") {
+        ctx.store.commit("setSetsDrawer", { open: false });
         return;
       }
       ctx.store.commit("closeLayout", { type: args.view });
