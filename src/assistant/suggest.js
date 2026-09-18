@@ -359,8 +359,11 @@ function commandPhase(context, segment, prefixText, whole) {
   }).filter((s) => s.score > 0 || !norm);
 
   if (!norm) {
-    // Empty box: the most used instructions, then the natural first few.
+    // Empty box: the recommended instructions (filtering, the Pareto front),
+    // then the most used, then the natural first few.
+    let lead = (template) => template.recommend || Infinity;
     scored.sort((a, b) =>
+      (lead(a.template) === lead(b.template) ? 0 : lead(a.template) < lead(b.template) ? -1 : 1) ||
       usageBonus(context, b.template.command) - usageBonus(context, a.template.command)
     );
   } else {

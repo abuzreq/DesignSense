@@ -18,11 +18,14 @@
  *   order     descending / ascending        stat      average, median, ...
  *   panel     a view name          set       a saved set      mode   lite / expert
  *   name      free text (a set name)        ordinal   first, second, ...
+ *
+ * `recommend: n` puts a template n-th at the top of what the empty bar
+ * suggests, ahead of what has been used most.
  */
 
 export const TEMPLATES = [
   // --- narrowing -------------------------------------------------------------
-  { command: "filter.range", text: "filter {dim:numeric} {op} {value}", keywords: ["filter", "only", "limit", "keep", "narrow", "restrict"], also: ["only the ones under a number", "keep everything above a value", "narrow to a range on one measure", "limit it to less than"] },
+  { command: "filter.range", text: "filter {dim:numeric} {op} {value}", recommend: 1, keywords: ["filter", "only", "limit", "keep", "narrow", "restrict"], also: ["only the ones under a number", "keep everything above a value", "narrow to a range on one measure", "limit it to less than"] },
   { command: "filter.range", text: "filter {dim:numeric} between {value} and {value2}", keywords: ["between"] },
   { command: "filter.range", text: "exclude {dim:numeric} {op} {value}", keywords: ["exclude", "get rid of", "drop", "remove", "without"], also: ["get rid of the expensive ones", "drop everything above a number", "remove the ones over a value", "throw out the pricey ones", "take out anything below"] },
   { command: "filter.range", text: "filter {dim:numeric} {op} {value} or {op2} {value2}", keywords: ["or", "either"], also: ["under one number or over another", "either below this or above that", "the cheap ones or the very expensive ones"] },
@@ -57,7 +60,7 @@ export const TEMPLATES = [
   { command: "ask.capabilities", text: "what can you do", keywords: ["help", "what can you do", "commands"] },
 
   // --- analysis --------------------------------------------------------------
-  { command: "analysis.pareto", text: "pareto front of {dim:numeric} vs {dim2:numeric}", keywords: ["pareto", "frontier", "trade offs", "best trade"], also: ["select the best trade off between two measures", "the best compromise between two things", "the options that are not beaten on both", "show the pareto frontier", "non dominated options"] },
+  { command: "analysis.pareto", text: "pareto front of {dim:numeric} vs {dim2:numeric}", recommend: 2, keywords: ["pareto", "frontier", "trade offs", "best trade"], also: ["select the best trade off between two measures", "the best compromise between two things", "the options that are not beaten on both", "show the pareto frontier", "non dominated options"] },
   { command: "analysis.cluster", text: "cluster into {k} groups", keywords: ["cluster", "group", "partition"] },
   { command: "analysis.similar", text: "similar to this one", keywords: ["similar", "like this", "nearest"] },
   { command: "analysis.representatives", text: "show {n} representative examples", keywords: ["representative", "typical", "examples"] },
