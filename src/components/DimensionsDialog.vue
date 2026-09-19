@@ -40,18 +40,12 @@
 
         <!-- Manage -->
         <template v-if="view === 'manage'">
-          <p class="dims-intro dims-mcda mt-3">
-            Judge options on your own criteria, then weigh them together for
-            <strong>multicriteria decision analysis</strong>. Enter values
-            beside the star rating or by dragging a knob on the parallel
-            coordinates.
-          </p>
           <v-alert
             v-if="dimensionStorageError"
             type="error"
             dense
             outlined
-            class="mb-2"
+            class="mt-3 mb-2"
             >{{ dimensionStorageError }}</v-alert
           >
           <v-alert
@@ -135,8 +129,17 @@
           </section>
 
           <div class="dims-section-head">
-            <span class="dims-section-title">Custom and weighted</span>
+            <span class="dims-section-title"
+              >Custom and Weighted Dimensions</span
+            >
           </div>
+          <p class="dims-intro dims-mcda">
+            Judge options on criteria of your own with custom dimensions, then
+            weigh several together into a weighted dimension for
+            <strong>multicriteria decision analysis</strong>. Enter values
+            beside the star rating or by dragging a knob on the parallel
+            coordinates.
+          </p>
           <div v-if="defs.length === 0" class="dims-empty">
             No custom or weighted dimensions yet.
           </div>
@@ -205,6 +208,19 @@
               </v-list-item-action>
             </v-list-item>
           </v-list>
+          <p class="dims-reference">
+            These follow the design space construction framework of Haymaker
+            et al. (2018), in which options are judged against objectives and
+            the objectives are weighed by preference into an overall value:
+            custom dimensions are objectives you judge yourself, and weighted
+            dimensions are that value. See &ldquo;<a
+              :href="paperUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Design space construction: a framework to support
+              collaborative, parametric decision making</a
+            >,&rdquo; <em>ITcon</em> 23(8): 157&ndash;178.
+          </p>
         </template>
 
         <!-- New custom dimension, or a custom dimension's range -->
@@ -352,13 +368,6 @@
           >{{ error || liveError }}</v-alert
         >
 
-        <p v-if="view === 'manage'" class="dims-reference">
-          See Haymaker et al. (2018),
-          &ldquo;<a :href="paperUrl" target="_blank" rel="noopener noreferrer"
-            >Design space construction: a framework to support collaborative,
-            parametric decision making</a
-          >,&rdquo; <em>ITcon</em> 23(8): 157&ndash;178.
-        </p>
       </v-card-text>
 
       <v-divider />
@@ -1047,6 +1056,7 @@ export default {
   color: rgba(0, 0, 0, 0.55);
 }
 .dims-mcda {
+  margin-bottom: 6px;
   padding: 8px 10px;
   border-left: 3px solid #00796b;
   background: rgba(0, 121, 107, 0.06);
