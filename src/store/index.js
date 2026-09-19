@@ -1184,6 +1184,34 @@ function builder(
         context.commit("pushDataStack", { data: context.state.data });
         context.commit("setData", { newData: selection });
       },
+      /**
+       * Leaves `{ ids, label }` out of the exploration, as Exclude does with
+       * a selection, keeping the filters: in Lite a scope with its own chip,
+       * in Expert a step that Step back undoes. The analysis dialog's
+       * outliers go this way.
+       */
+      excludeOptions(context, payload) {
+        let ids = new Set((payload.ids || []).map(String));
+        let data = context.state.data;
+        let gone = data.filter((row) => ids.has(String(row._id)));
+        if (gone.length === 0 || gone.length === data.length) return;
+        if (context.getters.isLite) {
+          let scope = makeScopeFilter(
+            utils.generateID(),
+            "exclude",
+            gone.map((row) => row._id),
+            []
+          );
+          if (payload.label) scope.label = payload.label;
+          commitFilters(context, context.state.filters.concat([scope]));
+          return;
+        }
+        if (!context.getters.can("zoomAndExclude")) return;
+        context.commit("pushDataStack", { data: data });
+        context.commit("setData", {
+          newData: data.filter((row) => !ids.has(String(row._id))),
+        });
+      },
       invertSelection(context) {
         if (!context.getters.can("invertSelection")) return;
         if (context.getters.isLite) {

@@ -1,13 +1,7 @@
 import Vue from "vue";
 import { MAX, MIN, WEIGHTED, columnKind, fileGoal } from "@/columns.js";
 import { RATING_DIMENSION } from "@/ratings.js";
-import {
-  PARETO_FILTER_KEY,
-  PARETO_LABEL,
-  frontCaveats,
-  paretoFront,
-  rowsWithValues,
-} from "@/analysis/pareto.js";
+import { PARETO_FILTER_KEY, PARETO_LABEL, tradeOffs } from "@/analysis/pareto.js";
 import { isMissingFor } from "./dimensions.js";
 import { applyFilters, narrowingFilters } from "./filters.js";
 
@@ -146,31 +140,18 @@ export function createGoalsStore(options) {
         return state.data.filter((row) => ids.has(String(row._id)));
       },
       /**
-       * The front over every goal: `{ dims, directions, skipped, rows, front,
-       * caveats }`, with `front` null when fewer than two goals can be used.
-       * Custom and weighted dimensions are `skipped`: a front kept as a
-       * filter would go out of date as their values change.
+       * What the best trade-offs are judged by: `{ dims, directions, skipped }`,
+       * every goal but those `skipped`, custom and weighted ones, since a
+       * front kept as a filter would go out of date as their values change.
+       * Fewer than two dims, and there is no trade-off to find.
        */
-      bestTradeOffs: (state, getters) => {
+      tradeOffGoals: (state, getters) => {
         let dims = getters.goalDims.filter((dim) => !getters.isUnfilterable(dim));
-        let skipped = getters.goalDims.filter((dim) => getters.isUnfilterable(dim));
-        let directions = dims.map((dim) => getters.goalOf(dim));
-        let result = { dims, directions, skipped, rows: [], front: null, caveats: [] };
-        if (dims.length < 2) return result;
-        let all = getters.tradeOffRows;
-        let values = rowsWithValues(all, dims, isMissingFor);
-        result.rows = values.rows;
-        result.front = paretoFront(values.rows, dims, directions);
-        result.caveats = frontCaveats({
+        return {
           dims: dims,
-          directions: directions,
-          rows: values.rows,
-          front: result.front,
-          missing: values.missing,
-          scoped: all.length < state.rawData.length,
-          skipped: skipped,
-        });
-        return result;
+          directions: dims.map((dim) => getters.goalOf(dim)),
+          skipped: getters.goalDims.filter((dim) => getters.isUnfilterable(dim)),
+        };
       },
       /** Changes whenever any dimension's goal does; views watch it to redraw. */
       goalSignature: (state) =>
@@ -205,15 +186,34 @@ export function createGoalsStore(options) {
         context.commit("setGoalChoice", { dim: payload.dim, choice: choice });
         persist(context.state);
       },
-      /** Keeps the front over every goal, as the "Best trade-offs" filter. */
-      keepBestTradeOffs(context) {
-        let best = context.getters.bestTradeOffs;
-        if (!best.front || best.front.length === 0) return;
+      /**
+       * Keeps the best trade-offs over every goal as the "Best trade-offs"
+       * filter: `{ fronts, leaveOut }`, how many fronts (see paretoFronts),
+       * and ids of options not to compare, outliers say. Returns how many
+       * were kept.
+       */
+      keepBestTradeOffs(context, payload) {
+        let fronts = (payload && payload.fronts) || 2;
+        let leaveOut = new Set(((payload && payload.leaveOut) || []).map(String));
+        let goals = context.getters.tradeOffGoals;
+        if (goals.dims.length < 2) return 0;
+        let rows = context.getters.tradeOffRows.filter(
+          (row) => !leaveOut.has(String(row._id))
+        );
+        let best = tradeOffs({
+          rows: rows,
+          dims: goals.dims,
+          directions: goals.directions,
+          fronts: fronts,
+          isMissing: isMissingFor,
+        });
+        if (best.kept.length === 0) return 0;
         context.dispatch("applyMembersFilter", {
           key: PARETO_FILTER_KEY,
           label: PARETO_LABEL,
-          ids: best.front.map((row) => row._id),
+          ids: best.kept.map((row) => row._id),
         });
+        return best.kept.length;
       },
     },
   };

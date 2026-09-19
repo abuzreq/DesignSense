@@ -72,7 +72,12 @@
               <span class="dims-section-title">Goals</span>
               <span class="dims-section-meta"
                 >Which way is better. Pareto fronts, new weighted dimensions,
-                the analysis and the parallel coordinates read these.</span
+                the analysis and the parallel coordinates read these.
+                {{
+                  isLite
+                    ? "Ask the assistant for the best trade-offs."
+                    : "Keep the best trade-offs by them in the Analysis panel."
+                }}</span
               >
             </div>
             <div v-if="goalRows.length === 0" class="dims-empty">
@@ -127,25 +132,6 @@
                   : "Show inputs (" + otherGoalDims.length + ")"
               }}
             </button>
-
-            <!-- The front over every goal, and what to know before keeping it. -->
-            <div class="tradeoffs">
-              <div class="tradeoffs-head">
-                <div class="tradeoffs-text">
-                  <span class="dims-section-title">Best trade-offs</span>
-                  <span class="dims-section-meta">{{ tradeOffText }}</span>
-                </div>
-                <v-btn
-                  small
-                  depressed
-                  color="primary"
-                  :disabled="!best.front || best.front.length === 0"
-                  @click="keepBestTradeOffs"
-                  >Keep the best trade-offs</v-btn
-                >
-              </div>
-              <CaveatChips v-if="best.front" :caveats="best.caveats" />
-            </div>
           </section>
 
           <div class="dims-section-head">
@@ -440,7 +426,6 @@ import {
 } from "@/customDimensions.js";
 import {
   CUSTOM,
-  GOAL_MARKS,
   INPUT,
   MIN,
   OUTPUT,
@@ -450,7 +435,6 @@ import {
   displayName,
 } from "@/columns.js";
 import { isAssetColumn } from "@/data/assets.js";
-import CaveatChips from "@/components/CaveatChips.vue";
 import DimensionName from "@/components/DimensionName.vue";
 import DimensionPicker from "@/components/DimensionPicker.vue";
 import { isMissingFor } from "@/store/dimensions.js";
@@ -505,7 +489,7 @@ function formatBound(value, span) {
  */
 export default {
   name: "DimensionsDialog",
-  components: { CaveatChips, DimensionName, DimensionPicker },
+  components: { DimensionName, DimensionPicker },
   data() {
     return {
       SLIDER_END: SLIDER_END,
@@ -550,6 +534,7 @@ export default {
       "goalOf",
       "goalSource",
       "hasRatings",
+      "isLite",
     ]),
     /** The numeric dimensions that can have a goal: not bookkeeping or pictures. */
     goalCandidates() {
@@ -591,32 +576,6 @@ export default {
       return this.showOtherGoals
         ? this.mainGoalDims.concat(this.otherGoalDims)
         : this.mainGoalDims;
-    },
-    best() {
-      return this.$store.getters.bestTradeOffs;
-    },
-    tradeOffText() {
-      let best = this.best;
-      if (!best.front) {
-        return (
-          "Set goals on two or more outputs to keep the options no other option beats on all of them." +
-          (best.skipped.length > 0
-            ? " Custom dimensions can't be used, since their values can still change."
-            : "")
-        );
-      }
-      let goals = best.dims
-        .map((dim, i) => displayName(dim) + " " + GOAL_MARKS[best.directions[i]].mark)
-        .join(", ");
-      return (
-        "Keeps " +
-        best.front.length +
-        " of " +
-        best.rows.length +
-        " options, by " +
-        goals +
-        "."
-      );
     },
     open: {
       get() {
@@ -734,10 +693,6 @@ export default {
       return dim === RATING_DIMENSION
         ? "Higher is better: more stars"
         : "Higher is better: a weighted score";
-    },
-    keepBestTradeOffs() {
-      this.$store.dispatch("keepBestTradeOffs");
-      this.open = false;
     },
     start(mode, name) {
       this.error = null;
@@ -1155,25 +1110,6 @@ export default {
 }
 .goals-more:hover {
   text-decoration: underline;
-}
-.tradeoffs {
-  margin-top: 14px;
-  padding: 10px 12px;
-  border: 1px solid #e3e8ee;
-  border-radius: 6px;
-  background: #fbfcfd;
-}
-.tradeoffs-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-.tradeoffs-text {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-width: 0;
 }
 .dims-actions {
   flex-direction: row;

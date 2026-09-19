@@ -1,7 +1,8 @@
 /**
  * Pareto fronts: the options no other option beats on every goal, and what
- * to know before trusting one. Shared by the Goals list's "Best trade-offs",
- * the assistant's "pareto front of X vs Y", and the scatterplot's front.
+ * to know before trusting one. Shared by the analysis dialog's "Best
+ * trade-offs", the assistant's "pareto front of X vs Y", and the
+ * scatterplot's front.
  *
  * A direction is "max" (higher is better) or "min" (lower is better), as a
  * goal is (see store/goals.js).
@@ -107,6 +108,51 @@ export function paretoFront(rows, dims, directions) {
 }
 
 /**
+ * The first `count` fronts, best first: the front, then the front of what it
+ * leaves, and so on (non-dominated sorting). The second front holds the
+ * options beaten only by the first; with noisy values those could be as good.
+ * Fewer come back when the rows run out.
+ */
+export function paretoFronts(rows, dims, directions, count) {
+  let fronts = [];
+  let left = rows;
+  while (fronts.length < count && left.length > 0) {
+    let front = paretoFront(left, dims, directions);
+    fronts.push(front);
+    let taken = new Set(front);
+    left = left.filter((row) => !taken.has(row));
+  }
+  return fronts;
+}
+
+/**
+ * Everything showing or keeping the best trade-offs needs, in one:
+ * `{ rows, fronts, kept, caveats }`, the rows compared (those with a value on
+ * every dimension), the first `fronts` fronts among them, their rows
+ * together, and frontCaveats. `info` is `{ rows, dims, directions, fronts,
+ * isMissing, scoped, skipped, unset }`; see rowsWithValues and frontCaveats.
+ */
+export function tradeOffs(info) {
+  let values = rowsWithValues(info.rows, info.dims, info.isMissing);
+  let fronts = paretoFronts(values.rows, info.dims, info.directions, info.fronts || 1);
+  return {
+    rows: values.rows,
+    fronts: fronts,
+    kept: [].concat(...fronts),
+    caveats: frontCaveats({
+      dims: info.dims,
+      directions: info.directions,
+      rows: values.rows,
+      front: fronts[0] || [],
+      missing: values.missing,
+      scoped: info.scoped,
+      skipped: info.skipped,
+      unset: info.unset,
+    }),
+  };
+}
+
+/**
  * The corners of a two-goal front drawn as steps, in data units: the front's
  * rows by x, joined through the corner that is the worse of each neighbour
  * pair on both goals, so the line bounds what the front beats.
@@ -179,7 +225,9 @@ export function frontCaveats(info) {
       detail: [
         "It keeps the options no other option beats on every goal.",
         "It is most telling when the goals are results that pull against each other: the final population of a multi-objective optimisation approximates one, as does a well-spread sweep of the design space.",
-        "It says nothing about how much better an option is: one at an end of the front can be poor on the other goals. Small differences decide it, so with simulation noise the options just behind it are as good.",
+        "It says nothing about how much better an option is: one at an end of the front can be poor on the other goals.",
+        "Small differences decide it, so with simulation noise the options just behind it could be as good. Keeping the next front too adds those beaten only by the front, as a buffer.",
+        "A value far outside the rest, such as a failed run's, can take a place on the front and push sound options behind it.",
       ],
     },
   ];
@@ -258,6 +306,7 @@ export function frontCaveats(info) {
     }
   }
 
+  // The first front only: the ones kept behind it are there by choice.
   let share = rows.length > 0 ? front.length / rows.length : 0;
   if (dims.length >= MANY_GOALS || (rows.length >= MIN_ROWS && share > LARGE_SHARE)) {
     caveats.push({

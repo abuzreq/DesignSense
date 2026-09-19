@@ -114,6 +114,10 @@
                 <span
                   >std <strong>{{ statText(dim, dim.std) }}</strong></span
                 >
+                <span v-if="farOutCount(dim.dim) > 0" class="ax-far">{{
+                  farOutCount(dim.dim) +
+                    (leaveOutOutliers ? " left out" : " far out")
+                }}</span>
               </div>
             </div>
           </div>
@@ -129,6 +133,140 @@
                 : "Show all " + summary.length + " dimensions"
             }}
           </button>
+        </section>
+
+        <!-- Values far outside the rest, which a front or a correlation can
+             lean on: found here, then looked at, left out of this reading,
+             or excluded from the exploration. -->
+        <section class="ax-section">
+          <div class="ax-head">
+            <span class="ax-head-title">Outliers</span>
+            <span class="ax-head-meta"
+              >Values far outside the rest of their dimension: more than three
+              interquartile ranges beyond the quartiles.</span
+            >
+            <v-spacer />
+            <v-checkbox
+              v-if="hasPrefixes"
+              v-model="outlierInputs"
+              label="Include inputs"
+              dense
+              hide-details
+              class="ax-check"
+            />
+          </div>
+          <div v-if="outlierDims.length === 0" class="sx-guide-line">
+            No outputs to check. Include the inputs to look at them.
+          </div>
+          <template v-else>
+            <div class="ax-line">
+              <span>{{ outlierSummary }}</span>
+              <CaveatChips
+                v-if="outlierChips.length > 0"
+                class="ax-chips"
+                :caveats="outlierChips"
+              />
+            </div>
+            <div v-if="outliers.ids.size > 0" class="ax-actions">
+              <v-btn
+                small
+                outlined
+                color="primary"
+                :disabled="outliersInData.length === 0"
+                @click="selectOutliers"
+                >Select them</v-btn
+              >
+              <v-switch
+                v-model="leaveOutOutliers"
+                inset
+                dense
+                hide-details
+                label="Leave out of the analysis"
+                class="ax-switch"
+              />
+              <v-tooltip bottom max-width="320">
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    v-on="on"
+                    small
+                    outlined
+                    :disabled="outliersInData.length === 0"
+                    @click="excludeOutliers"
+                    >Exclude from exploration</v-btn
+                  >
+                </template>
+                <span
+                  >Takes them out of every panel, as Exclude does with a
+                  selection. Step back, in the toolbar, brings them back.</span
+                >
+              </v-tooltip>
+              <span class="ax-caution"
+                >An outlier can be the best design or a failed run. Look before
+                leaving it out.</span
+              >
+            </div>
+            <div v-if="outliersExcluded > 0" class="ax-note">
+              {{ optionCount(outliersExcluded) }}
+              {{ outliersExcluded === 1 ? "is" : "are" }} out of the
+              exploration too. Step back, in the toolbar, brings them back.
+            </div>
+          </template>
+        </section>
+
+        <!-- The options no other beats on every goal, and those just behind
+             them, kept as a filter. The goals themselves are set under
+             Dimensions. -->
+        <section class="ax-section">
+          <div class="ax-head">
+            <span class="ax-head-title">Best trade-offs</span>
+            <span v-if="tradeOffMeta" class="ax-head-meta">{{
+              tradeOffMeta
+            }}</span>
+            <v-btn small text color="primary" class="ax-link" @click="setGoals"
+              >Set goals</v-btn
+            >
+            <v-spacer />
+            <v-btn-toggle
+              v-if="hasTradeOffs"
+              v-model="keepFronts"
+              mandatory
+              dense
+              class="ax-measures"
+            >
+              <v-tooltip
+                v-for="choice in frontChoices"
+                :key="choice.value"
+                bottom
+                max-width="320"
+              >
+                <template v-slot:activator="{ on }">
+                  <v-btn v-on="on" small :value="choice.value">{{
+                    choice.text
+                  }}</v-btn>
+                </template>
+                <span>{{ choice.note }}</span>
+              </v-tooltip>
+            </v-btn-toggle>
+          </div>
+          <div v-if="!hasTradeOffs" class="sx-guide-line">
+            Set goals on two or more outputs under Dimensions to keep the
+            options no other option beats on all of them.
+          </div>
+          <template v-else>
+            <div class="ax-line">
+              <span>{{ tradeOffPreview }}</span>
+              <v-spacer />
+              <v-btn
+                small
+                depressed
+                color="primary"
+                :disabled="best.kept.length === 0"
+                @click="keepTradeOffs"
+                >Keep the best trade-offs</v-btn
+              >
+            </div>
+            <CaveatChips :caveats="tradeOffCaveats" />
+          </template>
         </section>
 
         <section class="ax-section">
@@ -375,13 +513,18 @@ import { mapGetters, mapState } from "vuex";
 import { interpolateRdBu } from "d3-scale-chromatic";
 import { sensitivity, sensitivityCsv } from "@/analysis/sensitivity.js";
 import { summarize } from "@/analysis/summary.js";
+import { findOutliers } from "@/analysis/outliers.js";
+import { tradeOffs } from "@/analysis/pareto.js";
+import { operations } from "@/components/operations.js";
 import {
+  GOAL_MARKS,
   INPUT,
   MIN,
   OUTPUT,
   columnKind,
   dimensionItems,
   displayName,
+  optionName,
 } from "@/columns.js";
 import { isMissingFor } from "@/store/dimensions.js";
 import { formatValue } from "@/store/filters.js";
@@ -420,6 +563,29 @@ const LEVEL_INSET = 8;
 // labelled; past it, only the ends are, and the counts are on hover.
 const COUNT_LABEL_LEVELS = 8;
 const TICK_LEVELS = 6;
+// A far-out chip's tooltip names this many options on each side, then counts.
+const NAMED_OUTLIERS = 10;
+
+// How many fronts "Keep the best trade-offs" keeps (see paretoFronts).
+const FRONTS = [
+  {
+    text: "Front only",
+    value: 1,
+    note: "Only the options no other option beats on every goal.",
+  },
+  {
+    text: "+ next front",
+    value: 2,
+    note:
+      "Also the options beaten only by the front. Small differences decide " +
+      "the front, so with simulation noise these could be as good.",
+  },
+  {
+    text: "+ two more",
+    value: 3,
+    note: "The front and the two behind it, for a wider shortlist.",
+  },
+];
 
 const MEASURES = [
   {
@@ -453,12 +619,16 @@ function fixed(value) {
 }
 
 /**
- * The analysis dialog: every dimension on its own, then which inputs move
- * which outputs, over the whole collection.
+ * The analysis dialog: every dimension on its own, the options far outside
+ * the rest, the best trade-offs over the goals, then which inputs move which
+ * outputs.
  *
  * Deliberately reads `rawData` rather than `data`: the question is what the
  * design space does, not what the current zoom happens to hold, and a
- * correlation over a brushed corner of the space is a different claim.
+ * correlation over a brushed corner of the space is a different claim. Less
+ * the outliers, when they are left out. The best trade-offs are the
+ * exception: they are kept as a filter, so they are found in the current
+ * result, as the assistant finds them.
  *
  * The arithmetic lives in analysis/summary.js and analysis/sensitivity.js;
  * this is the reading of it. Everything is plain DOM rather than d3-drawn SVG
@@ -485,6 +655,14 @@ export default {
       showAllDims: false,
       // Whether the tiles run past the two rows shown until asked.
       dimsOverflow: false,
+      // Whether the outliers are looked for among the inputs too.
+      outlierInputs: false,
+      // Whether the outliers are left out of the tiles, the trade-offs and
+      // the sensitivity reading.
+      leaveOutOutliers: false,
+      // How many fronts the best trade-offs keep.
+      keepFronts: 2,
+      frontChoices: FRONTS,
     };
   },
   created() {
@@ -503,12 +681,19 @@ export default {
     ...mapState({
       dialogState: (state) => state.sensitivityDialog,
       rawData: (state) => state.rawData,
+      currentData: (state) => state.data,
       allDimensions: (state) => state.allDimensions,
       numericDimensions: (state) => state.numericDimensions,
       dimensionValuesVersion: (state) => state.dimensionValuesVersion,
       layouts: (state) => state.layouts,
     }),
-    ...mapGetters(["hasRatings", "isUnfilterable", "goalOf"]),
+    ...mapGetters([
+      "hasRatings",
+      "isUnfilterable",
+      "goalOf",
+      "tradeOffGoals",
+      "tradeOffRows",
+    ]),
     open: {
       get() {
         return this.dialogState.open;
@@ -542,12 +727,176 @@ export default {
       return this.inputs.length > 0 && this.outputs.length > 0;
     },
     denominatorText() {
-      let count = this.rawData.length;
-      return (
+      let count = this.analysisRows.length;
+      let text =
         count.toLocaleString() +
         (count === 1 ? " option" : " options") +
-        " · whole collection"
+        " · whole collection";
+      let out = this.rawData.length - count;
+      if (out > 0) {
+        text +=
+          ", " + out.toLocaleString() + (out === 1 ? " outlier" : " outliers") + " left out";
+      }
+      return text;
+    },
+    /**
+     * The dimensions searched for outliers: the outputs, and the inputs when
+     * asked; every column when the file doesn't say which is which. Never
+     * custom or weighted ones or the rating, whose values are entered or
+     * derived rather than measured.
+     */
+    outlierDims() {
+      return this.numericDimensions.filter((dim) => {
+        let kind = columnKind(dim);
+        if (dim === RATING_DIMENSION || this.isUnfilterable(dim)) return false;
+        if (!this.hasPrefixes) return true;
+        return kind === OUTPUT || (this.outlierInputs && kind === INPUT);
+      });
+    },
+    /** `{ ids, byDim, byId }` (see analysis/outliers.js), over the whole collection. */
+    outliers() {
+      if (!this.contentShown) return { ids: new Set(), byDim: {}, byId: {} };
+      return findOutliers(this.rawData, this.outlierDims, { isMissing: isMissingFor });
+    },
+    /** The outliers' ids as text, which a row's id is matched against. */
+    outlierKeys() {
+      return new Set(Array.from(this.outliers.ids).map(String));
+    },
+    /** The ids left out of this reading: the outliers, while they are. */
+    leftOut() {
+      return this.leaveOutOutliers ? this.outlierKeys : new Set();
+    },
+    /** What the tiles and the sensitivity read: the collection, less what is left out. */
+    analysisRows() {
+      if (this.leftOut.size === 0) return this.rawData;
+      return this.rawData.filter((row) => !this.leftOut.has(String(row._id)));
+    },
+    /** The outliers still in the exploration, which can be selected or excluded. */
+    outliersInData() {
+      if (this.outlierKeys.size === 0) return [];
+      return this.currentData
+        .filter((row) => this.outlierKeys.has(String(row._id)))
+        .map((row) => row._id);
+    },
+    /** How many outliers a zoom or exclusion took out of the exploration. */
+    outliersExcluded() {
+      return this.outlierKeys.size - this.outliersInData.length;
+    },
+    outlierSummary() {
+      let count = this.outliers.ids.size;
+      let dims = Object.keys(this.outliers.byDim).length;
+      if (count === 0) {
+        return (
+          "No option stands far outside the rest on " +
+          (this.outlierDims.length === 1
+            ? this.label(this.outlierDims[0])
+            : "any of " + this.outlierDims.length + " dimensions") +
+          "."
+        );
+      }
+      return (
+        this.optionCount(count) +
+        (count === 1 ? " stands" : " stand") +
+        " far out on " +
+        (dims === 1 ? "1 dimension:" : dims + " dimensions:")
       );
+    },
+    /** A chip for each dimension with outliers; its tooltip names them. */
+    outlierChips() {
+      let byDim = this.outliers.byDim;
+      return this.outlierDims
+        .filter((dim) => byDim[dim])
+        .map((dim) => {
+          let found = byDim[dim];
+          let sides = [];
+          if (found.high.length > 0) sides.push(found.high.length + " high");
+          if (found.low.length > 0) sides.push(found.low.length + " low");
+          let mark = GOAL_MARKS[this.goalOf(dim)];
+          let detail = [];
+          if (found.high.length > 0) {
+            detail.push(this.outlierLine(dim, found.high, "Above", found.fences[1]));
+          }
+          if (found.low.length > 0) {
+            detail.push(this.outlierLine(dim, found.low, "Below", found.fences[0]));
+          }
+          return {
+            key: dim,
+            text: this.label(dim) + (mark ? " " + mark.mark : "") + ": " + sides.join(", "),
+            detail: detail,
+            warn: true,
+          };
+        });
+    },
+    /** Whether there are goals enough for a trade-off: two or more that a filter can hold. */
+    hasTradeOffs() {
+      return this.tradeOffGoals.dims.length >= 2;
+    },
+    /** The rows the best trade-offs are found in: the current result, less what is left out. */
+    tradeOffBase() {
+      let rows = this.tradeOffRows;
+      if (this.leftOut.size === 0) return rows;
+      return rows.filter((row) => !this.leftOut.has(String(row._id)));
+    },
+    /** `{ rows, fronts, kept, caveats }` (see tradeOffs in analysis/pareto.js). */
+    best() {
+      let goals = this.tradeOffGoals;
+      if (!this.contentShown || goals.dims.length < 2) {
+        return { rows: [], fronts: [], kept: [], caveats: [] };
+      }
+      return tradeOffs({
+        rows: this.tradeOffBase,
+        dims: goals.dims,
+        directions: goals.directions,
+        fronts: this.keepFronts,
+        isMissing: isMissingFor,
+        scoped: this.tradeOffRows.length < this.rawData.length,
+        skipped: goals.skipped,
+      });
+    },
+    tradeOffMeta() {
+      let goals = this.tradeOffGoals;
+      if (goals.dims.length === 0) return "";
+      return (
+        "By the goals set under Dimensions: " +
+        goals.dims
+          .map((dim, i) => this.label(dim) + " " + GOAL_MARKS[goals.directions[i]].mark)
+          .join(", ")
+      );
+    },
+    /** "Keeps 24 of 648 options: 12 on the front and 12 just behind it." */
+    tradeOffPreview() {
+      let best = this.best;
+      if (best.kept.length === 0) return "No options have a value for every goal.";
+      let text =
+        "Keeps " +
+        best.kept.length.toLocaleString() +
+        " of " +
+        this.optionCount(best.rows.length);
+      let first = best.fronts[0].length;
+      let behind = best.kept.length - first;
+      if (best.fronts.length === 1) return text + ": the front.";
+      return (
+        text +
+        ": " +
+        first.toLocaleString() +
+        " on the front and " +
+        behind.toLocaleString() +
+        (best.fronts.length === 2 ? " just behind it." : " in the two fronts behind it.")
+      );
+    },
+    tradeOffCaveats() {
+      let caveats = this.best.caveats.slice();
+      let out = this.tradeOffRows.length - this.tradeOffBase.length;
+      if (out > 0) {
+        caveats.push({
+          key: "outliers",
+          text: out + (out === 1 ? " outlier" : " outliers") + " left out",
+          detail: [
+            "They stand far outside the rest, so they aren't compared. Turn off Leave out of the analysis to count them.",
+          ],
+        });
+      }
+      return caveats;
     },
     allInputsConstant() {
       if (!this.result) return false;
@@ -627,12 +976,12 @@ export default {
             "Read over " +
             result.rows.toLocaleString() +
             " of " +
-            this.rawData.length.toLocaleString(),
+            this.analysisRows.length.toLocaleString(),
           detail: [
             "Read over " +
               result.rows.toLocaleString() +
               " evenly spaced options of " +
-              this.rawData.length.toLocaleString() +
+              this.analysisRows.length.toLocaleString() +
               ", to keep this quick.",
           ],
         });
@@ -765,7 +1114,8 @@ export default {
       this.syncFocus();
       this.scheduleCompute();
     },
-    rawData() {
+    // A new collection, or the outliers left out or let back in.
+    analysisRows() {
       this.scheduleCompute();
     },
     // The rating joins the dimensions once anything is rated.
@@ -846,7 +1196,7 @@ export default {
         this.result = null;
         return;
       }
-      this.result = sensitivity(this.rawData, this.inputs, this.outputs, {
+      this.result = sensitivity(this.analysisRows, this.inputs, this.outputs, {
         // An unrated option has no rating, rather than a rating of zero.
         isMissing: isMissingFor,
         maxRows: MAX_ROWS,
@@ -863,7 +1213,7 @@ export default {
         (dim) => dim !== RATING_DIMENSION || this.hasRatings
       );
       this.summary = Object.freeze(
-        summarize(this.rawData, dims, { isMissing: isMissingFor }).map(
+        summarize(this.analysisRows, dims, { isMissing: isMissingFor }).map(
           Object.freeze
         )
       );
@@ -999,7 +1349,85 @@ export default {
       }
       let goal = this.goalOf(dim.dim);
       if (goal) text += " Goal: " + (goal === MIN ? "lower" : "higher") + " is better.";
+      let far = this.outliers.byDim[dim.dim];
+      if (far) {
+        let count = far.low.length + far.high.length;
+        let limits = [];
+        if (far.low.length > 0) limits.push("below " + this.statText(dim, far.fences[0]));
+        if (far.high.length > 0) limits.push("above " + this.statText(dim, far.fences[1]));
+        text +=
+          " " +
+          this.optionCount(count) +
+          " far out, " +
+          limits.join(" or ") +
+          (this.leaveOutOutliers ? ", left out here." : ".");
+      }
       return text;
+    },
+    /** How many options stand far out on a dimension. */
+    farOutCount(dim) {
+      let far = this.outliers.byDim[dim];
+      return far ? far.low.length + far.high.length : 0;
+    },
+    /** "Above 1,200: Option 12 (1,850), Option 40 (1,600) and 3 more." */
+    outlierLine(dim, ids, side, fence) {
+      let rows = this.rowsById(ids.slice(0, NAMED_OUTLIERS));
+      let values = this.rawData
+        .filter((row) => !isMissingFor(dim, row[dim]))
+        .map((row) => Number(row[dim]));
+      let span = Math.max(...values) - Math.min(...values);
+      let magnitude = Math.max(...values.map(Math.abs));
+      // A step finer than the tiles', since these are single values.
+      let format = (value) => formatValue(Number(value), span / 10, magnitude);
+      let named = rows.map((row) => optionName(row) + " (" + format(row[dim]) + ")");
+      let more = ids.length - rows.length;
+      return (
+        side +
+        " " +
+        format(fence) +
+        ": " +
+        named.join(", ") +
+        (more > 0 ? " and " + more + " more." : ".")
+      );
+    },
+    rowsById(ids) {
+      let wanted = new Set(ids.map(String));
+      let found = {};
+      this.rawData.forEach((row) => {
+        if (wanted.has(String(row._id))) found[String(row._id)] = row;
+      });
+      return ids.map((id) => found[String(id)]).filter(Boolean);
+    },
+    /** Selects the outliers still in the exploration, and closes to show them. */
+    selectOutliers() {
+      if (this.outliersInData.length === 0) return;
+      this.$store.dispatch("update", {
+        markingID: this.$store.state.defaultMarkingID,
+        selection: this.outliersInData,
+        operation: operations.REPLACE,
+        viewType: "Outliers",
+      });
+      this.open = false;
+    },
+    /** Takes them out of every panel, and so out of this reading too. */
+    excludeOutliers() {
+      this.$store.dispatch("excludeOptions", {
+        ids: this.outliersInData,
+        label: "Outliers",
+      });
+      this.leaveOutOutliers = true;
+    },
+    /** The Goals list, over this dialog; closing it comes back here. */
+    setGoals() {
+      this.$store.dispatch("openDimensionDialog", { mode: "manage" });
+    },
+    /** Keeps them as the "Best trade-offs" filter, and closes to show them. */
+    keepTradeOffs() {
+      this.$store.dispatch("keepBestTradeOffs", {
+        fronts: this.keepFronts,
+        leaveOut: Array.from(this.leftOut),
+      });
+      this.open = false;
     },
     /** How strongly an input moves the focused output, for ordering rows. */
     rankStrength(input) {
@@ -1353,7 +1781,7 @@ export default {
   margin: 0 0 10px;
 }
 
-/* --- The two sections -------------------------------------------------- */
+/* --- The sections ------------------------------------------------------ */
 .ax-section + .ax-section {
   margin-top: 16px;
   padding-top: 12px;
@@ -1374,6 +1802,59 @@ export default {
 .ax-head-meta {
   font-size: 12px;
   color: #78909c;
+}
+.ax-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 8px;
+  color: #37474f;
+}
+/* The chips run on in the line after its sentence. */
+.ax-line > .ax-chips {
+  display: contents;
+}
+.ax-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.ax-actions .v-btn.v-btn,
+.ax-line .v-btn.v-btn {
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ax-switch.v-input {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+}
+.ax-switch ::v-deep .v-label {
+  font-size: 13px;
+  color: #37474f;
+}
+.ax-check.v-input {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+}
+.ax-check ::v-deep .v-label {
+  font-size: 12px;
+}
+.ax-caution {
+  font-size: 12px;
+  color: #8a5300;
+}
+.ax-note {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #546e7a;
+}
+.ax-link.v-btn {
+  letter-spacing: 0;
+  text-transform: none;
 }
 .ax-measures.v-btn-toggle {
   border-radius: 6px;
@@ -1588,6 +2069,13 @@ export default {
 .ax-dim-stats strong {
   font-weight: 600;
   color: #37474f;
+}
+/* How many stand far out on a dimension, in the caveats' amber. */
+.ax-far {
+  padding: 0 5px;
+  border-radius: 3px;
+  background: #fff4e5;
+  color: #8a5300;
 }
 .ax-more {
   margin-top: 6px;

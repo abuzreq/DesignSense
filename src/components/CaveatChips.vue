@@ -36,8 +36,8 @@
 <script>
 /**
  * A line of caveats, each `{ key, text, detail, warn }`: `text` shown, the
- * `detail` lines on hover, and warnings in amber. Used by the analysis and by
- * the Best trade-offs in the Goals list.
+ * `detail` lines on hover, and warnings in amber. Used by the analysis
+ * dialog's sensitivity reading, outliers and best trade-offs.
  */
 export default {
   name: "CaveatChips",
