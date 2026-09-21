@@ -802,23 +802,9 @@ export default {
             terms.push({ dim: null, weight: 1, lowerIsBetter: false });
           }
         } else {
-          // Starts from every dimension with a goal, each the way its goal
-          // says, then any custom dimension not among them; equally weighted.
-          let withGoals = this.$store.getters.goalDims.filter(
-            (dim) => this.candidates.indexOf(dim) !== -1
-          );
-          let custom = this.defs
-            .filter(isCustom)
-            .map((d) => d.name)
-            .filter((dim) => withGoals.indexOf(dim) === -1);
-          terms = withGoals.concat(custom).map((dim) => ({
-            dim: dim,
-            weight: 1,
-            lowerIsBetter: this.goalOf(dim) === MIN,
-          }));
-          if (terms.length < 2) {
-            terms.push({ dim: null, weight: 1, lowerIsBetter: false });
-          }
+          // Starts empty: which dimensions to weigh is the user's to say.
+          // Each picked weighs the way its goal says (see pickTermDim).
+          terms = [{ dim: null, weight: 0, lowerIsBetter: false }];
         }
         this.weightedForm = { name: "", terms: this.formTerms(terms) };
       } else {
