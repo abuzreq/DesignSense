@@ -42,6 +42,8 @@ import {
 import { RATING_BOUNDS, RATING_DIMENSION, isRated } from "@/ratings.js";
 import { createDimensionsStore } from "./dimensions.js";
 import { createGoalsStore } from "./goals.js";
+import { createStoryStore } from "./story.js";
+import { STEP_OPS, describeSelection } from "./selectionLogic.js";
 import { emptySets, openSession } from "./session.js";
 import { addIds, removeIds, uniqueSetName } from "./cart.js";
 import { asRows } from "./rows.js";
@@ -103,6 +105,8 @@ function builder(
   const dimensions = createDimensionsStore(new_data, dataTypesMap, options);
   // Which way is better for each dimension (see store/goals.js).
   const goals = createGoalsStore(options);
+  // The summary image and the captured story (see store/story.js).
+  const story = createStoryStore(options);
   const store = new Vuex.Store({
     state: {
       // What a brush applies right now: the sticky operation, or a held modifier's.
@@ -123,6 +127,10 @@ function builder(
       // Expert undo/redo, as arrays of selected IDs on the default marking.
       selectionHistory: [],
       selectionFuture: [],
+      // How the Expert selection was built since its last Replace, for
+      // describing it: `{ op, atom }` steps (see selectionLogic.js). Undo
+      // and redo carry them along with the IDs.
+      selectionSteps: [],
       // Markings are mutated in place, out of Vue's sight. Bumping this lets
       // getters such as selectionCount recompute.
       selectionVersion: 0,
@@ -186,7 +194,10 @@ function builder(
       isStudySharable: false,
       shareLink: null,
 
-      isClusteringPanelOpen: true,
+      // The scatterplot's side column holds the matrix or the clusters, not
+      // both. The matrix is the way in to picking a plot, so it starts open.
+      isMatrixPanelOpen: true,
+      isClusteringPanelOpen: false,
       // The saved sets' drawer at the workspace's left edge. Always starts
       // closed. `pinned` is open until closed; unpinned it is open because the
       // pointer went to it or a set was just saved, and closes by itself.
@@ -205,13 +216,17 @@ function builder(
         sortDesc: true,
         scatterX: null,
         scatterY: null,
+        // The dimensions of the scatterplot matrix, in order.
+        matrixDims: null,
       },
       ...dimensions.state,
       ...goals.state,
+      ...story.state,
     },
     getters: {
       ...dimensions.getters,
       ...goals.getters,
+      ...story.getters,
       colorScale: (state) => d3.scaleOrdinal(state.colorRange),
       colorize: (state, getters) => (dataItem) => {
         return getters.colorScale(dataItem[state.colorColumn]);
@@ -239,6 +254,13 @@ function builder(
           .map((dim) => dim.toUpperCase()),
       dataMap: (state) => {
         return createDataMap(state.data);
+      },
+      /** The selection as a reduced statement; see selectionLogic.js. */
+      selectionDescription: (state, getters) => {
+        let rows = getters.rawDataMap;
+        return describeSelection(state.selectionSteps, {
+          rowOf: (id) => rows[id] || null,
+        });
       },
       // The whole collection, so the shortlist keeps options a zoom left out.
       rawDataMap: (state) => {
@@ -362,6 +384,7 @@ function builder(
     mutations: {
       ...dimensions.mutations,
       ...goals.mutations,
+      ...story.mutations,
       /* setSimilarityMap(state, payload)
              {   
                  state.similarity_map = payload.similarity_map;
@@ -476,7 +499,12 @@ function builder(
       {
         if (payload) {
           state.isClusteringPanelOpen = payload.value;
+          if (payload.value) state.isMatrixPanelOpen = false;
         }
+      },
+      setMatrixPanelOpen(state, payload) {
+        state.isMatrixPanelOpen = payload.value;
+        if (payload.value) state.isClusteringPanelOpen = false;
       },
       /** `{ open, pinned }`; closing always unpins. */
       setSetsDrawer(state, payload) {
@@ -516,7 +544,10 @@ function builder(
         for (var alt in marking) {
           marking[alt] = 0;
         }
-        if (before) pushSelectionHistory(state, before, []);
+        if (before) {
+          pushSelectionHistory(state, before, [], state.selectionSteps);
+          state.selectionSteps = [];
+        }
         state.selectionVersion += 1;
       },
       createView(state, payload) {
@@ -591,14 +622,24 @@ function builder(
         markingIDs.forEach((markingID) => {
           let marking = state.markingsMap[markingID];
           if (!marking) return;
-          // Only the default marking is user-facing, so only it is undoable.
+          // Only the default marking is user-facing, so only it is undoable
+          // and described.
+          let isDefault = markingID === state.defaultMarkingID;
           let before =
-            markingID === state.defaultMarkingID && payload.record !== false
+            isDefault && payload.record !== false
               ? getSelectedIDs(marking)
               : null;
+          let stepsBefore = state.selectionSteps;
+          // Before operating: a toggle is described by what it will do.
+          if (isDefault) state.selectionSteps = nextSteps(state, marking, payload);
           operate(marking, payload.selection, payload.operation);
           if (before) {
-            pushSelectionHistory(state, before, getSelectedIDs(marking));
+            pushSelectionHistory(
+              state,
+              before,
+              getSelectedIDs(marking),
+              stepsBefore
+            );
           }
         });
         state.selectionVersion += 1;
@@ -780,6 +821,7 @@ function builder(
     actions: {
       ...dimensions.actions,
       ...goals.actions,
+      ...story.actions,
       createMarkingEntry(context, payload) {
         context.commit("createMarkingEntry", payload);
       },
@@ -1241,6 +1283,7 @@ function builder(
           markingID: context.state.defaultMarkingID,
           selection: inverted,
           operation: operations.REPLACE,
+          stepOp: STEP_OPS.INVERT,
         });
       },
       resetData(context) {
@@ -1446,6 +1489,44 @@ function builder(
           context.commit("removeFromCart", { ids: [id] });
         }
       },
+      /**
+       * Brings back a captured view (see story/snapshot.js): its mode, then
+       * its filters in Lite, or its zoom and selection in Expert, each one
+       * undo step. Goals and the shortlist are the user's saved work, so a
+       * capture leaves them as they are.
+       */
+      restoreView(context, payload) {
+        let snapshot = payload.snapshot;
+        let state = context.state;
+        if (snapshot.mode !== state.uiMode) {
+          context.dispatch("setUiMode", { value: snapshot.mode });
+        }
+        if (snapshot.view) {
+          ["scatterX", "scatterY", "sortBy", "sortDesc"].forEach((key) => {
+            if (snapshot.view[key] !== undefined && snapshot.view[key] !== null) {
+              context.commit("setViewSetting", { key: key, value: snapshot.view[key] });
+            }
+          });
+        }
+        if (state.uiMode === UI_MODES.LITE) {
+          let next = (snapshot.filters || []).slice();
+          if (!sameFilterList(next, state.filters)) commitFilters(context, next);
+          return;
+        }
+        // The captured zoom, one Step back from what was shown before.
+        let shown = snapshot.shown ? new Set(snapshot.shown.map(String)) : null;
+        let data = shown ? state.rawData.filter((row) => shown.has(String(row._id))) : state.rawData;
+        if (data.length !== state.data.length || (shown && state.data.some((row) => !shown.has(String(row._id))))) {
+          context.commit("pushDataStack", { data: state.data });
+          context.commit("setData", { newData: data });
+        }
+        context.commit("update", {
+          markingID: state.defaultMarkingID,
+          selection: snapshot.selected || [],
+          operation: operations.REPLACE,
+          steps: snapshot.selected ? snapshot.steps || [] : [],
+        });
+      },
       restoreSet(context, payload) {
         if (context.state.uiMode === UI_MODES.LITE) {
           // The saved filters replace the current ones; undo brings those back.
@@ -1455,10 +1536,20 @@ function builder(
           return;
         }
         context.dispatch("resetData"); //Ahmed: in case restoring is called when portions of the data is being zoomed on. Altneratives includes adding only the content of set not present
+        let metadata = context.state.setsMetadataMap[payload.setID];
+        let members = context.state.setsMap[payload.setID] || [];
         context.commit("update", {
           markingID: context.state.defaultMarkingID,
-          selection: context.state.setsMap[payload.setID],
-          operation: payload.operation,
+          selection: members,
+          // Callers that give no known operation mean "bring the set back".
+          operation: Object.values(operations).includes(payload.operation)
+            ? payload.operation
+            : operations.REPLACE,
+          step: {
+            kind: "set",
+            label: metadata ? metadata.name : "Saved set",
+            ids: members,
+          },
         });
       },
       updateSet(context, payload) {
@@ -1498,9 +1589,11 @@ function builder(
         // again from what is left rather than from a rating about to go.
         context.dispatch("clearEnteredValues");
         session.clear();
+        context.commit("setPresenting", { index: null });
+        context.commit("clearStory");
         context.commit("showNotice", {
           text:
-            "Cleared the saved sets, notes, ratings, shortlist and entered values for this dataset.",
+            "Cleared the saved sets, notes, ratings, shortlist, story and entered values for this dataset.",
         });
       },
       rateAlt(context, payload) {
@@ -1523,6 +1616,7 @@ function builder(
     modules: {},
   });
   session.attach(store);
+  story.attach(store);
   return store;
 }
 
@@ -1559,6 +1653,99 @@ function applyFiltersToMarking(context) {
     selection: ids,
     operation: operations.REPLACE,
     record: false,
+    // Carried into Expert as the selection's first steps.
+    steps: stepsFromFilters(narrowing),
+  });
+}
+
+/**
+ * Filters as selection steps, AND-ed: a range filter is a region (its boxes
+ * OR-ed); any other is the options it names, or leaves out.
+ */
+function stepsFromFilters(filters) {
+  let steps = [];
+  filters.forEach((filter) => {
+    let first = steps.length === 0;
+    if (filter.kind === "range") {
+      steps.push({
+        op: first ? STEP_OPS.REPLACE : STEP_OPS.INTERSECT,
+        atom: { kind: "region", boxes: filter.boxes },
+      });
+      return;
+    }
+    let atom = {
+      kind: "set",
+      label: filter.label,
+      title: describeFilter(filter).title,
+      ids: filter.ids,
+    };
+    if (filter.kind === "exclude") {
+      // Everything but these: start from everything when it comes first.
+      if (first) steps.push({ op: STEP_OPS.INVERT });
+      steps.push({ op: STEP_OPS.SUBTRACT, atom: atom });
+      return;
+    }
+    steps.push({ op: first ? STEP_OPS.REPLACE : STEP_OPS.INTERSECT, atom: atom });
+  });
+  return steps;
+}
+
+/**
+ * The described steps after an update: `payload.steps` replaces them
+ * outright; otherwise the update is one more step, its condition
+ * `payload.step` or, when the view gave none, the options it named.
+ */
+function nextSteps(state, marking, payload) {
+  if (payload.steps) return freezeSteps(payload.steps);
+  if (payload.stepOp === STEP_OPS.INVERT) {
+    return state.selectionSteps.concat(freezeSteps([{ op: STEP_OPS.INVERT }]));
+  }
+  let ids = payload.selection || [];
+  let op;
+  switch (payload.operation) {
+    case operations.REPLACE:
+      // Replacing with nothing is clearing.
+      if (ids.length === 0) return [];
+      op = STEP_OPS.REPLACE;
+      break;
+    case operations.ADD:
+      op = STEP_OPS.ADD;
+      break;
+    case operations.SUBTRACT:
+      op = STEP_OPS.SUBTRACT;
+      break;
+    case operations.INTERSECT:
+      op = STEP_OPS.INTERSECT;
+      break;
+    case operations.TOGGLE: {
+      // operate() flips the options only when they all agree, so a toggle
+      // of options all selected removes them and any other adds them.
+      let states = ids.map((id) => marking[id]);
+      op =
+        states.length > 0 && states.every((v) => v == 1)
+          ? STEP_OPS.SUBTRACT
+          : STEP_OPS.ADD;
+      break;
+    }
+    default:
+      return state.selectionSteps;
+  }
+  let atom = payload.step || {
+    kind: "set",
+    label: viewLabelForPayload({ state: state }, payload) + " selection",
+    ids: ids,
+  };
+  let step = { op: op, atom: atom };
+  return op === STEP_OPS.REPLACE
+    ? freezeSteps([step])
+    : state.selectionSteps.concat(freezeSteps([step]));
+}
+
+/** Steps hold ID lists that Vue has no need to watch. */
+function freezeSteps(steps) {
+  return steps.map((step) => {
+    if (step.atom) Object.freeze(step.atom);
+    return Object.freeze(step);
   });
 }
 
@@ -1673,10 +1860,13 @@ function sameIds(a, b) {
   return true;
 }
 
-/** Records `before` as an undo step, unless the change did nothing. */
-function pushSelectionHistory(state, before, after) {
+/**
+ * Records `before` as an undo step, with the steps that described it, unless
+ * the change did nothing.
+ */
+function pushSelectionHistory(state, before, after, steps) {
   if (sameIds(before, after)) return;
-  state.selectionHistory.push(before);
+  state.selectionHistory.push({ ids: before, steps: steps || [] });
   if (state.selectionHistory.length > HISTORY_LIMIT) {
     state.selectionHistory.shift();
   }
@@ -1686,8 +1876,10 @@ function pushSelectionHistory(state, before, after) {
 function stepSelectionHistory(state, from, to) {
   let marking = state.markingsMap[state.defaultMarkingID];
   if (!marking || from.length === 0) return;
-  to.push(getSelectedIDs(marking));
-  operate(marking, from.pop(), operations.REPLACE);
+  to.push({ ids: getSelectedIDs(marking), steps: state.selectionSteps });
+  let entry = from.pop();
+  operate(marking, entry.ids, operations.REPLACE);
+  state.selectionSteps = entry.steps;
   state.selectionVersion += 1;
 }
 

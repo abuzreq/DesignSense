@@ -299,7 +299,7 @@ import * as kmeans from "node-kmeans";
 
 import PanelHeader from "@/components/PanelHeader.vue";
 import DimensionPicker from "@/components/DimensionPicker.vue";
-import { dimensionItems } from "@/columns.js";
+import { dimensionItems, displayName } from "@/columns.js";
 import { RATING_DIMENSION } from "@/ratings.js";
 import { operationIcon, operationPhrase } from "@/components/operationIcons.js";
 
@@ -604,6 +604,13 @@ export default {
         view: this.viewID,
         selection: memberIDs,
         operation: this.$store.state.currentSelectionOperation,
+        step: {
+          kind: "set",
+          label: "Cluster " + (index + 1),
+          title:
+            "Grouped on " + this.dimensions.map(displayName).join(", "),
+          ids: memberIDs,
+        },
       });
 
       //this.$store.commit("hover", { hovered: item });

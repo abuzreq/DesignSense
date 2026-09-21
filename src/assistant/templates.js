@@ -91,6 +91,8 @@ export const TEMPLATES = [
   { command: "inspect.item", text: "show me the one with the lowest {dim:numeric}", keywords: ["show me", "inspect"] },
   { command: "inspect.clear", text: "stop inspecting", keywords: ["stop", "close the details"] },
   { command: "export.csv", text: "download the results", keywords: ["download", "export", "csv"] },
+  { command: "export.summary", text: "make a summary image", keywords: ["summary", "image", "picture", "poster", "report"] },
+  { command: "story.capture", text: "capture this view", keywords: ["capture", "snapshot", "story"] },
 ];
 
 /** Fixed candidate lists. Column, value and set slots are filled from the data. */

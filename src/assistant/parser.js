@@ -129,6 +129,12 @@ const SHAPES = [
     }
     if (/^select all|^mark everything/.test(text)) return { command: "select.all", args: {} };
     if (/\binvert\b|flip the selection|flip the picks/.test(text)) return { command: "select.invert", args: {} };
+    if (/summary (image|picture|card|slide)|(one|single)[- ](image|picture|slide)|(summari[sz]e|sum up) (this|it|what)|make a (summary|poster|report)/.test(text)) {
+      return { command: "export.summary", args: {} };
+    }
+    if (/^(capture|snapshot)|(add|save) (this|it|the view) (to|in) the story/.test(text)) {
+      return { command: "story.capture", args: {} };
+    }
     if (/export|csv|download the results/.test(text)) return { command: "export.csv", args: {} };
     if (/stop inspecting|close the details/.test(text)) return { command: "inspect.clear", args: {} };
     return null;
@@ -731,7 +737,7 @@ function missingFamilyMember(text, candidates) {
 /** Commands BM25 alone may propose: those that touch no data and take no arguments. */
 const INTENT_ONLY = [
   "history.undo", "history.redo", "scope.reset", "scope.zoom", "scope.exclude", "scope.out", "set.clear",
-  "select.invert", "select.all", "export.csv", "inspect.clear",
+  "select.invert", "select.all", "export.csv", "export.summary", "story.capture", "inspect.clear",
   "ask.compare_selection", "ask.capabilities",
 ];
 

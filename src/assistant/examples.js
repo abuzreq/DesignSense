@@ -212,6 +212,8 @@ const EXAMPLES = {
   ],
   "inspect.clear": ["close the details", "unpick the inspected entry", "stop looking at it"],
   "export.csv": ["download the results", "save this to a file", "dump it to a spreadsheet"],
+  "export.summary": ["make a summary picture", "a one-page overview to share", "summarise this for my client"],
+  "story.capture": ["capture this view", "add this to the story", "keep a snapshot of this"],
 };
 
 /** Flattened into the {label, text} documents bm25.buildIndex expects. */

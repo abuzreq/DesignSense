@@ -147,6 +147,14 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
         Vue.set(state.viewSettings, key, null);
       }
     });
+    let matrixDims = state.viewSettings.matrixDims;
+    if (matrixDims && matrixDims.some((dim) => removed.includes(dim))) {
+      Vue.set(
+        state.viewSettings,
+        "matrixDims",
+        matrixDims.filter((dim) => !removed.includes(dim))
+      );
+    }
     if (removed.includes(state.colorColumn)) state.colorColumn = "";
   }
 

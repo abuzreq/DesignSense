@@ -393,7 +393,7 @@ export default {
       this.$store.dispatch("createSet");
     },
     restore(id) {
-      this.$store.dispatch("restoreSet", { setID: id });
+      this.$store.dispatch("restoreSet", { setID: id, operation: operations.REPLACE });
     },
     onCardClick(id) {
       // Lite restores only from its button, so a stray click never replaces

@@ -175,23 +175,17 @@ const ENCODER_TEXT = {
   failed: "The meaning model could not load; suggestions are ranked by wording.",
 };
 
-/* The same breakpoint at which the toolbar swaps its labels for icons. */
-const NARROW = "(max-width: 1500px)";
 /** Width of the field while it floats over the toolbar, and of its popup. */
 const FIELD_WIDTH = 380;
 const POPUP_WIDTH = 520;
 
-let narrowList = null;
-function narrowQuery() {
-  if (!narrowList && typeof window !== "undefined" && window.matchMedia) {
-    narrowList = window.matchMedia(NARROW);
-  }
-  return narrowList;
-}
-
-
 export default {
   name: "AssistantBar",
+  props: {
+    // Only a button until it is used, when the toolbar is short of room. The
+    // toolbar decides, weighing everything else in the row.
+    compact: { type: Boolean, default: false },
+  },
   data() {
     return {
       text: "",
@@ -213,8 +207,7 @@ export default {
       // The highlighted row of the instruction list, for arrow keys.
       helpAt: -1,
       encoder: semanticStatus(),
-      // Narrow toolbar: the bar is a button until it is used.
-      compact: narrowQuery() ? narrowQuery().matches : false,
+      // Compact: whether the button has been opened into the field.
       expanded: false,
       // Which way the floating field and its popup open, so both stay on screen.
       alignRight: false,
@@ -284,17 +277,6 @@ export default {
       }
     };
     document.addEventListener("keydown", this.onGlobalKeydown);
-    // Crossing the breakpoint swaps the inline field for the button and back.
-    this.onNarrowChange = () => {
-      this.compact = narrowQuery().matches;
-      if (!this.focused && !this.text) this.expanded = false;
-      if (this.floating) this.place();
-    };
-    let query = narrowQuery();
-    if (query) {
-      if (query.addEventListener) query.addEventListener("change", this.onNarrowChange);
-      else query.addListener(this.onNarrowChange);
-    }
     // The encoder loads in the background; the bar works before it arrives,
     // and the table's index is built while the page is idle so the first
     // click does not wait for it.
@@ -314,11 +296,13 @@ export default {
     clearTimeout(this.vectorTimer);
     clearTimeout(this.blurTimer);
     document.removeEventListener("keydown", this.onGlobalKeydown);
-    let query = narrowQuery();
-    if (query) {
-      if (query.removeEventListener) query.removeEventListener("change", this.onNarrowChange);
-      else query.removeListener(this.onNarrowChange);
-    }
+  },
+  watch: {
+    // Crossing the toolbar's threshold swaps the inline field for the button and back.
+    compact() {
+      if (!this.focused && !this.text) this.expanded = false;
+      if (this.floating) this.$nextTick(() => this.place());
+    },
   },
   methods: {
     short(column) {
@@ -607,9 +591,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 200px;
-  min-width: 120px;
-  max-width: 380px;
+  /* Its own width, not a share of the spare room: that goes to the filters
+     or the selection beside it, which have more to show. */
+  flex: 0 1 260px;
+  min-width: 180px;
+  max-width: 320px;
   height: 30px;
   padding: 0 2px;
 }

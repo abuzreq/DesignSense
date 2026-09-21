@@ -581,7 +581,8 @@ export const COMMANDS = {
     group: "Sets",
     run(ctx, args) {
       if (!ctx.state.setsMap[args.set]) return { message: "There is no set called " + args.set + "." };
-      ctx.store.dispatch("restoreSet", { setID: args.set, operation: 0 });
+      // Bringing a set back means selecting exactly its members.
+      ctx.store.dispatch("restoreSet", { setID: args.set, operation: operations.REPLACE });
     },
   },
   "set.update": {
@@ -636,6 +637,10 @@ export const COMMANDS = {
   },
   "inspect.clear": { title: "Stop inspecting", group: "Session", run: (ctx) => ctx.store.dispatch("clearInspection") },
   "export.csv": { title: "Download the results", group: "Session", run: (ctx) => ctx.store.dispatch("saveSelectedToFile") },
+  // A picture to share: the goals, the shortlist, a chart and findings.
+  "export.summary": { title: "Make a summary image", group: "Session", run: (ctx) => { ctx.store.dispatch("openSummary"); } },
+  // The view on screen, kept for the story with a note from the data.
+  "story.capture": { title: "Capture this view for the story", group: "Session", run: (ctx) => { ctx.store.dispatch("captureView"); } },
 };
 
 /** Grouped titles, for the help panel and the empty-input hint. */

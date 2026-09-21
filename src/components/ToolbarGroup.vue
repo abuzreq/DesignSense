@@ -1,6 +1,7 @@
 <template>
   <div class="toolbar-group">
     <div class="toolbar-group-buttons">
+      <slot name="start" />
       <TipButton
         v-for="name in names"
         :key="name"
@@ -44,19 +45,22 @@ export default {
   justify-content: center;
   flex: 0 0 auto;
 }
+/* 32px buttons and a 10px label: the pair fits the 52px bar with room above
+   and below, where 40px buttons and an 11px label needed 60. */
 .toolbar-group-buttons {
   display: flex;
   align-items: center;
-  height: 40px;
+  height: 32px;
 }
-.toolbar-group-buttons ::v-deep .tip-button .v-btn.v-btn--icon {
-  width: 40px;
-  height: 40px;
+.toolbar-group-buttons ::v-deep .v-btn.v-btn--icon {
+  width: 32px !important;
+  height: 32px !important;
 }
 .toolbar-group-label {
-  font-size: 11px;
-  line-height: 12px;
-  color: #cfd8dc;
+  font-size: 10px;
+  line-height: 11px;
+  letter-spacing: 0.02em;
+  color: #b0bec5;
   white-space: nowrap;
 }
 </style>

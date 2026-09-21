@@ -46,7 +46,7 @@
     </template>
     <template v-if="multiple" v-slot:selection="{ item, index, parent, selected, disabled }">
       <v-chip
-        v-if="smallChips"
+        v-if="!countLabel && smallChips"
         small
         tabindex="-1"
         class="v-chip--select"
@@ -65,12 +65,16 @@
         }}</span></v-chip
       >
       <span
-        v-else
+        v-else-if="!countLabel"
         class="v-select__selection v-select__selection--comma"
         :class="kindClass(item.value)"
         >{{ item.text
         }}{{ index < parent.selectedItems.length - 1 ? ", " : "" }}</span
       >
+      <!-- A count in place of the names, where a header has room for one line. -->
+      <span v-else-if="index === 0" class="v-select__selection ds-picker-count">{{
+        parent.selectedItems.length + " " + countLabel
+      }}</span>
     </template>
   </v-autocomplete>
 </template>
@@ -92,6 +96,8 @@ export default {
     multiple: { type: Boolean, default: false },
     smallChips: { type: Boolean, default: false },
     deletableChips: { type: Boolean, default: false },
+    // With `multiple`, shows "4 dimensions" rather than each name.
+    countLabel: { type: String, default: null },
   },
   computed: {
     /** A single choice's signs, after its text: its kind's, then its goal's. */
@@ -120,6 +126,9 @@ export default {
 </script>
 
 <style>
+.ds-picker-count {
+  white-space: nowrap;
+}
 /* The chosen dimension, as the text of a single choice. */
 .ds-picker--custom .v-select__slot input {
   color: #6a1b9a;

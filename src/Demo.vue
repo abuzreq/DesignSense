@@ -1,9 +1,14 @@
 <template>
-  <v-app>
+  <v-app :style="{ '--ds-bar-height': barHeight + 'px' }">
     <span
       id="designsense-center"
       style="display: none; position: relative; left: 50%; top: 50%"
     ></span>
+    <!-- The bar, left to right: who and what (the name, loading data, the
+         mode); how the collection is narrowed, which gets whatever room is
+         spare; the assistant; what to do with the result, in labelled groups;
+         and the occasional things (sharing, the layout, help) at the end.
+         barLevel fits it to the width in one place: see its computed. -->
     <v-app-bar
       app
       dark
@@ -11,48 +16,17 @@
       flat
       short
       color=" white--text text--lighten-1"
-      height="60"
+      :height="barHeight"
+      class="ds-bar"
+      :class="'ds-bar--' + barLevel"
     >
       <v-toolbar-title id="designsense-title" class="ds-title">
-        DesignSense
-        <span class="ds-stage" style="font-size: 14px; color: deepskyblue"
-          >beta</span
-        >
+        DesignSense<sup class="ds-stage">beta</sup>
       </v-toolbar-title>
       <v-divider vertical class="ds-divider" />
 
-      <!-- Getting data in and out -->
       <LoadDataModal id="loading-data-bar" compact> </LoadDataModal>
-      <TipButton
-        :icon="actions['saveToFile'].icon"
-        :tooltip="actions['saveToFile'].tooltip()"
-        :disabled="actionDisabled('saveToFile')"
-        @click="actions['saveToFile'].clickAction"
-      />
-      <TipButton
-        :icon="actions['shareStaticLink'].icon"
-        :tooltip="actions['shareStaticLink'].tooltip()"
-        :disabled="!isStudySharable"
-        @click="actions['shareStaticLink'].clickAction"
-      />
       <v-divider vertical class="ds-divider" />
-
-      <!-- Arranging the panels is about the workspace as a whole rather than
-           about any one group of tools, so it stands on its own here. The
-           wrapper stays whichever mode is on: a Vuetify tooltip places its
-           activator in the bar itself, outside what Vue tracks, so appearing
-           and disappearing beside one shifts it out of place. -->
-      <div class="ds-layout-slot">
-        <TipButton
-          v-if="can('layoutEditing')"
-          id="editing-mode"
-          :icon="actions['toggleEditingMode'].icon"
-          :tooltip="actions['toggleEditingMode'].tooltip()"
-          :color="toolbarColor(actions['toggleEditingMode'].type)"
-          @click="actions['toggleEditingMode'].clickAction"
-        />
-        <v-divider v-if="can('layoutEditing')" vertical class="ds-divider" />
-      </div>
 
       <v-tooltip bottom max-width="340">
         <template v-slot:activator="{ on }">
@@ -64,8 +38,8 @@
               rounded
               @change="setUiMode"
             >
-              <v-btn small value="lite">Lite</v-btn>
-              <v-btn small value="expert">Expert</v-btn>
+              <v-btn x-small value="lite">Lite</v-btn>
+              <v-btn x-small value="expert">Expert</v-btn>
             </v-btn-toggle>
           </div>
         </template>
@@ -80,104 +54,119 @@
       </v-tooltip>
       <v-divider vertical class="ds-divider" />
 
-      <!-- How the collection is narrowed: filters in Lite, a selection in Expert -->
+      <!-- How the collection is narrowed: filters in Lite, a selection in
+           Expert, and after either the same undo, redo and clear. It never
+           shrinks below what it holds, so it can't be drawn over its
+           neighbours; the assistant gives way instead. -->
       <div class="ds-narrowing">
         <SelectionOperationsBar
           v-if="can('selectionOperations')"
           id="selection-operations-bar"
+          :compact="barLevel !== 'roomy'"
         />
         <FilterBar v-else id="filter-bar" />
+        <ToolbarGroup
+          id="history-bar"
+          class="ds-history"
+          :names="historyActions"
+          :actions="actions"
+          :disabled="actionDisabled"
+        />
       </div>
 
       <!-- Ask or command, in the same row: the list of suggestions floats
            below, so the bar stays one row tall. -->
-      <AssistantBar ref="assistant" id="assistant-bar" />
-
-      <v-divider vertical class="ds-divider" />
-      <!-- The shortlist is reachable here too, without opening the sets' drawer. -->
-      <v-menu bottom left offset-y>
-        <template v-slot:activator="{ on: menu }">
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on: tooltip }">
-              <span
-                v-on="tooltip"
-                @focusin="tooltip.focus"
-                @focusout="tooltip.blur"
-              >
-                <v-btn
-                  id="cart-chip"
-                  icon
-                  :aria-label="cartTooltip"
-                  aria-haspopup="menu"
-                  v-on="menu"
-                >
-                  <v-badge
-                    :value="cartCount > 0"
-                    :content="cartCount"
-                    color="orange darken-2"
-                    overlap
-                  >
-                    <v-icon>mdi-bookmark-multiple-outline</v-icon>
-                  </v-badge>
-                </v-btn>
-              </span>
-            </template>
-            <span>{{ cartTooltip }}</span>
-          </v-tooltip>
-        </template>
-        <v-list dense>
-          <v-list-item @click="addResultToCart">
-            <v-list-item-icon><v-icon>mdi-playlist-plus</v-icon></v-list-item-icon>
-            <v-list-item-title>Add the selected</v-list-item-title>
-          </v-list-item>
-          <v-list-item :disabled="cartCount === 0" @click="clearCart">
-            <v-list-item-icon><v-icon>mdi-bookmark-off-outline</v-icon></v-list-item-icon>
-            <v-list-item-title>Clear the shortlist</v-list-item-title>
-          </v-list-item>
-          <v-divider />
-          <v-list-item :disabled="cartCount === 0" @click="compareCart">
-            <v-list-item-icon><v-icon>mdi-table-column</v-icon></v-list-item-icon>
-            <v-list-item-title>Compare the shortlist</v-list-item-title>
-          </v-list-item>
-          <v-list-item :disabled="cartCount === 0" @click="saveCartAsSet">
-            <v-list-item-icon><v-icon>mdi-content-save-outline</v-icon></v-list-item-icon>
-            <v-list-item-title>Save the shortlist as a set</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
-      <ToolbarGroup
-        id="sets-operations-bar"
-        :label="isLite ? 'Results' : 'Selection'"
-        :names="selectionActions"
-        :actions="actions"
-        :disabled="actionDisabled"
+      <AssistantBar
+        ref="assistant"
+        id="assistant-bar"
+        :compact="barLevel === 'tight'"
       />
       <v-divider vertical class="ds-divider" />
+
+      <!-- What to do with the selected: shortlist them, save them, compare them. -->
+      <ToolbarGroup
+        id="sets-operations-bar"
+        label="Save & compare"
+        :names="resultActions"
+        :actions="actions"
+        :disabled="actionDisabled"
+      >
+        <!-- The shortlist is reachable here too, without opening the sets' drawer. -->
+        <template v-slot:start>
+          <v-menu bottom left offset-y>
+            <template v-slot:activator="{ on: menu }">
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on: tooltip }">
+                  <span
+                    v-on="tooltip"
+                    @focusin="tooltip.focus"
+                    @focusout="tooltip.blur"
+                  >
+                    <v-btn
+                      id="cart-chip"
+                      icon
+                      :aria-label="cartTooltip"
+                      aria-haspopup="menu"
+                      v-on="menu"
+                    >
+                      <v-badge
+                        :value="cartCount > 0"
+                        :content="cartCount"
+                        color="orange darken-2"
+                        overlap
+                      >
+                        <v-icon>mdi-bookmark-multiple-outline</v-icon>
+                      </v-badge>
+                    </v-btn>
+                  </span>
+                </template>
+                <span>{{ cartTooltip }}</span>
+              </v-tooltip>
+            </template>
+            <v-list dense>
+              <v-list-item @click="addResultToCart">
+                <v-list-item-icon><v-icon>mdi-playlist-plus</v-icon></v-list-item-icon>
+                <v-list-item-title>Add the selected</v-list-item-title>
+              </v-list-item>
+              <v-list-item :disabled="cartCount === 0" @click="clearCart">
+                <v-list-item-icon><v-icon>mdi-bookmark-off-outline</v-icon></v-list-item-icon>
+                <v-list-item-title>Clear the shortlist</v-list-item-title>
+              </v-list-item>
+              <v-divider />
+              <v-list-item :disabled="cartCount === 0" @click="compareCart">
+                <v-list-item-icon><v-icon>mdi-table-column</v-icon></v-list-item-icon>
+                <v-list-item-title>Compare the shortlist</v-list-item-title>
+              </v-list-item>
+              <v-list-item :disabled="cartCount === 0" @click="saveCartAsSet">
+                <v-list-item-icon><v-icon>mdi-content-save-outline</v-icon></v-list-item-icon>
+                <v-list-item-title>Save the shortlist as a set</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </template>
+      </ToolbarGroup>
+      <v-divider vertical class="ds-divider" />
+      <!-- Moving about the collection: into the selected, past them, to what
+           they leave out, and back. -->
       <ToolbarGroup
         id="data-operations-bar"
-        label="Zoom"
+        label="Navigation"
         :names="dataActions"
         :actions="actions"
         :disabled="actionDisabled"
       />
-      <!-- Both modes inspect by clicking and stop with Esc or the
-           inspector's close button; pinning and inspecting on hover, and the
-           analysis tools, are Expert's. -->
-      <template v-if="isExpert">
+      <!-- Expert's analysis, which reads the collection as a whole rather
+           than acting on it. Inspecting on hover sits on the inspector, beside
+           the pin, and in the right-click menu. -->
+      <template v-if="can('sensitivity')">
         <v-divider vertical class="ds-divider" />
         <ToolbarGroup
-          id="inspection-bar"
-          label="Inspection"
-          :names="inspectionActions"
+          id="analysis-bar"
+          label="Analysis"
+          :names="[]"
           :actions="actions"
-          :color="toolbarColor"
-          :disabled="actionDisabled"
-        />
-        <v-divider vertical class="ds-divider" />
-        <!-- Reading the collection as a whole rather than acting on it: one
-             dialog with each dimension's summary and the sensitivity reading. -->
-        <ToolbarGroup id="analysis-bar" label="Analysis" :actions="actions">
-          <v-tooltip v-if="can('sensitivity')" bottom>
+        >
+          <v-tooltip bottom max-width="340">
             <template v-slot:activator="{ on }">
               <v-btn
                 id="analysis-button"
@@ -194,6 +183,144 @@
         </ToolbarGroup>
       </template>
       <v-divider vertical class="ds-divider" />
+
+      <!-- Everything for passing results on, in one drawer: the story,
+           the summary image, the link and the download. -->
+      <v-menu bottom left offset-y max-width="380">
+        <template v-slot:activator="{ on: menu, attrs }">
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on: tooltip }">
+              <span
+                v-on="tooltip"
+                @focusin="tooltip.focus"
+                @focusout="tooltip.blur"
+              >
+                <v-btn
+                  id="share-menu"
+                  icon
+                  aria-label="Share and present"
+                  aria-haspopup="menu"
+                  v-bind="attrs"
+                  v-on="menu"
+                >
+                  <v-badge
+                    :value="captureCount > 0"
+                    :content="captureCount"
+                    color="blue-grey"
+                    overlap
+                  >
+                    <v-icon>mdi-presentation-play</v-icon>
+                  </v-badge>
+                </v-btn>
+              </span>
+            </template>
+            <span>Share and present: capture views for a story, make a summary image or a report, share the link, download</span>
+          </v-tooltip>
+        </template>
+        <v-list dense class="ds-share-menu">
+          <v-subheader>Tell the story</v-subheader>
+          <v-list-item id="capture-button" @click="actions['captureView'].clickAction">
+            <v-list-item-icon><v-icon>{{ actions["captureView"].icon }}</v-icon></v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Capture this view</v-list-item-title>
+              <v-list-item-subtitle>The filters, goals and shortlist, with a note</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item id="story-button" @click="actions['toggleStory'].clickAction">
+            <v-list-item-icon><v-icon>{{ actions["toggleStory"].icon }}</v-icon></v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>The story{{ captureCount > 0 ? " (" + captureCount + ")" : "" }}</v-list-item-title>
+              <v-list-item-subtitle>Present the captured views, or make a PDF report</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item id="summary-button" @click="actions['openSummary'].clickAction">
+            <v-list-item-icon><v-icon>{{ actions["openSummary"].icon }}</v-icon></v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Summary image</v-list-item-title>
+              <v-list-item-subtitle>The goals, the shortlist, charts and findings on one picture</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-divider />
+          <v-subheader>Share the data</v-subheader>
+          <v-list-item :disabled="!isStudySharable" @click="actions['shareStaticLink'].clickAction">
+            <v-list-item-icon><v-icon>{{ actions["shareStaticLink"].icon }}</v-icon></v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Link to this dataset</v-list-item-title>
+              <v-list-item-subtitle>{{ actions["shareStaticLink"].tooltip() }}</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item :disabled="actionDisabled('saveToFile')" @click="actions['saveToFile'].clickAction">
+            <v-list-item-icon><v-icon>{{ actions["saveToFile"].icon }}</v-icon></v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title>Download (.csv)</v-list-item-title>
+              <v-list-item-subtitle>{{ actions["saveToFile"].tooltip() }}</v-list-item-subtitle>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+
+      <!-- The layout: editing, presets and reset in one menu. While editing,
+           a Done button stands beside it so stopping is one click. The slot
+           stays either way: a Vuetify tooltip places its activator in the bar
+           itself, outside what Vue tracks, so a button appearing and
+           disappearing beside one shifts it out of place. -->
+      <div class="ds-layout-slot">
+        <v-btn
+          v-if="isEditingMode"
+          small
+          depressed
+          color="green darken-1"
+          class="ds-layout-done"
+          @click="actions['toggleEditingMode'].clickAction"
+          >Done</v-btn
+        >
+      </div>
+      <v-menu bottom left offset-y>
+        <template v-slot:activator="{ on: menu }">
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on: tooltip }">
+              <span
+                v-on="tooltip"
+                @focusin="tooltip.focus"
+                @focusout="tooltip.blur"
+              >
+                <v-btn
+                  id="editing-mode"
+                  icon
+                  aria-label="The layout: edit, presets, reset"
+                  aria-haspopup="menu"
+                  :color="isEditingMode ? toolbarColor('editing') : undefined"
+                  v-on="menu"
+                >
+                  <v-icon>mdi-view-dashboard-edit-outline</v-icon>
+                </v-btn>
+              </span>
+            </template>
+            <span>The layout: move and resize the panels, pick a preset, or reset it</span>
+          </v-tooltip>
+        </template>
+        <v-list dense>
+          <v-list-item
+            v-if="can('layoutEditing')"
+            @click="toggleLayoutEditing"
+          >
+            <v-list-item-icon><v-icon>{{ actions["toggleEditingMode"].icon }}</v-icon></v-list-item-icon>
+            <v-list-item-title>{{
+              isEditingMode ? "Stop editing the layout" : "Edit the layout"
+            }}</v-list-item-title>
+            <v-list-item-action-text class="ml-4">`</v-list-item-action-text>
+          </v-list-item>
+          <v-list-item @click="isLayoutDialogOn = true">
+            <v-list-item-icon><v-icon>mdi-view-grid-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Layout presets…</v-list-item-title>
+          </v-list-item>
+          <v-list-item @click="resetLayout">
+            <v-list-item-icon><v-icon>mdi-view-dashboard-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Reset layout</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+
       <v-menu bottom left offset-y>
         <template v-slot:activator="{ on: menu }">
           <v-tooltip bottom>
@@ -231,14 +358,6 @@
             <v-list-item-title>Keyboard shortcuts &amp; gestures</v-list-item-title>
           </v-list-item>
           <v-divider />
-          <v-list-item @click="isLayoutDialogOn = true">
-            <v-list-item-icon><v-icon>mdi-view-grid-outline</v-icon></v-list-item-icon>
-            <v-list-item-title>Layout presets…</v-list-item-title>
-          </v-list-item>
-          <v-list-item @click="resetLayout">
-            <v-list-item-icon><v-icon>mdi-view-dashboard-outline</v-icon></v-list-item-icon>
-            <v-list-item-title>Reset layout</v-list-item-title>
-          </v-list-item>
           <v-list-item @click="isClearWorkDialogOn = true">
             <v-list-item-icon><v-icon>mdi-delete-sweep-outline</v-icon></v-list-item-icon>
             <v-list-item-title>Clear saved work…</v-list-item-title>
@@ -422,8 +541,8 @@
         <v-card-title>Clear saved work?</v-card-title>
         <v-card-text>
           This will permanently delete the saved sets, notes, shortlist,
-          ratings, and custom dimension values for this dataset from this
-          browser. This cannot be undone.
+          ratings, captured story, and custom dimension values for this
+          dataset from this browser. This cannot be undone.
         </v-card-text>
         <v-card-text class="pt-0">
           The custom and weighted dimensions will remain, but their values will
@@ -463,7 +582,10 @@
     <DimensionsDialog />
     <CompareDialog />
     <SensitivityDialog />
-    <v-main id="designsense-workspace" style="padding: 60px 0px 0px">
+    <SummaryDialog />
+    <StoryReportDialog />
+    <StoryPresenter />
+    <v-main id="designsense-workspace" :style="{ padding: barHeight + 'px 0 0' }">
       <!-- The saved sets' rail takes a strip at the left; their drawer opens
            over the workspace from it. -->
       <div class="ds-work-area">
@@ -485,6 +607,7 @@
             :type="item.type"
           />
         </div>
+        <StoryPanel />
       </div>
     </v-main>
 
@@ -630,32 +753,79 @@ body {
 .v-toolbar {
   margin-top: -5px;
 }
+/* The app bar is sized to what it holds, so none of it is tucked away. */
+.v-app-bar.ds-bar {
+  margin-top: 0;
+}
+.v-app-bar .v-toolbar__content {
+  padding-left: 8px;
+  padding-right: 8px;
+}
 
 /* The bar's icons are a size below Vuetify's 24px, so the row of buttons
-   reads lighter; the buttons, and so what a click can hit, stay as they are. */
+   reads lighter, and its buttons 32px rather than the toolbar's 48. */
 .v-app-bar .v-btn--icon.v-size--default .v-icon {
   font-size: 20px;
   width: 20px;
   height: 20px;
 }
+.v-app-bar .v-toolbar__content .v-btn--icon.v-size--default {
+  width: 32px !important;
+  height: 32px !important;
+}
 .ui-mode-toggle {
   margin: 0 2px;
+}
+.ui-mode-toggle .v-btn {
+  font-size: 11px;
+  letter-spacing: 0.04em;
 }
 .ds-layout-slot {
   display: inline-flex;
   align-items: center;
 }
+.ds-layout-done.v-btn {
+  margin-right: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+}
 .ds-title {
   flex: 0 0 auto;
-  margin-right: 4px;
+  margin-right: 2px;
+  font-size: 18px !important;
+}
+.ds-stage {
+  margin-left: 2px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: deepskyblue;
+}
+/* Loading data happens about once a visit: an icon, red so it is found. */
+#loading-data-bar .load-data-label {
+  display: none;
+}
+#loading-data-bar .load-data-icon.v-icon {
+  margin: 0;
+}
+#loading-data-bar .load-data-button.v-btn {
+  min-width: 0 !important;
+  padding: 0 8px !important;
+}
+/* The share menu's lines say what each does in full rather than cut short. */
+.ds-share-menu .v-list-item__subtitle {
+  white-space: normal;
+  line-height: 1.3 !important;
+}
+.ds-share-menu .v-list-item__icon {
+  margin-right: 16px !important;
 }
 .v-app-bar .v-divider--vertical.ds-divider {
   align-self: center;
-  min-height: 32px;
-  max-height: 32px;
-  margin: 0 8px;
+  min-height: 24px;
+  max-height: 24px;
+  margin: 0 4px;
 }
-/* The filters or selection operations take whatever room the groups leave. */
 /* The badge wrapper is taller than a bare icon, which pushes the bookmark
    below the line the other toolbar icons sit on. */
 #cart-chip .v-badge {
@@ -664,11 +834,36 @@ body {
   line-height: 1;
   margin-top: -2px;
 }
+/* The filters or the selection take whatever room the groups leave, but
+   never less than they hold: squeezed further, they were drawn over their
+   neighbours. */
 .ds-narrowing {
-  flex: 1 1 auto;
-  min-width: 0;
+  /* Shrinks last: short of room, the assistant narrows to its minimum first. */
+  flex: 1 0.2 auto;
+  min-width: min-content;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 2px;
+}
+/* Lite's filters take the zone's spare room but ask only for the count's:
+   the hint and the chips shorten, and would otherwise count at full length
+   towards the zone's minimum. Expert's strip does the same inside its bar. */
+.ds-narrowing > #filter-bar {
+  flex: 1 1 0;
+  width: 0;
+  /* The count and an "N filters" pill. */
+  min-width: 180px;
+}
+/* Undo, redo and clear sit a size down, beside the text they act on. */
+.v-app-bar .ds-history .v-btn.v-btn--icon.v-size--default {
+  width: 28px !important;
+  height: 28px !important;
+}
+.ds-history .v-btn--icon.v-size--default .v-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
 }
 .ds-welcome-body {
   font-size: 16px;
@@ -793,7 +988,7 @@ body {
 .ds-work-area {
   position: relative;
   display: flex;
-  height: calc(100vh - 60px);
+  height: calc(100vh - var(--ds-bar-height));
 }
 .ds-workspace {
   position: relative;
@@ -801,32 +996,12 @@ body {
   min-width: 0;
   height: 100%;
 }
-/* Below 1500px Expert's toolbar needs every pixel, so labels give way to icons. */
-@media (max-width: 1500px) {
-  .v-app-bar .v-toolbar__content {
-    padding-left: 8px;
-    padding-right: 8px;
-  }
-  .ds-stage {
-    display: none;
-  }
-  #loading-data-bar .load-data-label {
-    display: none;
-  }
-  #loading-data-bar .load-data-icon.v-icon {
-    margin: 0;
-  }
-  #loading-data-bar .load-data-button.v-btn {
-    min-width: 0 !important;
-    padding: 0 10px !important;
-  }
-  .v-app-bar .v-divider--vertical.ds-divider {
-    margin: 0 2px;
-  }
-  .v-app-bar .v-btn.v-btn--icon.v-size--default {
-    width: 34px !important;
-    height: 34px !important;
-  }
+/* Short of room (see barLevel): the rest gives way a little too. */
+.ds-bar--tight .ds-stage {
+  display: none;
+}
+.ds-bar--tight .v-divider--vertical.ds-divider {
+  margin: 0 2px;
 }
 
 /* Expert mode: the pointer shows which operation a brush will apply. */
@@ -889,6 +1064,17 @@ function isFirstVisit() {
   }
   return true;
 }
+// The app bar's height: 32px buttons with a 10px label under them, and room
+// around. Everything that sits below the bar is offset by this.
+const BAR_HEIGHT = 52;
+/**
+ * Where the toolbar changes shape, by window width. Measured against what the
+ * bar holds rather than guessed; see barLevel.
+ *  - Above ROOMY, Expert's five selection operations are spread out.
+ *  - Below TIGHT, the assistant becomes a button that opens over the bar.
+ */
+const BAR_ROOMY = 1600;
+const BAR_TIGHT = { lite: 1170, expert: 1280 };
 const EXPERT_ADDS =
   "selection operations and the lasso, clusters, coloring, editing sets, inspection controls, the analysis panel, and layout editing";
 import { applySelectionCursor } from "@/components/selectionCursors.js";
@@ -897,6 +1083,10 @@ import AssistantBar from "@/components/AssistantBar.vue";
 import DimensionsDialog from "@/components/DimensionsDialog.vue";
 import CompareDialog from "@/components/CompareDialog.vue";
 import SensitivityDialog from "@/components/SensitivityDialog.vue";
+import SummaryDialog from "@/components/SummaryDialog.vue";
+import StoryReportDialog from "@/components/StoryReportDialog.vue";
+import StoryPanel from "@/components/StoryPanel.vue";
+import StoryPresenter from "@/components/StoryPresenter.vue";
 import {
   DEFAULT_DATASET_URL,
   loadDataset,
@@ -948,6 +1138,10 @@ export default {
     DimensionsDialog,
     CompareDialog,
     SensitivityDialog,
+    SummaryDialog,
+    StoryReportDialog,
+    StoryPanel,
+    StoryPresenter,
     ParCoordsView,
     AugmentedGridView,
     SPLOMView,
@@ -994,10 +1188,10 @@ export default {
           "Each line is an option and each axis is a dimension. Drag along an axis to filter it. Drag a title to reorder the axes, or pick them under Axes.",
           "left"),
         tourStep(this, "lite", "#filter-bar", "Your filters",
-          "Each filter becomes a chip, and the count shows how many options match. Remove a chip to drop its filter. Press Esc to stop inspecting, then again to clear every filter.",
+          "Each filter becomes a chip, and the count shows how many options match. Remove a chip to drop its filter. The arrows beside them undo and redo, and the last button clears every filter; Esc stops inspecting, then clears too.",
           "bottom"),
-        tourStep(this, "lite", "#data-operations-bar", "Zoom",
-          "Zoom in on the selected options to focus on them, or exclude them instead. Reset brings back the whole collection.",
+        tourStep(this, "lite", "#data-operations-bar", "Navigation",
+          "Zoom in on the selected options to focus on them, or exclude them instead. Invert shows everything the filters leave out. Step back undoes the last zoom, and Reset brings back the whole collection.",
           "bottom"),
         tourStep(this, "lite", "#sets-drawer", "Saved sets",
           "Save the current results along with their filters. Restore a set later to bring those filters back. They wait at the left edge: move the pointer there, or click the tab.",
@@ -1014,20 +1208,20 @@ export default {
         tourStep(this, "expert", "#selection-operations-bar", "Selection operations",
           "Choose how a new selection combines with the current one: replace, add, subtract, toggle, or intersect. Hold Shift to add, Ctrl to subtract, or both to intersect.",
           "bottom"),
-        tourStep(this, "expert", "#sets-operations-bar", "Selection tools",
-          "Undo, redo, clear, or invert the selection.",
+        tourStep(this, "expert", "#sets-operations-bar", "Save and compare",
+          "Keep the selected on the shortlist, save them as a set, or compare them side by side. Inverting the selection is under Navigation, and undo, redo and clear sit beside the selection itself.",
           "bottom"),
         tourStep(this, "expert", ".v-card[type='ScatterPlot'] div.cluster-view", "Clusters",
           "Clusters group options that are similar on the dimensions you choose. Each image stands for a group. Click it to select the whole group.",
           "left", () => this.$store.commit("setClusteringPanelOpen", { value: true })),
-        tourStep(this, "expert", "#inspection-bar", "Inspection",
-          "Click any option to inspect it, or hold Space and move over options. Pin keeps it inspected after you let go, and the last button inspects on hover without holding Space.",
-          "bottom"),
+        tourStep(this, "expert", ".inspector_card", "Inspection",
+          "Click any option to inspect it, or hold Space and move over options. The pointer button here inspects on hover without holding Space, and the pin keeps an option here after you let go. Both are in the right-click menu too.",
+          "right", () => this.inspectTourOption()),
         dialogTourStep(this, "expert", ".sx-card", "Analysis",
-          "The whole collection at a glance, rather than what is on screen. At the top, every dimension's average, standard deviation and spread. Below, which inputs move which outputs: name the parameters and the results, or start their columns with in: and out: and the file names them for you. Each of the three measures answers a different question, and the panel says in the open that a reading is only as good as the sampling behind it.",
+          "The whole collection at a glance, rather than what is on screen. At the top, every dimension's average, standard deviation and spread. Then the outliers, which can be left out of the reading, and the best trade-offs by the goals set under Dimensions. Below, which inputs move which outputs: name the parameters and the results, or start their columns with in: and out: and the file names them for you. Each of the three measures answers a different question, and the panel says in the open that a reading is only as good as the sampling behind it.",
           () => this.openTourSensitivity()),
         tourStep(this, "expert", "#editing-mode", "Your layout",
-          "Turn on editing to move and resize the panels.",
+          "Turn on editing here to move and resize the panels, or pick a preset arrangement. Done, or the ` key, stops editing.",
           "bottom"),
         tourStep(this, "lite", "#designsense-title", "You're ready",
           "You're back in Lite. Switch to Expert whenever you need more control, and right-click the workspace for quick actions. The help menu has this tour and every shortcut. Feedback is welcome at abuzreq@gmail.com.",
@@ -1064,7 +1258,9 @@ export default {
           icon: "mdi-select-off",
           tooltip: () =>
             this.isLite
-              ? "Clear every filter [Esc]"
+              ? this.hasScope
+                ? "Clear every filter; the zoom stays [Esc]"
+                : "Clear every filter [Esc]"
               : "Clear the selection [Esc]",
           type: "selection",
         },
@@ -1115,8 +1311,8 @@ export default {
           icon: "mdi-selection-ellipse-arrow-inside",
           tooltip: () =>
             this.isInspectionMode
-              ? "Stop inspecting on hover"
-              : "Inspect options on hover without holding Space (or hold Space to inspect while hovering)",
+              ? "Inspecting on hover: click to stop"
+              : "Inspect on hover, without holding Space",
           type: "inspecting",
         },
         clearInspection: {
@@ -1151,7 +1347,7 @@ export default {
           clickAction: () => this.$store.dispatch("openSensitivity"),
           icon: "mdi-chart-box-outline",
           tooltip: () =>
-            "Analysis: each dimension's average, spread and distribution, and which inputs move which outputs",
+            "Analysis: each dimension's spread, the outliers, the best trade-offs by your goals, and which inputs move which outputs",
           type: "misc",
         },
         toggleEditingMode: {
@@ -1170,6 +1366,32 @@ export default {
             this.isLite
               ? "Download the selected options (.csv)"
               : "Download the selected options, or every option when nothing is selected (.csv)",
+          type: "misc",
+        },
+        openSummary: {
+          clickAction: () => this.$store.dispatch("openSummary"),
+          icon: "mdi-image-text",
+          tooltip: () =>
+            "Summary image: the goals, the shortlist, a chart and key findings on one picture to share",
+          type: "misc",
+        },
+        captureView: {
+          clickAction: () => this.$store.dispatch("captureView"),
+          icon: "mdi-camera-outline",
+          tooltip: () =>
+            "Capture this view for the story: what is filtered or selected, the goals and the shortlist, with a note",
+          type: "misc",
+        },
+        toggleStory: {
+          clickAction: () =>
+            this.$store.commit("setStoryPanel", {
+              open: !this.$store.state.storyPanel.open,
+            }),
+          icon: "mdi-book-open-page-variant-outline",
+          tooltip: () =>
+            this.captureCount > 0
+              ? "The story: " + this.captureCount + (this.captureCount === 1 ? " captured view" : " captured views") + " to present or make into a report"
+              : "The story: views you capture, to present or make into a report",
           type: "misc",
         },
         shareStaticLink: {
@@ -1199,10 +1421,13 @@ export default {
       // Whether an option is inspected; follows the store only when that
       // changes, not as inspection moves from option to option.
       isInspecting: false,
-      // The page minus its scrollbar gutter and the 60px app bar, so panels
+      // The page minus its scrollbar gutter and the app bar, so panels
       // mount at their final size. Re-measured on mount and on window resize.
       workspaceWidth: document.documentElement.clientWidth,
-      workspaceHeight: Math.max(0, document.documentElement.clientHeight - 60),
+      workspaceHeight: Math.max(0, document.documentElement.clientHeight - BAR_HEIGHT),
+      barHeight: BAR_HEIGHT,
+      // For fitting the toolbar; kept current on every resize, not debounced.
+      windowWidth: window.innerWidth,
     };
   },
   destroyed() {},
@@ -1288,6 +1513,7 @@ export default {
     }),
     ...mapGetters([
       "can",
+      "captureCount",
       "cartCount",
       "isInCart",
       "isExpert",
@@ -1389,25 +1615,33 @@ export default {
       });
       return disabled;
     },
-    selectionActions() {
-      // Lite's undo and redo already sit in the filter bar.
-      return this.isLite
-        ? ["resetAllMarkings", "invertSelection", "compareResult", "createSet"]
-        : ["undo", "redo", "resetAllMarkings", "invertSelection", "compareResult"];
+    /** Undo, redo and clear: after the filters or the selection, in both modes. */
+    historyActions() {
+      return ["undo", "redo", "resetAllMarkings"];
+    },
+    // After the shortlist, which the group draws first.
+    resultActions() {
+      return ["createSet", "compareResult"];
+    },
+    /**
+     * How much the toolbar shows, from the window's width. One place decides
+     * for every part of the bar, so they can't disagree: three breakpoints of
+     * their own once left a band where the selection was drawn over the
+     * assistant.
+     */
+    barLevel() {
+      if (this.windowWidth < BAR_TIGHT[this.isLite ? "lite" : "expert"]) return "tight";
+      if (this.isExpert && this.windowWidth >= BAR_ROOMY) return "roomy";
+      return "normal";
     },
     dataActions() {
       return [
         "zoomToSelection",
         "excludeSelection",
+        "invertSelection",
         "undoDataTransformation",
         "resetData",
       ];
-    },
-    inspectionActions() {
-      // Pinning and continuous inspection are Expert's; both inspect by clicking.
-      return this.can("inspectionControls")
-        ? ["togglePinInspection", "clearInspection", "toggleInspectionMode"]
-        : ["clearInspection"];
     },
     contextMenuItems() {
       if (this.isLite) {
@@ -1422,6 +1656,7 @@ export default {
         ];
       }
       return [
+        "toggleInspectionMode",
         "togglePinInspection",
         "clearInspection",
         "addSelectionToCart",
@@ -1511,6 +1746,14 @@ export default {
       this.isLayoutDialogOn = false;
     },
     /** The one way out of the dialog that turns layout editing on. */
+    /**
+     * The layout menu's Edit: straight to editing, since the presets that
+     * editing otherwise offers first are the next item in the same menu.
+     */
+    toggleLayoutEditing() {
+      if (this.isEditingMode) this.$store.dispatch("toggleEditingMode");
+      else this.arrangeLayoutMyself();
+    },
     arrangeLayoutMyself() {
       this.isLayoutDialogOn = false;
       this.arrangeRequested = true;
@@ -1677,6 +1920,7 @@ export default {
     },
     // Resizing rebuilds every chart, so wait until the size settles.
     onWorkspaceResize() {
+      this.windowWidth = window.innerWidth;
       clearTimeout(this.resizeTimer);
       this.resizeTimer = setTimeout(this.measureWorkspace, 150);
     },

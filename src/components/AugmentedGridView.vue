@@ -148,6 +148,34 @@
               "
               @click="toggleInCart(inspectedItem)"
             />
+            <!-- Inspecting on hover without holding Space: Expert's, tucked
+                 here rather than in the toolbar, and in the right-click menu. -->
+            <TipButton
+              v-if="can('inspectionControls')"
+              small
+              icon="mdi-selection-ellipse-arrow-inside"
+              :color="isInspectionMode ? 'primary' : undefined"
+              :tooltip="
+                isInspectionMode
+                  ? 'Inspecting on hover: click to stop'
+                  : 'Inspect on hover, without holding Space'
+              "
+              @click="$store.dispatch('toggleInspectionMode')"
+            />
+            <!-- Pinning belongs to what it pins, so it sits here rather than
+                 in the toolbar; P does the same. -->
+            <TipButton
+              v-if="inspectedItem && can('inspectionControls')"
+              small
+              :icon="isInspectionPinned ? 'mdi-pin' : 'mdi-pin-outline'"
+              :color="isInspectionPinned ? 'primary' : undefined"
+              :tooltip="
+                isInspectionPinned
+                  ? 'Pinned: stays inspected when the pointer moves on. Unpinning closes it [P]'
+                  : 'Pin the inspected option [P]'
+              "
+              @click="$store.dispatch('togglePinInspection')"
+            />
             <TipButton
               small
               icon="mdi-close"
@@ -709,6 +737,8 @@ export default {
       nonNumericDimensions: (state) => state.nonNumericDimensions,
       hovered: (state) => state.hovered,
       inspectionClears: (state) => state.inspectionClears,
+      isInspectionPinned: (state) => state.isInspectionPinned,
+      isInspectionMode: (state) => state.isInspectionMode,
 
       colorColumn: (state) => state.colorColumn,
       uiMode: (state) => state.uiMode,
@@ -1296,6 +1326,7 @@ export default {
         view: this.viewID,
         selection: selectedIDs,
         operation: this.currentSelectionOperation,
+        step: { kind: "set", label: "Gallery box", ids: selectedIDs },
       });
     },
     onSelectionDragMouseMove(selectedItems) {
@@ -1370,6 +1401,7 @@ export default {
           view: this.viewID,
           selection: [item._id],
           operation: operations.TOGGLE,
+          step: { kind: "pick", id: item._id },
         });
       }
     },

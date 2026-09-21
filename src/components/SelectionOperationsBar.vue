@@ -1,14 +1,42 @@
 <template>
   <v-container class="selectionOperationsContainer">
-    <v-tooltip bottom>
-      <template v-slot:activator="{ on }">
-        <div v-on="on" class="selection-count">
-          <strong>{{ selectionCount.toLocaleString() }}</strong> /
-          {{ totalCount.toLocaleString() }}
-        </div>
+    <!-- The count opens the whole description; the strip beside it shows
+         what fits in the bar. -->
+    <v-menu bottom offset-y :close-on-content-click="false" max-width="520">
+      <template v-slot:activator="{ on: menu }">
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on: tooltip }">
+            <!-- A button to look at: outlined, with the menu's arrow. -->
+            <div
+              v-on="Object.assign({}, menu, tooltip)"
+              class="selection-count"
+              role="button"
+              tabindex="0"
+              aria-haspopup="true"
+            >
+              <span
+                ><strong>{{ selectionCount.toLocaleString() }}</strong> /
+                {{ totalCount.toLocaleString() }}</span
+              >
+              <v-icon x-small class="selection-count-arrow">mdi-menu-down</v-icon>
+            </div>
+          </template>
+          <span
+            >Selected options, out of those shown. Click to see what is
+            selected: your selection steps turned into one logical statement
+            and simplified, with the steps below it.</span
+          >
+        </v-tooltip>
       </template>
-      <span>Selected options, out of those shown</span>
-    </v-tooltip>
+      <v-card class="selection-panel">
+        <div class="selection-panel-head">
+          <strong>{{ selectionCount.toLocaleString() }}</strong> of
+          {{ totalCount.toLocaleString() }} options selected
+        </div>
+        <SelectionDescription panel />
+      </v-card>
+    </v-menu>
+    <SelectionDescription class="selection-description-strip" />
 
     <!-- Narrow screens: the five operations fold into the current one, which
          opens the rest. The bar shares its row with the filters, the assistant
@@ -168,19 +196,54 @@
 
 <style scoped>
 .selectionOperationsContainer {
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   width: auto;
   max-width: none;
   margin: 0;
   padding: 0 4px;
 }
+/* The description takes only the room the bar has spare, up to a limit;
+   the count's menu always has all of it. */
+.selection-description-strip {
+  flex: 1 1 0;
+  width: 0;
+  /* Room for one short chip, or the "+N" of those that don't fit. */
+  min-width: 90px;
+  max-width: 460px;
+}
 .selection-count {
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  margin-right: 4px;
+  padding: 1px 3px 1px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  line-height: 18px;
   white-space: nowrap;
-  margin-right: 8px;
+  cursor: pointer;
+}
+.selection-count:hover,
+.selection-count:focus-visible {
+  background: rgba(255, 255, 255, 0.24);
+  outline: none;
+}
+.selection-count-arrow.v-icon {
+  color: inherit !important;
+}
+.selection-panel {
+  padding: 10px 12px;
+  font-size: 13px;
+}
+.selection-panel-head {
+  margin-bottom: 8px;
 }
 .held-hint {
   font-size: 11px;
@@ -206,11 +269,25 @@
   to {border: solid white 0px;}
 }
 
+/* The operations sit close together, small, as one control. */
 .operation-container {
   display: flex;
   align-items: center;
-  padding-right: 5px;
   border-radius: 10px;
+  font-size: 12px;
+}
+.operation-container.selected {
+  padding-right: 6px;
+}
+/* Over Vuetify's 48px for a toolbar's icon buttons. */
+.operation-container .v-btn.v-btn--icon {
+  width: 26px !important;
+  height: 26px !important;
+}
+.operation-container ::v-deep .v-icon__component,
+.operation-container ::v-deep .v-icon__svg {
+  width: 18px;
+  height: 18px;
 }
   .operation-container.selected {
     border: solid white 1px;
@@ -222,6 +299,9 @@
   text-transform: none;
   letter-spacing: 0;
   white-space: nowrap;
+  font-size: 12px;
+  padding: 0 4px !important;
+  min-width: 0 !important;
 }
 .operation-icon--current {
   color: white !important;
@@ -236,11 +316,7 @@
 import { operations } from "@/components/operations.js";
 import { operationIcon } from "@/components/operationIcons.js";
 import { mapState, mapGetters } from "vuex";
-
-// Up to this width the five operations fold into a pulldown. Spread out they
-// take some 235px more, and below about 2000px that comes out of the
-// assistant's field: at 1920px it was squeezed to half its width.
-const COMPACT_WIDTH = 2000;
+import SelectionDescription from "@/components/SelectionDescription.vue";
 
 const OPERATION_ITEMS = [
   { operation: operations.REPLACE, hint: "1" },
@@ -258,21 +334,17 @@ const OPERATION_ITEMS = [
 
 export default {
   name: "SelectionOperationsBar",
+  components: { SelectionDescription },
+  props: {
+    // The five operations folded into a pulldown. Spread out they take some
+    // 235px more; the toolbar decides, weighing the whole bar at once.
+    compact: { type: Boolean, default: true },
+  },
   data: function() {
     return {
       operationsList: operations,
       operationItems: OPERATION_ITEMS,
-      windowWidth: typeof window !== "undefined" ? window.innerWidth : 1920,
     };
-  },
-  created() {
-    this.onResize = () => {
-      this.windowWidth = window.innerWidth;
-    };
-    window.addEventListener("resize", this.onResize);
-  },
-  beforeDestroy() {
-    window.removeEventListener("resize", this.onResize);
   },
   computed: {
     ...mapState({
@@ -283,9 +355,6 @@ export default {
     ...mapGetters(["selectionCount"]),
     totalCount() {
       return this.data ? this.data.length : 0;
-    },
-    compact() {
-      return this.windowWidth <= COMPACT_WIDTH;
     },
     // Shift/Ctrl override the chosen operation only while held.
     isModifierHeld() {

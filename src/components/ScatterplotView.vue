@@ -133,6 +133,36 @@
               : "Select with a free-form lasso"
           }}</span>
         </v-tooltip>
+        <v-tooltip bottom max-width="300">
+          <template v-slot:activator="{ on }">
+            <span
+              v-on="on"
+              class="d-inline-block"
+              @focusin="on.focus"
+              @focusout="on.blur"
+            >
+              <v-btn
+                icon
+                small
+                class="ph-btn"
+                :class="{ 'ph-btn--on': sidePanel === 'matrix' }"
+                :disabled="!hasSideRoom"
+                aria-label="Overview of dimension pairs"
+                :aria-pressed="String(sidePanel === 'matrix')"
+                @click="toggleMatrix"
+              >
+                <v-icon small>mdi-view-grid-outline</v-icon>
+              </v-btn>
+            </span>
+          </template>
+          <span>{{
+            !hasSideRoom
+              ? "Widen the panel to show the overview of dimension pairs."
+              : sidePanel === "matrix"
+              ? "Hide the overview."
+              : "Show an overview of dimension pairs, and pick the plot from it."
+          }}</span>
+        </v-tooltip>
         <v-tooltip v-if="can('clustering')" bottom max-width="300">
           <template v-slot:activator="{ on }">
             <v-btn
@@ -140,16 +170,16 @@
               icon
               small
               class="ph-btn"
-              :class="{ 'ph-btn--on': isClusteringPanelOpen }"
+              :class="{ 'ph-btn--on': sidePanel === 'clusters' }"
               aria-label="Clusters"
-              :aria-pressed="String(isClusteringPanelOpen)"
+              :aria-pressed="String(sidePanel === 'clusters')"
               @click="toggleClustering"
             >
               <ClusterIcon class="ph-svg-icon" />
             </v-btn>
           </template>
           <span
-            >{{ isClusteringPanelOpen ? "Hide clusters" : "Show clusters" }}.
+            >{{ sidePanel === "clusters" ? "Hide clusters" : "Show clusters" }}.
             Clustering groups options that are similar on the chosen
             dimensions, starting with the plotted ones.</span
           >
@@ -164,13 +194,25 @@
         :style="{ width: `${plotWidth}px`, height: `${plotHeight}px` }"
       />
       <div
+        v-if="sidePanel === 'matrix'"
+        class="side-view"
+        :style="{ width: `${sideWidth}px`, height: `${plotHeight}px` }"
+      >
+        <ScatterMatrix
+          :width="sideWidth"
+          :height="plotHeight"
+          :x-column="xColumn"
+          :y-column="yColumn"
+        />
+      </div>
+      <div
         v-if="can('clustering')"
-        v-show="isClusteringPanelOpen"
+        v-show="sidePanel === 'clusters'"
         class="cluster-view"
-        :style="{ width: `${clusterWidth}px`, height: `${plotHeight}px` }"
+        :style="{ width: `${sideWidth}px`, height: `${plotHeight}px` }"
       >
         <ClusterView
-          :width="clusterWidth"
+          :width="sideWidth"
           :height="plotHeight"
           :defaultEnableContext="true"
           :x="x"
@@ -202,7 +244,8 @@
   flex: 0 0 auto;
   position: relative;
 }
-.cluster-view {
+.cluster-view,
+.side-view {
   flex: 0 0 auto;
   overflow: hidden;
 }
@@ -337,6 +380,7 @@ import { isMissingFor } from "@/store/dimensions.js";
 import { RATING_DIMENSION } from "@/ratings.js";
 import ClusterIcon from "@/assets/cluster_icon.svg?component";
 import ClusterView from "@/components/ClusterView.vue";
+import ScatterMatrix from "@/components/ScatterMatrix.vue";
 import DimensionPicker from "@/components/DimensionPicker.vue";
 
 // SVG circles become the bottleneck past a couple thousand points: each is a
@@ -346,11 +390,19 @@ const CANVAS_THRESHOLD = 2000;
 // Roughly how much room each tick label gets along each axis.
 const X_TICK_SPACING = 70;
 const Y_TICK_SPACING = 45;
+// Below this panel width the matrix stays closed.
+const MIN_SIDE_PANEL_WIDTH = 520;
 
 export default {
   mixins: [TemplateView],
   name: "ScatterplotView",
-  components: { PanelHeader, ClusterIcon, ClusterView, DimensionPicker },
+  components: {
+    PanelHeader,
+    ClusterIcon,
+    ClusterView,
+    ScatterMatrix,
+    DimensionPicker,
+  },
   data: function() {
     return {
       // Only the defaults; the axes themselves live in the store so that the
@@ -387,18 +439,26 @@ export default {
         this.$store.commit("setViewSetting", { key: "scatterY", value: value });
       },
     },
-    // Clustering is an Expert tool; its panel takes 40% of the width when open.
-    showClusters() {
-      return this.can("clustering") && this.isClusteringPanelOpen;
+    // Too narrow a panel leaves neither the plot nor the matrix readable.
+    hasSideRoom() {
+      return this.width >= MIN_SIDE_PANEL_WIDTH;
     },
-    clusterWidth() {
+    /**
+     * What the side column shows: the matrix of dimension pairs, the
+     * clusters (an Expert tool), or nothing. It takes 40% of the width.
+     */
+    sidePanel() {
+      if (this.isMatrixPanelOpen) return this.hasSideRoom ? "matrix" : null;
+      if (this.can("clustering") && this.isClusteringPanelOpen) return "clusters";
+      return null;
+    },
+    sideWidth() {
       return Math.round(this.width * 0.4);
     },
-    // Without clusters the plot takes the whole panel. Kept square, it left a
-    // strip beside it that nothing could fill in Lite, where there are no
-    // clusters; the axes add ticks as they get longer.
+    // Without a side column the plot takes the whole panel; the axes add
+    // ticks as they get longer.
     plotWidth() {
-      if (this.showClusters) return this.width - this.clusterWidth;
+      if (this.sidePanel) return this.width - this.sideWidth;
       return this.width;
     },
     plotHeight() {
@@ -409,6 +469,7 @@ export default {
     },
     ...mapState({
       isClusteringPanelOpen: (state) => state.isClusteringPanelOpen,
+      isMatrixPanelOpen: (state) => state.isMatrixPanelOpen,
       dimensionValuesVersion: (state) => state.dimensionValuesVersion,
     }),
     ...mapGetters([
@@ -467,8 +528,8 @@ export default {
     },
   },
   watch: {
-    // Opening or closing the clusters panel resizes the plot.
-    showClusters: function() {
+    // Opening, closing or switching the side column resizes the plot.
+    sidePanel: function() {
       this.scheduleRefresh();
     },
     // Custom values or ratings changed in place; redraw if this plot shows them.
@@ -528,6 +589,11 @@ export default {
   },
   methods: {
     label: displayName,
+    toggleMatrix: function() {
+      this.$store.commit("setMatrixPanelOpen", {
+        value: !this.isMatrixPanelOpen,
+      });
+    },
     toggleClustering: function() {
       this.$store.commit("setClusteringPanelOpen", {
         value: !this.isClusteringPanelOpen,
@@ -703,6 +769,34 @@ export default {
       }
       return false;
     },
+    /**
+     * What an Expert brush selected, for describing the selection: its
+     * rectangles as ranges on the plotted dimensions, or, for a lasso, the
+     * options it drew around.
+     */
+    brushStep: function(brushedIDs, rects) {
+      let x = this.xColumn;
+      let y = this.yColumn;
+      if (!rects || rects.length === 0) {
+        return {
+          kind: "set",
+          label: "Lasso on " + displayName(x) + " × " + displayName(y),
+          ids: brushedIDs,
+        };
+      }
+      return {
+        kind: "region",
+        boxes: rects.map((rect) => {
+          // A dimension plotted against itself gives two readings of one range.
+          if (x === y) {
+            return {
+              [x]: [Math.max(rect.x[0], rect.y[0]), Math.min(rect.x[1], rect.y[1])],
+            };
+          }
+          return { [x]: rect.x, [y]: rect.y };
+        }),
+      };
+    },
     /** Removes a rectangle just drawn, once the brush has finished its gesture. */
     clearDrawnBrush: function() {
       setTimeout(() => {
@@ -712,6 +806,8 @@ export default {
     hoverHandler: function() {
       //this.chart.cleanTooltip();
 
+      // A chart built before its panel had room drew nothing, and has no mark.
+      if (!this.chart || typeof this.chart.mark !== "function") return;
       let hovered = this.$store.getters.getHovered;
       this.chart.mark(hovered);
 
@@ -776,6 +872,7 @@ export default {
             view: this.viewID,
             selection: brushedIDs,
             operation: this.currentSelectionOperation,
+            step: this.brushStep(brushedIDs, extent),
           });
         })
         .onHovered((hovered) => {

@@ -243,6 +243,30 @@ export default {
     },
   },
   methods: {
+    /**
+     * What an Expert axis brush selected, for describing the selection: the
+     * range brushed, or the options themselves on an axis without one.
+     */
+    axisStep(brushed, args) {
+      let axis = args && args.axis;
+      let scaled = args && args.selection && args.selection.scaled;
+      if (
+        axis &&
+        scaled &&
+        scaled.length === 2 &&
+        scaled.every((v) => typeof v === "number" && isFinite(v))
+      ) {
+        return {
+          kind: "region",
+          boxes: [{ [axis]: [Math.min(scaled[0], scaled[1]), Math.max(scaled[0], scaled[1])] }],
+        };
+      }
+      return {
+        kind: "set",
+        label: axis ? "Brush on " + displayName(axis) : "PCP brush",
+        ids: brushed.map((d) => d._id),
+      };
+    },
     /** Rating stays hidden until an option is rated. */
     hiddenAxes() {
       if (this.hasRatings || this.excludedDimensions.includes(RATING_DIMENSION)) {
@@ -1294,6 +1318,7 @@ export default {
               view: this.viewID,
               selection: brushed.map((d) => d._id),
               operation: this.currentSelectionOperation,
+              step: this.axisStep(brushed, args),
             });
           }
         })

@@ -45,7 +45,15 @@ module.exports = (env, argv) => {
 
     resolve: {
       extensions: ['.js', '.vue'],
-      alias: { '@': path.resolve(__dirname, 'src') },
+      alias: {
+        '@': path.resolve(__dirname, 'src'),
+        // jsPDF reaches for these only to draw HTML or SVG into a page; the
+        // story report hands it finished pictures, so they stay out of the
+        // build (canvg doesn't even build here, wanting process/browser).
+        canvg: false,
+        html2canvas: false,
+        dompurify: false,
+      },
     },
 
     module: {
