@@ -290,6 +290,13 @@
             class="mb-3"
           />
 
+          <!-- One line per dimension under one header: which, its share,
+               and which way is better. -->
+          <div class="term-row term-head" aria-hidden="true">
+            <span>Dimension</span>
+            <span class="term-head-share">Share</span>
+            <span>Better</span>
+          </div>
           <div
             v-for="(term, i) in weightedForm.terms"
             :key="term.key"
@@ -298,7 +305,7 @@
             <DimensionPicker
               v-model="term.dim"
               :items="itemsFor(term)"
-              label="Dimension"
+              placeholder="Pick a dimension"
               dense
               outlined
               hide-details
@@ -307,53 +314,72 @@
             />
             <!-- Shares of the whole, always adding up to 100%: moving one
                  moves the others in proportion to theirs (see rebalance). -->
-            <div class="term-weight">
-              <v-slider
-                :value="term.dim ? term.weight * 100 : 0"
-                min="0"
-                max="100"
-                step="0"
-                dense
-                hide-details
-                class="term-slider"
-                aria-label="Share"
-                :disabled="!term.dim || countedTerms.length < 2"
-                title="Its share of the weighted value. Raising it lowers the others in proportion, so together they always make 100%."
-                @input="slideShare(term, $event)"
-              />
-              <v-text-field
-                :value="shareFieldText(term)"
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                suffix="%"
-                dense
-                outlined
-                hide-details
-                class="term-weight-input"
-                aria-label="Share, in percent"
-                :disabled="!term.dim || countedTerms.length < 2"
-                :error="editingShareKey === term.key && !isShareText(term.weightText)"
-                @focus="editShare(term)"
-                @input="typeShare(term, $event)"
-                @blur="editingShareKey = null"
-              />
-            </div>
-            <v-checkbox
-              v-model="term.lowerIsBetter"
-              label="Lower is better"
+            <v-slider
+              :value="term.dim ? term.weight * 100 : 0"
+              min="0"
+              max="100"
+              step="0"
               dense
               hide-details
-              class="term-flip"
+              class="term-slider"
+              aria-label="Share"
+              :disabled="!term.dim || countedTerms.length < 2"
+              title="Its share of the weighted value. Raising it lowers the others in proportion, so together they always make 100%."
+              @input="slideShare(term, $event)"
             />
-            <v-btn icon small class="term-remove" @click="removeTerm(i)">
+            <!-- Text rather than a number field: no spinner to crowd out
+                 the third digit of 100. -->
+            <v-text-field
+              :value="shareFieldText(term)"
+              inputmode="numeric"
+              suffix="%"
+              dense
+              outlined
+              hide-details
+              class="term-share"
+              aria-label="Share, in percent"
+              :disabled="!term.dim || countedTerms.length < 2"
+              :error="editingShareKey === term.key && !isShareText(term.weightText)"
+              @focus="editShare(term)"
+              @input="typeShare(term, $event)"
+              @blur="editingShareKey = null"
+            />
+            <v-tooltip bottom max-width="300">
+              <template v-slot:activator="{ on }">
+                <v-btn
+                  v-on="on"
+                  small
+                  text
+                  class="term-flip"
+                  :class="{ 'term-flip--conflict': goalConflict(term) }"
+                  :disabled="!term.dim"
+                  :aria-pressed="String(!!term.lowerIsBetter)"
+                  :aria-label="term.lowerIsBetter ? 'Lower is better' : 'Higher is better'"
+                  @click="term.lowerIsBetter = !term.lowerIsBetter"
+                >
+                  <v-icon x-small left>{{
+                    term.lowerIsBetter ? "mdi-arrow-down" : "mdi-arrow-up"
+                  }}</v-icon
+                  >{{ term.lowerIsBetter ? "Lower" : "Higher" }}
+                </v-btn>
+              </template>
+              <span>{{ directionTip(term) }}</span>
+            </v-tooltip>
+            <v-btn
+              icon
+              small
+              class="term-remove"
+              aria-label="Remove"
+              @click="removeTerm(i)"
+            >
               <v-icon small>mdi-close</v-icon>
             </v-btn>
-            <div class="term-scale">
-              {{ scaleText(term) }}
-              <span v-if="goalConflict(term)" class="term-conflict"
-                >Its goal says {{ goalConflict(term) }} is better.</span
+            <div v-if="termNotes(term).length > 0" class="term-scale">
+              <span
+                v-for="note in termNotes(term)"
+                :key="note.text"
+                :class="{ 'term-conflict': note.warn }"
+                >{{ note.text }}</span
               >
             </div>
           </div>
@@ -986,19 +1012,38 @@ export default {
       );
       return dimensionItems(this.candidates.filter((dim) => !used.has(dim)));
     },
-    scaleText(term) {
-      if (!term.dim) return "";
+    /**
+     * What the direction toggle does, with the dimension's range: "Lower is
+     * better: 851 counts as 1 and 3,070 as 0. Click for higher."
+     */
+    directionTip(term) {
+      if (!term.dim) return "Pick a dimension first.";
+      let lower = !!term.lowerIsBetter;
+      let text = lower ? "Lower is better" : "Higher is better";
       let bounds = this.scoringBoundsOf(term.dim);
-      if (!bounds) return "No values yet.";
-      let span = bounds[1] - bounds[0];
-      let text =
-        "Range " + formatBound(bounds[0], span) + "–" + formatBound(bounds[1], span);
-      if (term.dim === RATING_DIMENSION) text += " stars; unrated options get no value";
-      let goal = this.goalOf(term.dim);
-      if (goal) text += " · goal: " + (goal === MIN ? "lower" : "higher") + " is better";
-      return text;
+      if (bounds) {
+        let span = bounds[1] - bounds[0];
+        let best = formatBound(bounds[lower ? 0 : 1], span);
+        let worst = formatBound(bounds[lower ? 1 : 0], span);
+        text += ": " + best + " counts as 1 and " + worst + " as 0";
+      }
+      return text + ". Click for " + (lower ? "higher" : "lower") + ".";
     },
-    /** A newly picked dimension weighs the way its goal says, when it has one. */
+    /** Small print under a row: what to know, and a disagreement with the goal. */
+    termNotes(term) {
+      if (!term.dim) return [];
+      let notes = [];
+      if (!this.scoringBoundsOf(term.dim)) notes.push({ text: "No values yet." });
+      if (term.dim === RATING_DIMENSION) {
+        notes.push({ text: "Unrated options get no value." });
+      }
+      let conflict = this.goalConflict(term);
+      if (conflict) {
+        notes.push({ text: "Its goal says " + conflict + " is better.", warn: true });
+      }
+      return notes;
+    },
+        /** A newly picked dimension weighs the way its goal says, when it has one. */
     followGoal(term) {
       let goal = term.dim ? this.goalOf(term.dim) : null;
       if (goal) term.lowerIsBetter = goal === MIN;
@@ -1228,29 +1273,48 @@ export default {
   font-size: 13px;
   color: rgba(0, 0, 0, 0.7);
 }
+/* Dimension, slider, percentage, direction and remove on one line. */
 .term-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(140px, 1.1fr) minmax(90px, 1.3fr) 68px 84px 28px;
   align-items: center;
-  column-gap: 12px;
-  row-gap: 4px;
-  padding: 8px 0;
+  column-gap: 8px;
+  row-gap: 2px;
+  padding: 4px 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
-.term-dim {
-  flex: 1 1 180px;
-  min-width: 150px;
+.term-head {
+  padding: 8px 0 2px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: rgba(0, 0, 0, 0.5);
 }
-.term-weight {
-  flex: 2 1 200px;
-  display: flex;
-  align-items: center;
-  min-width: 180px;
+.term-head-share {
+  grid-column: 2 / 4;
 }
-.term-weight-input {
-  flex: 0 0 76px;
-  max-width: 76px;
-  margin-left: 8px;
+.term-dim,
+.term-share {
+  min-width: 0;
+}
+/* 32px rather than a dense field's 40, like the analysis' pickers. */
+.term-dim ::v-deep .v-input__control > .v-input__slot,
+.term-share ::v-deep .v-input__control > .v-input__slot {
+  min-height: 32px !important;
+}
+.term-dim ::v-deep .v-input__append-inner {
+  margin-top: 4px !important;
+}
+/* Narrow sides, so "100" and its "%" fit whole. */
+.term-share ::v-deep .v-input__control > .v-input__slot {
+  padding: 0 8px !important;
+}
+.term-share ::v-deep input {
+  text-align: right;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.term-share ::v-deep .v-text-field__suffix {
+  padding-left: 2px;
 }
 .dims-reference {
   margin: 16px 0 0;
@@ -1259,24 +1323,47 @@ export default {
   color: rgba(0, 0, 0, 0.6);
 }
 .term-slider {
-  flex: 1 1 auto;
-  min-width: 80px;
+  min-width: 0;
 }
-.term-flip {
-  margin-top: 0;
-  padding-top: 0;
-  flex: 0 0 auto;
+.term-slider ::v-deep .v-slider {
+  margin: 0;
+}
+.term-flip.v-btn {
+  justify-self: start;
+  min-width: 0 !important;
+  padding: 0 6px !important;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 12px;
+}
+/* The direction disagrees with the dimension's goal. */
+.term-flip--conflict.v-btn {
+  color: #b26500;
 }
 .term-remove {
-  flex: 0 0 auto;
+  justify-self: end;
 }
 .term-scale {
-  flex: 1 1 100%;
-  font-size: 12px;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  font-size: 11px;
   color: rgba(0, 0, 0, 0.55);
 }
 .term-conflict {
-  margin-left: 4px;
   color: #b26500;
+}
+/* Narrow: the dimension on a line of its own, the rest below it. */
+@media (max-width: 620px) {
+  .term-row {
+    grid-template-columns: minmax(0, 1fr) 68px 84px 28px;
+  }
+  .term-dim {
+    grid-column: 1 / -1;
+  }
+  .term-head {
+    display: none;
+  }
 }
 </style>
