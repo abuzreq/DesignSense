@@ -37,11 +37,13 @@ export function quartiles(sorted) {
 }
 
 /**
- * `{ ids, byDim, byId }` for the options far out on any of `dims`:
- *   ids    a Set of their ids;
- *   byDim  `{ dim: { fences: [lo, hi], low: [ids], high: [ids] } }` for each
- *          dimension with any, lowest and highest first;
- *   byId   `{ id: [{ dim, value, side }] }`, side "low" or "high".
+ * `{ ids, byDim, byId, fences }` for the options far out on any of `dims`:
+ *   ids     a Set of their ids;
+ *   byDim   `{ dim: { fences: [lo, hi], low: [ids], high: [ids] } }` for
+ *           each dimension with any, lowest and highest first;
+ *   byId    `{ id: [{ dim, value, side }] }`, side "low" or "high";
+ *   fences  `{ dim: [lo, hi] }` for every dimension judged, with or without
+ *           any beyond them.
  *
  * A dimension is passed over when it can't be judged this way: fewer than
  * MIN_VALUES values, no more than FEW_VALUES distinct ones (a sweep's
@@ -49,7 +51,7 @@ export function quartiles(sorted) {
  */
 export function findOutliers(rows, dims, options) {
   let isMissing = (options && options.isMissing) || defaultIsMissing;
-  let result = { ids: new Set(), byDim: {}, byId: {} };
+  let result = { ids: new Set(), byDim: {}, byId: {}, fences: {} };
   dims.forEach(function(dim) {
     let entries = [];
     let distinct = new Set();
@@ -66,6 +68,7 @@ export function findOutliers(rows, dims, options) {
     let spread = q3 - q1;
     if (!(spread > 0)) return;
     let fences = [q1 - FAR_OUT * spread, q3 + FAR_OUT * spread];
+    result.fences[dim] = fences;
     let low = entries.filter((entry) => entry.value < fences[0]);
     let high = entries.filter((entry) => entry.value > fences[1]);
     if (low.length === 0 && high.length === 0) return;
