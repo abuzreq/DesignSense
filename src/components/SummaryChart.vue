@@ -81,7 +81,7 @@ const STYLE = {
 
 /**
  * The summary card's scatterplot of the plotted pair: every option in view in
- * grey, the result in colour, the featured options ringed, and the pair's
+ * grey, the group in colour, the options on the card ringed, and the pair's
  * best trade-offs as a step line when both have goals. Plain SVG drawn by the
  * template, so it turns into an image like the rest of the card.
  */
@@ -92,6 +92,13 @@ export default {
     chart: { type: Object, required: true },
     width: { type: Number, default: 640 },
     height: { type: Number, default: 420 },
+    // The context of the options: every other option, in grey. Without it,
+    // only the group in colour is drawn (see narrate.js), and the axes fit it.
+    context: { type: Boolean, default: true },
+    // The options on the card ringed; without it, not ringed.
+    highlight: { type: Boolean, default: true },
+    // The options on the card; the whole group when not given.
+    ringed: { type: Set, default: null },
   },
   data() {
     return { margin: { top: 12, right: 16, bottom: 52, left: 64 }, style: STYLE };
@@ -103,9 +110,26 @@ export default {
     innerHeight() {
       return this.height - this.margin.top - this.margin.bottom;
     },
+    onCard() {
+      return this.ringed || this.chart.cart;
+    },
+    // The options in colour: the whole group, pictured or not.
+    group() {
+      return this.chart.group || this.chart.selected;
+    },
+    /** The options to ring; none when they aren't highlighted. */
+    featured() {
+      return this.highlight ? this.onCard : new Set();
+    },
     usable() {
       let { x, y } = this.chart;
-      return this.chart.rows.filter((row) => isFinite(this.num(row[x])) && isFinite(this.num(row[y])));
+      let group = this.group;
+      let onCard = this.onCard;
+      let rows = this.chart.rows.filter((row) => isFinite(this.num(row[x])) && isFinite(this.num(row[y])));
+      if (this.context) return rows;
+      let shown = rows.filter((row) => group.has(row) || onCard.has(row));
+      // Nothing to show on its own: better the whole cloud than an empty frame.
+      return shown.length > 0 ? shown : rows;
     },
     // Many points get smaller dots, so the cloud still reads as one.
     radius() {
@@ -125,11 +149,13 @@ export default {
       return this.ticksFor(this.yScale, 5);
     },
     points() {
-      let { x, y, selected, cart } = this.chart;
+      let { x, y } = this.chart;
+      let group = this.group;
+      let cart = this.featured;
       let out = { rest: [], selected: [], featured: [] };
       this.usable.forEach((row) => {
         let p = { id: row._id, x: this.xScale(this.num(row[x])), y: this.yScale(this.num(row[y])) };
-        if (selected.has(row)) out.selected.push(p);
+        if (group.has(row)) out.selected.push(p);
         else out.rest.push(p);
         if (cart.has(row)) out.featured.push(p);
       });

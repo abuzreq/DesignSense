@@ -130,6 +130,8 @@
               :item="inspectedItem"
               @onRatingChanged="onRatingChanged"
             />
+            <!-- Beside the rating: the stars say how much, the note says why. -->
+            <OptionNote v-if="inspectedItem" :item="inspectedItem" />
             <CustomDimensionControl
               v-if="inspectedItem"
               :item="inspectedItem"
@@ -183,6 +185,11 @@
               @click="closeInspection"
             />
           </div>
+        </div>
+
+        <!-- The note itself, where it is read with the option; it opens for editing. -->
+        <div v-if="inspectedItem && inspectedNote" class="inspected-note">
+          <OptionNote :item="inspectedItem" show-text />
         </div>
 
         <div class="params_panel_parent">
@@ -368,6 +375,15 @@
 }
 /* Sized from the panel's height (see `inspectorHeight`), not the window's, so
    the thumbnail list keeps its share however tall the panel is. */
+.inspected-note {
+  flex: 0 0 auto;
+  height: 42px;
+  padding: 2px 8px 4px;
+  overflow: hidden;
+}
+.inspected-note ::v-deep .on-text-body {
+  -webkit-line-clamp: 2;
+}
 .inspector_card {
   width: 100%;
   display: flex;
@@ -560,6 +576,7 @@ import { mapState, mapGetters } from "vuex";
 import * as d3 from "d3";
 import DragSelect from "@/plugins/DragSelect.vue";
 import StarRating from "@/components/StarRating.vue";
+import OptionNote from "@/components/OptionNote.vue";
 import CustomDimensionControl from "@/components/CustomDimensionControl.vue";
 import GalleryCard from "@/components/GalleryCard.vue";
 import ImageSwitcher from "@/components/ImageSwitcher.vue";
@@ -578,6 +595,8 @@ import PanelHeader from "@/components/PanelHeader.vue";
 const INSPECTOR_SHARE = 0.45;
 // The inspector's top bar (buttons, stars) and its details strip, in px.
 const INSPECTOR_BAR_HEIGHT = 42;
+// The note's strip under the bar, two lines at most, when there is a note.
+const INSPECTOR_NOTE_HEIGHT = 42;
 
 function isMissingValue(value) {
   return (
@@ -623,6 +642,7 @@ export default {
   components: {
     PanelHeader,
     StarRating,
+    OptionNote,
     CustomDimensionControl,
     GalleryCard,
     ImageSwitcher,
@@ -817,9 +837,15 @@ export default {
       if (!(panel > 0)) return 400;
       return Math.round(panel * INSPECTOR_SHARE);
     },
-    /** The inspected image's height: the inspector less its top bar. */
+    /** The inspected image's height: the inspector less its top bar and note. */
     inspectorImageHeight() {
-      return Math.max(60, this.inspectorHeight - INSPECTOR_BAR_HEIGHT);
+      let taken = INSPECTOR_BAR_HEIGHT + (this.inspectedNote ? INSPECTOR_NOTE_HEIGHT : 0);
+      return Math.max(60, this.inspectorHeight - taken);
+    },
+    /** The note on the inspected option, or "". */
+    inspectedNote() {
+      if (!this.inspectedItem) return "";
+      return this.$store.state.optionNotes[String(this.inspectedItem._id)] || "";
     },
     /** The inspected option's views, and the one on screen. */
     inspectedImages() {

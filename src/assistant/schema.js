@@ -10,6 +10,7 @@
 import { buildColumnIndex } from "./lexicon.js";
 import { isAssetColumn } from "../data/assets.js";
 import { goalFor, goalSourceFor } from "../store/goals.js";
+import { isRating } from "../ratings.js";
 
 /**
  * Columns a question is never about. Pictures and models are left to
@@ -44,9 +45,11 @@ function signature(state) {
   );
 }
 
-/** Custom and weighted dimensions: numeric, but never filtered by. */
+/** Custom and weighted dimensions: numeric, but never filtered by. The rating can be. */
 function unfilterableOf(state) {
-  return (state.customDimensions || []).map((def) => def.name);
+  return (state.customDimensions || [])
+    .map((def) => def.name)
+    .filter((name) => !isRating(name));
 }
 
 /** `{ dim: "max" | "min" }` for the columns that have a goal (see store/goals.js). */

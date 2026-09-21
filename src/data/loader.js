@@ -19,9 +19,14 @@ export const loadState = Vue.observable({
   link: null,
   // A short confirmation after a load the user started.
   notice: null,
+  // The file's columns and what they were read as: { fields, types, images,
+  // models }, or null before the first load.
+  columns: null,
 });
 
 let mount = null;
+// The last dataset mounted, so it can be shown again (see remountDataset).
+let lastMounted = null;
 let latestLoad = 0;
 const STALE = { stale: true };
 
@@ -45,6 +50,18 @@ function rememberInAddressBar(link) {
 /** `options.mount(data, dataTypesMap, { link, name })` shows a loaded dataset. */
 export function configureLoader(options) {
   mount = options.mount;
+}
+
+/**
+ * Shows the dataset on screen again in a fresh app, as a load would, without
+ * fetching it: for changes that every view has to read from the start, such
+ * as the roles of its columns. `notice` is said once it is back.
+ */
+export function remountDataset(notice) {
+  if (!lastMounted) return;
+  mount.apply(null, lastMounted);
+  loadState.notice = notice || null;
+  loadState.warnings = [];
 }
 
 /**
@@ -80,11 +97,17 @@ export function loadDataset(input, options) {
         files: fetched.files,
         rawFiles: fetched.rawFiles,
       });
-      mount(dataset.data, dataset.dataTypesMap, {
-        link: fetched.link || null,
-        // A local file has no link; its name helps tell it from others.
-        name: resolved && resolved.kind === "file" ? resolved.file.name : null,
-      });
+      loadState.columns = dataset.columns || null;
+      lastMounted = [
+        dataset.data,
+        dataset.dataTypesMap,
+        {
+          link: fetched.link || null,
+          // A local file has no link; its name helps tell it from others.
+          name: resolved && resolved.kind === "file" ? resolved.file.name : null,
+        },
+      ];
+      mount.apply(null, lastMounted);
       loadState.warnings = dataset.warnings;
       loadState.link = fetched.link || null;
       rememberInAddressBar(loadState.link);

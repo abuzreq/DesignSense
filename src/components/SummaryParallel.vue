@@ -44,8 +44,8 @@ const MAX_REST_LINES = 1500;
 
 /**
  * The summary card's parallel coordinates: one axis per dimension the panel
- * shows, better at the top as there, every option in view in grey, the result
- * in colour and the featured options in orange.
+ * shows, better at the top as there, every option in view in grey, the group
+ * in colour and the options on the card in orange.
  */
 export default {
   name: "SummaryParallel",
@@ -54,6 +54,13 @@ export default {
     parallel: { type: Object, required: true },
     width: { type: Number, default: 600 },
     height: { type: Number, default: 300 },
+    // The context of the options: every other option, in grey. Without it,
+    // only the group in colour is drawn (see narrate.js), and the axes fit it.
+    context: { type: Boolean, default: true },
+    // The options on the card ringed; without it, not ringed.
+    highlight: { type: Boolean, default: true },
+    // The options on the card; the whole group when not given.
+    ringed: { type: Set, default: null },
   },
   data() {
     return { margin: { top: 24, right: 36, bottom: 10, left: 34 }, style: STYLE };
@@ -65,8 +72,29 @@ export default {
     innerHeight() {
       return this.height - this.margin.top - this.margin.bottom;
     },
+    onCard() {
+      return this.ringed || this.parallel.featured;
+    },
+    // The options in colour: the whole group, pictured or not.
+    group() {
+      return this.parallel.group || this.parallel.selected;
+    },
+    /** The options to draw in orange; none when they aren't highlighted. */
+    featured() {
+      return this.highlight ? this.onCard : new Set();
+    },
+    /** The options drawn: every one in view, or only the group. */
+    rows() {
+      let rows = this.parallel.rows;
+      let group = this.group;
+      let onCard = this.onCard;
+      if (this.context) return rows;
+      let shown = rows.filter((row) => group.has(row) || onCard.has(row));
+      return shown.length > 0 ? shown : rows;
+    },
     scales() {
-      let { dims, goals, rows } = this.parallel;
+      let { dims, goals } = this.parallel;
+      let rows = this.rows;
       let out = {};
       dims.forEach((dim) => {
         let extent = d3.extent(rows, (row) => this.num(row[dim]));
@@ -100,7 +128,9 @@ export default {
       });
     },
     lines() {
-      let { rows, selected, featured } = this.parallel;
+      let selected = this.group;
+      let featured = this.featured;
+      let rows = this.rows;
       let out = { rest: [], selected: [], featured: [] };
       let rest = rows.filter((row) => !selected.has(row));
       let every = Math.max(1, Math.ceil(rest.length / MAX_REST_LINES));

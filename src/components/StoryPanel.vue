@@ -141,6 +141,8 @@ export default {
         snapshot: capture.snapshot,
         title: capture.title,
         note: capture.note,
+        focus: capture.focus || null,
+        captureId: capture.id,
       });
     },
     meta(capture) {

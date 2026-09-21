@@ -21,8 +21,9 @@ export const DETAIL_BLACKLIST = [
   "collection",
   "images",
   "description",
-  // Shown as stars rather than as a number.
-  "Rating",
+  // The rating, shown as stars rather than as a number (RATING_DIMENSION
+  // in ratings.js; written out, as this file imports nothing).
+  "custom:Rating",
   // Added for every row and never filled in by the app.
   "Tags",
 ];

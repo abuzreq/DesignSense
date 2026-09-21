@@ -179,6 +179,13 @@ export function createGoalsStore(options) {
        * matches what the dimension is given anyway isn't stored, so a goal
        * the file declares keeps following the file.
        */
+      /** Forgets every goal chosen here, so each is the file's or none again. */
+      clearGoalChoices(context) {
+        Object.keys(context.state.goalChoices).forEach((dim) => {
+          context.commit("setGoalChoice", { dim: dim, choice: null });
+        });
+        persist(context.state);
+      },
       setGoal(context, payload) {
         let goal = payload.goal === MAX || payload.goal === MIN ? payload.goal : null;
         let given = givenGoal(payload.dim);

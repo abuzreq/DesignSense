@@ -18,6 +18,9 @@ import {
 } from "@/data/loader.js";
 import { readShareParams } from "@/data/shareLink.js";
 import { datasetKey } from "@/customDimensions.js";
+import { installErrorCapture } from "@/errors.js";
+import { setColumnRoles } from "@/columns.js";
+import { loadColumnRoles } from "@/data/columnRoles.js";
 
 window.Gkey = "AIzaSyCSrF08UMawxKIb0m4JsA1mYE5NMmP36bY";
 
@@ -26,6 +29,8 @@ require("vue-tour/dist/vue-tour.css");
 Vue.use(VueTour);
 
 Vue.config.productionTip = false;
+// Errors nothing handled are kept, so feedback can carry them (see errors.js).
+installErrorCapture();
 
 let app = null;
 
@@ -51,6 +56,8 @@ function mountApp(data, dataTypesMap, options) {
         ids: data.map((d) => d._id),
       })
     : null;
+  // Roles the user gave this dataset's columns, before anything reads them.
+  setColumnRoles(loadColumnRoles(key).roles);
   app = new Vue({
     vuetify,
     vdr,

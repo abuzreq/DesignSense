@@ -118,6 +118,18 @@
             <StarRating :item="col.row" @onRatingChanged="rate(col.row, $event)" />
           </div>
 
+          <!-- Notes, where options are weighed against each other. -->
+          <div class="cmp-label">
+            <span class="cmp-label-text">Your note</span>
+          </div>
+          <div
+            v-for="col in columns"
+            :key="'note-' + col.id"
+            class="cmp-cell cmp-note"
+          >
+            <OptionNote :item="col.row" show-text />
+          </div>
+
           <template v-for="block in blocks">
             <div :key="block.key + '-block'" class="cmp-block">
               <button
@@ -193,6 +205,7 @@
 <script>
 import { mapGetters, mapState } from "vuex";
 import StarRating from "@/components/StarRating.vue";
+import OptionNote from "@/components/OptionNote.vue";
 import TipButton from "@/components/TipButton.vue";
 import ImageSwitcher from "@/components/ImageSwitcher.vue";
 import DimensionName from "@/components/DimensionName.vue";
@@ -235,7 +248,7 @@ const CLOSE_TRANSITION_MS = 400;
  */
 export default {
   name: "CompareDialog",
-  components: { DimensionName, ImageSwitcher, StarRating, TipButton },
+  components: { DimensionName, ImageSwitcher, OptionNote, StarRating, TipButton },
   data() {
     return {
       // Whether the dialog's content exists: while open, and through the
@@ -718,6 +731,11 @@ export default {
 .cmp-rating {
   display: flex;
   justify-content: center;
+}
+.cmp-note {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .cmp-block {

@@ -1,15 +1,17 @@
-import { RATING_DIMENSION } from "@/ratings.js";
 import { pruneCart } from "./cart.js";
 
 /*
  * Work saved per dataset: sets (their members, the filters they were saved
- * from, their names and notes), the shortlist, and star ratings. It lives in localStorage
+ * from, their names and notes), the shortlist, and notes on single options.
+ * Star ratings were saved here too, until the rating became a custom
+ * dimension (see ratings.js): those still here are read once and handed to
+ * the dimensions store, and not written again. It lives in localStorage
  * under the dataset's key (see datasetKey in customDimensions.js) and comes
  * back when that dataset opens again. Filters are not kept; they belong to
  * one visit.
  *
  *   { version: 1, sets: [{ id, members, criteria, name, comment }],
- *     setsCounter, cart: [id], ratings: { id: stars } }
+ *     setsCounter, cart: [id], notes: { id: text } }
  */
 
 export const SESSION_PREFIX = "designsense-session-v1:";
@@ -23,11 +25,12 @@ const SAVED_MUTATIONS = [
   "restoreRemovedSet",
   "setSetMetadata",
   "updateSet",
-  "rateAlt",
   "clearSets",
   "addToCart",
   "removeFromCart",
   "setCart",
+  "setOptionNote",
+  "clearOptionNotes",
 ];
 
 export function emptySets() {
@@ -40,12 +43,8 @@ export function emptySets() {
   };
 }
 
-/** What to store for the store's sets and the rows' ratings. */
-export function serializeSession(state, rows) {
-  let ratings = {};
-  rows.forEach((row) => {
-    if (row[RATING_DIMENSION] > 0) ratings[row._id] = row[RATING_DIMENSION];
-  });
+/** What to store for the store's sets, shortlist and notes. */
+export function serializeSession(state) {
   return {
     version: SESSION_VERSION,
     sets: state.setsIDs.map((id) => {
@@ -60,7 +59,7 @@ export function serializeSession(state, rows) {
     }),
     setsCounter: state.setsCounter,
     cart: (state.cart || []).slice(),
-    ratings: ratings,
+    notes: Object.assign({}, state.optionNotes || {}),
   };
 }
 
@@ -69,7 +68,7 @@ export function isEmptySession(session) {
   return (
     session.sets.length === 0 &&
     session.cart.length === 0 &&
-    Object.keys(session.ratings).length === 0
+    Object.keys(session.notes || {}).length === 0
   );
 }
 
@@ -84,6 +83,17 @@ function isStoredSet(set) {
     Array.isArray(set.members) &&
     (set.criteria === null || Array.isArray(set.criteria))
   );
+}
+
+/** Notes kept as { id: text }, dropping anything else. */
+function parseNotes(notes) {
+  let out = {};
+  if (!notes || typeof notes !== "object") return out;
+  Object.keys(notes).forEach((id) => {
+    let text = notes[id];
+    if (isStoredId(id) && typeof text === "string" && text.trim() !== "") out[id] = text;
+  });
+  return out;
 }
 
 /** The stored session, or null when the text is missing, malformed or from another version. */
@@ -103,25 +113,18 @@ export function parseSession(text) {
     cart: Array.isArray(parsed.cart) ? parsed.cart.filter(isStoredId) : [],
     ratings:
       parsed.ratings && typeof parsed.ratings === "object" ? parsed.ratings : {},
+    notes: parseNotes(parsed.notes),
   };
 }
 
 /**
- * Puts saved ratings on `rows` and returns the sets to start from. IDs that
- * are no longer in the data are dropped, so a dataset that changed still
- * opens with what fits.
+ * The sets to start from. IDs that are no longer in the data are dropped, so
+ * a dataset that changed still opens with what fits.
  */
 export function applySession(saved, rows) {
   let sets = emptySets();
   if (!saved) return sets;
   let byId = new Map(rows.map((row) => [String(row._id), row]));
-  Object.keys(saved.ratings).forEach((id) => {
-    let row = byId.get(id);
-    let stars = saved.ratings[id];
-    if (row && typeof stars === "number" && stars > 0) {
-      row[RATING_DIMENSION] = stars;
-    }
-  });
   saved.sets.forEach((set) => {
     if (Object.prototype.hasOwnProperty.call(sets.setsMap, set.id)) return;
     sets.setsIDs.push(set.id);
@@ -153,8 +156,9 @@ if (typeof window !== "undefined") {
 }
 
 /**
- * Opens the saved work for one dataset: puts its ratings on `rows` and returns
- * `{ sets, cart, attach(store), clear() }`. `attach` saves after every change;
+ * Opens the saved work for one dataset and returns `{ sets, notes, cart,
+ * legacyRatings, attach(store), clear() }`, where `legacyRatings` are
+ * { id: stars } saved before ratings moved to the dimensions store. `attach` saves after every change;
  * `clear` forgets what was saved. Without a dataset key nothing is saved.
  */
 export function openSession(rows, datasetKey) {
@@ -176,7 +180,7 @@ export function openSession(rows, datasetKey) {
     timer = null;
     flushPending = null;
     if (!storage) return;
-    let session = serializeSession(store.state, store.state.rawData);
+    let session = serializeSession(store.state);
     try {
       if (isEmptySession(session)) storage.removeItem(key);
       else storage.setItem(key, JSON.stringify(session));
@@ -185,17 +189,38 @@ export function openSession(rows, datasetKey) {
       warned = true;
       store.commit("showNotice", {
         text:
-          "Your sets and ratings couldn't be saved in this browser, so they last until the page is reloaded.",
+          "Your sets, shortlist and notes couldn't be saved in this browser, so they last until the page is reloaded.",
       });
     }
   }
 
+  // Notes on options the collection no longer has are dropped too.
+  let ids = new Set(rows.map((row) => String(row._id)));
+  let notes = {};
+  if (saved) {
+    Object.keys(saved.notes).forEach((id) => {
+      if (ids.has(id)) notes[id] = saved.notes[id];
+    });
+  }
+  // Ratings for options the collection no longer has are dropped as well.
+  let legacyRatings = {};
+  if (saved) {
+    Object.keys(saved.ratings).forEach((id) => {
+      if (ids.has(id) && saved.ratings[id] > 0) legacyRatings[id] = saved.ratings[id];
+    });
+  }
   return {
     sets: sets,
+    notes: notes,
+    legacyRatings: legacyRatings,
     // Ids the collection no longer has are dropped, as they are for sets.
     cart: pruneCart(saved ? saved.cart : [], rows),
     attach(store) {
       if (!storage) return;
+      // Ratings kept here from before are in the dimensions store by now
+      // (the store saves them before attaching this), so they go from here:
+      // left behind, they would come back after being cleared.
+      if (saved && Object.keys(saved.ratings).length > 0) write(store);
       store.subscribe((mutation) => {
         if (SAVED_MUTATIONS.indexOf(mutation.type) === -1) return;
         if (timer) clearTimeout(timer);

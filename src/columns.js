@@ -13,6 +13,10 @@
  * from DesignSense loads back the same way, but the interface shows only what
  * follows it.
  *
+ * A user can give a column another role after loading (see
+ * data/columnRoles.js). Those roles are set here, with setColumnRoles, before
+ * a dataset's store is built, and win over the prefixes.
+ *
  * Kept free of imports so the loader, the store and the views can share it.
  */
 
@@ -20,6 +24,9 @@ export const INPUT = "in";
 export const OUTPUT = "out";
 export const CUSTOM = "custom";
 export const WEIGHTED = "weighted";
+
+// The star rating's column: a custom dimension of its own (see ratings.js).
+export const RATING_DIMENSION = CUSTOM + ":Rating";
 
 // The goals (see GOAL_MARKS) a name's prefix can declare.
 export const MAX = "max";
@@ -32,19 +39,43 @@ function prefixOf(name) {
   return match ? match[1].toLowerCase() : null;
 }
 
-/**
- * "in", "out", "custom" or "weighted" by the name's prefix, or null. A
- * "min:" or "max:" column is an output that also says which way is better.
- */
-export function columnKind(name) {
+// Roles given after loading: { column: "in" | "out" | "none" }.
+let roleOverrides = {};
+
+/** Sets the roles the user gave the current dataset's columns. */
+export function setColumnRoles(roles) {
+  roleOverrides = Object.assign({}, roles || {});
+}
+
+/** "in", "out", "custom" or "weighted" by the name's prefix alone, or null. */
+export function prefixKind(name) {
   let prefix = prefixOf(name);
   return prefix === MIN || prefix === MAX ? OUTPUT : prefix;
 }
 
-/** "min" or "max" when the name's prefix declares its goal, else null. */
+/**
+ * "in", "out", "custom" or "weighted", or null: the role the user gave the
+ * column, else its prefix's. A "min:" or "max:" column is an output that also
+ * says which way is better.
+ */
+export function columnKind(name) {
+  let kind = prefixKind(name);
+  if (kind === CUSTOM || kind === WEIGHTED) return kind;
+  let role = roleOverrides[name];
+  if (role === INPUT || role === OUTPUT) return role;
+  if (role === "none") return null;
+  return kind;
+}
+
+/**
+ * "min" or "max" when the name's prefix declares its goal, else null. A
+ * column the user made something other than an output declares none.
+ */
 export function fileGoal(name) {
   let prefix = prefixOf(name);
-  return prefix === MIN || prefix === MAX ? prefix : null;
+  if (prefix !== MIN && prefix !== MAX) return null;
+  let role = roleOverrides[name];
+  return role && role !== OUTPUT ? null : prefix;
 }
 
 /** The name the interface shows: the column's name without its prefix. */

@@ -20,6 +20,7 @@ import {
   removeStored,
   serializeDimensions,
   termCandidates,
+  upgradeLegacyRatings,
   validateBounds,
   validateName,
   validateTerms,
@@ -28,7 +29,13 @@ import {
   writeStored,
 } from "@/customDimensions.js";
 import { columnKind, displayName, prefixedName } from "@/columns.js";
-import { RATING_DIMENSION, RATING_STARS } from "@/ratings.js";
+import {
+  RATING_BOUNDS,
+  RATING_DIMENSION,
+  isRated,
+  isRating,
+  starsOf,
+} from "@/ratings.js";
 
 const VIEW_SETTINGS_ON_DIMENSIONS = ["sortBy", "scatterX", "scatterY"];
 const UNSAVED_MESSAGE =
@@ -52,9 +59,9 @@ function quoted(name) {
   return "“" + displayName(name) + "”";
 }
 
-/** An unrated option has no rating to weigh, rather than a rating of zero. */
+/** A value that isn't a number is missing: no value entered, or none in the file. */
 export function isMissingFor(dim, value) {
-  return !isNumber(value) || (dim === RATING_DIMENSION && !(value > 0));
+  return !isNumber(value);
 }
 
 /**
@@ -69,7 +76,8 @@ export function isMissingFor(dim, value) {
  *
  * Values are written onto rows in place, never by replacing them in `data`,
  * which would rebuild every chart; `dimensionValuesVersion` tells views that
- * draw imperatively that values changed, ratings included.
+ * draw imperatively that values changed, ratings included (the rating is a
+ * custom dimension; see ratings.js).
  * `dimensionStructure` changes only when dimensions are added, removed or
  * drawn over a new range, which is when charts have to rebuild their axes.
  */
@@ -85,26 +93,26 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
   const extents = numericExtents(
     rows,
     numericColumns.filter(
-      (dim) =>
-        dim !== RATING_DIMENSION &&
-        columnKind(dim) !== CUSTOM &&
-        columnKind(dim) !== WEIGHTED
+      (dim) => columnKind(dim) !== CUSTOM && columnKind(dim) !== WEIGHTED
     )
   );
   const scoringBounds = (defs) => (dim) => {
     let def = defs.find((d) => d.name === dim);
     if (def) return fixedBounds(def);
-    if (dim === RATING_DIMENSION) return RATING_STARS;
     return extents[dim] || null;
   };
 
+  // Ratings saved before the rating was a custom dimension come in here, once.
+  const upgraded = upgradeLegacyRatings(
+    storageKey ? parseStoredDimensions(readStored(storage, storageKey)) : null,
+    (options && options.legacyRatings) || {},
+    Object.keys(dataTypesMap)
+  );
   const loaded = loadDefinitions({
     rows: rows,
     columns: Object.keys(dataTypesMap),
     numericColumns: numericColumns,
-    stored: storageKey
-      ? parseStoredDimensions(readStored(storage, storageKey))
-      : null,
+    stored: upgraded.stored,
     boundsFor: scoringBounds,
     isMissing: isMissingFor,
   });
@@ -200,10 +208,16 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
       state.customDimensions.filter(isCustom).map((def) => def.name),
     weightedDimensionNames: (state) =>
       state.customDimensions.filter(isWeighted).map((def) => def.name),
+    // The rating is the one custom dimension that can be filtered by.
     unfilterableDimensions: (state) =>
-      state.customDimensions.map((def) => def.name),
+      state.customDimensions
+        .map((def) => def.name)
+        .filter((name) => !isRating(name)),
     isUnfilterable: (state) => (dim) =>
-      state.customDimensions.some((def) => def.name === dim),
+      !isRating(dim) && state.customDimensions.some((def) => def.name === dim),
+    /** Whether the rating exists: something was rated, or a weighted dimension weighs it. */
+    hasRatingDimension: (state) =>
+      state.customDimensions.some((def) => isRating(def.name)),
     dimensionDef: (state) => (name) =>
       state.customDimensions.find((def) => def.name === name) || null,
     /** The fixed range a custom or weighted dimension is drawn over; null for others. */
@@ -316,12 +330,15 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
       state.dimensionValuesVersion += 1;
     },
     /**
-     * Empties every dimension without removing any: what was entered here
+     * Empties custom dimensions without removing any: what was entered here
      * goes, and a dimension the file brought holds the file's values again.
      * Weighted ones are read again from whatever their terms still hold.
+     * `payload.only` names the ones to empty; without it, every one.
      */
-    clearEnteredValues(state) {
+    clearEnteredValues(state, payload) {
+      let only = payload && payload.only;
       state.customDimensions.filter(isCustom).forEach((def) => {
+        if (only && only.indexOf(def.name) === -1) return;
         state.rawData.forEach((row) => {
           row[def.name] = def.fromFile ? fileValue(def.name, row) : undefined;
         });
@@ -329,14 +346,6 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
       state.customDimensions
         .filter(isWeighted)
         .forEach((def) => recomputeWeighted(state, def));
-      state.dimensionValuesVersion += 1;
-    },
-    /** A value outside the custom dimensions changed, such as a rating. */
-    refreshDerivedValues(state, payload) {
-      let row = rowById.get(String(payload.id));
-      let affected = dependentsOf(state.customDimensions, payload.dim);
-      if (!row || affected.length === 0) return;
-      affected.forEach((def) => recomputeWeighted(state, def, row));
       state.dimensionValuesVersion += 1;
     },
     setDimensionDialog(state, payload) {
@@ -416,13 +425,51 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
           bounds: def.bounds,
         }),
       });
-      if (payload.final) persist(context);
+      if (payload.final) {
+        persist(context);
+        // The rating's weight may have been taken out.
+        context.dispatch("dropRatingIfUnused");
+      }
+      return { ok: true };
+    },
+    /**
+     * The rating, made the first time an option is rated. It skips the name
+     * check: "Rating" may be a column of the file too, and this one is apart
+     * from it by its prefix.
+     */
+    createRatingDimension(context) {
+      if (context.getters.hasRatingDimension) return { ok: true };
+      context.commit("addDimensionDefinition", {
+        def: makeCustomDimension(RATING_DIMENSION, RATING_BOUNDS.slice()),
+      });
+      persist(context);
+      return { ok: true };
+    },
+    /**
+     * Lets the rating go once nothing is rated, so it is there only while it
+     * holds something: unless the file brought it, a weighted dimension
+     * weighs it and would lose that weight, or a filter is on it.
+     */
+    dropRatingIfUnused(context) {
+      let def = context.getters.dimensionDef(RATING_DIMENSION);
+      if (!def || def.fromFile) return { ok: true };
+      if (context.state.rawData.some(isRated)) return { ok: true };
+      if (dependentsOf(context.state.customDimensions, RATING_DIMENSION).length > 0) {
+        return { ok: true };
+      }
+      let filtered = (context.getters.narrowingFilters || []).some(
+        (f) => (f.dims || []).indexOf(RATING_DIMENSION) !== -1
+      );
+      if (filtered) return { ok: true };
+      context.commit("removeDimensionDefinition", { name: RATING_DIMENSION });
+      persist(context);
       return { ok: true };
     },
     /** New bounds must hold every value already entered; values aren't clamped behind the user's back. */
     updateCustomBounds(context, payload) {
       let def = context.getters.dimensionDef(payload.name);
       if (!isCustom(def)) return { error: "That dimension is gone." };
+      if (isRating(def.name)) return { error: "Ratings run from 1 to 5 stars." };
       let bounds = validateBounds(payload.bounds);
       if (bounds.error) return { error: bounds.error };
       let lo = bounds.bounds[0];
@@ -463,6 +510,8 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
       }
       context.commit("removeDimensionDefinition", { name: payload.name });
       persist(context);
+      // A weighted dimension may have been all that kept an empty rating.
+      context.dispatch("dropRatingIfUnused");
       return { ok: true };
     },
     clearDimensionValues(context, payload) {
@@ -471,16 +520,34 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
       }
       context.commit("clearDimensionValues", { name: payload.name });
       persist(context);
+      if (isRating(payload.name)) context.dispatch("dropRatingIfUnused");
       return { ok: true };
     },
     /**
-     * Clearing the saved work empties the dimensions rather than removing
-     * them: the criteria a user set up are theirs to keep, the values they
-     * filled in are the work. What is saved afterwards is the definitions
-     * alone.
+     * Empties the dimensions rather than removing them: the criteria a user
+     * set up stay unless removing them is asked for too (removeAddedDimensions).
+     * `{ only }` names the dimensions to empty; without it, every one.
      */
-    clearEnteredValues(context) {
-      context.commit("clearEnteredValues");
+    clearEnteredValues(context, payload) {
+      context.commit("clearEnteredValues", payload);
+      persist(context);
+      return { ok: true };
+    },
+    /**
+     * Removes the custom and weighted dimensions added in DesignSense, but
+     * not the rating, which comes and goes with ratings, nor those the file
+     * brought, which can't be removed.
+     */
+    removeAddedDimensions(context) {
+      context.state.customDimensions
+        .filter((def) => !def.fromFile && !isRating(def.name))
+        .map((def) => def.name)
+        .forEach((name) => {
+          // Removing a dimension can take a weighted one that weighs it along.
+          if (context.getters.dimensionDef(name)) {
+            context.commit("removeDimensionDefinition", { name: name });
+          }
+        });
       persist(context);
       return { ok: true };
     },
@@ -499,10 +566,13 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
     setDimensionValue(context, payload) {
       let def = context.getters.dimensionDef(payload.dim);
       if (!isCustom(def)) return { error: "Only custom dimensions take values." };
+      let value = cleanValue(payload.value, def.bounds);
+      // Whole stars only.
+      if (isRating(def.name) && value !== undefined) value = starsOf(value);
       context.commit("setDimensionValue", {
         dim: def.name,
         id: payload.id,
-        value: cleanValue(payload.value, def.bounds),
+        value: value,
       });
       if (payload.final) persist(context);
       return { ok: true };
@@ -514,6 +584,8 @@ export function createDimensionsStore(rows, dataTypesMap, options) {
 
   return {
     names: loaded.defs.filter((def) => !def.fromFile).map((def) => def.name),
+    // Old ratings were brought in, so the store saves them once it exists.
+    migrated: upgraded.changed,
     state: state,
     getters: getters,
     mutations: mutations,

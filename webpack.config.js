@@ -137,6 +137,11 @@ module.exports = (env, argv) => {
       // ReferenceError deep inside a feature. This is the whole shim: nothing
       // in src/ asks for it.
       new webpack.ProvidePlugin({ process: 'process/browser' }),
+      // The version the app shows and reports with feedback: package.json's,
+      // so the two can't drift apart.
+      new webpack.DefinePlugin({
+        __APP_VERSION__: JSON.stringify(require('./package.json').version),
+      }),
       new VueLoaderPlugin(),
       // src/plugins/vuetify.js imports vuetify/lib, which registers nothing on
       // its own: this is what turns each <v-btn> in a template into an import

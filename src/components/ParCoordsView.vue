@@ -11,7 +11,7 @@
       <template v-slot:actions>
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
-            <v-btn small text class="ph-text-btn" v-on="on" @click="openDimensions">
+            <v-btn id="dimensions-button" small text class="ph-text-btn" v-on="on" @click="openDimensions">
               <v-icon small left>mdi-scale-balance</v-icon>
               Dimensions
             </v-btn>
@@ -81,7 +81,7 @@ import { round } from "@/components/utils.js";
 import { formatValue, sameRange } from "@/store/filters.js";
 import { axisTickFormat } from "@/components/axisFormat.js";
 import { operations } from "@/components/operations.js";
-import { RATING_BOUNDS, RATING_DIMENSION } from "@/ratings.js";
+import { RATING_BOUNDS, RATING_DIMENSION, isRating, starsOf } from "@/ratings.js";
 import { snapValue } from "@/customDimensions.js";
 import {
   CUSTOM,
@@ -466,9 +466,13 @@ export default {
           let y = Math.max(top, Math.min(nullY, d3.event.y));
           // Past the separator line, halfway down to the missing band.
           let cleared = y >= (bottom + nullY) / 2;
+          let raw = yscale.invert(Math.min(y, bottom));
+          // Ratings are whole stars.
           let value = cleared
             ? undefined
-            : snapValue(yscale.invert(Math.min(y, bottom)), def.bounds);
+            : isRating(dim)
+            ? starsOf(raw)
+            : snapValue(raw, def.bounds);
           gesture.value = value;
           gesture.y = cleared ? nullY : yscale(value);
           this.__knobY = gesture.y;
@@ -492,12 +496,18 @@ export default {
           vm.cleanTooltip();
           if (vm.hovered) vm.addTooltip([vm.hovered]);
           if (gesture && gesture.moved) {
-            vm.$store.dispatch("setDimensionValue", {
-              dim: dim,
-              id: d._id,
-              value: d[dim],
-              final: true,
-            });
+            if (isRating(dim)) {
+              // As the stars do: a filter on Rating follows, and clearing
+              // the last rating lets the rating go.
+              vm.$store.dispatch("rateAlt", { item: d, rating: d[dim] || 0 });
+            } else {
+              vm.$store.dispatch("setDimensionValue", {
+                dim: dim,
+                id: d._id,
+                value: d[dim],
+                final: true,
+              });
+            }
           }
         });
     },
@@ -572,11 +582,13 @@ export default {
     decorateAxes(chart) {
       let custom = new Set(this.customDimensionNames);
       let weighted = new Set(this.weightedDimensionNames);
+      // The rating is custom but keeps its brushes: it can be filtered by.
+      let unfilterable = new Set(this.unfilterableDimensions);
       let band = axisBand(chart);
       chart.svg.selectAll("g.dimension").each(function(dim) {
         let group = d3.select(this);
         group
-          .classed("ds-unfilterable", custom.has(dim) || weighted.has(dim))
+          .classed("ds-unfilterable", unfilterable.has(dim))
           .classed("ds-custom-axis", custom.has(dim))
           .classed("ds-weighted-axis", weighted.has(dim));
         let mark = custom.has(dim)

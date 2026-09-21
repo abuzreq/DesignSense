@@ -572,6 +572,7 @@ export const COMMANDS = {
     title: "Save the results as a set",
     group: "Sets",
     run(ctx, args) {
+      if (ctx.getters.selectedShown.length === 0) return { message: "Nothing is selected to save." };
       ctx.store.dispatch("createSet", { setName: args.name || null });
       return { message: "Saved" + (args.name ? " as " + args.name : "") + "." };
     },

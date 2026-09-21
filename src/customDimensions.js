@@ -12,6 +12,8 @@
  * first scaled to 0-1 by its bounds (and flipped when lower is better), so its
  * value always lies in 0-1. Neither can be filtered by: a value the user is
  * still deciding on would silently move options in and out of the result.
+ * The star rating is the exception: a custom dimension of whole stars, 1 to
+ * 5, that can be filtered by (see ratings.js).
  *
  * Names carry the column prefix of their kind (see columns.js), so a file
  * saved with these dimensions loads back with them. A data file can bring its
@@ -35,6 +37,11 @@ import {
   displayName,
   prefixedName,
 } from "./columns.js";
+import {
+  LEGACY_RATING_COLUMN,
+  RATING_BOUNDS,
+  RATING_DIMENSION,
+} from "./ratings.js";
 
 export { CUSTOM, WEIGHTED };
 export const STORAGE_PREFIX = "designsense-dimensions-v1:";
@@ -379,7 +386,10 @@ export function fileDimensions(rows, columns) {
       kind === CUSTOM
         ? makeCustomDimension(
             column,
-            boundsAround(extent, DEFAULT_CUSTOM_BOUNDS),
+            // Stars, however few the file's ratings span.
+            column === RATING_DIMENSION
+              ? RATING_BOUNDS.slice()
+              : boundsAround(extent, DEFAULT_CUSTOM_BOUNDS),
             true
           )
         : makeWeightedDimension(column, [], {
@@ -695,6 +705,53 @@ function upgradeFromVersion1(parsed) {
     values[renamed.has(name) ? renamed.get(name) : name] = parsed.values[name];
   });
   return { dimensions: dimensions, values: values };
+}
+
+/**
+ * Ratings from before the rating was a custom dimension, brought into
+ * `stored` (as parseStoredDimensions returns it, or null): `ratings` is
+ * { id: stars } from the saved session, and weighted dimensions that weighed
+ * the old "Rating" column weigh the new one. Nothing changes when the rating
+ * already has a definition, or when the data has a "Rating" column of its
+ * own, which such terms then mean. Returns { stored, changed }.
+ */
+export function upgradeLegacyRatings(stored, ratings, columns) {
+  if ((columns || []).indexOf(LEGACY_RATING_COLUMN) !== -1) {
+    return { stored: stored, changed: false };
+  }
+  let dimensions = (stored && stored.dimensions) || [];
+  if (dimensions.some((def) => def.name === RATING_DIMENSION)) {
+    return { stored: stored, changed: false };
+  }
+  let weighsRating = false;
+  dimensions = dimensions.map((def) => {
+    if (!isWeighted(def) || !Array.isArray(def.terms)) return def;
+    let terms = def.terms.map((term) => {
+      if (!term || term.dim !== LEGACY_RATING_COLUMN) return term;
+      weighsRating = true;
+      return Object.assign({}, term, { dim: RATING_DIMENSION });
+    });
+    return Object.assign({}, def, { terms: terms });
+  });
+  let values = {};
+  Object.keys(ratings || {}).forEach((id) => {
+    let stars = Math.round(Number(ratings[id]));
+    if (stars >= RATING_BOUNDS[0] && stars <= RATING_BOUNDS[1]) values[id] = stars;
+  });
+  if (!weighsRating && Object.keys(values).length === 0) {
+    return { stored: stored, changed: false };
+  }
+  let rating = { name: RATING_DIMENSION, kind: CUSTOM, bounds: RATING_BOUNDS.slice() };
+  let allValues = Object.assign({}, (stored && stored.values) || {});
+  allValues[RATING_DIMENSION] = values;
+  return {
+    stored: {
+      version: STORAGE_VERSION,
+      dimensions: [rating].concat(dimensions),
+      values: allValues,
+    },
+    changed: true,
+  };
 }
 
 /** The stored object, or null when the text is missing, malformed or from an unknown version. */

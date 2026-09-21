@@ -5,7 +5,7 @@
       <v-tooltip bottom max-width="300">
         <template v-slot:activator="{ on }">
           <span v-on="on">
-            <v-btn small depressed color="primary" @click="save">
+            <v-btn small depressed color="primary" :disabled="selectedShown.length === 0" @click="save">
               <v-icon left small>{{
                 isLite ? "mdi-bookmark-plus-outline" : "mdi-plus"
               }}</v-icon>
@@ -56,21 +56,42 @@
           </template>
           <span>Compare the shortlisted options side by side</span>
         </v-tooltip>
-        <v-menu bottom left offset-y>
+        <v-tooltip bottom>
           <template v-slot:activator="{ on }">
-            <v-btn icon x-small v-on="on" aria-label="More shortlist actions">
-              <v-icon small>mdi-dots-vertical</v-icon>
-            </v-btn>
+            <span v-on="on">
+              <v-btn
+                icon
+                x-small
+                :disabled="selectedShown.length === 0"
+                aria-label="Add the selected to the shortlist"
+                @click="addResultToCart"
+              >
+                <v-icon small>mdi-playlist-plus</v-icon>
+              </v-btn>
+            </span>
           </template>
-          <v-list dense>
-            <v-list-item @click="addResultToCart">
-              <v-list-item-title>{{ addResultLabel }}</v-list-item-title>
-            </v-list-item>
-            <v-list-item :disabled="cartCount === 0" @click="clearCart">
-              <v-list-item-title>Clear the shortlist</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
+          <span>{{
+            selectedShown.length === 0
+              ? "Select options first: the selected options in view are added"
+              : "Add the " + selectedShown.length + " selected options in view to the shortlist"
+          }}</span>
+        </v-tooltip>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <span v-on="on">
+              <v-btn
+                icon
+                x-small
+                :disabled="cartCount === 0"
+                aria-label="Clear the shortlist"
+                @click="clearCart"
+              >
+                <v-icon small>mdi-bookmark-off-outline</v-icon>
+              </v-btn>
+            </span>
+          </template>
+          <span>Clear the shortlist</span>
+        </v-tooltip>
       </div>
 
       <p v-if="cartCount === 0" class="cart-empty">
@@ -247,6 +268,34 @@
             </template>
             <span>Compare this set's options side by side</span>
           </v-tooltip>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                icon
+                x-small
+                v-on="on"
+                aria-label="Put this set on the shortlist"
+                @click.stop="putOnCart(id)"
+              >
+                <v-icon small>mdi-bookmark-multiple-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>Put this set's options on the shortlist, beside what is there</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                icon
+                x-small
+                v-on="on"
+                aria-label="Summary image of this set"
+                @click.stop="summarizeSet(id)"
+              >
+                <v-icon small>mdi-image-text</v-icon>
+              </v-btn>
+            </template>
+            <span>Summary image of this set: its options pictured and ringed in the charts</span>
+          </v-tooltip>
           <v-spacer />
           <button
             v-if="!hasNote(id) && !openNotes[id]"
@@ -304,6 +353,7 @@ export default {
       "isLite",
       "matchingSetID",
       "selectionCount",
+      "selectedShown",
       "setCriteriaChips",
       "cartCount",
       "cartItems",
@@ -313,17 +363,16 @@ export default {
     nextSetName() {
       return "Set #" + (this.setsCounter + 1);
     },
-    addResultLabel() {
-      return "Add the selected";
-    },
     saveTooltip() {
+      let count = this.selectedShown.length;
+      if (count === 0) {
+        return this.isLite
+          ? "Filter the options first: a set saves the selected options in view."
+          : "Select options first: a set saves the selected options in view.";
+      }
       if (!this.isLite) {
-        return "Save the selected options as a set. Click a set later to bring its options back; the current selection operation applies.";
+        return "Save the " + count.toLocaleString() + " selected options as a set. Click a set later to bring its options back; the current selection operation applies.";
       }
-      if (!this.isFilterActive && !this.hasScope) {
-        return "Save all options as a set. Filter the collection first to save just part of it.";
-      }
-      let count = this.isFilterActive ? this.selectionCount : this.dataLength;
       return (
         "Save the " +
         count.toLocaleString() +
@@ -373,6 +422,12 @@ export default {
     },
     compareSet(id) {
       this.$store.dispatch("openCompare", { source: "set", setID: id });
+    },
+    putOnCart(id) {
+      this.$store.dispatch("putSetOnCart", { setID: id });
+    },
+    summarizeSet(id) {
+      this.$store.dispatch("openSummary", { focus: { kind: "set", setID: id } });
     },
     nameOf(id) {
       let metadata = this.setsMetadataMap[id];

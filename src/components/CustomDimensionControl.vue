@@ -159,6 +159,7 @@ import {
   stepFor,
 } from "@/customDimensions.js";
 import { displayName } from "@/columns.js";
+import { isRating } from "@/ratings.js";
 import DimensionName from "@/components/DimensionName.vue";
 
 /**
@@ -182,8 +183,9 @@ export default {
     ...mapState({
       customDimensions: (state) => state.customDimensions,
     }),
+    // The rating is entered with its stars, beside this button.
     customDefs() {
-      return this.customDimensions.filter(isCustom);
+      return this.customDimensions.filter((def) => isCustom(def) && !isRating(def.name));
     },
     weightedDefs() {
       return this.customDimensions.filter(isWeighted);

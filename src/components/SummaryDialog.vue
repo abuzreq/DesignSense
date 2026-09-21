@@ -28,7 +28,7 @@
                 :title="titleText"
                 :sentences="shownSentences"
                 :show="show"
-                :hidden="hidden"
+                :picked="picked"
                 :images="images"
               />
             </div>
@@ -45,35 +45,79 @@
         <div class="sm-side">
           <v-text-field v-model="titleText" label="Title" dense outlined hide-details class="mb-4" />
 
-          <div class="sm-label">Show</div>
-          <div class="sm-toggles">
-            <v-checkbox v-model="show.goals" label="Goals" dense hide-details />
-            <v-checkbox v-model="show.featured" :label="summary.featured.label" dense hide-details />
-            <v-checkbox v-model="show.chart" label="Scatterplot" :disabled="!summary.chart" dense hide-details />
-            <v-checkbox
-              v-model="show.parallel"
-              label="Parallel coordinates"
-              :disabled="!summary.parallel"
-              dense
-              hide-details
-            />
-            <v-checkbox v-model="show.findings" label="Findings" dense hide-details />
-          </div>
+          <!-- Where the card's options come from: the shortlist, the selected
+               options or a saved set. -->
+          <v-select
+            :value="focusValue"
+            :items="focusChoices"
+            item-text="text"
+            item-value="value"
+            label="Options from"
+            :placeholder="focusChoices.length === 0 ? 'Nothing shortlisted or saved' : undefined"
+            :disabled="focusChoices.length === 0"
+            persistent-placeholder
+            dense
+            outlined
+            hide-details
+            :menu-props="{ offsetY: true }"
+            class="mb-1"
+            @change="chooseFocus"
+          />
+          <div class="sm-hint mb-3">{{ focusHint }}</div>
 
+          <!-- Which of them are pictured, picked from a checkbox list as the
+               clusters' dimensions are. The box stays empty: the card shows
+               what is picked. -->
           <template v-if="show.featured && summary.featured.items.length > 0">
-            <div class="sm-label mt-3">Options on the card</div>
-            <div class="sm-options">
-              <v-checkbox
-                v-for="item in summary.featured.items"
-                :key="item.id"
-                :input-value="hidden.indexOf(item.id) === -1"
-                :label="item.name"
-                dense
-                hide-details
-                @change="toggleItem(item.id, $event)"
-              />
+            <v-autocomplete
+              :value="shownIds"
+              :items="optionChoices"
+              item-text="text"
+              item-value="value"
+              label="Options on the card"
+              multiple
+              dense
+              outlined
+              hide-details
+              :menu-props="{ offsetY: true, maxHeight: 320 }"
+              class="sm-picker"
+              @change="pickOptions"
+            >
+              <template v-slot:selection></template>
+              <template v-slot:item="{ item, attrs, parent }">
+                <v-list-item-action>
+                  <v-simple-checkbox
+                    :value="attrs.inputValue"
+                    :disabled="attrs.disabled"
+                    color="primary"
+                    :ripple="false"
+                    @input="parent.$emit('select', item)"
+                  />
+                </v-list-item-action>
+                <v-list-item-content>
+                  <v-list-item-title v-html="parent.genFilteredText(item.text)" />
+                </v-list-item-content>
+              </template>
+            </v-autocomplete>
+            <div class="sm-hint mb-4">
+              {{ pickHint }}
+              <a v-if="picked" href="#" @click.prevent="picked = null">Back to the first {{ capacity }}</a>
             </div>
           </template>
+
+          <!-- Which options the charts draw: data, so it sits with the options
+               above rather than with the sections below. -->
+          <SummaryShowControls :summary="summary" only="data" class="mb-4" />
+
+          <div class="sm-label">Show</div>
+          <SummaryShowControls :summary="summary" only="views" />
+          <div class="sm-shared">
+            <v-icon x-small class="sm-shared-icon">mdi-sync</v-icon>
+            <span>
+              Remembered, and the same for every summary image and every page
+              of the story report.
+            </span>
+          </div>
 
           <template v-if="show.findings">
             <div class="sm-label mt-3">Findings</div>
@@ -136,8 +180,16 @@
 </template>
 
 <script>
-import SummaryCard, { CARD_HEIGHT, CARD_WIDTH } from "@/components/SummaryCard.vue";
+import SummaryCard, {
+  CARD_HEIGHT,
+  CARD_WIDTH,
+  cardCapacity,
+  cardItems,
+} from "@/components/SummaryCard.vue";
+import SummaryShowControls from "@/components/SummaryShowControls.vue";
 import { summarize } from "@/story/narrate.js";
+import { shownFor } from "@/story/summarySettings.js";
+import { AUTO_FOCUS, focusChoices, focusValue, resolveFocus } from "@/story/focus.js";
 import {
   canCopyImages,
   copyPng,
@@ -148,6 +200,8 @@ import {
 } from "@/story/image.js";
 
 const SIDE_WIDTH = 360;
+// The finding a set's note is put in, when the card pictures that set.
+const SET_NOTE = "set-note";
 
 /**
  * Makes the one-image summary of what is on screen (see SummaryCard): the
@@ -155,17 +209,20 @@ const SIDE_WIDTH = 360;
  */
 export default {
   name: "SummaryDialog",
-  components: { SummaryCard },
+  components: { SummaryCard, SummaryShowControls },
   data() {
     return {
       summary: null,
+      // Where the card's options come from (see story/focus.js).
+      focusSpec: AUTO_FOCUS,
       titleText: "",
       // Sentence id -> its text as shown; notes are the user's own.
       texts: {},
       notes: [],
       noteCounter: 0,
-      show: { goals: true, featured: true, chart: true, parallel: false, findings: true },
-      hidden: [],
+      // The options the user picked for the card, in order; null for the
+      // first of the candidates, as many as there is room for.
+      picked: null,
       images: {},
       failedImages: 0,
       loadingImages: false,
@@ -189,9 +246,60 @@ export default {
         if (!value) this.$store.dispatch("closeSummary");
       },
     },
+    focusChoices() {
+      return focusChoices(this.$store.state, this.dialogState.snapshot);
+    },
+    focusValue() {
+      return focusValue(this.focusSpec, this.dialogState.snapshot);
+    },
+    focusHint() {
+      let source = this.summary.featured.source;
+      if (source === "set") return "Its options are pictured and ringed in the charts; its note leads the findings.";
+      if (source === "shortlist") return "Its options are pictured and ringed in the charts.";
+      if (source === "selected") return "What the filters or the selection leave; the first ones are pictured and ringed in the charts.";
+      return "Shortlist options, or save a set, to picture them on the card.";
+    },
+    capacity() {
+      if (!this.summary) return 0;
+      return cardCapacity(this.show, this.summary, this.shownSentences.length);
+    },
+    // Watched, so it must read without a summary too: a watcher whose first
+    // reading throws never runs again, and the pictures never loaded.
+    shownItems() {
+      if (!this.summary) return [];
+      return cardItems(this.summary, this.picked, this.capacity);
+    },
+    shownIds() {
+      return this.shownItems.map((item) => item.id);
+    },
+    /** Every candidate; once the card is full, the rest wait greyed out. */
+    optionChoices() {
+      let full = this.shownIds.length >= this.capacity;
+      let shown = new Set(this.shownIds);
+      return this.summary.featured.items.map((item) => ({
+        value: item.id,
+        text: item.name,
+        disabled: full && !shown.has(item.id),
+      }));
+    },
+    pickHint() {
+      let n = this.summary.featured.items.length;
+      let room = "Room for " + this.capacity + " on the card";
+      let more = n > this.capacity && this.show.pictures !== "small" ? "; smaller pictures fit more" : "";
+      return room + more + (n > this.capacity ? ". " + n + " to choose from." : ".");
+    },
+    // Shared with every summary image and the report (summarySettings.js).
+    show() {
+      let settings = this.$store.state.summarySettings;
+      return this.summary ? shownFor(settings, this.summary) : settings;
+    },
     editable() {
       let found = this.summary.sentences.map((s) => ({ id: s.id, original: s.text }));
-      return found.concat(this.notes.map((id) => ({ id: id, original: "" })));
+      let own = (id) => ({ id: id, original: "" });
+      // The pictured set's note leads; the user's own findings follow the data's.
+      let lead = this.notes.filter((id) => id === SET_NOTE).map(own);
+      let rest = this.notes.filter((id) => id !== SET_NOTE).map(own);
+      return lead.concat(found, rest);
     },
     shownSentences() {
       return this.editable
@@ -202,6 +310,10 @@ export default {
   watch: {
     "dialogState.open"(value) {
       if (value) this.start();
+    },
+    // Whatever changes what is pictured: a pick, a focus, more room.
+    shownItems(items) {
+      if (this.dialogState.open) this.loadImages(items);
     },
   },
   mounted() {
@@ -217,8 +329,8 @@ export default {
   methods: {
     start() {
       let state = this.$store.state;
-      let snapshot = this.dialogState.snapshot;
-      let summary = summarize(snapshot, state.rawData, state.numericDimensions);
+      this.focusSpec = this.dialogState.focus || AUTO_FOCUS;
+      let summary = this.summarizeFor(this.focusSpec);
       let texts = {};
       summary.sentences.forEach((s) => (texts[s.id] = s.text));
       // Frozen, so Vue doesn't walk the rows and sets it holds.
@@ -233,21 +345,63 @@ export default {
         this.addNote();
         this.texts["note-" + this.noteCounter] = note;
       }
-      this.hidden = [];
-      this.show = {
-        goals: true,
-        featured: true,
-        chart: !!summary.chart,
-        parallel: false,
-        findings: true,
-      };
+      this.putSetNote(resolveFocus(this.focusSpec, state));
+      this.picked = null;
       this.error = "";
       this.copied = false;
+      this.images = {};
+      this.failedImages = 0;
       this.$nextTick(() => {
         this.measure();
         this.observeStage();
       });
-      this.loadImages(summary.featured.items);
+    },
+    summarizeFor(spec) {
+      let state = this.$store.state;
+      return summarize(
+        this.dialogState.snapshot,
+        state.rawData,
+        state.numericDimensions,
+        resolveFocus(spec, state)
+      );
+    },
+    /**
+     * Pictures another shortlist or set. What the user wrote is kept: their findings,
+     * their rewording of one the data wrote, and a title of their own.
+     */
+    chooseFocus(value) {
+      let choice = this.focusChoices.find((c) => c.value === value);
+      if (!choice) return;
+      let old = this.summary;
+      this.focusSpec = choice.spec;
+      let summary = this.summarizeFor(choice.spec);
+      let before = {};
+      old.sentences.forEach((s) => (before[s.id] = s.text));
+      let texts = {};
+      this.notes.forEach((id) => (texts[id] = this.texts[id]));
+      summary.sentences.forEach((s) => {
+        let edited = before[s.id] !== undefined && this.texts[s.id] !== before[s.id];
+        texts[s.id] = edited ? this.texts[s.id] : s.text;
+      });
+      this.texts = texts;
+      if (this.titleText === old.title) this.titleText = summary.title;
+      this.summary = Object.freeze(summary);
+      this.putSetNote(resolveFocus(choice.spec, this.$store.state));
+      this.picked = null;
+      this.images = {};
+      this.failedImages = 0;
+      // A captured view keeps where its options come from, for the report too.
+      if (this.dialogState.captureId) {
+        this.$store.commit("updateCapture", { id: this.dialogState.captureId, focus: choice.spec });
+      }
+    },
+    /** A pictured set's note leads the findings; another choice drops it. */
+    putSetNote(focus) {
+      if (this.notes.indexOf(SET_NOTE) !== -1) this.removeNote(SET_NOTE);
+      let note = focus && focus.kind === "set" ? (focus.note || "").trim() : "";
+      if (!note) return;
+      this.notes.unshift(SET_NOTE);
+      this.$set(this.texts, SET_NOTE, note);
     },
     /** Measures again whenever the preview's room changes, as it does while the dialog opens. */
     observeStage() {
@@ -283,21 +437,27 @@ export default {
       this.notes = this.notes.filter((other) => other !== id);
       this.$delete(this.texts, id);
     },
-    toggleItem(id, shown) {
-      this.hidden = shown ? this.hidden.filter((other) => other !== id) : this.hidden.concat([id]);
+    /** The options picked in the multi-select, as many as there is room for. */
+    pickOptions(ids) {
+      this.picked = ids.slice(0, this.capacity);
     },
-    /** Copies the featured images in, so they go into the picture. */
+    /**
+     * Copies in the pictures of the options on the card that aren't in yet,
+     * so they go into the image. Only those: the list can run to dozens.
+     */
     async loadImages(items) {
-      this.images = {};
-      this.failedImages = 0;
+      let missing = items.filter((item) => !(item.id in this.images));
+      if (missing.length === 0) return;
+      let summary = this.summary;
       this.loadingImages = true;
-      let loaded = await loadImages(items);
-      // A newer opening may have started meanwhile.
-      if (this.summary && this.summary.featured.items === items) {
-        this.images = loaded.images;
-        this.failedImages = loaded.failed;
-        this.loadingImages = false;
-      }
+      let loaded = await loadImages(missing);
+      // Another focus, or a new opening, may have started meanwhile.
+      if (this.summary !== summary) return;
+      let images = Object.assign({}, this.images);
+      missing.forEach((item) => (images[item.id] = loaded.images[item.id] || null));
+      this.images = images;
+      this.failedImages += loaded.failed;
+      this.loadingImages = false;
     },
     render() {
       let card = this.$refs.card;
@@ -382,7 +542,18 @@ export default {
   text-transform: uppercase;
   color: rgba(0, 0, 0, 0.55);
 }
-.sm-toggles,
+.sm-shared {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(0, 0, 0, 0.55);
+}
+.sm-shared-icon {
+  margin-top: 2px;
+}
 .sm-options {
   display: grid;
   grid-template-columns: 1fr 1fr;

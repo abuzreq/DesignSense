@@ -14,5 +14,23 @@
     <!-- src/main.js mounts here. Without this element the build succeeds and
          the page renders nothing. -->
     <div id="app"></div>
+    <!-- Never shown: Netlify reads this at deploy time to learn the feedback
+         form's fields (see src/feedback.js), and records only fields named
+         here. The app posts to it with fetch. -->
+    <form
+      name="feedback"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      enctype="multipart/form-data"
+      hidden
+    >
+      <input type="text" name="bot-field" />
+      <input type="text" name="kind" />
+      <textarea name="message"></textarea>
+      <input type="email" name="email" />
+      <textarea name="context"></textarea>
+      <textarea name="errors"></textarea>
+      <input type="file" name="screenshot" />
+    </form>
   </body>
 </html>

@@ -25,6 +25,8 @@
   </template>
   
   <script>
+  import { RATING_DIMENSION } from "@/ratings.js";
+
   export default {
     props: ["item"],
     data() {
@@ -39,11 +41,12 @@
        * be rated from the inspector and from Compare at once, and a copy only
        * one of them made would disagree with the other. Rows are not reactive
        * (see store/rows.js), so the version is what says the rating changed.
-       * Number(): ratings loaded from a file may arrive as strings.
+       * Number(): ratings loaded from a file may arrive as strings. Before
+       * anything is rated the rating has no column (see ratings.js): 0.
        */
       rating() {
         void this.$store.state.dimensionValuesVersion;
-        return Number(this.item.Rating) || 0;
+        return Number(this.item[RATING_DIMENSION]) || 0;
       },
     },
     methods: {

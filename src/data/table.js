@@ -19,10 +19,11 @@ import {
 const ID_COLUMNS = ["_id", "ID", "id"];
 const NUMBER = /^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i;
 const UNNAMED_COLUMN = "column_";
-// Columns added to every row, with the types the views expect of them.
+// Columns added to every row, with the types the views expect of them. The
+// rating isn't one: it is a custom dimension, made when first given (see
+// ratings.js).
 const ADDED_COLUMN_TYPES = {
   _id: "string",
-  Rating: "Float",
   Tags: "string",
   image: "string",
   images: "string",
@@ -324,8 +325,6 @@ export function prepareRows(rows, resolver, columns) {
   let imageColumns = (columns && columns.images) || [];
   let modelColumns = (columns && columns.models) || [];
   rows.forEach((row) => {
-    // A blank rating means not rated yet.
-    if (typeof row.Rating !== "number" || !isFinite(row.Rating)) row.Rating = 0;
     if (!row.Tags) row.Tags = [];
     let views = resolveViews(resolver, row, imageColumns, IMAGE_EXTENSIONS);
     row.images = views;
@@ -370,7 +369,6 @@ export function buildDataset(text, options) {
   setClaimedColumns(assets.claimed);
   setFolderFiles((options && options.rawFiles) || (options && options.files) || null);
 
-  delete blanks.Rating;
   // A custom dimension's blanks are values not entered yet, not gaps in the data.
   let blankColumns = Object.keys(blanks).filter(
     (field) => !isNumericByName(field)
@@ -432,5 +430,13 @@ export function buildDataset(text, options) {
     data: rows,
     dataTypesMap: Object.assign({}, types, ADDED_COLUMN_TYPES),
     warnings: warnings,
+    // The file's own columns in its order, and what each was read as, for
+    // saying so after a load (see ColumnsDialog).
+    columns: {
+      fields: table.fields.slice(),
+      types: types,
+      images: assets.images.slice(),
+      models: assets.models.slice(),
+    },
   };
 }

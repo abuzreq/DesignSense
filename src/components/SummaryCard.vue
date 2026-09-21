@@ -15,10 +15,18 @@
       </div>
     </header>
 
-    <div class="sc-body" :class="{ 'no-featured': !hasFeatured, 'two-charts': twoCharts }">
+    <div
+      class="sc-body"
+      :class="{
+        'no-featured': !hasFeatured,
+        'two-charts': twoCharts,
+        'no-findings': !showFindings,
+        'no-side': !hasSide,
+      }"
+    >
       <section v-if="hasFeatured" class="sc-featured">
-        <div class="sc-label">{{ summary.featured.label }}</div>
-        <div class="sc-grid" :class="'n' + items.length">
+        <div class="sc-label">{{ featuredLabel }}</div>
+        <div class="sc-grid" :class="['n' + items.length, 'size-' + layout.size]" :style="gridStyle">
           <div v-for="item in items" :key="item.id" class="sc-option">
             <div class="sc-image">
               <img v-if="images[item.id]" :src="images[item.id]" alt="" />
@@ -32,28 +40,35 @@
                 <span class="sc-vtext">{{ v.text }}</span>
               </span>
             </div>
+            <div v-if="noteOf(item)" class="sc-note">“{{ noteOf(item) }}”</div>
           </div>
         </div>
       </section>
 
-      <section ref="side" class="sc-side">
+      <section v-if="hasSide" ref="side" class="sc-side">
         <div v-if="showScatter || showParallel" class="sc-charts">
           <SummaryChart
             v-if="showScatter"
             :chart="summary.chart"
+            :context="showContext"
+            :highlight="showHighlight"
+            :ringed="ringed"
             :width="chartSize.width"
             :height="chartSize.scatter"
           />
           <SummaryParallel
             v-if="showParallel"
             :parallel="summary.parallel"
+            :context="showContext"
+            :highlight="showHighlight"
+            :ringed="ringed"
             :width="chartSize.width"
             :height="chartSize.parallel"
           />
           <div class="sc-legend">
-            <span><i class="lg rest"></i>Other options</span>
-            <span><i class="lg selected"></i>In the result</span>
-            <span v-if="hasFeatured"><i class="lg featured"></i>{{ featuredWord }}</span>
+            <span v-if="showContext"><i class="lg rest"></i>Other options</span>
+            <span><i class="lg selected"></i>{{ featuredWord }}</span>
+            <span v-if="hasFeatured && showHighlight"><i class="lg featured"></i>On the card</span>
             <span v-if="showScatter && summary.chart.steps.length > 1"
               ><i class="lg front"></i>Best trade-offs</span
             >
@@ -61,7 +76,7 @@
           </div>
         </div>
         <div
-          v-if="show.findings && sentences.length > 0"
+          v-if="showFindings"
           class="sc-findings"
           :style="{ fontSize: fontSize + 'px' }"
         >
@@ -88,6 +103,60 @@ const MAX_FONT = 17;
 const MIN_FONT = 12;
 
 /**
+ * How many options the card has room for: beside the charts and the
+ * findings, 6; with the findings left out, 9 beside the charts; with nothing
+ * beside them, 12 across the card. The dialog and the report ask it too.
+ */
+export function cardCapacity(show, summary, findingsCount) {
+  return cardLayout(show, summary, findingsCount).capacity;
+}
+
+/*
+ * Grids for smaller pictures, by how much of the card the options have:
+ * "narrow" beside both charts and the findings, "normal" beside the side
+ * column, "wide" across the whole card. Each fills the room at its size.
+ */
+const SMALLER = {
+  narrow: { medium: { cols: 3, rows: 4 }, small: { cols: 4, rows: 5 } },
+  normal: { medium: { cols: 5, rows: 4 }, small: { cols: 6, rows: 5 } },
+  wide: { medium: { cols: 8, rows: 4 }, small: { cols: 10, rows: 5 } },
+};
+
+/**
+ * How the card lays out its options: `{ size, area, grid, capacity }`. Large
+ * pictures keep the layouts made for them (6 beside the findings, 9 beside
+ * the charts alone, 12 across the card); medium and small fill a grid of
+ * their own, fitting more at the expense of their size.
+ */
+export function cardLayout(show, summary, findingsCount) {
+  let scatter = !!(show.chart && summary.chart);
+  let parallel = !!(show.parallel && summary.parallel);
+  let findings = !!show.findings && findingsCount > 0;
+  let charts = scatter || parallel;
+  let area = !charts && !findings ? "wide" : scatter && parallel && findings ? "narrow" : "normal";
+  let size = SMALLER.normal[show.pictures] ? show.pictures : "large";
+  if (size === "large") {
+    return { size: size, area: area, grid: null, capacity: findings ? 6 : charts ? 9 : 12 };
+  }
+  let grid = SMALLER[area][size];
+  return { size: size, area: area, grid: grid, capacity: grid.cols * grid.rows };
+}
+
+/**
+ * The options the card pictures: the ones picked, in the order picked, or
+ * the first of the candidates; never more than it has room for.
+ */
+export function cardItems(summary, picked, capacity) {
+  let listed = summary.featured.items;
+  if (!picked) return listed.slice(0, capacity);
+  let byId = new Map(listed.map((item) => [item.id, item]));
+  return picked
+    .map((id) => byId.get(id))
+    .filter(Boolean)
+    .slice(0, capacity);
+}
+
+/**
  * The one-image summary: a fixed-size card meant to be turned into a PNG and
  * pasted into a slide, an email or a chat. Plain HTML without Vuetify, so
  * what is drawn is exactly what is exported.
@@ -101,14 +170,17 @@ export default {
     title: { type: String, default: "" },
     // The sentences as shown, after the user's edits: [{ id, text }].
     sentences: { type: Array, default: () => [] },
-    // Which sections are shown: { goals, featured, chart, parallel, findings },
-    // chart being the scatterplot and parallel the parallel coordinates.
+    // Which sections are shown: { goals, featured, chart, parallel, findings,
+    // context, highlight }, chart being the scatterplot, parallel the parallel
+    // coordinates, context the other options behind the result in both, and
+    // highlight the shortlist or set ringed there (see summarySettings.js).
     show: {
       type: Object,
       default: () => ({ goals: true, featured: true, chart: true, parallel: false, findings: true }),
     },
-    // Featured options' ids left out by the user.
-    hidden: { type: Array, default: () => [] },
+    // The ids of the options the user picked for the card, in order; null
+    // for the first of the shortlist or set.
+    picked: { type: Array, default: null },
     // id -> the image as a data URL, or null when it couldn't be read.
     images: { type: Object, default: () => ({}) },
     // A report's page number goes here.
@@ -120,17 +192,50 @@ export default {
     subtitle() {
       return this.summary.subtitle;
     },
+    showFindings() {
+      return !!this.show.findings && this.sentences.length > 0;
+    },
+    hasSide() {
+      return this.showScatter || this.showParallel || this.showFindings;
+    },
+    layout() {
+      return cardLayout(this.show, this.summary, this.sentences.length);
+    },
+    capacity() {
+      return this.layout.capacity;
+    },
+    // Smaller pictures set their own columns; large ones keep the classes'.
+    gridStyle() {
+      let grid = this.layout.grid;
+      return grid ? { gridTemplateColumns: "repeat(" + grid.cols + ", minmax(0, 1fr))" } : null;
+    },
     items() {
-      return this.summary.featured.items.filter((item) => this.hidden.indexOf(item.id) === -1);
+      return cardItems(this.summary, this.picked, this.capacity);
+    },
+    /** "Shortlist (9 of 14)" when the card pictures only some of them. */
+    featuredLabel() {
+      let label = this.summary.featured.label;
+      let total = this.summary.featured.total || this.items.length;
+      return this.items.length < total ? label + " (" + this.items.length + " of " + total + ")" : label;
+    },
+    showHighlight() {
+      return this.show.highlight !== false;
+    },
+    // The charts mark the options on the card, so they follow what is picked.
+    ringed() {
+      return this.hasFeatured ? new Set(this.items.map((item) => item.row)) : new Set();
     },
     hasFeatured() {
       return this.show.featured && this.items.length > 0;
     },
     featuredWord() {
-      return this.summary.featured.source === "shortlist" ? "Shortlisted" : "Featured";
+      return this.summary.featured.legend;
     },
     showScatter() {
       return !!(this.show.chart && this.summary.chart);
+    },
+    showContext() {
+      return this.show.context !== false;
     },
     showParallel() {
       return !!(this.show.parallel && this.summary.parallel);
@@ -140,18 +245,23 @@ export default {
     },
     /** The charts' width and each one's height, for the layout in use. */
     chartSize() {
+      // Each chart keeps its size whether or not the other is shown: the room
+      // of one left out goes to the findings, not to stretching the other.
+      if (this.hasFeatured && !this.showFindings) {
+        return { width: 600, scatter: 340, parallel: 300 };
+      }
       if (this.twoCharts) {
         return this.hasFeatured
           ? { width: 540, scatter: 290, parallel: 270 }
           : { width: 760, scatter: 300, parallel: 280 };
       }
       return this.hasFeatured
-        ? { width: 600, scatter: 340, parallel: 340 }
-        : { width: 860, scatter: 540, parallel: 500 };
+        ? { width: 600, scatter: 340, parallel: 300 }
+        : { width: 860, scatter: 400, parallel: 340 };
     },
     // What changes how much room the findings need.
     fitKey() {
-      return JSON.stringify([this.sentences.map((s) => s.text), this.show, this.hidden]);
+      return JSON.stringify([this.sentences.map((s) => s.text), this.show, this.picked]);
     },
   },
   watch: {
@@ -167,6 +277,11 @@ export default {
     this.$nextTick(() => this.fit());
   },
   methods: {
+    /** The user's note on a featured option (see optionNotes.js), or "". */
+    noteOf(item) {
+      let notes = this.$store && this.$store.state.optionNotes;
+      return (notes && notes[String(item.id)]) || "";
+    },
     /** Shrinks the findings a step at a time until the column holds them. */
     fit() {
       let side = this.$refs.side;
@@ -185,7 +300,7 @@ export default {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  padding: 44px 56px 28px;
+  padding: 26px 36px 14px;
   background: #ffffff;
   color: #263238;
   font-family: Roboto, "Segoe UI", Arial, sans-serif;
@@ -195,8 +310,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 40px;
-  padding-bottom: 20px;
+  gap: 32px;
+  padding-bottom: 12px;
   border-bottom: 3px solid #263238;
 }
 .sc-title {
@@ -207,7 +322,7 @@ export default {
   letter-spacing: -0.01em;
 }
 .sc-subtitle {
-  margin-top: 8px;
+  margin-top: 2px;
   font-size: 18px;
   color: #607d8b;
 }
@@ -239,13 +354,26 @@ export default {
 .sc-body {
   flex: 1;
   display: flex;
-  gap: 40px;
-  padding-top: 26px;
+  gap: 28px;
+  padding-top: 16px;
   min-height: 0;
 }
 .sc-featured {
   flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+}
+/* Two lines at most: the card has no room to grow. */
+.sc-note {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 3px;
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.3;
+  color: #5d4037;
 }
 .sc-side {
   flex: 0 0 600px;
@@ -286,6 +414,39 @@ export default {
 .two-charts:not(.no-featured) .sc-grid.n5 .sc-image,
 .two-charts:not(.no-featured) .sc-grid.n6 .sc-image {
   aspect-ratio: 9 / 4;
+}
+/* Without the findings, the charts stack in the side column. */
+.no-findings:not(.no-featured) .sc-side,
+.two-charts.no-findings:not(.no-featured) .sc-side {
+  flex: 0 0 600px;
+  flex-direction: column;
+}
+.no-side .sc-featured {
+  flex: 1 1 100%;
+}
+/* Seven to nine beside the charts: three across, in wide pictures. */
+.sc-grid.n7 .sc-image,
+.sc-grid.n8 .sc-image,
+.sc-grid.n9 .sc-image {
+  aspect-ratio: 16 / 9;
+}
+/* Across the whole card: four across, then six for more than eight. */
+.no-side .sc-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+.no-side .sc-grid.n1,
+.no-side .sc-grid.n2,
+.no-side .sc-grid.n3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.no-side .sc-grid.n9,
+.no-side .sc-grid.n10,
+.no-side .sc-grid.n11,
+.no-side .sc-grid.n12 {
+  grid-template-columns: repeat(6, 1fr);
+}
+.no-side .sc-grid .sc-image {
+  aspect-ratio: 4 / 3;
 }
 .sc-grid {
   display: grid;
@@ -397,6 +558,60 @@ export default {
   border-top: 2px dashed #263238;
   vertical-align: 3px;
 }
+/* Both charts but no findings: the charts stack, so the options keep three
+   across as beside one chart. */
+.two-charts.no-findings:not(.no-featured) .sc-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+.two-charts.no-findings:not(.no-featured) .sc-grid .sc-image {
+  aspect-ratio: 16 / 9;
+}
+/* Smaller pictures: wide, with smaller text and gaps. Specific enough to
+   win over the large layouts' rules above, which they replace. */
+.summary-card .sc-body .sc-grid.size-medium,
+.summary-card .sc-body .sc-grid.size-small {
+  gap: 12px;
+}
+.summary-card .sc-body .sc-grid.size-small {
+  gap: 10px 8px;
+}
+.summary-card .sc-body .sc-grid.size-medium .sc-image,
+.summary-card .sc-body .sc-grid.size-small .sc-image {
+  aspect-ratio: 16 / 9;
+}
+.size-medium .sc-name {
+  margin-top: 5px;
+  font-size: 15px;
+}
+.size-medium .sc-values {
+  gap: 0 10px;
+  font-size: 13px;
+}
+.size-medium .sc-note {
+  -webkit-line-clamp: 1;
+  font-size: 13px;
+}
+.size-small .sc-name {
+  margin-top: 4px;
+  font-size: 13px;
+}
+.size-small .sc-values {
+  gap: 0 8px;
+  font-size: 11px;
+}
+.size-small .sc-note {
+  display: none;
+}
+.size-medium .sc-badge,
+.size-small .sc-badge {
+  left: 4px;
+  top: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+}
+.size-small .sc-noimage {
+  font-size: 12px;
+}
 .sc-findings ul {
   margin: 0;
   padding-left: 22px;
@@ -406,7 +621,7 @@ export default {
   line-height: 1.4;
 }
 .sc-foot {
-  padding-top: 10px;
+  padding-top: 4px;
   font-size: 13px;
   color: #90a4ae;
   text-align: right;

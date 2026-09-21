@@ -1398,7 +1398,7 @@ export default {
      * thousand options. Frozen, so Vue doesn't watch every bin.
      */
     computeSummary() {
-      // Every row has a rating column; until something is rated it is empty.
+      // The rating exists once something is rated (see ratings.js).
       let dims = this.candidates.filter(
         (dim) => dim !== RATING_DIMENSION || this.hasRatings
       );

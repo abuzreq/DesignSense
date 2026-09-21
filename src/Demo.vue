@@ -124,9 +124,9 @@
               </v-tooltip>
             </template>
             <v-list dense>
-              <v-list-item @click="addResultToCart">
+              <v-list-item :disabled="actionDisabled('addSelectionToCart')" @click="addResultToCart">
                 <v-list-item-icon><v-icon>mdi-playlist-plus</v-icon></v-list-item-icon>
-                <v-list-item-title>Add the selected</v-list-item-title>
+                <v-list-item-title>Add to shortlist</v-list-item-title>
               </v-list-item>
               <v-list-item :disabled="cartCount === 0" @click="clearCart">
                 <v-list-item-icon><v-icon>mdi-bookmark-off-outline</v-icon></v-list-item-icon>
@@ -345,6 +345,11 @@
           </v-tooltip>
         </template>
         <v-list dense>
+          <v-list-item id="feedback-button" @click="openFeedback(false)">
+            <v-list-item-icon><v-icon>mdi-message-text-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Send feedback…</v-list-item-title>
+          </v-list-item>
+          <v-divider />
           <v-list-item @click="requestTour">
             <v-list-item-icon><v-icon>mdi-map-marker-path</v-icon></v-list-item-icon>
             <v-list-item-title>Take the tour</v-list-item-title>
@@ -360,12 +365,12 @@
           <v-divider />
           <v-list-item @click="isClearWorkDialogOn = true">
             <v-list-item-icon><v-icon>mdi-delete-sweep-outline</v-icon></v-list-item-icon>
-            <v-list-item-title>Clear saved work…</v-list-item-title>
+            <v-list-item-title>Clear data…</v-list-item-title>
           </v-list-item>
           <v-divider />
           <v-list-item to="/about">
             <v-list-item-icon><v-icon>mdi-information-outline</v-icon></v-list-item-icon>
-            <v-list-item-title>About</v-list-item-title>
+            <v-list-item-title>Learn more</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
@@ -415,16 +420,22 @@
           </v-btn>
         </v-card-title>
         <v-card-text class="ds-welcome-body">
-          <p>
-            Explore a collection of design options through their images and
-            data.
+          <p class="ds-welcome-lead">
+            Explore a collection of design options through their pictures and
+            data: narrow them down to the few worth keeping, see the trade-offs
+            between them, and share why.
           </p>
           <div class="ds-welcome-choices">
             <div class="ds-welcome-choice">
-              <p>First time here? Start with the short tour.</p>
+              <div class="ds-welcome-choice-head">
+                <v-icon color="blue darken-1">mdi-map-marker-path</v-icon>
+                New here?
+              </div>
+              <p>A short tour of the views and what they do.</p>
               <v-btn
                 color="blue darken-1"
                 dark
+                depressed
                 @click="
                   isOpeningDialogOn = false;
                   requestTour();
@@ -433,29 +444,63 @@
               >
             </div>
             <div class="ds-welcome-choice">
-              <p>Been here before? Open your data.</p>
+              <div class="ds-welcome-choice-head">
+                <v-icon color="teal">mdi-eye-outline</v-icon>
+                {{ welcomeDataset.title }}
+              </div>
+              <p>{{ welcomeDataset.text }}</p>
+              <v-btn
+                color="teal"
+                dark
+                depressed
+                :disabled="loadState.loading"
+                @click="isOpeningDialogOn = false"
+                >Explore it</v-btn
+              >
+            </div>
+            <div class="ds-welcome-choice">
+              <div class="ds-welcome-choice-head">
+                <v-icon color="red lighten-2">mdi-folder-open-outline</v-icon>
+                Your own data
+              </div>
+              <p>A CSV from your computer, a link, or another sample.</p>
               <LoadDataModal />
             </div>
           </div>
+          <p class="ds-welcome-privacy">
+            <v-icon small color="green darken-2">mdi-shield-check-outline</v-icon>
+            Your data is read in this browser and never uploaded; your work is
+            kept here too.
+          </p>
           <p class="ds-welcome-note">
-            <em
-              >This is an ongoing research project, so we would appreciate your
-              feedback!</em
-            >
+            DesignSense is a research project and still changing, so your
+            feedback shapes what it does next.
           </p>
           <div class="ds-welcome-links">
-            <router-link to="/about">About</router-link>
-            <span>|</span>
-            <a href="mailto:abuzreq@gmail.com">Contact</a>
-          </div>
-          <div class="ds-welcome-credit">
-            Built by
-            <a href="https://abuzreq.netlify.app/" target="_blank"
-              >Ahmed Abuzuraiq</a
+            <router-link to="/about">Learn more</router-link>
+            <span>·</span>
+            <a href="#" @click.prevent="openFeedback(false)">Send feedback</a>
+            <span>·</span>
+            <span
+              >Built by
+              <a href="https://abuzreq.com/" target="_blank" rel="noopener"
+                >Ahmed Abuzuraiq</a
+              ></span
             >
-            · v1.2.0 beta
+            <span>·</span>
+            <span>v{{ appVersion }}</span>
           </div>
         </v-card-text>
+        <v-card-actions class="ds-welcome-actions">
+          <v-checkbox
+            v-model="showWelcomeAtStart"
+            dense
+            hide-details
+            label="Show this when DesignSense opens"
+          />
+          <v-spacer />
+          <v-btn text @click="isOpeningDialogOn = false">Close</v-btn>
+        </v-card-actions>
       </v-card>
     </v-dialog>
 
@@ -536,25 +581,8 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="isClearWorkDialogOn" max-width="460px">
-      <v-card>
-        <v-card-title>Clear saved work?</v-card-title>
-        <v-card-text>
-          This will permanently delete the saved sets, notes, shortlist,
-          ratings, captured story, and custom dimension values for this
-          dataset from this browser. This cannot be undone.
-        </v-card-text>
-        <v-card-text class="pt-0">
-          The custom and weighted dimensions will remain, but their values will
-          be cleared.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn text @click="isClearWorkDialogOn = false">Cancel</v-btn>
-          <v-btn color="error" text @click="clearSavedWork">Clear</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <!-- What of this dataset's work to delete: all of it unless some is left out. -->
+    <ClearDataDialog v-model="isClearWorkDialogOn" />
 
     <v-dialog v-model="isTourDialogOn" max-width="460px">
       <v-card>
@@ -583,6 +611,8 @@
     <CompareDialog />
     <SensitivityDialog />
     <SummaryDialog />
+    <FeedbackDialog v-model="isFeedbackOn" :from-error="feedbackFromError" />
+    <ColumnsDialog />
     <StoryReportDialog />
     <StoryPresenter />
     <v-main id="designsense-workspace" :style="{ padding: barHeight + 'px 0 0' }">
@@ -664,6 +694,21 @@
       }"
       :callbacks="onboardingCallbacks"
     ></v-tour>
+    <!-- An error nothing handled: offered for reporting, once per error. It
+         sits at the top so it never hides the store's notices below. -->
+    <v-snackbar
+      :value="!!latestError && !isFeedbackOn"
+      color="deep-orange darken-3"
+      :timeout="-1"
+      top
+      right
+    >
+      Something went wrong. Reporting it helps fix it.
+      <template v-slot:action="{ attrs }">
+        <v-btn text v-bind="attrs" @click="openFeedback(true)">Report</v-btn>
+        <v-btn text v-bind="attrs" @click="dismissError">Dismiss</v-btn>
+      </template>
+    </v-snackbar>
     <!-- Store notices (a deleted set, a download) take the snackbar over the
          last load's message; a new notice replaces the one on screen. -->
     <v-snackbar
@@ -701,6 +746,14 @@
     >
       {{ loadNotice }}
       <template v-slot:action="{ attrs }">
+        <v-btn
+          v-if="ownDataLoaded && !loadState.error"
+          text
+          color="amber"
+          v-bind="attrs"
+          @click="reviewColumns"
+          >Columns</v-btn
+        >
         <v-btn text v-bind="attrs" @click="showLoadNotice = false">Close</v-btn>
       </template>
     </v-snackbar>
@@ -865,36 +918,85 @@ body {
   width: 18px;
   height: 18px;
 }
+.ds-welcome .v-card__title {
+  flex-wrap: nowrap;
+  word-break: normal;
+}
+@media (max-width: 600px) {
+  .ds-welcome .v-card__title {
+    font-size: 20px !important;
+  }
+}
 .ds-welcome-body {
-  font-size: 16px;
+  padding-bottom: 8px !important;
+  color: #37474f !important;
+}
+.ds-welcome-lead {
+  font-size: 15px;
+  line-height: 1.5;
 }
 .ds-welcome-choices {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin: 8px 0 12px;
+  gap: 12px;
+  margin: 4px 0 14px;
 }
 .ds-welcome-choice {
-  flex: 1 1 240px;
+  flex: 1 1 180px;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid #e3e8eb;
+  border-radius: 8px;
+}
+.ds-welcome-choice-head {
+  display: flex;
   align-items: center;
-  justify-content: space-between;
-  text-align: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #263238;
+}
+.ds-welcome-choice p {
+  flex: 1 1 auto;
+  margin-bottom: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+/* The load dialog's own button, brought in line with the other two. */
+.ds-welcome-choice .container {
+  padding: 0 !important;
+  margin: 0;
+}
+.ds-welcome-privacy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #2e7d32;
 }
 .ds-welcome-note {
-  margin-top: 12px;
-  font-size: 14px;
+  margin-bottom: 8px;
+  font-size: 13px;
 }
 .ds-welcome-links {
   display: flex;
-  justify-content: center;
-  gap: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: 13px;
+  color: #78909c;
 }
-.ds-welcome-credit {
-  margin-top: 8px;
+.ds-welcome-actions {
+  padding: 4px 16px 10px 20px !important;
+  border-top: 1px solid #eceff1;
+}
+.ds-welcome-actions .v-input--selection-controls {
+  margin-top: 0;
+}
+.ds-welcome-actions .v-label {
   font-size: 13px;
 }
 .ds-layout-intro {
@@ -1052,17 +1154,26 @@ const PANEL_LABELS = {
 
 // What Expert adds to Lite, said the same way in the mode tooltip and the tour.
 // Outlive the workspace, which is mounted again for each dataset.
-const welcome = { pending: isFirstVisit() };
+// Whether the welcome screen opens with the app: yes until the user unticks
+// it. Without storage, it always does.
+const SHOW_WELCOME_KEY = "designsense-show-welcome";
+const welcome = { pending: readShowWelcome() };
 const tour = { pending: false };
 
-function isFirstVisit() {
+function readShowWelcome() {
   try {
-    if (localStorage.getItem("wasOpeningDialogShown") === "true") return false;
-    localStorage.setItem("wasOpeningDialogShown", "true");
+    return localStorage.getItem(SHOW_WELCOME_KEY) !== "false";
   } catch (e) {
-    /* without storage, every visit counts as the first */
+    return true;
   }
-  return true;
+}
+
+function writeShowWelcome(value) {
+  try {
+    localStorage.setItem(SHOW_WELCOME_KEY, value ? "true" : "false");
+  } catch (e) {
+    /* kept for this visit only */
+  }
 }
 // The app bar's height: 32px buttons with a 10px label under them, and room
 // around. Everything that sits below the bar is offset by this.
@@ -1084,6 +1195,13 @@ import DimensionsDialog from "@/components/DimensionsDialog.vue";
 import CompareDialog from "@/components/CompareDialog.vue";
 import SensitivityDialog from "@/components/SensitivityDialog.vue";
 import SummaryDialog from "@/components/SummaryDialog.vue";
+import FeedbackDialog from "@/components/FeedbackDialog.vue";
+import ColumnsDialog from "@/components/ColumnsDialog.vue";
+import ClearDataDialog from "@/components/ClearDataDialog.vue";
+import { loadColumnRoles } from "@/data/columnRoles.js";
+import { errorState } from "@/errors.js";
+import { APP_VERSION } from "@/feedback.js";
+import { presetFor } from "@/data/presets.js";
 import StoryReportDialog from "@/components/StoryReportDialog.vue";
 import StoryPanel from "@/components/StoryPanel.vue";
 import StoryPresenter from "@/components/StoryPresenter.vue";
@@ -1139,6 +1257,9 @@ export default {
     CompareDialog,
     SensitivityDialog,
     SummaryDialog,
+    FeedbackDialog,
+    ColumnsDialog,
+    ClearDataDialog,
     StoryReportDialog,
     StoryPanel,
     StoryPresenter,
@@ -1167,19 +1288,19 @@ export default {
       // Lite first, then what Expert adds. Each step names the mode it needs.
       onboardingStudyTourSteps: [
         tourStep(this, "lite", "#designsense-title", "Welcome to DesignSense",
-          "Explore a collection of design options through their images and data. This tour takes about three minutes. Use the arrow keys or the buttons below.",
+          "Explore a collection of design options through their pictures and data: narrow them down, see the trade-offs, pick the few worth keeping, and share why. This tour takes a few minutes. Use the arrow keys or the buttons below.",
           "bottom"),
         tourStep(this, "lite", "#ui-mode-toggle", "Lite and Expert",
           "<b>Lite</b> keeps things simple: you narrow the options with filters. <b>Expert</b> adds " + EXPERT_ADDS + ". The tour starts in Lite.",
           "bottom"),
         tourStep(this, "lite", "#loading-data-bar", "Load your data",
-          "Open one of the prepared datasets, a link or shared folder, or a file from your computer. This tour uses a small set of used cars.",
+          "Open one of the prepared datasets, a link or shared folder, or a file from your computer. It is read in your browser and never uploaded. With your own file, DesignSense then shows which columns it read as inputs, outputs and pictures, and you can correct them. This tour uses a small set of used cars.",
           "bottom"),
         tourStep(this, "lite", '.v-card[type="Grid"]', "Gallery",
-          "Every option appears here as an image. Sort them from the menu at the top and change the image size on the right. Click an image to inspect it, and click it again to stop.",
+          "Every option appears here as an image. Sort them from the menu at the top and change the image size on the right. Drag a box over images to keep just those; the others stay, dimmed. Click an image to inspect it, and click it again to stop.",
           "right"),
         tourStep(this, "lite", ".inspector_card", "A closer look",
-          "A bigger look at the option you clicked. The first button lists its values beside the image; an option with more than one view is switched there too, and one with a 3D model opens it with the cube button. On the right you can rate it, and keep it aside on the shortlist.",
+          "A bigger look at the option you clicked. The first button lists its values beside the image; an option with more than one view is switched there too, and one with a 3D model opens it with the cube button. On the right you can rate it, write a note on it, and keep it aside on the shortlist. Ratings become a Rating axis you can filter by.",
           "right", () => this.inspectTourOption()),
         tourStep(this, "lite", ".v-card[type='ScatterPlot']", "Scatterplot",
           "Each dot is an option. Drag a box to filter by both axes, and choose the axes at the top. Click a dot to inspect it.",
@@ -1187,8 +1308,14 @@ export default {
         tourStep(this, "lite", '.v-card[type="ParallelCoordinatesPlot"]', "Parallel coordinates",
           "Each line is an option and each axis is a dimension. Drag along an axis to filter it. Drag a title to reorder the axes, or pick them under Axes.",
           "left"),
+        tourStep(this, "lite", "#dimensions-button", "Goals and your own criteria",
+          "Say which way is better for each output: lower cost, higher daylight. Arrows then mark it on the axes, and Expert's analysis finds the best trade-offs. Here you can also add criteria of your own, entered by hand or weighed from others.",
+          "left"),
         tourStep(this, "lite", "#filter-bar", "Your filters",
-          "Each filter becomes a chip, and the count shows how many options match. Remove a chip to drop its filter. The arrows beside them undo and redo, and the last button clears every filter; Esc stops inspecting, then clears too.",
+          "Each filter becomes a chip, and the count shows how many options match. Remove a chip to drop its filter. The arrows after them undo and redo, and the last button clears every filter; Esc stops inspecting, then clears too.",
+          "bottom"),
+        tourStep(this, "lite", "#assistant-bar", "Ask or command",
+          "Type what you want in plain words, like “price under 10000” or “what do these have in common”, and the assistant does it or answers. Press / to get here from anywhere.",
           "bottom"),
         tourStep(this, "lite", "#data-operations-bar", "Navigation",
           "Zoom in on the selected options to focus on them, or exclude them instead. Invert shows everything the filters leave out. Step back undoes the last zoom, and Reset brings back the whole collection.",
@@ -1202,6 +1329,9 @@ export default {
         dialogTourStep(this, "lite", ".cmp-card", "Compare",
           "Up to eight options side by side, each column with its image, its rating and its own shortlist button. Rows that read the same everywhere are dimmed, and in a numeric row the highest and lowest values are marked. Click a row name to sort the columns by it.",
           () => this.openTourCompare()),
+        tourStep(this, "lite", "#share-menu", "Share and present",
+          "Capture views as you go, each with its filters, goals and shortlist and a note. Present them in a meeting, turn them into a PDF report, or make a one-image summary. The link to the dataset and a CSV download are here too.",
+          "bottom"),
         tourStep(this, "expert", "#ui-mode-toggle", "Expert mode",
           "Expert keeps everything you have seen and adds " + EXPERT_ADDS + ". Instead of filtering, you build a selection.",
           "bottom"),
@@ -1221,10 +1351,10 @@ export default {
           "The whole collection at a glance, rather than what is on screen. At the top, every dimension's average, standard deviation and spread. Then the outliers, which can be left out of the reading, and the best trade-offs by the goals set under Dimensions. Below, which inputs move which outputs: name the parameters and the results, or start their columns with in: and out: and the file names them for you. Each of the three measures answers a different question, and the panel says in the open that a reading is only as good as the sampling behind it.",
           () => this.openTourSensitivity()),
         tourStep(this, "expert", "#editing-mode", "Your layout",
-          "Turn on editing here to move and resize the panels, or pick a preset arrangement. Done, or the ` key, stops editing.",
+          "This menu turns on editing, to move and resize the panels, picks a preset arrangement, or resets it. Done, or the ` key, stops editing.",
           "bottom"),
         tourStep(this, "lite", "#designsense-title", "You're ready",
-          "You're back in Lite. Switch to Expert whenever you need more control, and right-click the workspace for quick actions. The help menu has this tour and every shortcut. Feedback is welcome at abuzreq@gmail.com.",
+          "You're back in Lite. Switch to Expert whenever you need more control, and right-click the workspace for quick actions. The help menu has this tour and every shortcut. To tell us what works and what doesn't, use Help → Send feedback.",
           "bottom", () => this.clearTourExample()),
       ],
       operationsList: operations,
@@ -1409,6 +1539,11 @@ export default {
       isShareLinkModalOn: false,
       shareCopied: false,
       isShortcutsDialogOn: false,
+      isFeedbackOn: false,
+      // Opened from the error notice rather than the help menu.
+      feedbackFromError: false,
+      appVersion: APP_VERSION,
+      showWelcomeAtStart: readShowWelcome(),
       isClearWorkDialogOn: false,
       isTourDialogOn: false,
       isLayoutDialogOn: false,
@@ -1438,6 +1573,7 @@ export default {
     clearTimeout(this.resizeTimer);
     clearTimeout(this.copiedTimer);
     clearTimeout(this.tourDialogTimer);
+    clearTimeout(this.columnsTimer);
   },
   created() {
     document.title = "DesignSense";
@@ -1477,6 +1613,13 @@ export default {
       { immediate: true }
     );
     this.measureWorkspace();
+    // A dataset of the user's own, opened for the first time: say how its
+    // columns were read, once the workspace has drawn behind the dialog.
+    if (this.ownDataLoaded && !loadColumnRoles(this.$store.state.datasetKey).reviewed) {
+      this.columnsTimer = setTimeout(() => {
+        this.$store.commit("setColumnsDialog", { open: true });
+      }, 700);
+    }
     // The observer also catches size changes no window resize event reports;
     // both feed the same delayed measurement.
     window.addEventListener("resize", this.onWorkspaceResize);
@@ -1531,6 +1674,26 @@ export default {
         this.$store.commit("setIsOpeningDialogOn", { value: value });
       },
     },
+    /** What the welcome screen says about the data open behind it. */
+    welcomeDataset() {
+      if (loadState.loading) {
+        return { title: "Look around", text: "The data is loading…" };
+      }
+      let count = this.$store.state.rawData.length;
+      let options = count.toLocaleString() + (count === 1 ? " option" : " options");
+      let preset = presetFor(loadState.link);
+      let shared = loadState.source === "startup" && loadState.link !== DEFAULT_DATASET_URL;
+      if (shared && !preset) {
+        return { title: "Shared with you", text: "The link you opened holds " + options + "." };
+      }
+      if (preset) {
+        return {
+          title: shared ? "Shared with you" : "Look around",
+          text: "The " + preset.name + " sample is open: " + options + ".",
+        };
+      }
+      return { title: "Look around", text: "Your data is open: " + options + "." };
+    },
     storeNotice() {
       return this.$store.state.notice;
     },
@@ -1578,6 +1741,16 @@ export default {
      * What the last load left to say. The load dialog shows its own errors, so
      * only a load nobody watched reports one here.
      */
+    /** Whether the user loaded this dataset themselves, from a file or a link. */
+    ownDataLoaded() {
+      return (
+        (loadState.source === "file" || loadState.source === "url") &&
+        !!loadState.columns
+      );
+    },
+    latestError() {
+      return errorState.latest;
+    },
     loadNotice() {
       if (loadState.error) {
         let unwatched =
@@ -1669,6 +1842,9 @@ export default {
     },
   },
   watch: {
+    showWelcomeAtStart(value) {
+      writeShowWelcome(value);
+    },
     currentSelectionOperation: {
       immediate: true,
       handler() {
@@ -1750,6 +1926,18 @@ export default {
      * The layout menu's Edit: straight to editing, since the presets that
      * editing otherwise offers first are the next item in the same menu.
      */
+    openFeedback(fromError) {
+      this.feedbackFromError = fromError;
+      this.isOpeningDialogOn = false;
+      this.isFeedbackOn = true;
+    },
+    reviewColumns() {
+      this.showLoadNotice = false;
+      this.$store.commit("setColumnsDialog", { open: true });
+    },
+    dismissError() {
+      errorState.latest = null;
+    },
     toggleLayoutEditing() {
       if (this.isEditingMode) this.$store.dispatch("toggleEditingMode");
       else this.arrangeLayoutMyself();
@@ -1762,10 +1950,6 @@ export default {
     resetLayout() {
       this.$store.commit("toggleEditingMode", { value: false });
       this.$store.commit("resetLayouts");
-    },
-    clearSavedWork() {
-      this.isClearWorkDialogOn = false;
-      this.$store.dispatch("clearSavedWork");
     },
     copyShareLink() {
       let done = () => {
@@ -1965,6 +2149,7 @@ export default {
         case "clearInspection":
           return !this.isInspecting;
         case "addSelectionToCart":
+        case "createSet":
           return count === 0;
         case "compareResult":
           return count === 0;

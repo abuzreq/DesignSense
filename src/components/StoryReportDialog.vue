@@ -14,6 +14,15 @@
       </v-toolbar>
       <v-card-text class="sr-body">
         <v-text-field v-model="titleText" label="Title" dense outlined hide-details class="sr-title" />
+        <div class="sr-show">
+          <div class="sr-label">Each page shows</div>
+          <SummaryShowControls row />
+          <div class="sr-shared">
+            <v-icon x-small class="sr-shared-icon">mdi-sync</v-icon>
+            The same choices as the summary image: a change here changes it
+            too, and is remembered.
+          </div>
+        </div>
         <div ref="stage" class="sr-stage">
           <div
             v-for="(page, i) in pages"
@@ -35,7 +44,7 @@
                 :summary="page.summary"
                 :title="page.title"
                 :sentences="page.sentences"
-                :show="page.show"
+                :show="showFor(page)"
                 :images="images"
                 :footer="footerFor(i)"
               />
@@ -65,17 +74,26 @@
 
 <script>
 import ReportCover from "@/components/ReportCover.vue";
-import SummaryCard, { CARD_HEIGHT, CARD_WIDTH } from "@/components/SummaryCard.vue";
+import SummaryCard, {
+  CARD_HEIGHT,
+  CARD_WIDTH,
+  cardCapacity,
+  cardItems,
+} from "@/components/SummaryCard.vue";
+import SummaryShowControls from "@/components/SummaryShowControls.vue";
+import { shownFor } from "@/story/summarySettings.js";
+import { resolveFocus } from "@/story/focus.js";
 import { summarize } from "@/story/narrate.js";
 import { downloadBlob, fileNameFor, loadImages, pdfOf } from "@/story/image.js";
 
 /**
  * The story as a PDF report: a cover (ReportCover), then each captured view
- * as a SummaryCard with its note leading the findings, both charts shown.
+ * as a SummaryCard with its note leading the findings. What a page shows is
+ * the summary settings, shared with the summary image (summarySettings.js).
  */
 export default {
   name: "StoryReportDialog",
-  components: { ReportCover, SummaryCard },
+  components: { ReportCover, SummaryCard, SummaryShowControls },
   data() {
     return {
       titleText: "",
@@ -108,6 +126,10 @@ export default {
     },
   },
   watch: {
+    // Leaving out the findings makes room for more options on each page.
+    "$store.state.summarySettings"() {
+      if (this.dialogState.open) this.loadImages();
+    },
     "dialogState.open"(value) {
       if (value) this.start();
     },
@@ -123,7 +145,13 @@ export default {
       let goals = new Map();
       let pages = [{ id: "cover", cover: true }];
       captures.forEach((capture) => {
-        let summary = summarize(capture.snapshot, state.rawData, state.numericDimensions);
+        // What the capture's summary image was set to feature, a set among them.
+        let summary = summarize(
+          capture.snapshot,
+          state.rawData,
+          state.numericDimensions,
+          resolveFocus(capture.focus, state)
+        );
         summary.goals.forEach((goal) => goals.set(goal.dim, goal));
         let note = (capture.note || "").trim();
         // The note leads; what the data says follows, less what the note
@@ -138,13 +166,6 @@ export default {
             summary: summary,
             title: capture.title,
             sentences: sentences,
-            show: {
-              goals: true,
-              featured: true,
-              chart: !!summary.chart,
-              parallel: !!summary.parallel,
-              findings: true,
-            },
           })
         );
       });
@@ -165,7 +186,12 @@ export default {
         this.measure();
         this.observeStage();
       });
+      this.images = {};
+      this.failedImages = 0;
       this.loadImages();
+    },
+    showFor(page) {
+      return shownFor(this.$store.state.summarySettings, page.summary);
     },
     footerFor(index) {
       return "Made with DesignSense · " + (index + 1) + " / " + this.pages.length;
@@ -193,16 +219,28 @@ export default {
       this.measuredWidth = width;
       this.scale = Math.max(0.2, Math.min(1, (width - 8) / CARD_WIDTH));
     },
+    /** The options each page pictures, as many as its layout has room for. */
+    pictured() {
+      let pages = this.pages.filter((p) => !p.cover);
+      return [].concat(
+        ...pages.map((p) => {
+          let show = this.showFor(p);
+          return cardItems(p.summary, null, cardCapacity(show, p.summary, p.sentences.length));
+        })
+      );
+    },
+    /** Copies in the pictures not in yet; more room on the pages asks for more. */
     async loadImages() {
       let pages = this.pages;
-      this.images = {};
-      this.failedImages = 0;
+      let missing = this.pictured().filter((item) => !(item.id in this.images));
+      if (missing.length === 0) return;
       this.loadingImages = true;
-      let items = [].concat(...pages.filter((p) => !p.cover).map((p) => p.summary.featured.items));
-      let loaded = await loadImages(items);
+      let loaded = await loadImages(missing);
       if (this.pages !== pages) return;
-      this.images = loaded.images;
-      this.failedImages = loaded.failed;
+      let images = Object.assign({}, this.images);
+      missing.forEach((item) => (images[item.id] = loaded.images[item.id] || null));
+      this.images = images;
+      this.failedImages += loaded.failed;
       this.loadingImages = false;
     },
     async download() {
@@ -249,6 +287,25 @@ export default {
 .sr-title {
   max-width: 480px;
   margin-bottom: 14px !important;
+}
+.sr-show {
+  margin-bottom: 14px;
+}
+.sr-label {
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.55);
+}
+.sr-shared {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.55);
 }
 .sr-page {
   overflow: hidden;

@@ -15,11 +15,14 @@ import { describeFilter, formatValue, isScopeFilter } from "@/store/filters.js";
 import { describeSelection } from "@/store/selectionLogic.js";
 import { correlations, describeGroup, describeRelation, pretty } from "@/assistant/answers.js";
 import { frontCaveats, frontSteps, frontWarning, paretoFront, rowsWithValues } from "@/analysis/pareto.js";
-import { RATING_DIMENSION } from "@/ratings.js";
+import { RATING_DIMENSION, isRated } from "@/ratings.js";
 import { snapshotRows } from "./snapshot.js";
 
-// The card has room for this many options, and this many values on each.
+// The findings speak of this many featured options, as the card with its
+// findings has room for; MAX_LISTED more can be picked for the card, which
+// shows as many as its layout holds (see SummaryCard's cardCapacity).
 export const MAX_FEATURED = 6;
+const MAX_LISTED = 60;
 const MAX_VALUES = 3;
 // More axes than this and the card's parallel coordinates can't be read.
 const MAX_AXES = 10;
@@ -162,15 +165,14 @@ function narrowingSentence(snapshot, rows, dims) {
   );
 }
 
-const GROUP_NAMES = {
-  shortlist: "the shortlisted options",
-  front: "the best trade-offs",
-  top: "the featured options",
-  selected: "the featured options",
-};
+/** The group as a sentence names it: "the shortlisted options". */
+function groupName(featured) {
+  if (featured.source === "set") return "the options in " + featured.name;
+  return featured.source === "selected" ? "the selected options" : "the shortlisted options";
+}
 
 /** What sets the featured options apart from the rest in view. */
-function standoutSentence(featured, source, pool, dims) {
+function standoutSentence(featured, who, pool, dims) {
   if (featured.length === 0 || featured.length >= pool.length) return "";
   let found = describeGroup(pool, featured.map((row) => row._id), dims).filter(
     (d) => Math.abs(d.effect) >= NOTABLE_EFFECT
@@ -186,7 +188,6 @@ function standoutSentence(featured, source, pool, dims) {
       pretty(d.outside) +
       ")"
   );
-  let who = GROUP_NAMES[source] || "the featured options";
   return "Compared with the rest, " + who + " have " + listed(parts) + ", by median.";
 }
 
@@ -271,7 +272,7 @@ function caveatSentence(caveats, goalDims) {
   );
 }
 
-function frontSentence(best, goalDims, goals, featured, source) {
+function frontSentence(best, goalDims, goals, featured, source, name) {
   if (!best || best.front.length === 0) return "";
   let names = listed(goalDims.map((dim) => withMark(dim, goals[dim])));
   let text =
@@ -284,67 +285,58 @@ function frontSentence(best, goalDims, goals, featured, source) {
     ": no other option beats " +
     (best.front.length === 1 ? "it" : "them") +
     " on every goal.";
-  if (source === "shortlist" && featured.length > 0) {
+  if ((source === "shortlist" || source === "set") && featured.length > 0) {
     let onFront = new Set(best.front);
     let k = featured.filter((row) => onFront.has(row)).length;
+    let one = source === "set" ? "the option in " + name : "the shortlisted option";
+    let many = source === "set" ? "options in " + name : "shortlisted options";
     text +=
       k === 0
-        ? " None of the shortlisted options is among them."
+        ? " None of the " + many + " is among them."
         : k === featured.length
         ? featured.length === 1
-          ? " The shortlisted option is one of them."
-          : " Every shortlisted option is one of them."
-        : " " + k + " of the " + featured.length + " shortlisted options are among them.";
+          ? " " + capitalised(one) + " is one of them."
+          : " Every one of the " + many + " is one of them."
+        : " " + k + " of the " + featured.length + " " + many + " are among them.";
   }
   return text;
 }
 
 /**
- * The options the card features, and where they came from: the shortlist,
- * else the best trade-offs among what is selected, else the selection's best
- * on its first goal, else the first of the selection.
+ * The options the card pictures, and where they come from: the saved set the
+ * focus names, or the selected options when it names those, else the
+ * shortlist, else none. `all` is the whole group, which
+ * the charts mark; `listed` the ones that can be picked for the card; `rows`
+ * the ones the findings speak of.
  */
-function featuredOf(parts, best, goalDims, goals) {
-  if (parts.cart.length > 0) {
-    return { rows: parts.cart.slice(0, MAX_FEATURED), source: "shortlist", total: parts.cart.length };
-  }
-  let selected = new Set(parts.selected);
-  if (best) {
-    let onFront = best.front.filter((row) => selected.has(row));
-    if (onFront.length > 0 && onFront.length <= MAX_FEATURED * 3) {
-      return { rows: onFront.slice(0, MAX_FEATURED), source: "front", total: onFront.length };
-    }
-  }
-  if (goalDims.length > 0) {
-    let dim = goalDims[0];
-    let s = sign(goals[dim]);
-    let ranked = parts.selected
-      .filter((row) => isFinite(Number(row[dim])) && row[dim] !== "" && row[dim] !== null)
-      .sort((a, b) => s * (Number(b[dim]) - Number(a[dim])));
-    if (ranked.length > 0) {
-      return { rows: ranked.slice(0, MAX_FEATURED), source: "top", total: parts.selected.length, by: dim };
-    }
+function featuredOf(parts, focus, rows) {
+  let kind = focus ? focus.kind : "auto";
+  let group = [];
+  let source = "none";
+  if (kind === "set" && Array.isArray(focus.ids)) {
+    let byId = new Map(rows.map((row) => [String(row._id), row]));
+    group = focus.ids.map((id) => byId.get(String(id))).filter(Boolean);
+    source = "set";
+  } else if (kind === "selected") {
+    group = parts.selected;
+    source = "selected";
+  } else if (parts.cart.length > 0) {
+    group = parts.cart;
+    source = "shortlist";
   }
   return {
-    rows: parts.selected.slice(0, MAX_FEATURED),
-    source: "selected",
-    total: parts.selected.length,
+    rows: group.slice(0, MAX_FEATURED),
+    listed: group.slice(0, MAX_LISTED),
+    all: group,
+    source: source,
+    name: source === "set" ? focus.name || "the set" : "",
+    total: group.length,
   };
 }
 
 function featuredLabel(featured) {
-  switch (featured.source) {
-    case "shortlist":
-      return featured.total > featured.rows.length
-        ? "Shortlist (" + featured.rows.length + " of " + featured.total + ")"
-        : "Shortlist";
-    case "front":
-      return "Best trade-offs";
-    case "top":
-      return "Best on " + displayName(featured.by);
-    default:
-      return "Selected options";
-  }
+  if (featured.source === "set") return featured.name;
+  return featured.source === "selected" ? "Selected options" : "Shortlist";
 }
 
 /**
@@ -363,9 +355,24 @@ function parallelDims(shown, numericDims, goals) {
   return ordered.slice(0, MAX_AXES);
 }
 
+/** How the charts' legend names the options drawn in colour. */
+function groupLegend(featured) {
+  if (featured.source === "set") return "In " + featured.name;
+  if (featured.source === "selected") return "Selected";
+  if (featured.source === "shortlist") return "Shortlisted";
+  return "In the result";
+}
+
+// A set's name the app gave it, which says nothing as a title.
+const NUMBERED_SET = /^Set #\d+$/;
+
 function defaultTitle(snapshot, featured) {
-  if (featured.source === "shortlist") {
+  if (featured.source === "set" && !NUMBERED_SET.test(featured.name)) return featured.name;
+  if (featured.source === "shortlist" || featured.source === "set") {
     return plural(featured.total, "design option") + " worth a closer look";
+  }
+  if (featured.source === "selected" && featured.total < snapshot.counts.total) {
+    return featured.total + " of " + plural(snapshot.counts.total, "design option");
   }
   return "Summary of " + plural(snapshot.counts.total, "design option");
 }
@@ -377,54 +384,72 @@ function dateText(time) {
 
 /**
  * Everything the summary card shows, from a snapshot and the whole
- * collection's `rows`. `numericDims` are the numeric dimensions.
+ * collection's `rows`. `numericDims` are the numeric dimensions. `focus`
+ * says which options the card pictures (see story/focus.js): { kind: "auto" },
+ * the default, for the shortlist, { kind: "selected" }, or
+ * { kind: "set", ids, name }. Ratings are
+ * left out while no option in view has one.
  *
  *   { title, subtitle, goals: [{ dim, name, mark, title }],
- *     featured: { label, source, items: [{ id, row, name, image, values, onFront }] },
- *     chart: { x, y, goals, rows, selected: Set, cart: Set, steps } | null,
- *     parallel: { dims, goals, rows, selected: Set, featured: Set } | null,
+ *     featured: { label, legend, source, total, grouped,
+ *                 items: [{ id, row, name, image, values, onFront }] },
+ *       items: the options that can be pictured, in order, more than a card
+ *       shows; total: how many the group has.
+ *     chart: { x, y, goals, rows, selected: Set, cart: Set, group: Set, narrowed, steps } | null,
+ *     parallel: { dims, goals, rows, selected: Set, featured: Set, group: Set, narrowed } | null,
+ *       group: the options drawn in colour, the rest grey (see groupLegend).
  *     sentences: [{ id, text }] }
  */
-export function summarize(snapshot, rows, numericDims) {
+export function summarize(snapshot, rows, numericDims, focus) {
   let parts = snapshotRows(snapshot, rows);
   let goals = snapshot.goals || {};
+  // An empty rating says nothing: no goal chip, value or axis for it.
+  if (!parts.shown.some(isRated)) {
+    numericDims = numericDims.filter((dim) => dim !== RATING_DIMENSION);
+    goals = Object.assign({}, goals);
+    delete goals[RATING_DIMENSION];
+  }
   let goalDims = numericDims.filter((dim) => goals[dim]);
   let outputDims = numericDims.filter((dim) => columnKind(dim) === OUTPUT);
   let pool = parts.shown;
   let scoped = snapshot.shown !== null || snapshot.selected !== null;
   let best = frontOf(parts.selected, goalDims, goals, scoped);
-  let featured = featuredOf(parts, best, goalDims, goals);
+  let featured = featuredOf(parts, focus, rows);
   let onFront = new Set(best ? best.front : []);
 
   let valueDims = (goalDims.length > 0 ? goalDims : [snapshot.view.scatterX, snapshot.view.scatterY])
     .filter(Boolean)
     .slice(0, MAX_VALUES);
-  let items = featured.rows.map((row) => ({
+  let items = featured.listed.map((row) => ({
     id: String(row._id),
     row: row,
     name: optionName(row),
     image: row.image || null,
     onFront: onFront.has(row),
-    values: valueDims.map((dim) => ({
-      dim: dim,
-      name: displayName(dim),
-      mark: GOAL_MARKS[goals[dim]] ? GOAL_MARKS[goals[dim]].mark : "",
-      text: row[dim] === "" || row[dim] === null || row[dim] === undefined ? "–" : pretty(Number(row[dim])),
-    })),
+    // An option nobody rated shows no rating, rather than a dash.
+    values: valueDims
+      .filter((dim) => dim !== RATING_DIMENSION || isRated(row))
+      .map((dim) => ({
+        dim: dim,
+        name: displayName(dim),
+        mark: GOAL_MARKS[goals[dim]] ? GOAL_MARKS[goals[dim]].mark : "",
+        text: row[dim] === "" || row[dim] === null || row[dim] === undefined ? "–" : pretty(Number(row[dim])),
+      })),
   }));
 
   let sentences = [
     { id: "narrowing", text: narrowingSentence(snapshot, rows, numericDims) },
     {
       id: "standout",
+      // The whole group, as its name says, not only the few pictured.
       text: standoutSentence(
-        featured.rows,
-        featured.source,
+        featured.all,
+        groupName(featured),
         pool,
         goalDims.length > 0 ? goalDims.concat(outputDims.filter((d) => !goals[d])) : outputDims.length > 0 ? outputDims : numericDims
       ),
     },
-    { id: "front", text: frontSentence(best, goalDims, goals, featured.rows, featured.source) },
+    { id: "front", text: frontSentence(best, goalDims, goals, featured.all || featured.rows, featured.source, featured.name) },
     { id: "caveat", text: best ? caveatSentence(best.caveats, goalDims) : "" },
     { id: "tradeoff", text: tradeOffSentence(parts.selected, goalDims, goals, outputDims) },
   ].filter((s) => s.text);
@@ -432,7 +457,10 @@ export function summarize(snapshot, rows, numericDims) {
   let x = snapshot.view.scatterX;
   let y = snapshot.view.scatterY;
   let selectedSet = new Set(parts.selected);
-  let featuredSet = new Set(featured.source === "shortlist" ? parts.cart : featured.rows);
+  let featuredSet = new Set(featured.all || featured.rows);
+  // Drawn in colour against the grey of the rest: the options the card is
+  // about, all of them, pictured or not; with none, the result.
+  let groupSet = featured.all.length > 0 ? featuredSet : selectedSet;
   let chart = null;
   if (x && y && x !== y) {
     let pairGoals = [goals[x] || null, goals[y] || null];
@@ -448,6 +476,8 @@ export function summarize(snapshot, rows, numericDims) {
       rows: pool,
       selected: selectedSet,
       cart: featuredSet,
+      group: groupSet,
+      narrowed: snapshot.selected !== null,
       steps: steps,
     };
   }
@@ -455,7 +485,15 @@ export function summarize(snapshot, rows, numericDims) {
   let axes = parallelDims(snapshot.view.pcpDims, numericDims, goals);
   let parallel =
     axes.length >= 2
-      ? { dims: axes, goals: goals, rows: pool, selected: selectedSet, featured: featuredSet }
+      ? {
+          dims: axes,
+          goals: goals,
+          rows: pool,
+          selected: selectedSet,
+          featured: featuredSet,
+          group: groupSet,
+          narrowed: snapshot.selected !== null,
+        }
       : null;
 
   let counts = snapshot.counts;
@@ -476,7 +514,13 @@ export function summarize(snapshot, rows, numericDims) {
       mark: GOAL_MARKS[goals[dim]].mark,
       title: GOAL_MARKS[goals[dim]].title,
     })),
-    featured: { label: featuredLabel(featured), source: featured.source, items: items },
+    featured: {
+      label: featuredLabel(featured),
+      legend: groupLegend(featured),
+      source: featured.source,
+      total: featured.total,
+      items: items,
+    },
     chart: chart,
     parallel: parallel,
     sentences: sentences,

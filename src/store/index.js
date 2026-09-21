@@ -39,7 +39,13 @@ import {
   setGallerySelected,
   upsertFilter,
 } from "./filters.js";
-import { RATING_BOUNDS, RATING_DIMENSION, isRated } from "@/ratings.js";
+import {
+  RATING_BOUNDS,
+  RATING_DIMENSION,
+  isRated,
+  isRating as isRatingDim,
+} from "@/ratings.js";
+import { NOTE_LIMIT } from "@/optionNotes.js";
 import { createDimensionsStore } from "./dimensions.js";
 import { createGoalsStore } from "./goals.js";
 import { createStoryStore } from "./story.js";
@@ -98,11 +104,15 @@ function builder(
   new_similarity_map,
   options
 ) {
-  // Saved ratings go onto the rows first, so weighted dimensions that weigh
-  // the rating start from them.
   const session = openSession(new_data, options && options.datasetKey);
-  // Custom and weighted dimensions go onto the rows before Vue observes them.
-  const dimensions = createDimensionsStore(new_data, dataTypesMap, options);
+  // Custom and weighted dimensions go onto the rows before Vue observes them,
+  // the rating among them. Ratings a session saved before the rating was a
+  // custom dimension are brought in there.
+  const dimensions = createDimensionsStore(
+    new_data,
+    dataTypesMap,
+    Object.assign({}, options, { legacyRatings: session.legacyRatings })
+  );
   // Which way is better for each dimension (see store/goals.js).
   const goals = createGoalsStore(options);
   // The summary image and the captured story (see store/story.js).
@@ -148,6 +158,14 @@ function builder(
       // filtering, brushing, zooming and mode switches, until they are saved
       // as a set. Ids, resolved against rawData, so a zoom never empties it.
       cart: session.cart,
+      // A note on an option, by its id: why it's in or out, what to ask about
+      // it. Saved with the session (see optionNotes.js).
+      optionNotes: session.notes,
+      // What the dataset's saved work is found by (see datasetKey in
+      // customDimensions.js); null for the placeholder.
+      datasetKey: (options && options.datasetKey) || null,
+      // Whether the dialog listing the columns and their roles is open.
+      columnsDialog: { open: false },
       // The shortlist before it was cleared or saved, so both can be undone.
       lastCart: null,
       // Which options the compare view is showing, and where they came from.
@@ -347,11 +365,26 @@ function builder(
       /** Chips for the filters a set was saved from; null for a hand-picked set. */
       setCriteriaChips: (state) => (setID) => {
         let criteria = state.setsCriteriaMap[setID];
-        return criteria ? criteria.map(describeChip) : null;
+        return criteria ? criteria.map(describeSetChip) : null;
       },
       // Rows are not reactive, so the version is what says a rating changed.
-      hasRatings: (state) =>
-        state.dimensionValuesVersion >= 0 && state.rawData.some(isRated),
+      hasRatings: (state, getters) =>
+        state.dimensionValuesVersion >= 0 &&
+        getters.hasRatingDimension &&
+        state.rawData.some(isRated),
+      /**
+       * The options a set or the shortlist takes: the selected ones still in
+       * view, as zooming takes them. Nothing when nothing is selected: in
+       * Lite, while no filter narrows the options.
+       */
+      selectedShown: (state, getters) => {
+        void state.selectionVersion;
+        if (getters.isLite && !getters.isFilterActive) return [];
+        let shown = getters.dataMap;
+        return Object.keys(getters.selectedInMarking(state.defaultMarkingID)).filter(
+          (id) => !!shown[id]
+        );
+      },
       selectionCount: (state, getters) => {
         void state.selectionVersion;
         return Object.keys(getters.selectedInMarking(state.defaultMarkingID))
@@ -658,11 +691,18 @@ function builder(
        * would rebuild every chart. Views that draw ratings imperatively redraw
        * on `dimensionValuesVersion`.
        */
-      rateAlt(state, payload) {
-        let row = state.rawData.find((x) => x._id === payload.item._id);
-        if (!row || row.Rating === payload.rating) return;
-        row.Rating = payload.rating;
-        state.dimensionValuesVersion += 1;
+      /** `{ id, text }`; empty text removes the note. */
+      setOptionNote(state, payload) {
+        let id = String(payload.id);
+        let text = (payload.text || "").slice(0, NOTE_LIMIT);
+        if (text.trim() === "") Vue.delete(state.optionNotes, id);
+        else Vue.set(state.optionNotes, id, text);
+      },
+      clearOptionNotes(state) {
+        state.optionNotes = {};
+      },
+      setColumnsDialog(state, payload) {
+        state.columnsDialog = { open: !!payload.open };
       },
       popDataStack(state, payload) {
         payload.data = state.dataStack.pop();
@@ -1118,13 +1158,23 @@ function builder(
         );
         // Rows list the header's columns, quoted where needed; a missing
         // value is an empty cell.
+        // Notes go out as a column of their own when there are any, named
+        // so it can't take the place of one the file already has.
+        var notes = context.state.optionNotes;
+        var noteColumn = null;
+        if (Object.keys(notes).length > 0) {
+          noteColumn = "Note";
+          while (selectDims.indexOf(noteColumn) !== -1) noteColumn = "DesignSense " + noteColumn;
+        }
         var csv = Papa.unparse({
-          fields: selectDims,
-          data: data.map((row) =>
-            selectDims.map((dim) =>
+          fields: noteColumn ? selectDims.concat([noteColumn]) : selectDims,
+          data: data.map((row) => {
+            var cells = selectDims.map((dim) =>
               row[dim] === undefined || row[dim] === null ? "" : row[dim]
-            )
-          ),
+            );
+            if (noteColumn) cells.push(notes[String(row._id)] || "");
+            return cells;
+          }),
         });
         var url = URL.createObjectURL(
           new Blob([csv], { type: "text/csv;charset=utf-8" })
@@ -1332,19 +1382,15 @@ function builder(
         let criteria = null;
         if (payload && payload.members) {
           members = payload.members;
-        } else if (context.getters.isLite) {
-          members = context.getters.isFilterActive
-            ? Object.keys(
-                context.getters.selectedInMarking(
-                  context.state.defaultMarkingID
-                )
-              )
-            : context.state.data.map((d) => d._id);
-          criteria = context.state.filters;
         } else {
-          members = Object.keys(
-            context.getters.selectedInMarking(context.state.defaultMarkingID)
-          );
+          // Only what is selected and in view: never an option filtered,
+          // zoomed or excluded out, and never an empty set.
+          members = context.getters.selectedShown;
+          if (members.length === 0) {
+            context.commit("showNotice", { text: "Select options first: only the selected options in view are saved or shortlisted." });
+            return false;
+          }
+          if (context.getters.isLite) criteria = context.state.filters;
         }
         context.commit("addSet", {
           members: members,
@@ -1352,6 +1398,7 @@ function builder(
           setName: payload ? payload.setName : null,
           comment: payload ? payload.comment : null,
         });
+        return true;
       },
       /** Every one-option shortlist control goes through here. */
       toggleInCart(context, payload) {
@@ -1364,11 +1411,11 @@ function builder(
       },
       /** Shortlists everything the filters or the selection currently leave. */
       addResultToCart(context) {
-        let ids = Object.keys(
-          context.getters.selectedInMarking(context.state.defaultMarkingID)
-        );
-        if (context.getters.isLite && !context.getters.isFilterActive) {
-          ids = context.state.data.map((row) => row._id);
+        // As a set takes them: the selected options still in view.
+        let ids = context.getters.selectedShown;
+        if (ids.length === 0) {
+          context.commit("showNotice", { text: "Select options first: only the selected options in view are saved or shortlisted." });
+          return;
         }
         let before = context.state.cart;
         context.commit("addToCart", { ids: ids });
@@ -1383,6 +1430,27 @@ function builder(
         context.commit("showNotice", {
           text:
             "Added " + added + (added === 1 ? " option" : " options") + " to the shortlist.",
+          action: "restoreCart",
+        });
+      },
+      /** Puts a saved set's options on the shortlist, beside what is there. */
+      putSetOnCart(context, payload) {
+        let members = context.state.setsMap[payload.setID] || [];
+        let metadata = context.state.setsMetadataMap[payload.setID];
+        let name = metadata ? metadata.name : payload.setID;
+        let before = context.state.cart;
+        context.commit("addToCart", { ids: members });
+        let added = context.state.cart.length - before.length;
+        if (added === 0) {
+          context.commit("showNotice", {
+            text: "Every option in " + name + " is already on the shortlist.",
+          });
+          return;
+        }
+        context.commit("rememberCart", { ids: before });
+        context.commit("showNotice", {
+          text:
+            "Put " + added + (added === 1 ? " option" : " options") + " from " + name + " on the shortlist.",
           action: "restoreCart",
         });
       },
@@ -1414,6 +1482,7 @@ function builder(
         context.dispatch("createSet", { members: members, setName: name });
         let setID = context.state.setsIDs[context.state.setsIDs.length - 1];
         context.commit("rememberCart", { ids: members });
+        context.commit("rememberShortlistSet", { setID: setID });
         context.commit("setCart", { ids: [] });
         context.commit("showNotice", {
           text:
@@ -1553,9 +1622,11 @@ function builder(
         });
       },
       updateSet(context, payload) {
-        let members = Object.keys(
-          context.getters.selectedInMarking(context.state.defaultMarkingID)
-        );
+        let members = context.getters.selectedShown;
+        if (members.length === 0) {
+          context.commit("showNotice", { text: "Select options first: only the selected options in view are saved or shortlisted." });
+          return;
+        }
         context.commit("updateSet", {
           setID: payload.setID,
           members: members,
@@ -1575,34 +1646,86 @@ function builder(
        * Forgets the sets, notes and ratings saved for this dataset, and clears
        * them from the workspace. Custom dimensions are managed on their own.
        */
-      clearSavedWork(context) {
-        context.commit("clearSets");
-        // Left behind, the shortlist would be written back 400ms later and
-        // re-create the record that was just forgotten.
-        context.commit("setCart", { ids: [] });
-        context.commit("rememberCart", { ids: null });
-        context.state.rawData.forEach((row) => {
-          if (!(row[RATING_DIMENSION] > 0)) return;
-          context.dispatch("rateAlt", { item: row, rating: 0 });
-        });
-        // After the ratings, so a weighted dimension that weighs one is read
-        // again from what is left rather than from a rating about to go.
-        context.dispatch("clearEnteredValues");
-        session.clear();
-        context.commit("setPresenting", { index: null });
-        context.commit("clearStory");
-        context.commit("showNotice", {
-          text:
-            "Cleared the saved sets, notes, ratings, shortlist, story and entered values for this dataset.",
-        });
+      /**
+       * Clears the parts of this dataset's work named in `parts`: { sets,
+       * shortlist, notes, ratings, values, dimensions, goals, story }, each
+       * true to clear it. Nothing can be undone. Returns what was cleared, as
+       * words for a notice. Column roles are cleared by the dialog, since
+       * they take a fresh start of the workspace (see ClearDataDialog).
+       */
+      clearData(context, parts) {
+        let p = parts || {};
+        let done = [];
+        if (p.sets) {
+          context.commit("clearSets");
+          done.push("sets");
+        }
+        if (p.shortlist) {
+          context.commit("setCart", { ids: [] });
+          context.commit("rememberCart", { ids: null });
+          done.push("shortlist");
+        }
+        if (p.notes) {
+          context.commit("clearOptionNotes");
+          done.push("notes");
+        }
+        if (p.dimensions) {
+          context.dispatch("removeAddedDimensions");
+          done.push("custom and weighted dimensions");
+        }
+        if (p.ratings || p.values) {
+          let only = context.state.customDimensions
+            .filter((def) => (isRatingDim(def.name) ? p.ratings : p.values))
+            .map((def) => def.name);
+          if (only.length > 0) context.dispatch("clearEnteredValues", { only: only });
+          if (p.ratings) done.push("ratings");
+          if (p.values) done.push("entered values");
+        }
+        // Without ratings, or what weighed them, the rating goes.
+        context.dispatch("dropRatingIfUnused");
+        if (p.goals) {
+          context.dispatch("clearGoalChoices");
+          done.push("goals");
+        }
+        if (p.story) {
+          context.commit("setPresenting", { index: null });
+          context.commit("clearStory");
+          done.push("story");
+        }
+        return done;
       },
-      rateAlt(context, payload) {
-        context.commit("rateAlt", payload);
-        // Weighted dimensions that weigh the rating follow it.
-        context.commit("refreshDerivedValues", {
-          id: payload.item._id,
-          dim: RATING_DIMENSION,
+      /** Everything, as the clear-data dialog does by default. */
+      clearSavedWork(context) {
+        let done = context.dispatch("clearData", {
+          sets: true,
+          shortlist: true,
+          notes: true,
+          ratings: true,
+          values: true,
+          dimensions: true,
+          goals: true,
+          story: true,
         });
+        session.clear();
+        return done;
+      },
+      /**
+       * `{ item, rating }`: 1-5 stars, or 0 to clear. The rating is a custom
+       * dimension that exists only while something is rated: the first
+       * rating makes it, and clearing the last lets it go (see
+       * dimensions.js). Weighted dimensions that weigh it follow its values.
+       */
+      rateAlt(context, payload) {
+        let stars = payload.rating > 0 ? payload.rating : undefined;
+        if (stars !== undefined) context.dispatch("createRatingDimension");
+        if (!context.getters.hasRatingDimension) return;
+        context.dispatch("setDimensionValue", {
+          dim: RATING_DIMENSION,
+          id: payload.item._id,
+          value: stars,
+          final: true,
+        });
+        if (stars === undefined) context.dispatch("dropRatingIfUnused");
         // A filter on Rating has to pick up the new rating. Other filters
         // select by other values or by ID, so their result stands.
         let byRating = context.getters.narrowingFilters.some(
@@ -1615,6 +1738,9 @@ function builder(
     },
     modules: {},
   });
+  // Ratings brought in from an old session are saved where ratings live now,
+  // before the session, attached next, stops carrying them.
+  if (dimensions.migrated) store.dispatch("saveDimensions");
   session.attach(store);
   story.attach(store);
   return store;
@@ -1785,6 +1911,19 @@ function scopeToResult(context, action) {
     narrowing.map((f) => describeFilter(f).text)
   );
   commitFilters(context, scopeFilters(state.filters).concat([scope]));
+}
+
+/**
+ * A saved set's filter as its card shows it. An exclusion reads as what the
+ * set leaves out: "Excluded (5)" on a set looked like the five were in it.
+ */
+function describeSetChip(filter) {
+  let chip = describeChip(filter);
+  if (isScopeFilter(filter) && filter.kind === "exclude") {
+    let n = (filter.ids || []).length;
+    chip.text = "Leaves out " + n + (n === 1 ? " option" : " options");
+  }
+  return chip;
 }
 
 function describeChip(filter) {

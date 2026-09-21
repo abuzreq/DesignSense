@@ -5,12 +5,14 @@
  *
  * The story is saved per dataset in localStorage, like the saved work in
  * session.js:
- *   { version: 1, counter, captures: [{ id, title, note, snapshot, createdAt }] }
+ *   { version: 1, counter, captures: [{ id, title, note, snapshot, createdAt, focus? }] }
+ * focus is what its summary image features (see story/focus.js).
  * A snapshot is story/snapshot.js's.
  */
 
 import { takeSnapshot, SNAPSHOT_VERSION } from "@/story/snapshot.js";
 import { summarize } from "@/story/narrate.js";
+import { loadSummarySettings, saveSummarySettings } from "@/story/summarySettings.js";
 
 export const STORY_PREFIX = "designsense-story-v1:";
 const STORY_VERSION = 1;
@@ -35,6 +37,10 @@ function isCapture(capture) {
   );
 }
 
+function isFocus(focus) {
+  return !!focus && typeof focus.kind === "string";
+}
+
 /** The saved story, or an empty one when the text is missing, malformed or from another version. */
 export function parseStory(text) {
   let empty = { captures: [], counter: 0 };
@@ -53,6 +59,7 @@ export function parseStory(text) {
     // Frozen, so Vue doesn't walk the ids it lists.
     snapshot: Object.freeze(c.snapshot),
     createdAt: typeof c.createdAt === "number" ? c.createdAt : 0,
+    focus: isFocus(c.focus) ? c.focus : null,
   }));
   return {
     captures: captures,
@@ -134,7 +141,13 @@ export function createStoryStore(options) {
     state: {
       // The summary dialog, and the snapshot it was opened on (see
       // story/snapshot.js), so what it shows doesn't move while it is open.
-      summaryDialog: { open: false, snapshot: null, title: null, note: null },
+      // captureId names the capture it was opened on, which keeps its focus.
+      summaryDialog: { open: false, snapshot: null, title: null, note: null, focus: null, captureId: null },
+      // The set the shortlist was last saved as, this visit: with the
+      // shortlist emptied, it is what a summary image features.
+      lastShortlistSet: null,
+      // What every summary image and report page shows (see summarySettings.js).
+      summarySettings: loadSummarySettings(),
       story: saved,
       // The story's panel at the workspace's right edge.
       storyPanel: { open: false },
@@ -150,11 +163,18 @@ export function createStoryStore(options) {
       setSummaryDialog(state, payload) {
         state.summaryDialog = Object.assign({}, state.summaryDialog, payload);
       },
+      /** Some of the summary settings, e.g. `{ parallel: true }`. */
+      setSummarySettings(state, payload) {
+        state.summarySettings = Object.assign({}, state.summarySettings, payload);
+      },
       setStoryReportDialog(state, payload) {
         state.storyReportDialog = Object.assign({}, state.storyReportDialog, payload);
       },
       setStoryPanel(state, payload) {
         state.storyPanel = Object.assign({}, state.storyPanel, payload);
+      },
+      rememberShortlistSet(state, payload) {
+        state.lastShortlistSet = payload.setID || null;
       },
       setPresenting(state, payload) {
         state.presenting = payload.index === null || payload.index === undefined ? null : payload.index;
@@ -165,7 +185,7 @@ export function createStoryStore(options) {
           captures: state.story.captures.concat([payload.capture]),
         };
       },
-      /** `{ id, title?, note? }`. */
+      /** `{ id, title?, note?, focus? }`. */
       updateCapture(state, payload) {
         state.story = Object.assign({}, state.story, {
           captures: state.story.captures.map((c) => {
@@ -173,6 +193,7 @@ export function createStoryStore(options) {
             let next = Object.assign({}, c);
             if (typeof payload.title === "string") next.title = payload.title;
             if (typeof payload.note === "string") next.note = payload.note;
+            if (payload.focus !== undefined) next.focus = payload.focus;
             return next;
           }),
         });
@@ -197,16 +218,34 @@ export function createStoryStore(options) {
       },
     },
     actions: {
-      /** Opens the summary of `{ snapshot, title, note }`, or of what is on screen now. */
+      /**
+       * Opens the summary of `{ snapshot, title, note, focus, captureId }`,
+       * or of what is on screen now. Without a focus, the screen's summary
+       * features the shortlist, or when that is empty the set it was just
+       * saved as, so saving it doesn't take it off the picture.
+       */
       openSummary(context, payload) {
+        let state = context.state;
         let snapshot =
           (payload && payload.snapshot) || snapshotNow(context);
+        let focus = (payload && payload.focus) || null;
+        let saved = state.lastShortlistSet;
+        if (!focus && !(payload && payload.snapshot) && state.cart.length === 0 && saved && state.setsMap[saved]) {
+          focus = { kind: "set", setID: saved };
+        }
         context.commit("setSummaryDialog", {
           open: true,
           snapshot: snapshot,
           title: (payload && payload.title) || null,
           note: (payload && payload.note) || null,
+          focus: focus,
+          captureId: (payload && payload.captureId) || null,
         });
+      },
+      /** Changes the summary settings and keeps them for next time. */
+      changeSummarySettings(context, payload) {
+        context.commit("setSummarySettings", payload);
+        saveSummarySettings(context.state.summarySettings);
       },
       closeSummary(context) {
         context.commit("setSummaryDialog", { open: false });

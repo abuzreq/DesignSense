@@ -15,6 +15,17 @@
         </v-btn>
         <span class="dims-title-text">{{ title }}</span>
         <v-spacer />
+        <!-- The file's columns and their roles, which goals build on. -->
+        <v-btn
+          v-if="view === 'manage'"
+          small
+          text
+          class="dims-columns-btn"
+          @click="openColumns"
+        >
+          <v-icon small left>mdi-table-cog</v-icon>
+          Columns
+        </v-btn>
         <v-btn icon small @click="open = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
@@ -140,11 +151,11 @@
             beside the star rating or by dragging a knob on the parallel
             coordinates.
           </p>
-          <div v-if="defs.length === 0" class="dims-empty">
+          <div v-if="listedDefs.length === 0" class="dims-empty">
             No custom or weighted dimensions yet.
           </div>
           <v-list v-else dense class="py-0">
-            <v-list-item v-for="def in defs" :key="def.name" class="dims-row">
+            <v-list-item v-for="def in listedDefs" :key="def.name" class="dims-row">
               <v-list-item-icon class="mr-3">
                 <v-icon
                   small
@@ -166,7 +177,8 @@
                 >
               </v-list-item-content>
               <v-list-item-action class="dims-actions">
-                <v-tooltip bottom>
+                <!-- The rating's range is fixed: whole stars, 1 to 5. -->
+                <v-tooltip v-if="def.name !== ratingDimension" bottom>
                   <template v-slot:activator="{ on }">
                     <v-btn
                       icon
@@ -566,6 +578,7 @@ export default {
   components: { DimensionName, DimensionPicker },
   data() {
     return {
+      ratingDimension: RATING_DIMENSION,
       view: "manage",
       // The dimension being edited; null while creating one.
       editingName: null,
@@ -611,6 +624,9 @@ export default {
       "hasRatings",
       "isLite",
     ]),
+    listedDefs() {
+      return this.defs;
+    },
     /** The numeric dimensions that can have a goal: not bookkeeping or pictures. */
     goalCandidates() {
       return this.numericDimensions.filter(
@@ -763,6 +779,10 @@ export default {
     },
   },
   methods: {
+    openColumns() {
+      this.open = false;
+      this.$store.commit("setColumnsDialog", { open: true });
+    },
     label: displayName,
     setGoal(dim, choice) {
       this.$store.dispatch("setGoal", {
