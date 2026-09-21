@@ -271,7 +271,8 @@
         <template v-else-if="view === 'weighted'">
           <p class="dims-intro mt-3">
             Each dimension is scaled to 0&ndash;1, flipped if lower is better,
-            and averaged by weight.
+            and averaged by its share. The shares always add up to 100%:
+            raising one lowers the others in proportion.
             <template v-if="editingFromFile"
               >Shows the file's values until weighted.</template
             >
@@ -302,39 +303,42 @@
               outlined
               hide-details
               class="term-dim"
-              @change="followGoal(term)"
+              @change="pickTermDim(term)"
             />
+            <!-- Shares of the whole, always adding up to 100%: moving one
+                 moves the others in proportion to theirs (see rebalance). -->
             <div class="term-weight">
-              <v-text-field
-                :value="term.weightText"
-                label="Weight"
-                type="number"
-                min="0"
-                step="any"
-                dense
-                outlined
-                hide-details
-                class="term-weight-input"
-                :error="!isWeightText(term.weightText)"
-                @input="setWeightText(term, $event)"
-                @blur="term.weightText = String(term.weight)"
-              />
-              <!-- Weights count relative to each other, so the slider
-                   runs on a log scale with the weight every dimension starts
-                   with, 1, in the middle (see weightToSlider). -->
               <v-slider
-                :value="weightToSlider(term.weight)"
+                :value="term.dim ? term.weight * 100 : 0"
                 min="0"
-                :max="SLIDER_END"
+                max="100"
                 step="0"
                 dense
                 hide-details
                 class="term-slider"
-                aria-label="Weight"
-                title="Left of the middle weighs less, right weighs more. The far left leaves it out."
-                @input="slideWeight(term, $event)"
+                aria-label="Share"
+                :disabled="!term.dim || countedTerms.length < 2"
+                title="Its share of the weighted value. Raising it lowers the others in proportion, so together they always make 100%."
+                @input="slideShare(term, $event)"
               />
-              <span class="term-share">{{ shareText(i) }}</span>
+              <v-text-field
+                :value="shareFieldText(term)"
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                suffix="%"
+                dense
+                outlined
+                hide-details
+                class="term-weight-input"
+                aria-label="Share, in percent"
+                :disabled="!term.dim || countedTerms.length < 2"
+                :error="editingShareKey === term.key && !isShareText(term.weightText)"
+                @focus="editShare(term)"
+                @input="typeShare(term, $event)"
+                @blur="editingShareKey = null"
+              />
             </div>
             <v-checkbox
               v-model="term.lowerIsBetter"
@@ -455,30 +459,65 @@ const PAPER_URL = "https://www.itcon.org/papers/2018_08-ITcon-Haymaker.pdf";
 const BOOKKEEPING = ["index", "selected", "ID", "id", "_id", "collection"];
 // A little longer than the dialog's fade-out.
 const CLOSE_TRANSITION_MS = 400;
-// The weight slider's positions run from 0 to this; its middle is weight 1.
-const SLIDER_END = 100;
-// Its ends, either side of 1: a tenth of the weight, and ten times it.
-const SLIDER_REACH = 10;
+// Two weightings whose shares differ by less than this weigh alike.
+const SAME_SHARE = 1e-3;
 
-/**
- * Where a weight sits along the slider: 1 in the middle, a tenth and ten
- * times either end, evenly by ratio, so halving a weight moves the knob as far
- * as doubling it. Zero, which leaves a dimension out, is the left end, as is
- * anything below a tenth; anything past ten is the right end.
+/*
+ * Weights count only relative to each other (see weightedValue), so the
+ * editor works in shares that add up to 1, shown as percentages.
  */
-function weightToSlider(weight) {
-  if (!(weight > 0)) return 0;
-  let middle = SLIDER_END / 2;
-  let at = middle + (middle * Math.log(weight)) / Math.log(SLIDER_REACH);
-  return Math.max(0, Math.min(SLIDER_END, at));
+
+/** Shares adding up to 1 from any weights; equal ones when all are zero. */
+function normalized(weights) {
+  let total = weights.reduce((sum, w) => sum + (w > 0 ? w : 0), 0);
+  if (total > 0) return weights.map((w) => (w > 0 ? w / total : 0));
+  return weights.map(() => 1 / weights.length);
 }
 
-/** The weight at a slider position, to two significant figures: 0.25, 1.4, 6.3. */
-function sliderToWeight(position) {
-  if (!(position > 0)) return 0;
-  let middle = SLIDER_END / 2;
-  let weight = Math.pow(SLIDER_REACH, (position - middle) / middle);
-  return Number(weight.toPrecision(2));
+/**
+ * Sets share `index` to `value` and moves the others in proportion to
+ * theirs, so the shares still add up to 1. With the others all at zero,
+ * they split what is left evenly.
+ */
+function rebalance(shares, index, value) {
+  let set = Math.max(0, Math.min(1, value));
+  let rest = shares.reduce((sum, w, j) => (j === index ? sum : sum + w), 0);
+  let left = 1 - set;
+  return shares.map((w, j) => {
+    if (j === index) return set;
+    return rest > 0 ? (w / rest) * left : left / (shares.length - 1);
+  });
+}
+
+/**
+ * Shares as whole percentages that add up to exactly 100, the largest
+ * remainders rounded up: 33.3, 33.3 and 33.3 become 34, 33 and 33.
+ */
+function wholePercents(shares) {
+  let total = shares.reduce((sum, w) => sum + w, 0);
+  if (!(total > 0)) return shares.map(() => 0);
+  let raw = shares.map((w) => (w / total) * 100);
+  let whole = raw.map(Math.floor);
+  let left = 100 - whole.reduce((sum, w) => sum + w, 0);
+  raw
+    .map((r, i) => [r - whole[i], i])
+    .sort((a, b) => b[0] - a[0])
+    .slice(0, left)
+    .forEach((pair) => (whole[pair[1]] += 1));
+  return whole;
+}
+
+/** Whether two lists of terms weigh the same dimensions the same way, by shares. */
+function sameWeighting(a, b) {
+  if (a.length !== b.length) return false;
+  let sa = normalized(a.map((term) => Number(term.weight)));
+  let sb = normalized(b.map((term) => Number(term.weight)));
+  return a.every(
+    (term, i) =>
+      term.dim === b[i].dim &&
+      !!term.lowerIsBetter === !!b[i].lowerIsBetter &&
+      Math.abs(sa[i] - sb[i]) < SAME_SHARE
+  );
 }
 
 function quoted(name) {
@@ -501,7 +540,6 @@ export default {
   components: { DimensionName, DimensionPicker },
   data() {
     return {
-      SLIDER_END: SLIDER_END,
       view: "manage",
       // The dimension being edited; null while creating one.
       editingName: null,
@@ -521,6 +559,8 @@ export default {
       contentShown: false,
       // Whether the Goals list shows the inputs too.
       showOtherGoals: false,
+      // The term whose percentage is being typed, shown as typed until done.
+      editingShareKey: null,
     };
   },
   beforeDestroy() {
@@ -615,20 +655,29 @@ export default {
     candidates() {
       return this.weightedTermCandidates(this.editingName);
     },
-    completeTerms() {
-      return this.weightedForm.terms
-        .filter((term) => term.dim)
-        .map((term) => ({
-          dim: term.dim,
-          weight: Number(term.weight),
-          lowerIsBetter: !!term.lowerIsBetter,
-        }));
+    /** The terms with a dimension picked: those the shares are split among. */
+    countedTerms() {
+      return this.weightedForm.terms.filter((term) => term.dim);
     },
+    /** Each counted term's whole percentage, by its key, adding up to 100. */
+    termPercents() {
+      let terms = this.countedTerms;
+      let whole = wholePercents(terms.map((term) => term.weight));
+      let out = {};
+      terms.forEach((term, i) => (out[term.key] = whole[i]));
+      return out;
+    },
+    completeTerms() {
+      return this.countedTerms.map((term) => ({
+        dim: term.dim,
+        // Four places: a hundredth of a percent is finer than any slider.
+        weight: Math.round(Number(term.weight) * 1e4) / 1e4,
+        lowerIsBetter: !!term.lowerIsBetter,
+      }));
+    },
+    /** Changed from where editing began, by shares: 1, 1, 2 and 25%, 25%, 50% are one. */
     isChanged() {
-      return (
-        !!this.snapshot &&
-        JSON.stringify(this.snapshot) !== JSON.stringify(this.completeTerms)
-      );
+      return !!this.snapshot && !sameWeighting(this.snapshot, this.completeTerms);
     },
     previewText() {
       void this.dimensionValuesVersion;
@@ -671,10 +720,7 @@ export default {
       handler() {
         if (this.view !== "weighted" || !this.editingName) return;
         let def = this.defs.find((d) => d.name === this.editingName);
-        if (
-          def &&
-          JSON.stringify(def.terms) === JSON.stringify(this.completeTerms)
-        ) {
+        if (def && sameWeighting(def.terms, this.completeTerms)) {
           this.liveError = null;
           return;
         }
@@ -748,47 +794,98 @@ export default {
             terms.push({ dim: null, weight: 1, lowerIsBetter: false });
           }
         }
-        this.weightedForm = {
-          name: "",
-          terms: terms.map((term) => this.withKey(term)),
-        };
+        this.weightedForm = { name: "", terms: this.formTerms(terms) };
       } else {
         this.view = "manage";
         this.editingName = null;
       }
     },
+    /**
+     * The form's terms from stored ones: a key each, weights turned into
+     * shares of those with a dimension, and a term without one sharing none.
+     */
+    formTerms(terms) {
+      let counted = terms.filter((term) => term.dim);
+      let shares = normalized(counted.map((term) => Number(term.weight)));
+      return terms.map((term) => {
+        let at = counted.indexOf(term);
+        return this.withKey(
+          Object.assign({}, term, { weight: at === -1 ? 0 : shares[at] })
+        );
+      });
+    },
     withKey(term) {
       this.termKey = (this.termKey || 0) + 1;
-      // The weight as typed, which may be mid-edit ("", "0.") while the
-      // weight itself keeps its last valid number.
+      // `weightText` is the percentage as typed, which may be mid-edit
+      // ("", "4") while the share keeps its last valid value; `counted`
+      // whether the term holds a share, which picking its first dimension
+      // gives it.
       return Object.assign(
-        { key: this.termKey, weightText: String(term.weight) },
+        { key: this.termKey, weightText: "", counted: !!term.dim },
         term
       );
     },
-    isWeightText(text) {
-      let trimmed = String(text === undefined || text === null ? "" : text).trim();
-      let weight = Number(trimmed);
-      return trimmed !== "" && isFinite(weight) && weight >= 0;
+    /** Sets one term's share, moving the others in proportion to keep 100%. */
+    setShare(term, share) {
+      let terms = this.countedTerms;
+      let index = terms.indexOf(term);
+      if (index === -1) return;
+      let next = rebalance(
+        terms.map((other) => other.weight),
+        index,
+        share
+      );
+      terms.forEach((other, i) => (other.weight = next[i]));
     },
-    setWeightText(term, text) {
-      term.weightText = text;
-      if (this.isWeightText(text)) term.weight = Number(text);
+    /** Brings the shares back to 100% after a term left. */
+    normalizeShares() {
+      let terms = this.countedTerms;
+      let next = normalized(terms.map((term) => term.weight));
+      terms.forEach((term, i) => (term.weight = next[i]));
     },
-    setWeight(term, weight) {
-      term.weight = weight;
-      term.weightText = String(weight);
-    },
-    weightToSlider: weightToSlider,
     /**
-     * A move of the slider. It also reports back the position it is given,
-     * which for a typed weight between its positions or past its ends is not
-     * where that weight is, so a report of the weight's own position is no
-     * move at all.
+     * A move of the slider. It also reports back positions it is given, as
+     * the others move with this one; those are no move at all.
      */
-    slideWeight(term, position) {
-      if (Math.abs(position - weightToSlider(term.weight)) < 1e-9) return;
-      this.setWeight(term, sliderToWeight(position));
+    slideShare(term, position) {
+      if (Math.abs(position / 100 - term.weight) < 1e-9) return;
+      this.setShare(term, position / 100);
+    },
+    shareFieldText(term) {
+      if (!term.dim) return "";
+      return this.editingShareKey === term.key
+        ? term.weightText
+        : String(this.termPercents[term.key]);
+    },
+    editShare(term) {
+      this.editingShareKey = term.key;
+      term.weightText = String(this.termPercents[term.key]);
+    },
+    isShareText(text) {
+      let trimmed = String(text === undefined || text === null ? "" : text).trim();
+      let percent = Number(trimmed);
+      return trimmed !== "" && isFinite(percent) && percent >= 0 && percent <= 100;
+    },
+    typeShare(term, text) {
+      term.weightText = text;
+      if (this.isShareText(text)) this.setShare(term, Number(text) / 100);
+    },
+    /**
+     * A dimension picked for a term: its first gives it an equal share, the
+     * others making room in proportion; clearing it gives its share back.
+     * It weighs the way the dimension's goal says.
+     */
+    pickTermDim(term) {
+      if (term.dim && !term.counted) {
+        term.counted = true;
+        term.weight = 0;
+        this.setShare(term, 1 / this.countedTerms.length);
+      } else if (!term.dim && term.counted) {
+        term.counted = false;
+        term.weight = 0;
+        this.normalizeShares();
+      }
+      this.followGoal(term);
     },
     startCustom(name) {
       this.finishLiveEdit();
@@ -864,20 +961,22 @@ export default {
       if (terms.length === 0) {
         terms.push({ dim: null, weight: 1, lowerIsBetter: false });
       }
-      this.weightedForm.terms = terms.map((term) => this.withKey(term));
+      this.weightedForm.terms = this.formTerms(terms);
       this.$store.dispatch("updateWeightedDimension", {
         name: this.editingName,
         terms: this.snapshot,
         final: true,
       });
     },
+    /** A row waiting for its dimension; picking one gives it a share. */
     addTerm() {
       this.weightedForm.terms.push(
-        this.withKey({ dim: null, weight: 1, lowerIsBetter: false })
+        this.withKey({ dim: null, weight: 0, lowerIsBetter: false })
       );
     },
     removeTerm(index) {
       this.weightedForm.terms.splice(index, 1);
+      this.normalizeShares();
     },
     itemsFor(term) {
       let used = new Set(
@@ -886,14 +985,6 @@ export default {
           .map((other) => other.dim)
       );
       return dimensionItems(this.candidates.filter((dim) => !used.has(dim)));
-    },
-    shareText(index) {
-      let shares = weightShares(
-        this.weightedForm.terms.map((term) => ({
-          weight: term.dim ? Number(term.weight) : 0,
-        }))
-      );
-      return Math.round(shares[index] * 100) + "%";
     },
     scaleText(term) {
       if (!term.dim) return "";
@@ -925,7 +1016,7 @@ export default {
       if (def.terms.length === 0) {
         return "Weighted, no weights yet";
       }
-      let shares = weightShares(def.terms);
+      let percents = wholePercents(weightShares(def.terms));
       return (
         "Weighted: " +
         def.terms
@@ -933,7 +1024,7 @@ export default {
             (term, i) =>
               displayName(term.dim) +
               " " +
-              Math.round(shares[i] * 100) +
+              percents[i] +
               "%" +
               (term.lowerIsBetter ? " (lower is better)" : "")
           )
@@ -1157,9 +1248,9 @@ export default {
   min-width: 180px;
 }
 .term-weight-input {
-  flex: 0 0 84px;
-  max-width: 84px;
-  margin-right: 8px;
+  flex: 0 0 76px;
+  max-width: 76px;
+  margin-left: 8px;
 }
 .dims-reference {
   margin: 16px 0 0;
@@ -1170,22 +1261,6 @@ export default {
 .term-slider {
   flex: 1 1 auto;
   min-width: 80px;
-}
-/* A tick at the middle of the track: weight 1. */
-.term-slider ::v-deep .v-slider__track-container::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: -4px;
-  width: 1px;
-  height: 10px;
-  background: rgba(0, 0, 0, 0.35);
-}
-.term-share {
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  width: 38px;
-  text-align: right;
 }
 .term-flip {
   margin-top: 0;
