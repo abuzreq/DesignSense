@@ -83,6 +83,20 @@
       />
       <v-divider vertical class="ds-divider" />
 
+      <!-- The bar's groups run in the order of the work: navigate the
+           collection, save and compare what is found, then set up the view and
+           share it. -->
+      <!-- Moving about the collection: into the selected, past them, to what
+           they leave out, and back. -->
+      <ToolbarGroup
+        id="data-operations-bar"
+        label="Navigate"
+        :names="dataActions"
+        :actions="actions"
+        :disabled="actionDisabled"
+      />
+      <v-divider vertical class="ds-divider" />
+
       <!-- What to do with the selected: shortlist them, save them, compare them. -->
       <ToolbarGroup
         id="sets-operations-bar"
@@ -145,16 +159,6 @@
           </v-menu>
         </template>
       </ToolbarGroup>
-      <v-divider vertical class="ds-divider" />
-      <!-- Moving about the collection: into the selected, past them, to what
-           they leave out, and back. -->
-      <ToolbarGroup
-        id="data-operations-bar"
-        label="Navigation"
-        :names="dataActions"
-        :actions="actions"
-        :disabled="actionDisabled"
-      />
       <!-- Expert's analysis, which reads the collection as a whole rather
            than acting on it. Inspecting on hover sits on the inspector, beside
            the pin, and in the right-click menu. -->
@@ -162,7 +166,7 @@
         <v-divider vertical class="ds-divider" />
         <ToolbarGroup
           id="analysis-bar"
-          label="Analysis"
+          label="Analyse"
           :names="[]"
           :actions="actions"
         >
@@ -184,142 +188,151 @@
       </template>
       <v-divider vertical class="ds-divider" />
 
-      <!-- Everything for passing results on, in one drawer: the story,
+      <!-- Setting up the view and passing it on: the layout, then the story,
            the summary image, the link and the download. -->
-      <v-menu bottom left offset-y max-width="380">
-        <template v-slot:activator="{ on: menu, attrs }">
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on: tooltip }">
-              <span
-                v-on="tooltip"
-                @focusin="tooltip.focus"
-                @focusout="tooltip.blur"
-              >
-                <v-btn
-                  id="share-menu"
-                  icon
-                  aria-label="Share and present"
-                  aria-haspopup="menu"
-                  v-bind="attrs"
-                  v-on="menu"
-                >
-                  <v-badge
-                    :value="captureCount > 0"
-                    :content="captureCount"
-                    color="blue-grey"
-                    overlap
-                  >
-                    <v-icon>mdi-presentation-play</v-icon>
-                  </v-badge>
-                </v-btn>
-              </span>
-            </template>
-            <span>Share and present: capture views for a story, make a summary image or a report, share the link, download</span>
-          </v-tooltip>
-        </template>
-        <v-list dense class="ds-share-menu">
-          <v-subheader>Tell the story</v-subheader>
-          <v-list-item id="capture-button" @click="actions['captureView'].clickAction">
-            <v-list-item-icon><v-icon>{{ actions["captureView"].icon }}</v-icon></v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Capture this view</v-list-item-title>
-              <v-list-item-subtitle>The filters, goals and shortlist, with a note</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-          <v-list-item id="story-button" @click="actions['toggleStory'].clickAction">
-            <v-list-item-icon><v-icon>{{ actions["toggleStory"].icon }}</v-icon></v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>The story{{ captureCount > 0 ? " (" + captureCount + ")" : "" }}</v-list-item-title>
-              <v-list-item-subtitle>Present the captured views, or make a PDF report</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-          <v-list-item id="summary-button" @click="actions['openSummary'].clickAction">
-            <v-list-item-icon><v-icon>{{ actions["openSummary"].icon }}</v-icon></v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Summary image</v-list-item-title>
-              <v-list-item-subtitle>The goals, the shortlist, charts and findings on one picture</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-          <v-divider />
-          <v-subheader>Share the data</v-subheader>
-          <v-list-item :disabled="!isStudySharable" @click="actions['shareStaticLink'].clickAction">
-            <v-list-item-icon><v-icon>{{ actions["shareStaticLink"].icon }}</v-icon></v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Link to this dataset</v-list-item-title>
-              <v-list-item-subtitle>{{ actions["shareStaticLink"].tooltip() }}</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-          <v-list-item :disabled="actionDisabled('saveToFile')" @click="actions['saveToFile'].clickAction">
-            <v-list-item-icon><v-icon>{{ actions["saveToFile"].icon }}</v-icon></v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title>Download (.csv)</v-list-item-title>
-              <v-list-item-subtitle>{{ actions["saveToFile"].tooltip() }}</v-list-item-subtitle>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </v-menu>
-
-      <!-- The layout: editing, presets and reset in one menu. While editing,
-           a Done button stands beside it so stopping is one click. The slot
-           stays either way: a Vuetify tooltip places its activator in the bar
-           itself, outside what Vue tracks, so a button appearing and
-           disappearing beside one shifts it out of place. -->
-      <div class="ds-layout-slot">
-        <v-btn
-          v-if="isEditingMode"
-          small
-          depressed
-          color="green darken-1"
-          class="ds-layout-done"
-          @click="actions['toggleEditingMode'].clickAction"
-          >Done</v-btn
-        >
-      </div>
-      <v-menu bottom left offset-y>
-        <template v-slot:activator="{ on: menu }">
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on: tooltip }">
-              <span
-                v-on="tooltip"
-                @focusin="tooltip.focus"
-                @focusout="tooltip.blur"
-              >
-                <v-btn
-                  id="editing-mode"
-                  icon
-                  aria-label="The layout: edit, presets, reset"
-                  aria-haspopup="menu"
-                  :color="isEditingMode ? toolbarColor('editing') : undefined"
-                  v-on="menu"
-                >
-                  <v-icon>mdi-view-dashboard-edit-outline</v-icon>
-                </v-btn>
-              </span>
-            </template>
-            <span>The layout: move and resize the panels, pick a preset, or reset it</span>
-          </v-tooltip>
-        </template>
-        <v-list dense>
-          <v-list-item
-            v-if="can('layoutEditing')"
-            @click="toggleLayoutEditing"
+      <ToolbarGroup
+        id="setup-share-bar"
+        label="Setup & share"
+        :names="[]"
+        :actions="actions"
+      >
+        <!-- The layout: editing, presets and reset in one menu. While editing,
+             a Done button stands beside it so stopping is one click. The slot
+             stays either way: a Vuetify tooltip places its activator in the bar
+             itself, outside what Vue tracks, so a button appearing and
+             disappearing beside one shifts it out of place. -->
+        <div class="ds-layout-slot">
+          <v-btn
+            v-if="isEditingMode"
+            small
+            depressed
+            color="green darken-1"
+            class="ds-layout-done"
+            @click="actions['toggleEditingMode'].clickAction"
+            >Done</v-btn
           >
-            <v-list-item-icon><v-icon>{{ actions["toggleEditingMode"].icon }}</v-icon></v-list-item-icon>
-            <v-list-item-title>{{
-              isEditingMode ? "Stop editing the layout" : "Edit the layout"
-            }}</v-list-item-title>
-            <v-list-item-action-text class="ml-4">`</v-list-item-action-text>
-          </v-list-item>
-          <v-list-item @click="isLayoutDialogOn = true">
-            <v-list-item-icon><v-icon>mdi-view-grid-outline</v-icon></v-list-item-icon>
-            <v-list-item-title>Layout presets…</v-list-item-title>
-          </v-list-item>
-          <v-list-item @click="resetLayout">
-            <v-list-item-icon><v-icon>mdi-view-dashboard-outline</v-icon></v-list-item-icon>
-            <v-list-item-title>Reset layout</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+        </div>
+        <v-menu bottom left offset-y>
+          <template v-slot:activator="{ on: menu }">
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on: tooltip }">
+                <span
+                  v-on="tooltip"
+                  @focusin="tooltip.focus"
+                  @focusout="tooltip.blur"
+                >
+                  <v-btn
+                    id="editing-mode"
+                    icon
+                    aria-label="The layout: edit, presets, reset"
+                    aria-haspopup="menu"
+                    :color="isEditingMode ? toolbarColor('editing') : undefined"
+                    v-on="menu"
+                  >
+                    <v-icon>mdi-view-dashboard-edit-outline</v-icon>
+                  </v-btn>
+                </span>
+              </template>
+              <span>The layout: move and resize the panels, pick a preset, or reset it</span>
+            </v-tooltip>
+          </template>
+          <v-list dense>
+            <v-list-item
+              v-if="can('layoutEditing')"
+              @click="toggleLayoutEditing"
+            >
+              <v-list-item-icon><v-icon>{{ actions["toggleEditingMode"].icon }}</v-icon></v-list-item-icon>
+              <v-list-item-title>{{
+                isEditingMode ? "Stop editing the layout" : "Edit the layout"
+              }}</v-list-item-title>
+              <v-list-item-action-text class="ml-4">`</v-list-item-action-text>
+            </v-list-item>
+            <v-list-item @click="isLayoutDialogOn = true">
+              <v-list-item-icon><v-icon>mdi-view-grid-outline</v-icon></v-list-item-icon>
+              <v-list-item-title>Layout presets…</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="resetLayout">
+              <v-list-item-icon><v-icon>mdi-view-dashboard-outline</v-icon></v-list-item-icon>
+              <v-list-item-title>Reset layout</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+
+        <!-- Everything for passing results on, in one drawer: the story,
+             the summary image, the link and the download. -->
+        <v-menu bottom left offset-y max-width="380">
+          <template v-slot:activator="{ on: menu, attrs }">
+            <v-tooltip bottom>
+              <template v-slot:activator="{ on: tooltip }">
+                <span
+                  v-on="tooltip"
+                  @focusin="tooltip.focus"
+                  @focusout="tooltip.blur"
+                >
+                  <v-btn
+                    id="share-menu"
+                    icon
+                    aria-label="Share and present"
+                    aria-haspopup="menu"
+                    v-bind="attrs"
+                    v-on="menu"
+                  >
+                    <v-badge
+                      :value="captureCount > 0"
+                      :content="captureCount"
+                      color="blue-grey"
+                      overlap
+                    >
+                      <v-icon>mdi-presentation-play</v-icon>
+                    </v-badge>
+                  </v-btn>
+                </span>
+              </template>
+              <span>Share and present: capture views for a story, make a summary image or a report, share the link, download</span>
+            </v-tooltip>
+          </template>
+          <v-list dense class="ds-share-menu">
+            <v-subheader>Tell the story</v-subheader>
+            <v-list-item id="capture-button" @click="actions['captureView'].clickAction">
+              <v-list-item-icon><v-icon>{{ actions["captureView"].icon }}</v-icon></v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>Capture this view</v-list-item-title>
+                <v-list-item-subtitle>The filters, goals and shortlist, with a note</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+            <v-list-item id="story-button" @click="actions['toggleStory'].clickAction">
+              <v-list-item-icon><v-icon>{{ actions["toggleStory"].icon }}</v-icon></v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>The story{{ captureCount > 0 ? " (" + captureCount + ")" : "" }}</v-list-item-title>
+                <v-list-item-subtitle>Present the captured views, or make a PDF report</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+            <v-list-item id="summary-button" @click="actions['openSummary'].clickAction">
+              <v-list-item-icon><v-icon>{{ actions["openSummary"].icon }}</v-icon></v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>Summary image</v-list-item-title>
+                <v-list-item-subtitle>The goals, the shortlist, charts and findings on one picture</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+            <v-divider />
+            <v-subheader>Share the data</v-subheader>
+            <v-list-item :disabled="!isStudySharable" @click="actions['shareStaticLink'].clickAction">
+              <v-list-item-icon><v-icon>{{ actions["shareStaticLink"].icon }}</v-icon></v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>Link to this dataset</v-list-item-title>
+                <v-list-item-subtitle>{{ actions["shareStaticLink"].tooltip() }}</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+            <v-list-item :disabled="actionDisabled('saveToFile')" @click="actions['saveToFile'].clickAction">
+              <v-list-item-icon><v-icon>{{ actions["saveToFile"].icon }}</v-icon></v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>Download (.csv)</v-list-item-title>
+                <v-list-item-subtitle>{{ actions["saveToFile"].tooltip() }}</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </ToolbarGroup>
 
       <v-menu bottom left offset-y>
         <template v-slot:activator="{ on: menu }">
@@ -1317,7 +1330,7 @@ export default {
         tourStep(this, "lite", "#assistant-bar", "Ask or command",
           "Type what you want in plain words, like “price under 10000” or “what do these have in common”, and the assistant does it or answers. Press / to get here from anywhere.",
           "bottom"),
-        tourStep(this, "lite", "#data-operations-bar", "Navigation",
+        tourStep(this, "lite", "#data-operations-bar", "Navigate",
           "Zoom in on the selected options to focus on them, or exclude them instead. Invert shows everything the filters leave out. Step back undoes the last zoom, and Reset brings back the whole collection.",
           "bottom"),
         tourStep(this, "lite", "#sets-drawer", "Saved sets",
