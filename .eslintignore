@@ -1,0 +1,6 @@
+# Third-party code kept in the tree, linted by nobody here.
+src/plugins/jquery-1.9.0.js
+src/plugins/jquery-ui.js
+src/plugins/vue-drag-select.js
+dist/
+eval/runs/
