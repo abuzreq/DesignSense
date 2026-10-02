@@ -22,8 +22,6 @@ import { installErrorCapture } from "@/errors.js";
 import { setColumnRoles } from "@/columns.js";
 import { loadColumnRoles } from "@/data/columnRoles.js";
 
-window.Gkey = "AIzaSyCSrF08UMawxKIb0m4JsA1mYE5NMmP36bY";
-
 require("vue-tour/dist/vue-tour.css");
 
 Vue.use(VueTour);

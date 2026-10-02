@@ -7,3 +7,10 @@
 [build.environment]
   # Kept the same as .nvmrc, which is what a local nvm/fnm reads.
   NODE_VERSION = "22.14.0"
+  # DESIGNSENSE_DRIVE_API_KEY, set in the site's settings, is built into the
+  # bundle so Drive folders can be listed (see data/loader.js). A browser key has to
+  # reach the browser, so the scan for secrets is told to expect it there; it
+  # is restricted to this site and the Drive API instead. Smart detection is
+  # told the same by SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES, which holds the
+  # key itself and so lives in the site's settings, not here.
+  SECRETS_SCAN_OMIT_KEYS = "DESIGNSENSE_DRIVE_API_KEY"

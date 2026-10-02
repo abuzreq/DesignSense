@@ -272,6 +272,13 @@ function addToFolder(folder, name, mimeType, url, imageUrl) {
 
 /** Lists a public Google Drive folder, following every page. */
 export function listGoogleDriveFolder(folderId, apiKey) {
+  if (!apiKey) {
+    return Promise.reject(
+      new LoadError(
+        "This copy of DesignSense was built without a Google Drive key, so it can't read Drive folders. Download the folder and open data.csv from your computer, or put the folder on a web server."
+      )
+    );
+  }
   let key = encodeURIComponent(apiKey || "");
   let items = [];
   function nextPage(pageToken) {

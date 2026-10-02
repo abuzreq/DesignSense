@@ -57,10 +57,21 @@ which writes `dist/`, ready to serve as static files.
 build tools ask for. The same Node runs the evaluation harness under `eval/`,
 which needs 18 or newer for `fetch`.
 
-**On the Google key:** listing a Google Drive folder needs a browser API key,
-which `src/main.js` sets as `window.Gkey`. A fork should replace it with its
-own key from the Google Cloud console — a Drive API key, restricted by HTTP
-referrer to its own domains. Every other way of loading data works without it.
+**On the Google key:** listing a Google Drive folder needs a browser API key.
+The build reads it from the environment and puts it into the bundle, so it is
+kept out of the repository:
+
+```sh
+DESIGNSENSE_DRIVE_API_KEY=your-key npm run build-prod
+```
+
+A deploy sets `DESIGNSENSE_DRIVE_API_KEY` in its own settings; on Netlify,
+also list it in `SECRETS_SCAN_OMIT_KEYS` (`netlify.toml` does) and put the key itself in
+`SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES`, so the scan for secrets expects a
+browser key in the output. Get the key from the Google Cloud console — a Drive
+API key, restricted by HTTP referrer to your own domains, since every browser
+that loads the app can read it. Built without a key, Drive folders say so and
+every other way of loading data works.
 
 ## License
 
