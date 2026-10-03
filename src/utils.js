@@ -1,6 +1,6 @@
+/** The values `obj` holds at `keys`, in that order. */
 function values(obj, keys) {
-    let v = Object.values(get(obj, keys));
-    return v;
-  }
+  return keys.map((key) => obj[key]);
+}
 
-  export default values;
+export default values;

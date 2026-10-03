@@ -2134,31 +2134,31 @@ function flip(value) {
 
 function operate(marking, selection, operation) {
   if (operation == operations.REPLACE) {
-    for (var alt in marking) {
+    for (let alt in marking) {
       marking[alt] = 0;
     }
-    for (var alt of selection) {
+    for (let alt of selection) {
       marking[alt] = 1;
     }
   } else if (operation == operations.ADD) {
-    for (var alt of selection) {
+    for (let alt of selection) {
       marking[alt] = 1;
     }
   } else if (operation == operations.TOGGLE) {
     let selected = getSelection(marking, selection);
     let areAllTheSame = allTheSame(selected);
     if (areAllTheSame) {
-      for (var alt of selection) {
+      for (let alt of selection) {
         marking[alt] = flip(marking[alt]);
       }
     } else {
-      for (var alt of selection) {
+      for (let alt of selection) {
         marking[alt] = 1;
       }
     }
   } else if (operation == operations.INTERSECT) {
     let selected = getSelection(marking, selection);
-    for (var alt in marking) {
+    for (let alt in marking) {
       if (marking[alt] == 1 && selected[alt] == 1) {
         marking[alt] = 1;
       } else {
@@ -2166,7 +2166,7 @@ function operate(marking, selection, operation) {
       }
     }
   } else if (operation == operations.SUBTRACT) {
-    for (var alt of selection) {
+    for (let alt of selection) {
       marking[alt] = 0;
     }
   } else {

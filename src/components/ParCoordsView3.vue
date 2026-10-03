@@ -165,6 +165,7 @@ export default {
         .selectAll("canvas").nodes().map(canvas => dict[canvas.getAttribute("class")] = canvas)
           console.log(dict)
 
+          let items = this.chart.brushed() || [];
           if(items.length > 0)
           {
             if(hovered)
