@@ -8,13 +8,15 @@ import { b64EncodeUnicode } from "./shareLink.js";
  * a LoadError with a message for the user.
  */
 
-const DRIVE_FILES_API = "https://www.googleapis.com/drive/v3/files";
 const ONEDRIVE_SHARES_API = "https://api.onedrive.com/v1.0/shares/";
+
+// What to do when a shared cloud folder can't be read from the browser.
+const CLOUD_HINT =
+  "Download the folder and open its data.csv from your computer, or put the folder on a web server (a GitHub repository works) and use that link.";
 
 /**
  * Works out what `input` is: `{ file }` for a local file, otherwise a link.
- * Returns `{ kind, ... }` with kind "file", "csv", "server", "gdrive" or
- * "onedrive". `link` is what reopens the dataset from a share link.
+ * Returns `{ kind, ... }` with kind "file", "csv", "server" or "onedrive". `link` is what reopens the dataset from a share link.
  */
 export function resolveSource(input) {
   if (input && input.file) return { kind: "file", file: input.file };
@@ -37,15 +39,13 @@ export function resolveSource(input) {
     host = url.hostname;
   }
 
+  // Google Drive folders are not read any more: listing one needs an API
+  // key of the site's own, which every visitor's browser would carry (see the
+  // README). A folder on a web server needs none, so that is what we ask for.
   if (host === "drive.google.com") {
-    let folder = url.pathname.match(/\/folders\/([-\w]+)/);
-    let id = folder ? folder[1] : url.searchParams.get("id");
-    if (!id || !/^[-\w]+$/.test(id)) {
-      throw new LoadError(
-        "That Google Drive link isn't a folder. Share the folder that holds data.csv and use its link."
-      );
-    }
-    return { kind: "gdrive", folderId: id, link: url.href };
+    throw new LoadError(
+      "DesignSense can't read Google Drive folders. " + CLOUD_HINT
+    );
   }
   if (host === "1drv.ms" || host === "onedrive.live.com") {
     return { kind: "onedrive", link: url.href };
@@ -89,8 +89,7 @@ function parseHttpUrl(text) {
  * name (`rawFiles` holding the originals, companions included), and the link
  * that reopens the dataset (none for local files).
  */
-export function fetchSource(source, options) {
-  let apiKey = options && options.apiKey;
+export function fetchSource(source) {
   if (source.kind === "file") {
     return readFileText(source.file).then((text) => ({ text: text }));
   }
@@ -105,11 +104,7 @@ export function fetchSource(source, options) {
       link: source.link,
     }));
   }
-  let listing =
-    source.kind === "gdrive"
-      ? listGoogleDriveFolder(source.folderId, apiKey)
-      : listOneDriveFolder(source.link);
-  return listing.then((folder) =>
+  return listOneDriveFolder(source.link).then((folder) =>
     fetchText(pickDataCsv(folder)).then((text) => ({
       text: text,
       files: folder.files,
@@ -152,6 +147,12 @@ function httpError(response, url, notFoundMessage) {
     return new LoadError(notFoundMessage || "No file was found at that link.");
   }
   if (response.status === 401 || response.status === 403) {
+    if (/onedrive|sharepoint|microsoft/i.test(host)) {
+      return new LoadError(
+        "Microsoft doesn't let other sites read this shared OneDrive folder, however it is shared. " +
+          CLOUD_HINT
+      );
+    }
     return new LoadError(
       host + " denied access. Make sure the files are shared publicly."
     );
@@ -164,9 +165,6 @@ function httpError(response, url, notFoundMessage) {
 function linkHint(url) {
   let host = hostOf(url);
   if (host === "github.com") return " For files on GitHub, use the Raw link.";
-  if (host === "drive.google.com" || host === "docs.google.com") {
-    return " For Google Drive, share the folder that holds data.csv and use the folder's link.";
-  }
   return "";
 }
 
@@ -204,13 +202,17 @@ function apiMessage(body) {
 }
 
 function folderError(status, service, message) {
-  if (/api key/i.test(message)) {
+  // OneDrive turns away a signed-out request for a folder on an account that
+  // has moved to SharePoint, whatever the folder is shared with, so sharing it
+  // again is no help: say what does work instead.
+  if (status === 401 || /unauthenticated/i.test(message)) {
     return new LoadError(
       service +
-        " rejected this app's key, so its folders can't be opened. Download the folder and load its data.csv from your computer, or use a direct link to a CSV file."
+        " doesn't let other sites read this shared folder, however it is shared. " +
+        CLOUD_HINT
     );
   }
-  if (status === 401 || status === 403) {
+  if (status === 403) {
     return new LoadError(
       service +
         " denied access to that folder. Share it so anyone with the link can view it."
@@ -270,47 +272,6 @@ function addToFolder(folder, name, mimeType, url, imageUrl) {
   }
 }
 
-/** Lists a public Google Drive folder, following every page. */
-export function listGoogleDriveFolder(folderId, apiKey) {
-  if (!apiKey) {
-    return Promise.reject(
-      new LoadError(
-        "This copy of DesignSense was built without a Google Drive key, so it can't read Drive folders. Download the folder and open data.csv from your computer, or put the folder on a web server."
-      )
-    );
-  }
-  let key = encodeURIComponent(apiKey || "");
-  let items = [];
-  function nextPage(pageToken) {
-    let url =
-      DRIVE_FILES_API +
-      "?q=" +
-      encodeURIComponent("'" + folderId + "' in parents and trashed=false") +
-      "&fields=" +
-      encodeURIComponent("nextPageToken,files(id,name,mimeType)") +
-      "&pageSize=1000&key=" +
-      key +
-      (pageToken ? "&pageToken=" + encodeURIComponent(pageToken) : "");
-    return fetchJson(url, "Google Drive").then((body) => {
-      items = items.concat(body.files || []);
-      return body.nextPageToken ? nextPage(body.nextPageToken) : items;
-    });
-  }
-  return nextPage(null).then((files) => {
-    let folder = emptyFolder();
-    files.forEach((item) => {
-      addToFolder(
-        folder,
-        item.name,
-        item.mimeType,
-        DRIVE_FILES_API + "/" + item.id + "?alt=media&key=" + key,
-        "https://drive.google.com/thumbnail?id=" + item.id + "&sz=w1000"
-      );
-    });
-    return folder;
-  });
-}
-
 /** The OneDrive API's id for a sharing link: "u!" and unpadded base64url. */
 export function toOneDriveShareId(link) {
   return (
@@ -322,7 +283,12 @@ export function toOneDriveShareId(link) {
   );
 }
 
-/** Lists a shared OneDrive folder, following every page and skipping subfolders. */
+/**
+ * Lists a shared OneDrive folder, following every page and skipping
+ * subfolders. Microsoft turns the request away for an account whose OneDrive
+ * has moved to SharePoint, whatever the folder is shared with, so this works
+ * for some accounts and not others; a refusal says what to do instead.
+ */
 export function listOneDriveFolder(link) {
   let items = [];
   function nextPage(url) {

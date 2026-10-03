@@ -111,9 +111,10 @@
                 href="https://tt-acm.github.io/DesignExplorer/design_explorer_data/example/online/example.zip"
                 target="_blank"
                 >Design Explorer example</a
-              >). Google Drive and OneDrive folders work too — keep everything
-              in one folder, shared so anyone with the link can view. For files
-              on GitHub, use the Raw link.
+              >). Keep everything in one folder on a web server, such as a
+              GitHub repository — for files on GitHub, use the Raw link. Google
+              Drive folders can't be read, and OneDrive folders only from some
+              accounts; download those and load the CSV from your computer.
             </p>
 
             <v-expansion-panels flat class="load-help">
@@ -181,8 +182,9 @@
                     it is the one that always works.
                   </p>
                   <p class="mb-0">
-                    In a Google Drive or OneDrive folder you can skip the extra
-                    columns: a file named <code>12_2.png</code> beside
+                    In a OneDrive folder, where DesignSense can read the list
+                    of files, you can skip the extra columns: a file named
+                    <code>12_2.png</code> beside
                     <code>12.png</code> becomes that option's second view, and
                     <code>12.glb</code> becomes its model.
                   </p>

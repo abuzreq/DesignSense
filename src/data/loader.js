@@ -1,4 +1,3 @@
-/* global __DRIVE_API_KEY__ */
 import Vue from "vue";
 import { buildDataset } from "./table.js";
 import { fetchSource, resolveSource } from "./sources.js";
@@ -6,17 +5,6 @@ import { addressFor } from "./shareLink.js";
 
 export const DEFAULT_DATASET_URL =
   "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv";
-
-/*
- * The key that lists a public Google Drive folder, put in at build time from
- * DESIGNSENSE_DRIVE_API_KEY (see webpack.config.js). Every browser that loads
- * the app can read it, as any key a browser sends must be, so it is restricted
- * in the Google Cloud console to this site and to the Drive API, and never
- * stands in for a secret. Without it a Drive folder says so (see sources.js);
- * every other way of loading data works.
- */
-const DRIVE_API_KEY =
-  typeof __DRIVE_API_KEY__ !== "undefined" ? __DRIVE_API_KEY__ : "";
 
 /**
  * The latest load, for the load dialogs and the workspace. `source` says who
@@ -100,7 +88,7 @@ export function loadDataset(input, options) {
     .then(resolveSource)
     .then((source) => {
       resolved = source;
-      return fetchSource(source, { apiKey: DRIVE_API_KEY });
+      return fetchSource(source);
     })
     .then(stillLatest)
     .then((fetched) => {

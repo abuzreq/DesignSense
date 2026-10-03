@@ -141,11 +141,6 @@ module.exports = (env, argv) => {
       // so the two can't drift apart.
       new webpack.DefinePlugin({
         __APP_VERSION__: JSON.stringify(require('./package.json').version),
-        // Listing a Google Drive folder needs a key (see data/loader.js). It
-        // ships to the browser, so it is a restricted browser key and not a
-        // secret; it is kept out of the repository all the same, so a copy of
-        // the source carries no key of ours. Without it Drive folders say so.
-        __DRIVE_API_KEY__: JSON.stringify(process.env.DESIGNSENSE_DRIVE_API_KEY || ''),
       }),
       new VueLoaderPlugin(),
       // src/plugins/vuetify.js imports vuetify/lib, which registers nothing on
