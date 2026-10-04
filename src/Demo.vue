@@ -1377,7 +1377,7 @@ export default {
           "Type what you want in plain words, like “price under 10000” or “what do these have in common”, and the assistant does it or answers. Press / to get here from anywhere.",
           "bottom"),
         tourStep(this, "lite", "#data-operations-bar", "Navigate",
-          "Zoom in on the selected options to focus on them, or exclude them instead. Invert shows everything the filters leave out. Step back undoes the last zoom, and Reset brings back the whole collection.",
+          "Zoom in on the selected options to focus on them, or exclude them instead. Step back undoes the last zoom, and Reset brings back the whole collection.",
           "bottom"),
         tourStep(this, "lite", "#sets-drawer", "Saved sets",
           "Save the current results along with their filters. Restore a set later to bring those filters back. They wait at the left edge: move the pointer there, or click the tab.",
@@ -1882,11 +1882,18 @@ export default {
       if (this.isExpert && this.windowWidth >= BAR_ROOMY) return "roomy";
       return "normal";
     },
+    /**
+     * Inverting is off the bar in Lite. Zoom and exclude are the two moves
+     * that matter there and they read straight off their icons; "everything
+     * the filters leave out" is a turn of thought that needs explaining, and
+     * a button nobody presses costs the ones beside it room. The assistant
+     * still does it on request, and Expert keeps the button.
+     */
     dataActions() {
       return [
         "zoomToSelection",
         "excludeSelection",
-        "invertSelection",
+        ...(this.isLite ? [] : ["invertSelection"]),
         "undoDataTransformation",
         "resetData",
       ];
