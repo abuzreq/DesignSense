@@ -36,6 +36,27 @@
             : "Values increase to the right. Click to reverse."
         }}</span>
       </v-tooltip>
+      <!-- Between the two pickers, where what it exchanges is either side
+           of it. The matrix draws each pair only one way round, so this is
+           how the other way is reached. -->
+      <v-tooltip bottom max-width="280">
+        <template v-slot:activator="{ on }">
+          <v-btn
+            v-on="on"
+            icon
+            small
+            class="ph-btn ph-btn--gap"
+            aria-label="Swap the axes"
+            @click="swapAxes"
+          >
+            <v-icon small>mdi-swap-horizontal</v-icon>
+          </v-btn>
+        </template>
+        <span
+          >Put {{ label(yColumn) }} across and {{ label(xColumn) }} up. Which
+          way each axis runs comes with it.</span
+        >
+      </v-tooltip>
       <span class="ph-label ph-label--gap">Y</span>
       <DimensionPicker
         :value="yColumn"
@@ -671,6 +692,23 @@ export default {
       };
     },
 
+    /**
+     * The pair the other way round. The direction of each axis travels with
+     * its dimension, so the plot is the same cloud reflected about the
+     * diagonal rather than a differently arranged one.
+     */
+    swapAxes: function() {
+      let x = this.xColumn;
+      let y = this.yColumn;
+      let xWasIncremental = this.isXAxisIncremental;
+      this.xColumn = y;
+      this.yColumn = x;
+      this.isXAxisIncremental = this.isYAxisIncremental;
+      this.isYAxisIncremental = xWasIncremental;
+      // Not refresh(): the two flags above each schedule one of their own,
+      // and this way the three changes cost a single rebuild.
+      this.scheduleRefresh();
+    },
     onXChange: function(newXColumn) {
       this.xColumn = newXColumn;
       this.refresh();

@@ -73,6 +73,9 @@ export default {
   font-weight: 500;
   white-space: nowrap;
 }
+.panel-header ::v-deep .ph-btn--gap {
+  margin-left: 6px;
+}
 .panel-header ::v-deep .ph-label--gap {
   margin-left: 8px;
 }
