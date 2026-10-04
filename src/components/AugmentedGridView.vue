@@ -1018,6 +1018,10 @@ export default {
     // height is not measured here: reading card heights forces a layout, and
     // renders happen on every filter change and hover.
     this.attachGalleryScrollListener();
+    // Scrolling hands a mounted card a different option, so its colour has
+    // to be put on again. Only a style is written, nothing is read back, so
+    // this costs no layout.
+    this.paintCardTints();
   },
   created() {
     this.viewID = "id" + this._uid;
@@ -1580,7 +1584,27 @@ export default {
     },
     updateAuxiliaries() {
       this.updateScrollbar();
+      this.paintCardTints();
       //this.updateAxis();
+    },
+    /**
+     * The colour the charts give an option, as a mat around its picture, so
+     * a card can be read against the chart it came from. Painted here rather
+     * than bound in the template: the cards are built by hand for speed, and
+     * windowing mounts only the ones on screen.
+     */
+    paintCardTints() {
+      let cards = this.getAllCards();
+      if (!cards) return;
+      let on = this.colorColumn !== "";
+      cards.forEach((node) => {
+        let id = node.id.substring(this.cardSelector.length);
+        let datum = this.$store.getters.dataMap[id];
+        d3.select(node.parentNode).style(
+          "background-color",
+          on && datum ? this.colorize(datum) + "55" : null
+        );
+      });
     },
     /**
      * Marker positions come from each item's index in the sorted order rather
@@ -1761,20 +1785,12 @@ export default {
         this.showing3D = false;
       }
     },
-    colorColumn: function(newValue, oldValue) {
-      let cardNodes = d3.select("#" + this.viewID).selectAll(".thumbnail_card");
-
-      this.getAllCards().forEach((node, i) => {
-        let id = node.id.substring(this.cardSelector.length);
-        let datum = this.$store.getters.dataMap[id];
-        d3.select(node.parentNode).style(
-          "background-color",
-          newValue !== "" ? this.colorize(datum) + "55" : "white"
-        );
-      });
+    colorColumn: function() {
+      this.paintCardTints();
     },
-    colorScale: function(newValue, oldValue) {
-      // this.refresh();
+    // The ramp restretches when a zoom narrows the collection.
+    colorScale: function() {
+      this.paintCardTints();
     },
   },
 };

@@ -6,6 +6,18 @@
       :compact="width < 640"
     >
       <template v-slot:default>
+        <span class="ph-label">Colour</span>
+        <DimensionPicker
+          :value="colorColumn"
+          :items="colorItems"
+          dense
+          outlined
+          hide-details
+          class="ph-select ph-select--narrow"
+          @change="setColorColumn"
+        />
+        <ColorKey />
+        <span class="ph-divider" />
         <span class="ph-meta">{{ headerHint }}</span>
       </template>
       <template v-slot:actions>
@@ -75,7 +87,9 @@ import * as d3 from "d3";
 import { mapGetters, mapState } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import PanelHeader from "@/components/PanelHeader.vue";
+import ColorKey from "@/components/ColorKey.vue";
 import DimensionName from "@/components/DimensionName.vue";
+import DimensionPicker from "@/components/DimensionPicker.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
 import { round } from "@/components/utils.js";
 import { formatValue, sameRange } from "@/store/filters.js";
@@ -89,18 +103,34 @@ import {
   KIND_MARKS,
   MIN,
   WEIGHTED,
+  dimensionItems,
   displayName,
 } from "@/columns.js";
 import { isAssetColumn } from "@/data/assets.js";
 
-// About one tick per this many pixels of axis height.
-const AXIS_TICK_SPACING = 40;
+// About one tick per this many pixels of axis height. Loose: the values
+// matter less than the shape of the lines between them.
+const AXIS_TICK_SPACING = 56;
+// However tall the panel, more ticks than this is clutter.
+const MAX_AXIS_TICKS = 6;
+/*
+ * How solid a line is drawn, by how many there are. With hundreds of options
+ * at full strength the chart is a single mass; faint, the same lines read as
+ * shading, which is the thing worth seeing.
+ */
+const LINE_ALPHA = [
+  { upTo: 50, alpha: 0.75, width: 1.4 },
+  { upTo: 200, alpha: 0.55, width: 1.4 },
+  { upTo: 1000, alpha: 0.35, width: 1.4 },
+  { upTo: 5000, alpha: 0.2, width: 1.1 },
+  { upTo: Infinity, alpha: 0.12, width: 1 },
+];
 // Room kept between neighbouring axis titles.
 const TITLE_PADDING = 8;
 
 export default {
   mixins: [TemplateView],
-  components: { PanelHeader, DimensionName },
+  components: { PanelHeader, ColorKey, DimensionName, DimensionPicker },
   name: "ParCoordsView",
   data() {
     return {
@@ -123,6 +153,7 @@ export default {
       numericDimensions: (state) => state.numericDimensions,
       nonNumericDimensions: (state) => state.nonNumericDimensions,
       dimensionValuesVersion: (state) => state.dimensionValuesVersion,
+      colorColumn: (state) => state.colorColumn,
     }),
     ...mapGetters([
       "inputDimensions",
@@ -135,6 +166,18 @@ export default {
       "goalOf",
       "goalSignature",
     ]),
+    /** How solid and how thick to draw the lines, for this many of them. */
+    lineInk() {
+      let count = this.chartData ? this.chartData.length : 0;
+      return LINE_ALPHA.find((step) => count <= step.upTo);
+    },
+    /** What the colour can follow: any dimension, and "nothing". */
+    colorItems() {
+      let dims = this.numericDimensions
+        .concat(this.nonNumericDimensions)
+        .filter((dim) => !isAssetColumn(dim) && !this.keysBlackList.includes(dim));
+      return [{ text: "None", value: "" }].concat(dimensionItems(dims));
+    },
     /** Axes drawn over a fixed range rather than their data's extent. */
     fixedAxisBounds() {
       let bounds = { [RATING_DIMENSION]: RATING_BOUNDS.slice() };
@@ -302,6 +345,31 @@ export default {
       });
 
       return result;
+    },
+    /** How solid and how thick the lines are, for this many of them. */
+    setColorColumn(dim) {
+      this.$store.commit("changeColorColumn", dim || "");
+    },
+    /**
+     * Clicking an axis title colours the chart by it, and clicking it again
+     * takes the colour off. Two of the library's own handlers are taken off
+     * the titles to make room: double-click flipped the axis, which fires
+     * this twice on the way and is undone by the next rebuild anyway since
+     * applyGoalOrientation re-reads the goals; and the wheel rotated every
+     * title to a diagonal, which a stray scroll was enough to trigger.
+     */
+    bindAxisTitles(chart) {
+      if (!chart || !chart.svg) return;
+      let vm = this;
+      chart.svg
+        .selectAll("g.dimension text.label")
+        .classed("ds-colour-by", (dim) => dim === this.colorColumn)
+        .on("dblclick", null)
+        .on("wheel", null)
+        .on("click", function(dim) {
+          d3.event.stopPropagation();
+          vm.setColorColumn(dim === vm.colorColumn ? "" : dim);
+        });
     },
     isAxisShown(dim) {
       return !this.excludedDimensions.includes(dim);
@@ -585,12 +653,27 @@ export default {
       // The rating is custom but keeps its brushes: it can be filtered by.
       let unfilterable = new Set(this.unfilterableDimensions);
       let band = axisBand(chart);
+      let outputs = new Set(this.outputDimensions);
+      let coloured = this.colorColumn;
       chart.svg.selectAll("g.dimension").each(function(dim) {
         let group = d3.select(this);
         group
           .classed("ds-unfilterable", unfilterable.has(dim))
           .classed("ds-custom-axis", custom.has(dim))
           .classed("ds-weighted-axis", weighted.has(dim));
+        // Results are set apart from the parameters that produced them, and
+        // whatever the colour follows is set apart from both.
+        group
+          .select("text.label")
+          .style(
+            "fill",
+            dim === coloured
+              ? "#263238"
+              : outputs.has(String(dim).toUpperCase())
+              ? "#1565c0"
+              : "#37474f"
+          )
+          .style("font-weight", dim === coloured ? 700 : 600);
         let mark = custom.has(dim)
           ? KIND_MARKS[CUSTOM]
           : weighted.has(dim)
@@ -1274,10 +1357,15 @@ export default {
         },
       };
 
+      let ink = this.lineInk;
       const chart = ParCoords({
         markedLineWidth: 4,
-        highlightedLineWidth: 1.4,
-        lineWidth: 1.4,
+        // The highlight canvas is drawn without `alpha`, so a selected line
+        // is solid whatever the rest are; a little thicker separates it from
+        // them without reaching the inspected line's 4.
+        highlightedLineWidth: 1.8,
+        alpha: ink.alpha,
+        lineWidth: ink.width,
         // Options missing a value cross below the axes, under a separator line.
         nullValueSeparator: "bottom",
        // markedShadowColor: "#ff0000",
@@ -1393,24 +1481,17 @@ export default {
       // to learn where every press began.
       svg.node().addEventListener("mousedown", (e) => this.recordPress(e), true);
 
-      let outputLabelColor = "steelblue";
-      let inputLabelColor = "black";
-      let colorSet = [];
-      // Coloring axes titles and lines based on whether dimensions were inputs (prefixed with "in:") or outputs (prefixed with "out:")
-      d3.selectAll(".parcoords text.label").style("fill", (d) => {
-        // change colors for inputs vs outputs
-        if (this.outputDimensions.includes(d.toUpperCase())) {
-          colorSet.push(outputLabelColor);
-          return outputLabelColor;
-        } else {
-          colorSet.push(inputLabelColor);
-          return inputLabelColor;
-        }
-      });
-      d3.selectAll(".parcoords path.domain").style("stroke", function(d, i) {
-        return colorSet[i];
-      });
+      // Titles are coloured in decorateAxes, which runs per axis with the
+      // dimension in hand. It used to be done here with a document-wide
+      // selection and a list of colours indexed by position, which two
+      // parallel-coordinates panels would have crossed, and which an axis
+      // flip dropped because only createAxes writes the titles.
       this.decorateAxes(chart);
+      this.bindAxisTitles(chart);
+      chart.on("render.axes", () => {
+        this.decorateAxes(chart);
+        this.bindAxisTitles(chart);
+      });
       this.fittedTitlesKey = null;
       this.fitAxisTitles(chart);
 
@@ -1540,7 +1621,10 @@ function applyTickCounts(chart) {
   let padding = chart.nullValueSeparatorPadding();
   let axisHeight =
     chart.height() - margin.top - margin.bottom - padding.bottom - padding.top;
-  let ticks = Math.max(2, Math.round(axisHeight / AXIS_TICK_SPACING));
+  let ticks = Math.max(
+    2,
+    Math.min(MAX_AXIS_TICKS, Math.round(axisHeight / AXIS_TICK_SPACING))
+  );
   Object.keys(dimensions).forEach((dim) => {
     let axis = dimensions[dim];
     axis.ticks = ticks;
@@ -1678,7 +1762,24 @@ function sameAxisItems(drawn, wanted, span) {
   transform: translate(0px, -10px);
 }
 ::v-deep .parcoords g.axis .tick text {
+  font-size: 10px;
+  fill: #78909c;
+  font-variant-numeric: tabular-nums;
+}
+/* The library writes these inline when it builds an axis, and does not write
+   them again when it updates one, so restyling them in script is lost on the
+   next flip. */
+::v-deep .parcoords g.axis .tick line {
+  stroke: #cfd8dc !important;
+}
+/* A custom or weighted axis is left out: decorateAxes gives it the colour of
+   its own mark, inline, which !important here would override. */
+::v-deep .parcoords g.dimension:not(.ds-custom-axis):not(.ds-weighted-axis) path.domain {
+  stroke: #b0bec5 !important;
+}
+::v-deep .parcoords text.label {
   font-size: 11px;
+  cursor: pointer;
 }
 
 </style>

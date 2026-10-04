@@ -87,6 +87,33 @@ function persistUiMode(mode) {
   }
 }
 
+/*
+ * Colour carries a dimension across the views: the lines of the parallel
+ * coordinates, and the gallery's cards.
+ *
+ * Viridis rather than the blue-to-red a lot of these tools use. Blue-to-red
+ * diverges, which tells the reader there is a meaningful middle, and these
+ * are plain measurements with no such point. Viridis also reads for the
+ * colour-blind and rises steadily in lightness, so a dense bundle of
+ * half-transparent lines still shows its value rather than only its density.
+ */
+const SEQUENTIAL = d3Chromatic.interpolateViridis;
+// A value a scale cannot place: the same grey the small plots use.
+const NO_COLOR = "#cfd8dc";
+// Every option the same, for a collection nothing is coloured by. The first
+// of the categorical colours, which is what this used to resolve to.
+const DEFAULT_LINE_COLOR = "#4e79a7";
+
+/**
+ * What to colour by before anyone says: the first result the file declares.
+ * Arbitrary among the results, but a flat chart tells the reader nothing,
+ * and a file with no "out:" column keeps its single colour.
+ */
+function defaultColorColumn(allDimensions) {
+  let output = (allDimensions || []).find((dim) => columnKind(dim) === OUTPUT);
+  return output || "";
+}
+
 const VIEW_TYPE_LABELS = {
   ScatterPlot: "Scatterplot",
   ParallelCoordinatesPlot: "PCP",
@@ -201,7 +228,7 @@ function builder(
       isInspectionPinned: true,
 
       colorRange: d3Chromatic.schemeTableau10,
-      colorColumn: "",
+      colorColumn: defaultColorColumn(Object.keys(dataTypesMap)),
 
       uiMode: readStoredUiMode(),
       // Lite mode's filters (see store/filters.js) and their undo history.
@@ -248,9 +275,41 @@ function builder(
       ...dimensions.getters,
       ...goals.getters,
       ...story.getters,
-      colorScale: (state) => d3.scaleOrdinal(state.colorRange),
+      /**
+       * The span the colour ramp covers, or null when what is coloured by is
+       * not a number. Read from `data` rather than `rawData`, so zooming in
+       * stretches the ramp over what is left and the chart keeps its range.
+       */
+      colorDomain: (state) => {
+        let dim = state.colorColumn;
+        if (!dim || state.numericDimensions.indexOf(dim) === -1) return null;
+        let span = d3.extent(state.data, (row) => Number(row[dim]));
+        if (span[0] === undefined || isNaN(span[0])) return null;
+        // One value, or all the same: put it in the middle of the ramp.
+        if (span[0] === span[1]) return [span[0] - 0.5, span[1] + 0.5];
+        return span;
+      },
+      /**
+       * Always a function of one value. Numbers run along the ramp,
+       * everything else gets a colour of its own, and with nothing chosen
+       * every option is the same.
+       */
+      colorScale: (state, getters) => {
+        if (!state.colorColumn) return () => DEFAULT_LINE_COLOR;
+        let domain = getters.colorDomain;
+        if (domain) return d3.scaleSequential(SEQUENTIAL).domain(domain);
+        return d3.scaleOrdinal(state.colorRange);
+      },
+      /**
+       * An option's colour, always as #rrggbb: the gallery appends two more
+       * digits to it for the card's tint, which only works on hex.
+       */
       colorize: (state, getters) => (dataItem) => {
-        return getters.colorScale(dataItem[state.colorColumn]);
+        let value = dataItem ? dataItem[state.colorColumn] : undefined;
+        if (state.colorColumn && (value === undefined || value === null || value === ""))
+          return NO_COLOR;
+        let color = d3.color(getters.colorScale(value));
+        return color ? color.formatHex() : NO_COLOR;
       },
       getEditingMode: (state) => state.isEditingMode,
       getMarking: (state) => (view) => {
@@ -877,11 +936,21 @@ function builder(
         state.data = asRows(payload.data);
 
         state.dataTypesMap = payload.dataTypesMap;
-        (state.numericDimensions = getNumericDimensions(payload.dataTypesMap)),
-          (state.nonNumericDimensions = getNonNumericDimensions(
-            payload.dataTypesMap
-          )),
-          (state.allDimensions = Object.keys(payload.dataTypesMap));
+        // The dimensions a user made are numeric too, and are not in the
+        // file's type map; without them they drop out of every dimension
+        // picker after a load.
+        state.numericDimensions = getNumericDimensions(
+          payload.dataTypesMap
+        ).concat(dimensions.names);
+        state.nonNumericDimensions = getNonNumericDimensions(
+          payload.dataTypesMap
+        );
+        state.allDimensions = Object.keys(payload.dataTypesMap).concat(
+          dimensions.names
+        );
+        if (!state.allDimensions.includes(state.colorColumn)) {
+          state.colorColumn = defaultColorColumn(state.allDimensions);
+        }
       },
     },
     actions: {
