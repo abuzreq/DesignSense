@@ -62,43 +62,39 @@ export const TABLEAU_20 = [
 ];
 
 /**
- * Tableau's "Blue-Teal", one of its ordered-sequential palettes, for a
+ * Tableau's "Orange-Gold", one of its ordered-sequential palettes, for a
  * dimension whose values measure something.
  *
- * Chosen among Tableau's ordered ramps for two reasons. Over the plainer
- * single-hue "Blue": the parallel coordinates draw hundreds of lines over
- * one another at an alpha well below one, and compositing on white flattens
- * the lightness difference a single hue has nothing else to fall back on,
- * where teal through to deep blue keeps a hue difference as well. Over the
- * warmer "Orange-Gold" and "Green-Gold", which do separate a touch better
- * still: both say something about the values as well as ordering them --
- * red at the top reads as the bad end, green as the good one -- and which
- * end is the good one is already said, per dimension, by the goal arrows on
- * the axes. A colour that disagreed with them would be read as a second
- * opinion.
+ * Of the ordered ramps this one holds up best under how these colours are
+ * used. The parallel coordinates draw hundreds of lines over one another at
+ * an alpha well below one, and compositing on white flattens the lightness
+ * difference that a single-hue ramp like Tableau's "Blue" has nothing else
+ * to fall back on; gold through orange to brick keeps a hue difference too,
+ * and a wider one than the cooler "Blue-Teal" that was tried before it.
  *
- * The pale end sits on white no more faintly than the yellow end of
- * viridis, which this replaces.
+ * It does say something as well as order: a hot end reads as the bad end.
+ * Which end is the good one is settled per dimension by the goal arrows on
+ * the axes, which is the only place that knows.
  */
-export const TABLEAU_BLUE_TEAL = [
-  "#bce4d8",
-  "#aedcd5",
-  "#a1d5d2",
-  "#95cecf",
-  "#89c8cc",
-  "#7ec1ca",
-  "#72bac6",
-  "#66b2c2",
-  "#59acbe",
-  "#4ba5ba",
-  "#419eb6",
-  "#3b96b2",
-  "#358ead",
-  "#3586a7",
-  "#347ea1",
-  "#32779b",
-  "#316f96",
-  "#2f6790",
-  "#2d608a",
-  "#2c5985",
+export const TABLEAU_ORANGE_GOLD = [
+  "#f4d166",
+  "#f6c760",
+  "#f8bc58",
+  "#f8b252",
+  "#f7a84a",
+  "#f69e41",
+  "#f49538",
+  "#f38b2f",
+  "#f28026",
+  "#f0751e",
+  "#eb6c1c",
+  "#e4641e",
+  "#de5d1f",
+  "#d75521",
+  "#cf4f22",
+  "#c64a22",
+  "#bc4623",
+  "#b24223",
+  "#a83e24",
+  "#9e3a26",
 ];

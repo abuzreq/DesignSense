@@ -57,7 +57,7 @@ import { addIds, removeIds, uniqueSetName } from "./cart.js";
 import { asRows } from "./rows.js";
 import { isDerivedAssetKey } from "@/data/assets.js";
 import { INPUT, OUTPUT, columnKind } from "@/columns.js";
-import { TABLEAU_10, TABLEAU_20, TABLEAU_BLUE_TEAL } from "@/palettes.js";
+import { TABLEAU_10, TABLEAU_20, TABLEAU_ORANGE_GOLD } from "@/palettes.js";
 // The same count that decides whether a dimension is drawn as a set of bars
 // or as a histogram; see colorLevels for why the colours follow it.
 import { MAX_LEVELS } from "@/analysis/summary.js";
@@ -101,7 +101,7 @@ function persistUiMode(mode) {
  * half-transparent lines still shows its value rather than only its density.
  */
 // A spline through Tableau's ordered ramp, the way d3 builds its own.
-const SEQUENTIAL = d3.interpolateRgbBasis(TABLEAU_BLUE_TEAL);
+const SEQUENTIAL = d3.interpolateRgbBasis(TABLEAU_ORANGE_GOLD);
 // A value a scale cannot place: the same grey the small plots use.
 const NO_COLOR = "#cfd8dc";
 // Every option the same, for a collection nothing is coloured by. The first
