@@ -8,6 +8,7 @@
  *   max:daylight     an output where higher is better
  *   custom:looks     a custom dimension, with values entered by hand
  *   weighted:score   a weighted dimension, a weighted sum of other dimensions
+ *   name:variant     what to call each option, rather than "Option 12"
  *
  * The prefix stays part of the column's name in the data, so a file saved
  * from DesignSense loads back the same way, but the interface shows only what
@@ -24,6 +25,8 @@ export const INPUT = "in";
 export const OUTPUT = "out";
 export const CUSTOM = "custom";
 export const WEIGHTED = "weighted";
+// Not a dimension: a column whose values name the options.
+export const NAME = "name";
 
 // The star rating's column: a custom dimension of its own (see ratings.js).
 export const RATING_DIMENSION = CUSTOM + ":Rating";
@@ -32,7 +35,38 @@ export const RATING_DIMENSION = CUSTOM + ":Rating";
 export const MAX = "max";
 export const MIN = "min";
 
-const PREFIX = /^\s*(in|out|min|max|custom|weighted)\s*:\s*/i;
+const PREFIX = /^\s*(in|out|min|max|custom|weighted|name)\s*:\s*/i;
+
+/*
+ * Design Explorer's wiki documents a "name:" prefix, but its own files --
+ * the three of them this app ships as samples -- carry a plain "Description"
+ * column instead. So a column named like one of these is *offered* as the
+ * name, the way data/assets.js offers "img" as a picture, and the Columns
+ * dialog lets it be changed or turned off.
+ *
+ * Only offered, though, and only once its values look like names: the used
+ * cars sample has a "description" too, holding the whole of each listing,
+ * and a paragraph is not what a card should be called.
+ */
+export const NAME_COLUMN = /^(name|description|label|title)$/i;
+// Longer than this and it is prose, not a name.
+const NAME_MAX_LENGTH = 60;
+// How many rows are enough to tell one from the other.
+const NAME_SAMPLE = 50;
+
+function looksLikeNames(rows, column) {
+  let seen = [];
+  for (let i = 0; i < rows.length && seen.length < NAME_SAMPLE; i++) {
+    let value = rows[i][column];
+    if (value === undefined || value === null || value === "") continue;
+    let text = String(value);
+    if (text.length > NAME_MAX_LENGTH) return false;
+    seen.push(text);
+  }
+  if (seen.length === 0) return false;
+  // Mostly the same value over and over names nothing.
+  return new Set(seen).size * 2 >= seen.length;
+}
 
 function prefixOf(name) {
   let match = PREFIX.exec(String(name));
@@ -41,16 +75,54 @@ function prefixOf(name) {
 
 // Roles given after loading: { column: "in" | "out" | "none" }.
 let roleOverrides = {};
+// Which column names the options, "" for none, null until one is worked out.
+let nameColumn = null;
 
 /** Sets the roles the user gave the current dataset's columns. */
 export function setColumnRoles(roles) {
   roleOverrides = Object.assign({}, roles || {});
 }
 
-/** "in", "out", "custom" or "weighted" by the name's prefix alone, or null. */
+/**
+ * Says which column names the options: a column name, or "" for none. Null
+ * hands the choice back to the file, which `nameColumnFor` reads.
+ */
+export function setNameColumn(column) {
+  nameColumn = column === null || column === undefined ? null : String(column);
+}
+
+export function getNameColumn() {
+  return nameColumn;
+}
+
+/**
+ * The column a file means to name its options by: one carrying the "name:"
+ * prefix, else one called Name, Description, Label or Title. "" when the
+ * file offers neither.
+ */
+export function nameColumnFor(allDimensions, rows) {
+  let names = allDimensions || [];
+  let prefixed = names.find((dim) => prefixOf(dim) === NAME);
+  if (prefixed) return prefixed;
+  let candidate = names.find((dim) => NAME_COLUMN.test(String(dim).trim()));
+  if (!candidate) return "";
+  if (!rows || rows.length === 0) return candidate;
+  return looksLikeNames(rows, candidate) ? candidate : "";
+}
+
+/**
+ * "in", "out", "custom", "weighted" or "name" by the name's prefix alone, or
+ * null.
+ */
 export function prefixKind(name) {
   let prefix = prefixOf(name);
   return prefix === MIN || prefix === MAX ? OUTPUT : prefix;
+}
+
+/** Whether this column names the options rather than measuring them. */
+export function isNameColumn(name) {
+  if (prefixKind(name) === NAME) return true;
+  return nameColumn !== null && nameColumn !== "" && name === nameColumn;
 }
 
 /**
@@ -61,6 +133,7 @@ export function prefixKind(name) {
 export function columnKind(name) {
   let kind = prefixKind(name);
   if (kind === CUSTOM || kind === WEIGHTED) return kind;
+  if (kind === NAME) return null;
   let role = roleOverrides[name];
   if (role === INPUT || role === OUTPUT) return role;
   if (role === "none") return null;
@@ -88,11 +161,17 @@ export function displayName(name) {
 
 /**
  * What an option is called wherever it is named -- a gallery card, the
- * inspector, a column in Compare: its own ID column when the data has one,
- * otherwise the id the app gave it.
+ * inspector, a column in Compare: the column the file names them by when it
+ * has one, else its own ID column, else the id the app gave it.
  */
 export function optionName(item) {
   if (!item) return "";
+  if (nameColumn) {
+    let given = item[nameColumn];
+    if (given !== undefined && given !== null && String(given) !== "") {
+      return String(given);
+    }
+  }
   let id = item.ID;
   if (id === undefined || id === null || id === "") id = item.id;
   if (id === undefined || id === null || id === "") id = item._id;

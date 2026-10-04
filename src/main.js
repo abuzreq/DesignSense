@@ -19,7 +19,7 @@ import {
 import { readShareParams } from "@/data/shareLink.js";
 import { datasetKey } from "@/customDimensions.js";
 import { installErrorCapture } from "@/errors.js";
-import { setColumnRoles } from "@/columns.js";
+import { nameColumnFor, setColumnRoles, setNameColumn } from "@/columns.js";
 import { loadColumnRoles } from "@/data/columnRoles.js";
 
 require("vue-tour/dist/vue-tour.css");
@@ -55,7 +55,16 @@ function mountApp(data, dataTypesMap, options) {
       })
     : null;
   // Roles the user gave this dataset's columns, before anything reads them.
-  setColumnRoles(loadColumnRoles(key).roles);
+  let columnChoices = loadColumnRoles(key);
+  setColumnRoles(columnChoices.roles);
+  // What the options are called: the user's choice, else what the file
+  // offers -- a "name:" column, or one called Description, as Design
+  // Explorer's own files carry.
+  setNameColumn(
+    columnChoices.nameColumn !== null
+      ? columnChoices.nameColumn
+      : nameColumnFor(Object.keys(dataTypesMap), data)
+  );
   app = new Vue({
     vuetify,
     vdr,

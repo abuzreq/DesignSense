@@ -5,10 +5,14 @@
  * to columns.js before the dataset's store is built, so every view reads the
  * same roles.
  *
- *   { version: 1, roles: { column: "in" | "out" | "none" }, reviewed: true }
+ *   { version: 1, roles: { column: "in" | "out" | "none" }, reviewed: true,
+ *     nameColumn: "Description" }
  *
  * `reviewed` records that the user has seen the columns dialog for this
- * dataset, so it doesn't open again by itself.
+ * dataset, so it doesn't open again by itself. `nameColumn` is the column
+ * whose values name the options, "" for none, and absent to let the file
+ * decide; it needs no version bump, since only `roles` is validated, so an
+ * older build reading a newer save simply ignores it.
  */
 
 export const ROLES_PREFIX = "designsense-columns-v1:";
@@ -23,9 +27,9 @@ function browserStorage() {
   }
 }
 
-/** `{ roles, reviewed }` from stored text; empty when missing or malformed. */
+/** `{ roles, reviewed, nameColumn }` from stored text; empty when malformed. */
 export function parseColumnRoles(text) {
-  let empty = { roles: {}, reviewed: false };
+  let empty = { roles: {}, reviewed: false, nameColumn: null };
   if (typeof text !== "string" || text === "") return empty;
   let parsed;
   try {
@@ -38,17 +42,22 @@ export function parseColumnRoles(text) {
   Object.keys(parsed.roles || {}).forEach((column) => {
     if (ROLE_VALUES.indexOf(parsed.roles[column]) !== -1) roles[column] = parsed.roles[column];
   });
-  return { roles: roles, reviewed: parsed.reviewed === true };
+  return {
+    roles: roles,
+    reviewed: parsed.reviewed === true,
+    nameColumn:
+      typeof parsed.nameColumn === "string" ? parsed.nameColumn : null,
+  };
 }
 
 /** What was saved for the dataset with `key`. */
 export function loadColumnRoles(key) {
   let storage = key ? browserStorage() : null;
-  if (!storage) return { roles: {}, reviewed: false };
+  if (!storage) return { roles: {}, reviewed: false, nameColumn: null };
   try {
     return parseColumnRoles(storage.getItem(ROLES_PREFIX + key));
   } catch (e) {
-    return { roles: {}, reviewed: false };
+    return { roles: {}, reviewed: false, nameColumn: null };
   }
 }
 
@@ -57,14 +66,18 @@ export function saveColumnRoles(key, value) {
   let storage = key ? browserStorage() : null;
   if (!storage) return;
   let roles = value.roles || {};
+  let named = typeof value.nameColumn === "string";
   try {
-    if (Object.keys(roles).length === 0 && !value.reviewed) {
+    if (Object.keys(roles).length === 0 && !value.reviewed && !named) {
       storage.removeItem(ROLES_PREFIX + key);
     } else {
-      storage.setItem(
-        ROLES_PREFIX + key,
-        JSON.stringify({ version: ROLES_VERSION, roles: roles, reviewed: !!value.reviewed })
-      );
+      let saved = {
+        version: ROLES_VERSION,
+        roles: roles,
+        reviewed: !!value.reviewed,
+      };
+      if (named) saved.nameColumn = value.nameColumn;
+      storage.setItem(ROLES_PREFIX + key, JSON.stringify(saved));
     }
   } catch (e) {
     /* They last until the page is reloaded. */

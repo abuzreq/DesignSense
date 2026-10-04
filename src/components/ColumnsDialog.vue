@@ -93,6 +93,23 @@
           </div>
         </div>
 
+        <div v-if="nameChoices.length > 1" class="cols-group">
+          <div class="cols-section">What each option is called</div>
+          <div class="cols-help">
+            Shown on a card, in the inspector and as a column heading in
+            Compare. Without one they are numbered.
+          </div>
+          <v-select
+            v-model="nameColumn"
+            :items="nameChoices"
+            dense
+            outlined
+            hide-details
+            class="cols-name-select"
+            aria-label="What each option is called"
+          />
+        </div>
+
         <div v-if="warnings.length > 0" class="cols-group">
           <div class="cols-section">Noticed while loading</div>
           <ul class="cols-warnings">
@@ -126,6 +143,9 @@ import {
   WEIGHTED,
   columnKind,
   displayName,
+  getNameColumn,
+  nameColumnFor,
+  setNameColumn,
   prefixKind,
   setColumnRoles,
 } from "@/columns.js";
@@ -157,7 +177,9 @@ function sortedJson(map) {
 export default {
   name: "ColumnsDialog",
   data() {
-    return { numeric: [], initial: {} };
+    // nameColumn is "" for "number them"; initialName is what it was on
+    // opening, so a change can be told from a choice left alone.
+    return { numeric: [], initial: {}, nameColumn: "", initialName: "" };
   },
   computed: {
     open() {
@@ -230,7 +252,10 @@ export default {
         .map((p) => ({ key: p.key, text: p.n + " " + (p.n === 1 ? p.one : p.many) }));
     },
     changedCount() {
-      return this.numeric.filter((c) => this.isChanged(c)).length;
+      return (
+        this.numeric.filter((c) => this.isChanged(c)).length +
+        (this.nameChanged ? 1 : 0)
+      );
     },
     overrides() {
       let out = {};
@@ -241,6 +266,23 @@ export default {
     },
     rolesChanged() {
       return sortedJson(this.overrides) !== sortedJson(loadColumnRoles(this.key).roles);
+    },
+    /** Columns whose values could name an option, and "number them". */
+    nameChoices() {
+      let { fields, types, images, models } = this.columns;
+      let usable = fields.filter(
+        (f) =>
+          types[f] !== "Float" &&
+          f !== "_id" &&
+          images.indexOf(f) === -1 &&
+          models.indexOf(f) === -1
+      );
+      return [{ text: "Numbered: Option 1, Option 2…", value: "" }].concat(
+        usable.map((f) => ({ text: this.label(f), value: f }))
+      );
+    },
+    nameChanged() {
+      return this.nameColumn !== this.initialName;
     },
     key() {
       return this.$store.state.datasetKey;
@@ -259,6 +301,12 @@ export default {
       return displayName(name);
     },
     start() {
+      let chosen = getNameColumn();
+      this.nameColumn =
+        chosen === null
+          ? nameColumnFor(this.columns.fields, this.$store.state.rawData)
+          : chosen;
+      this.initialName = this.nameColumn;
       let { fields, types } = this.columns;
       let rows = this.$store.state.rawData;
       let getters = this.$store.getters;
@@ -306,10 +354,15 @@ export default {
         c.role = this.initial[c.name].role;
         c.goal = this.initial[c.name].goal;
       });
+      this.nameColumn = this.initialName;
     },
     markReviewed() {
       let saved = loadColumnRoles(this.key);
-      saveColumnRoles(this.key, { roles: saved.roles, reviewed: true });
+      saveColumnRoles(this.key, {
+        roles: saved.roles,
+        reviewed: true,
+        nameColumn: saved.nameColumn,
+      });
     },
     close() {
       this.markReviewed();
@@ -324,10 +377,16 @@ export default {
         return;
       }
       let overrides = this.overrides;
-      let remount = this.rolesChanged;
+      let remount = this.rolesChanged || this.nameChanged;
       // Roles first: a goal is judged against what the column now is.
       setColumnRoles(overrides);
-      saveColumnRoles(this.key, { roles: overrides, reviewed: true });
+      setNameColumn(this.nameColumn);
+      saveColumnRoles(this.key, {
+        roles: overrides,
+        reviewed: true,
+        nameColumn: this.nameColumn,
+      });
+      this.initialName = this.nameColumn;
       let getters = this.$store.getters;
       this.numeric.forEach((c) => {
         let goal = c.role === INPUT ? null : c.goal || null;
@@ -471,6 +530,9 @@ export default {
   background: #f5f7f8;
   border: 1px solid #e0e6e9;
   border-radius: 10px;
+}
+.cols-name-select {
+  max-width: 320px;
 }
 .cols-warnings {
   margin: 4px 0 0;
