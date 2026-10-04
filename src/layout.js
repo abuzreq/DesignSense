@@ -1,7 +1,17 @@
-const LAYOUT_STORAGE_KEY = "designsense-layouts-v2";
-const PRESET_STORAGE_KEY = "designsense-layout-preset-v1";
+/*
+ * The arrangement is remembered between visits, so whatever a reader last
+ * settled on is what opens next time.
+ *
+ * The keys carry a generation, bumped together when the arrangement a reader
+ * starts from changes. Without it the saved layout always wins and a new
+ * default reaches nobody who has used DesignSense before: the chart over the
+ * gallery is new here, so the generation moves on once and everyone sees it,
+ * after which their own choice is remembered again.
+ */
+const LAYOUT_STORAGE_KEY = "designsense-layouts-v3";
+const PRESET_STORAGE_KEY = "designsense-layout-preset-v2";
 // Whether the welcome screen has already asked which arrangement is wanted.
-const ASKED_STORAGE_KEY = "designsense-layout-asked-v1";
+const ASKED_STORAGE_KEY = "designsense-layout-asked-v2";
 
 /**
  * Panels sit on a grid of LAYOUT_COLUMNS x LAYOUT_ROWS cells that is stretched
@@ -49,7 +59,9 @@ function balancedLayouts() {
   ];
 }
 
-// Where a layout starts, and what `resetLayouts` goes back to.
+// Where a layout starts, and what `resetLayouts` goes back to. Design
+// Explorer's own arrangement, and the one the storage generation above
+// carries everybody to.
 export const DEFAULT_PRESET_ID = "explorer";
 var defaultLayouts = explorerLayouts;
 
