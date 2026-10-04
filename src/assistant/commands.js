@@ -523,6 +523,9 @@ export const COMMANDS = {
     run(ctx, args) {
       if (args.view === "Clusters") {
         if (!ctx.getters.can("clustering")) return { message: "The clusters panel is an Expert-mode feature; say \"switch to expert mode\" first." };
+        // Clusters are drawn inside the scatterplot, so opening them with it
+        // closed would report success and show nothing.
+        ctx.store.commit("openLayout", { type: "ScatterPlot" });
         ctx.store.commit("setClusteringPanelOpen", { value: true });
         return;
       }
