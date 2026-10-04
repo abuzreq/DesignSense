@@ -5,7 +5,6 @@ import { operations } from "@/components/operations.js";
 import utils from "@/components/utils.js";
 
 import * as d3 from "d3";
-import * as d3Chromatic from "d3-scale-chromatic";
 
 import { encodeUrl } from "@/data/shareLink.js";
 import {
@@ -58,6 +57,10 @@ import { addIds, removeIds, uniqueSetName } from "./cart.js";
 import { asRows } from "./rows.js";
 import { isDerivedAssetKey } from "@/data/assets.js";
 import { INPUT, OUTPUT, columnKind } from "@/columns.js";
+import { TABLEAU_10, TABLEAU_20, TABLEAU_BLUE_TEAL } from "@/palettes.js";
+// The same count that decides whether a dimension is drawn as a set of bars
+// or as a histogram; see colorLevels for why the colours follow it.
+import { MAX_LEVELS } from "@/analysis/summary.js";
 import Papa from "papaparse";
 
 const UI_MODE_KEY = "designsense-uiMode";
@@ -97,7 +100,8 @@ function persistUiMode(mode) {
  * colour-blind and rises steadily in lightness, so a dense bundle of
  * half-transparent lines still shows its value rather than only its density.
  */
-const SEQUENTIAL = d3Chromatic.interpolateViridis;
+// A spline through Tableau's ordered ramp, the way d3 builds its own.
+const SEQUENTIAL = d3.interpolateRgbBasis(TABLEAU_BLUE_TEAL);
 // A value a scale cannot place: the same grey the small plots use.
 const NO_COLOR = "#cfd8dc";
 // Every option the same, for a collection nothing is coloured by. The first
@@ -233,7 +237,7 @@ function builder(
       isInspectionMode: false,
       isInspectionPinned: true,
 
-      colorRange: d3Chromatic.schemeTableau10,
+      colorRange: TABLEAU_10,
       colorColumn: defaultColorColumn(
         Object.keys(dataTypesMap),
         getNumericDimensions(dataTypesMap)
@@ -285,13 +289,60 @@ function builder(
       ...goals.getters,
       ...story.getters,
       /**
+       * The values of the colour column when it names rather than measures,
+       * in order; null when it measures, and so wants a ramp instead.
+       *
+       * Two things make a dimension one to name by. The first is that it is
+       * not a number at all: "Oak" and "Steel" have no distance between
+       * them to put along a ramp. The second is that it is a number taking
+       * only a handful of values -- the three or four settings a sweep was
+       * run at, or a type written down as 1, 2, 3. Those are labels wearing
+       * a number's clothes, and a ramp spends its whole range on four
+       * neighbouring shades that no reader can match back to the key, where
+       * four hues name them outright.
+       *
+       * "A handful" is MAX_LEVELS, the count the analysis already uses to
+       * decide whether to draw a dimension as a bar per value or as a
+       * histogram. One judgement, so what the distribution says a dimension
+       * is and what its colour says agree.
+       *
+       * Counted over `rawData`, not `data`: what a dimension *is* must not
+       * change when a zoom leaves eight options on screen and every
+       * measurement in them suddenly has few enough values to look like a
+       * set of labels.
+       */
+      colorLevels: (state) => {
+        let dim = state.colorColumn;
+        if (!dim) return null;
+        let numeric = state.numericDimensions.indexOf(dim) !== -1;
+        let seen = new Map();
+        for (let i = 0; i < state.rawData.length; i++) {
+          let value = state.rawData[i][dim];
+          if (value === undefined || value === null || value === "") continue;
+          let key = String(value);
+          if (seen.has(key)) continue;
+          seen.set(key, value);
+          // Too many for labels: it is a measurement after all.
+          if (numeric && seen.size > MAX_LEVELS) return null;
+        }
+        if (seen.size === 0) return null;
+        let values = Array.from(seen.values());
+        // Numbers in their own order, so the palette walks the levels the
+        // way the data does; text alphabetically, which is arbitrary but at
+        // least the same every time.
+        return numeric
+          ? values.sort((a, b) => Number(a) - Number(b))
+          : values.sort((a, b) => String(a).localeCompare(String(b)));
+      },
+      /**
        * The span the colour ramp covers, or null when what is coloured by is
-       * not a number. Read from `data` rather than `rawData`, so zooming in
+       * not measured. Read from `data` rather than `rawData`, so zooming in
        * stretches the ramp over what is left and the chart keeps its range.
        */
-      colorDomain: (state) => {
+      colorDomain: (state, getters) => {
         let dim = state.colorColumn;
         if (!dim || state.numericDimensions.indexOf(dim) === -1) return null;
+        if (getters.colorLevels) return null;
         let span = d3.extent(state.data, (row) => Number(row[dim]));
         if (span[0] === undefined || isNaN(span[0])) return null;
         // One value, or all the same: put it in the middle of the ramp.
@@ -299,15 +350,24 @@ function builder(
         return span;
       },
       /**
-       * Always a function of one value. Numbers run along the ramp,
-       * everything else gets a colour of its own, and with nothing chosen
-       * every option is the same.
+       * Always a function of one value. A set of labels gets Tableau's
+       * categorical hues, a measurement its ordered ramp, and with nothing
+       * chosen every option is the same.
        */
       colorScale: (state, getters) => {
-        if (!state.colorColumn) return () => DEFAULT_LINE_COLOR;
+        let levels = getters.colorLevels;
+        if (levels) {
+          // The twenty once ten will not go round; past twenty they repeat,
+          // which is as much as any set of hues can do.
+          let range =
+            levels.length > state.colorRange.length ? TABLEAU_20 : state.colorRange;
+          // An explicit domain, so a value keeps its colour as the
+          // collection is filtered rather than taking whichever is next.
+          return d3.scaleOrdinal().domain(levels).range(range);
+        }
         let domain = getters.colorDomain;
         if (domain) return d3.scaleSequential(SEQUENTIAL).domain(domain);
-        return d3.scaleOrdinal(state.colorRange);
+        return () => DEFAULT_LINE_COLOR;
       },
       /**
        * An option's colour, always as #rrggbb: the gallery appends two more

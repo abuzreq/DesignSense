@@ -68,7 +68,7 @@ export default {
       colorColumn: (state) => state.colorColumn,
       currentData: (state) => state.data,
     }),
-    ...mapGetters(["colorDomain", "colorScale", "colorize"]),
+    ...mapGetters(["colorDomain", "colorLevels", "colorScale"]),
     // Several panels can show a key at once, so the gradient needs its own id.
     gradientId() {
       return "ck-" + this._uid;
@@ -101,22 +101,30 @@ export default {
     highText() {
       return this.endText[1];
     },
-    /** The distinct values and how many there are, counted once. */
+    /**
+     * The values on screen and how many there are, in the order the scale
+     * holds them rather than the order the rows happen to arrive in. Only
+     * the ones still in the collection: a swatch for a value a filter has
+     * taken away would be a colour the reader cannot find anywhere.
+     */
     categorical() {
-      if (this.colorDomain) return { shown: [], more: 0 };
-      let shown = [];
-      let known = new Set();
+      let levels = this.colorLevels;
+      if (!levels) return { shown: [], more: 0 };
+      let here = new Set();
       this.currentData.forEach((row) => {
         let value = row[this.colorColumn];
         if (value === undefined || value === null || value === "") return;
-        let key = String(value);
-        if (known.has(key)) return;
-        known.add(key);
-        if (shown.length < MAX_SWATCHES) {
-          shown.push({ value: key, color: this.colorize(row) });
-        }
+        here.add(String(value));
       });
-      return { shown: shown, more: Math.max(0, known.size - MAX_SWATCHES) };
+      let present = levels.filter((value) => here.has(String(value)));
+      let shown = present.slice(0, MAX_SWATCHES).map((value) => {
+        let color = d3.color(this.colorScale(value));
+        return {
+          value: String(value),
+          color: color ? color.formatHex() : "#ffffff",
+        };
+      });
+      return { shown: shown, more: Math.max(0, present.length - MAX_SWATCHES) };
     },
     swatches() {
       return this.categorical.shown;
