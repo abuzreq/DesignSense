@@ -108,6 +108,18 @@ import {
 } from "@/columns.js";
 import { isAssetColumn } from "@/data/assets.js";
 
+/*
+ * How tall the axes may get, against how wide the chart is. Parallel
+ * coordinates are read across: the lines between the axes carry the shape,
+ * and stretching them down a tall panel -- which is what happens when the
+ * panel beside this one is closed -- pulls them into near-vertical streaks
+ * that say nothing the shorter chart did not. Past this the chart keeps its
+ * height and sits in the middle of the panel instead.
+ */
+const MAX_HEIGHT_OF_WIDTH = 0.7;
+// Unless the panel is so narrow that the ratio would leave nothing.
+const MIN_CHART_HEIGHT = 220;
+
 // About one tick per this many pixels of axis height. Loose: the values
 // matter less than the shape of the lines between them.
 const AXIS_TICK_SPACING = 56;
@@ -226,7 +238,12 @@ export default {
     chartHeight() {
       // Never below zero: a panel is briefly unmeasured while it mounts, and
       // a negative height reaches the chart's svg as an invalid attribute.
-      return Math.max(0, this.height - this.headerHeight);
+      let room = Math.max(0, this.height - this.headerHeight);
+      let tallest = Math.max(
+        MIN_CHART_HEIGHT,
+        Math.round(this.width * MAX_HEIGHT_OF_WIDTH)
+      );
+      return Math.min(room, tallest);
     },
     headerHint() {
       let hint =
@@ -1792,9 +1809,12 @@ function sameAxisItems(drawn, wanted, span) {
   flex-direction: column;
   overflow: hidden;
 }
+/* Centred in whatever the chart does not take, so a panel taller than the
+   chart should be reads as room to spare rather than a chart cut short. */
 .pcp-view .parcoords {
   flex: 0 0 auto;
   position: relative;
+  margin: auto 0;
 }
 </style>
 

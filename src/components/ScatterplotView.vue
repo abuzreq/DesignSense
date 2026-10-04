@@ -191,7 +191,7 @@
         :id="viewID"
         ref="scatter"
         class="scatter-plot"
-        :style="{ width: `${plotWidth}px`, height: `${plotHeight}px` }"
+        :style="{ width: `${plotWidth}px`, height: `${plotDrawHeight}px` }"
       />
       <div
         v-if="sidePanel === 'matrix'"
@@ -235,8 +235,11 @@
   flex-direction: column;
   overflow: hidden;
 }
+/* The plot is centred in whatever it does not take; the side panels are
+   given the full height and so are unaffected by it. */
 .scatter-body {
   display: flex;
+  align-items: center;
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -366,6 +369,10 @@ import { operations } from "@/components/operations.js";
 import TemplateView from "@/components/TemplateView.vue";
 import PanelHeader from "@/components/PanelHeader.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
+
+// Below this a square plot is too small to read, so a narrow panel keeps
+// the height it has rather than matching its width.
+const MIN_PLOT_HEIGHT = 220;
 import { formatValue } from "@/store/filters.js";
 import { axisTickFormat } from "@/components/axisFormat.js";
 import { GOAL_MARKS, dimensionItems, displayName } from "@/columns.js";
@@ -463,8 +470,19 @@ export default {
       if (this.sidePanel) return Math.max(0, this.width - this.sideWidth);
       return Math.max(0, this.width);
     },
+    /** The room below the header, which the side panels take all of. */
     plotHeight() {
       return Math.max(0, this.height - this.headerHeight);
+    },
+    /**
+     * How tall the plot itself is drawn. Two axes of a pair deserve the same
+     * room, so it is never taller than it is wide: a panel left tall by
+     * closing the one beside it would otherwise stretch the cloud into a
+     * column and make distances along one axis look larger than the other.
+     */
+    plotDrawHeight() {
+      let tallest = Math.max(MIN_PLOT_HEIGHT, this.plotWidth);
+      return Math.min(this.plotHeight, tallest);
     },
     compactHeader() {
       return this.width < 640;
@@ -822,10 +840,12 @@ export default {
       // tick labels with the x title below.
       var margin = { left: 54, top: 10, right: 12, bottom: 45 };
       var innerWidth = this.plotWidth - margin.left - margin.right;
-      var innerHeight = this.plotHeight - margin.top - margin.bottom;
+      // The drawn height, not the room there is: the plot keeps its shape
+      // and sits in the middle of a panel taller than it needs.
+      var innerHeight = this.plotDrawHeight - margin.top - margin.bottom;
       scatterPlot
         .outerWidth(this.plotWidth)
-        .outerHeight(this.plotHeight)
+        .outerHeight(this.plotDrawHeight)
         .margin(margin)
         .xColumn(this.xColumn)
         .xAxisLabel(this.axisLabel(this.xColumn))
