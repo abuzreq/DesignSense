@@ -14,6 +14,18 @@ import { mapState, mapGetters } from "vuex";
 // Mutations after which a view must re-read its marking.
 const MARKING_MUTATIONS = ["update", "reverseUpdate", "redoUpdate", "resetMarking"];
 
+/*
+ * Below this there is no chart worth drawing, and the drawing libraries take
+ * the panel's size, subtract their own margins and axis room from it, and
+ * hand the negative remainder to an svg element, which the browser rejects
+ * one complaint at a time. A panel is this small while the workspace is
+ * being measured for the first time, and again for a frame when a seam is
+ * dragged to an edge. The width and height watchers below rebuild as soon as
+ * there is room.
+ */
+const MIN_CHART_WIDTH = 40;
+const MIN_CHART_HEIGHT = 60;
+
 export default {
   props: ["width", "height", "x", "y", "type"],
   data() {
@@ -25,6 +37,13 @@ export default {
     };
   },
   computed: {
+    /** Whether the panel is big enough to draw into yet. */
+    hasRoomToDraw() {
+      return (
+        Number(this.width) >= MIN_CHART_WIDTH &&
+        Number(this.height) >= MIN_CHART_HEIGHT
+      );
+    },
     ...mapGetters([
       "colorScale",
       "colorize",
@@ -45,12 +64,14 @@ export default {
     }),
   },
   mounted() {
-    this.chart = this.createChart();
+    // The view registers itself either way: its marking and its place in the
+    // store do not wait on there being room to draw.
+    if (this.hasRoomToDraw) this.chart = this.createChart();
     this.$store.dispatch("createDefaultView", {
       view: this.viewID,
       vueComponent: this,
     });
-    if (typeof this.afterChartRebuilt === "function") {
+    if (this.chart && typeof this.afterChartRebuilt === "function") {
       this.afterChartRebuilt();
     }
   },
@@ -61,7 +82,7 @@ export default {
     // that a layout change removes, and would otherwise keep calling it.
     this.unsubscribeStore = this.$store.subscribe((mutation, state) => {
       if (MARKING_MUTATIONS.includes(mutation.type)) {
-        if (this.hasOwnProperty("markingChangeHandler"))
+        if (this.chart && this.hasOwnProperty("markingChangeHandler"))
           this.markingChangeHandler(mutation.type === "resetMarking");
       }
     });
@@ -88,6 +109,12 @@ export default {
       // Loading data mounts a new app over the old one without destroying its
       // views, so a rebuild they scheduled finds no element to draw into.
       if (this._isDestroyed || !this.$el.isConnected) return;
+      if (!this.hasRoomToDraw) {
+        // Leave nothing half-drawn at a size it cannot be drawn at.
+        this.destroyChart();
+        this.chart = null;
+        return;
+      }
       this.chart = this.createChart();
       var selection = this.$store.getters.selectedDataInView(this.viewID);
       this.highlight(selection);
@@ -126,7 +153,7 @@ export default {
   },
   watch: {
     hovered: function (newValue, oldValue) {
-      if (this.hasOwnProperty("hoverHandler")) {
+      if (this.chart && this.hasOwnProperty("hoverHandler")) {
         this.hoverHandler();
       }
     },

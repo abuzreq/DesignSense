@@ -457,12 +457,14 @@ export default {
     },
     // Without a side column the plot takes the whole panel; the axes add
     // ticks as they get longer.
+    // Never below zero: a panel is briefly unmeasured while it mounts, and
+    // a negative size reaches the plot's svg as an invalid attribute.
     plotWidth() {
-      if (this.sidePanel) return this.width - this.sideWidth;
-      return this.width;
+      if (this.sidePanel) return Math.max(0, this.width - this.sideWidth);
+      return Math.max(0, this.width);
     },
     plotHeight() {
-      return this.height - this.headerHeight;
+      return Math.max(0, this.height - this.headerHeight);
     },
     compactHeader() {
       return this.width < 640;

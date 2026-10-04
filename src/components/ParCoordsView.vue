@@ -224,7 +224,9 @@ export default {
       return this.axisOptions.filter((dim) => this.isAxisShown(dim)).length;
     },
     chartHeight() {
-      return this.height - this.headerHeight;
+      // Never below zero: a panel is briefly unmeasured while it mounts, and
+      // a negative height reaches the chart's svg as an invalid attribute.
+      return Math.max(0, this.height - this.headerHeight);
     },
     headerHint() {
       let hint =
@@ -1373,8 +1375,8 @@ export default {
 
       })("#" + this.viewID)
         .data(this.chartData)
-        .width(this.width - 8)
-        .height(this.chartHeight - 6);
+        .width(Math.max(0, this.width - 8))
+        .height(Math.max(0, this.chartHeight - 6));
       // The library reads each axis type from the first row, and hiding axes
       // renders, which fails for a type it can't scale: a blank first value.
       declareNumberAxes(chart, this.chartData, this.numericDimensions);

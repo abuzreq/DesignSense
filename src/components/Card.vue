@@ -180,8 +180,17 @@ export default {
       let top = Math.round(this.initY * this.unitH);
       this.x = left;
       this.y = top;
-      let width = Math.round((this.initX + this.initW) * this.unitW) - left;
-      let height = Math.round((this.initY + this.initH) * this.unitH) - top;
+      // At least a pixel each way: the panel is laid out before the
+      // workspace has been measured, and a zero fails vue-draggable-
+      // resizable's own check on `h` as well as sizing the chart inside it.
+      let width = Math.max(
+        1,
+        Math.round((this.initX + this.initW) * this.unitW) - left
+      );
+      let height = Math.max(
+        1,
+        Math.round((this.initY + this.initH) * this.unitH) - top
+      );
       this.width = width;
       this.height = height;
 
