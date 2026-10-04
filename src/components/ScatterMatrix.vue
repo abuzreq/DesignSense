@@ -27,9 +27,11 @@
             >
           </template>
           <span
-            >Every chosen dimension against every other. Click a plot to show
-            it large; the one on show is outlined. The diagonal shows how each
-            dimension's values are spread.</span
+            >Every pair of the chosen dimensions, once: a plot above the
+            diagonal would be the one below it with the axes swapped. Click a
+            plot to show it large; the one on show is outlined, whichever way
+            round it is drawn there. The diagonal shows how each dimension's
+            values are spread.</span
           >
         </v-tooltip>
       </template>
@@ -135,6 +137,11 @@ const SELECTED_STROKE = "rgb(33, 119, 180)";
  * scatterplot shows. It only reads the selection and the filters; brushing
  * stays in the full-size views.
  *
+ * Only the half below the diagonal is drawn. The half above holds the same
+ * pairs with the axes swapped, which is the same cloud reflected: twice the
+ * plots to read, each of them half the size, for nothing. The scatterplot's
+ * own swap button is where a pair gets turned round.
+ *
  * Points go on one canvas for the whole grid: k² cells of every option is
  * too many DOM nodes for SVG. What sits on top -- names, distributions, the
  * outline of the plot on show, filter boxes, the hovered option -- is plain
@@ -194,6 +201,8 @@ export default {
       let result = [];
       dims.forEach((yDim, row) => {
         dims.forEach((xDim, col) => {
+          // The upper half is the lower half reflected; see above.
+          if (row < col) return;
           let style = {
             left: `${col * (cell + GAP)}px`,
             top: `${row * (cell + GAP)}px`,
@@ -221,7 +230,11 @@ export default {
             x: xDim,
             y: yDim,
             style: style,
-            current: xDim === this.xColumn && yDim === this.yColumn,
+            // The pair is the pair whichever axis each dimension is on,
+            // and only one of the two cells for it is drawn.
+            current:
+              (xDim === this.xColumn && yDim === this.yColumn) ||
+              (xDim === this.yColumn && yDim === this.xColumn),
             title: `${displayName(xDim)} (across) vs ${displayName(yDim)} (up)`,
             boxes: this.boxesIn(xDim, yDim),
             hover: this.hoverMark(hovered, xDim, yDim),
@@ -520,8 +533,9 @@ export default {
       function draw() {
         ctx.clearRect(0, 0, size, size);
         for (let row = 0; row < k; row++) {
-          for (let col = 0; col < k; col++) {
-            if (row === col) continue;
+          // The diagonal is drawn as a distribution by the overlay, and the
+          // half above it would only mirror the half below.
+          for (let col = 0; col < row; col++) {
             drawCell(row, col);
           }
         }
