@@ -206,6 +206,27 @@ const GRAY = [
   "#49525e",
 ];
 
+/*
+ * Not Tableau's, and not twenty steps: the two colours Design Explorer
+ * hard-codes in its page, kept for the readers coming from it, three of whose
+ * files DesignSense ships as samples.
+ *
+ *   var color = d3.scale.linear().range(["#3182bd", "#f33"]);
+ *
+ * d3 v3 interpolates colour strings in RGB, and interpolateRgbBasis over two
+ * colours is bit-identical to that at every step, so these two control points
+ * reproduce the original exactly.
+ *
+ * It is a different animal from the ramps above, and the menu says so. Every
+ * colour along it sits between 0.155 and 0.239 in luminance: the two ends
+ * differ by 1.14 to 1 and the middle is darker than either, so it carries no
+ * light-to-dark order and nothing of it survives in grey. What it does have
+ * is no pale end -- every value stands at better than 3.6 to 1 on white,
+ * where Orange-Gold's low end manages 1.48 -- which is why its chart looks
+ * as crisp as it does.
+ */
+const DESIGN_EXPLORER = ["#3182bd", "#ff3333"];
+
 /**
  * The ordered ramps on offer, for a dimension that measures something.
  *
@@ -251,6 +272,12 @@ export const COLOR_RAMPS = [
     name: "Gray",
     note: "For printing, photocopying and tired projectors",
     colors: GRAY,
+  },
+  {
+    id: "design-explorer",
+    name: "Design Explorer",
+    note: "The colours Design Explorer uses: strong at every value, but no low-to-high order and nothing left in grey",
+    colors: DESIGN_EXPLORER,
   },
 ];
 

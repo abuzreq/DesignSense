@@ -53,6 +53,7 @@
 </template>
 
 <script>
+import * as d3 from "d3";
 import { mapGetters, mapState } from "vuex";
 import { COLOR_RAMPS, COLOR_SCHEMES } from "@/palettes.js";
 
@@ -107,13 +108,23 @@ export default {
     },
   },
   methods: {
-    /** A few colours of the palette, spread across it for a ramp. */
+    /**
+     * A few of a palette's colours, for the row beside its name.
+     *
+     * A hue set is the particular colours in it, so the first few are shown
+     * as they are; spreading the row across the set would quietly drop some
+     * of them. An ordered ramp is a curve rather than a list, so it is
+     * sampled from the curve the chart will draw -- reading its control
+     * points instead would show a two-stop ramp as two flat blocks, which is
+     * a set of two categories, not a ramp.
+     */
     preview(option) {
-      let colors = option.colors;
-      if (colors.length <= PREVIEW) return colors;
+      if (this.naming) return option.colors.slice(0, PREVIEW);
+      let ramp = d3.interpolateRgbBasis(option.colors);
       let out = [];
       for (let i = 0; i < PREVIEW; i++) {
-        out.push(colors[Math.round((i * (colors.length - 1)) / (PREVIEW - 1))]);
+        let color = d3.color(ramp(i / (PREVIEW - 1)));
+        out.push(color ? color.formatHex() : "#ffffff");
       }
       return out;
     },
