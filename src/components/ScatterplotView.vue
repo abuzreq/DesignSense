@@ -318,6 +318,17 @@ div ::v-deep svg.scatter-svg {
   z-index: 1;
 }
 
+/*
+ * d3's brush lays a rect over the whole plot and gives it a crosshair. A
+ * crosshair is a hairline that Windows draws at its own size whatever the
+ * pointer is set to, so over the plot -- most of the panel -- the pointer
+ * appears to vanish. The ordinary arrow instead: the grips of a drawn
+ * rectangle keep their resize cursors, which says enough about dragging.
+ */
+div ::v-deep svg.scatter-svg .overlay {
+  cursor: default;
+}
+
 /* Click-to-inspect: d3 sets a cursor on the brush rects, so target them. */
 div ::v-deep svg.scatter-svg.near-point .overlay,
 div ::v-deep svg.scatter-svg.near-point .selection {
