@@ -199,10 +199,7 @@
         :names="[]"
         :actions="actions"
       >
-        <!-- The arrangements themselves, one click each, ahead of the menu
-             that holds the rest. On a short bar they fold back into it. -->
-        <LayoutPresetBar v-if="barLevel !== 'tight'" id="layout-presets" />
-        <!-- The layout: editing, presets and reset in one menu. While editing,
+        <!-- The layout: arrangements, editing and reset in one menu. While editing,
              a Done button stands beside it so stopping is one click. The slot
              stays either way: a Vuetify tooltip places its activator in the bar
              itself, outside what Vue tracks, so a button appearing and
@@ -243,6 +240,15 @@
             </v-tooltip>
           </template>
           <v-list dense>
+            <!-- Picking an arrangement is the common errand, so it is in the
+                 menu itself. The click is stopped so trying two in a row
+                 doesn't shut the menu between them; the items below close it
+                 as menu items should. -->
+            <div class="ds-layout-picks" id="layout-presets" @click.stop>
+              <div class="ds-layout-picks-head">Arrangement</div>
+              <LayoutPresetBar />
+            </div>
+            <v-divider />
             <v-list-item
               v-if="can('layoutEditing')"
               @click="toggleLayoutEditing"
@@ -255,7 +261,7 @@
             </v-list-item>
             <v-list-item @click="isLayoutDialogOn = true">
               <v-list-item-icon><v-icon>mdi-view-grid-outline</v-icon></v-list-item-icon>
-              <v-list-item-title>Layout presets…</v-list-item-title>
+              <v-list-item-title>Views and layout…</v-list-item-title>
             </v-list-item>
             <v-list-item @click="resetLayout">
               <v-list-item-icon><v-icon>mdi-view-dashboard-outline</v-icon></v-list-item-icon>
@@ -490,8 +496,11 @@
             <div class="ds-welcome-layout-head">{{ layoutQuestion }}</div>
             <p class="ds-welcome-layout-help">
               The charts and the pictures share the screen. Pick where you
-              would like them; you can change it whenever you like from the
-              toolbar, or by dragging the edge between two panels.
+              would like them; you can change it whenever you like from
+              <v-icon small color="#546e7a"
+                >mdi-view-dashboard-edit-outline</v-icon
+              >
+              in the toolbar, or by dragging the edge between two panels.
             </p>
             <div class="ds-welcome-layout-choices">
               <button
@@ -587,7 +596,7 @@
     <v-dialog v-model="isLayoutDialogOn" max-width="760px">
       <v-card>
         <v-card-title>
-          Choose a layout
+          Views and layout
           <v-spacer />
           <v-btn icon aria-label="Close" @click="isLayoutDialogOn = false">
             <v-icon>mdi-close</v-icon>
@@ -595,8 +604,8 @@
         </v-card-title>
         <v-card-text>
           <p class="ds-layout-intro">
-            Pick one of these, or arrange the panels yourself by dragging their
-            headers and edges. Whichever you pick is remembered.
+            Which views share the screen, and how they are arranged. Whatever
+            you settle on is remembered for next time.
           </p>
           <div class="ds-presets">
             <button
@@ -617,6 +626,41 @@
               <span class="ds-preset-desc">{{ preset.description }}</span>
             </button>
           </div>
+
+          <div class="ds-layout-heading">Which views are shown</div>
+          <div class="ds-layout-panels">
+            <button
+              v-for="panel in panelChoices"
+              :key="panel.type"
+              type="button"
+              class="ds-panel-pick"
+              :class="{ 'ds-panel-pick--on': panel.shown }"
+              :disabled="panel.locked"
+              :aria-pressed="String(panel.shown)"
+              @click="togglePanel(panel)"
+            >
+              <v-icon small :color="panel.shown ? 'primary' : undefined">{{
+                panel.shown
+                  ? "mdi-checkbox-marked"
+                  : "mdi-checkbox-blank-outline"
+              }}</v-icon>
+              <span class="ds-panel-name">{{ panel.label }}</span>
+              <span v-if="panel.locked" class="ds-panel-why">{{
+                panel.reason
+              }}</span>
+            </button>
+          </div>
+
+          <p class="ds-layout-hint">
+            <v-icon small color="#546e7a">mdi-arrow-split-vertical</v-icon>
+            <span
+              >Drag the edge between two panels to give one of them more
+              room.<template v-if="can('layoutEditing')">
+                To move a panel somewhere else entirely, arrange it
+                yourself.</template
+              ></span
+            >
+          </p>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -1063,6 +1107,71 @@ body {
   font-size: 14px;
   color: #37474f;
 }
+/* The arrangements at the head of the layout menu. */
+.ds-layout-picks {
+  padding: 6px 10px 8px;
+}
+.ds-layout-picks-head {
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #78909c;
+}
+.ds-layout-heading {
+  margin: 22px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #263238;
+}
+.ds-layout-panels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ds-panel-pick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px 7px 9px;
+  border: 1px solid #cfd8dc;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  color: #37474f;
+  cursor: pointer;
+}
+.ds-panel-pick:hover:not(:disabled) {
+  border-color: #90caf9;
+}
+.ds-panel-pick--on {
+  border-color: #1565c0;
+}
+.ds-panel-pick:disabled {
+  cursor: default;
+  background: #fafbfc;
+}
+.ds-panel-name {
+  font-weight: 500;
+}
+.ds-panel-why {
+  font-size: 11.5px;
+  color: #78909c;
+}
+/* How to resize without any of the above. */
+.ds-layout-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f4f6f8;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #546e7a;
+}
 .ds-presets {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -1231,6 +1340,7 @@ import {
   LAYOUT_PRESETS,
   LAYOUT_ROWS,
   loadLayoutAsked,
+  panelChoices,
   saveLayoutAsked,
 } from "@/layout.js";
 import LayoutPresetBar from "@/components/LayoutPresetBar.vue";
@@ -1797,6 +1907,10 @@ export default {
         "on the shortlist"
       );
     },
+    /** Which views are on the workspace, for the dialog's checklist. */
+    panelChoices() {
+      return panelChoices(this.layouts);
+    },
     layoutQuestion() {
       return this.layoutAsked
         ? "How your workspace is arranged"
@@ -2032,6 +2146,12 @@ export default {
       this.$store.commit("setLayouts", {
         layouts: this.layouts,
         keepPreset: true,
+      });
+    },
+    togglePanel(panel) {
+      if (panel.locked) return;
+      this.$store.commit(panel.shown ? "closeLayout" : "openLayout", {
+        type: panel.type,
       });
     },
     chooseWelcomeLayout(id) {

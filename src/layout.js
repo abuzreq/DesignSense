@@ -393,6 +393,44 @@ function seamsAlong(layouts, axis) {
   return seams;
 }
 
+/*
+ * Which panels a reader can take off the workspace and put back, in the
+ * order they are offered rather than the order a layout happens to hold
+ * them. Shared, so the layout dialog and anything else asking the same
+ * question give the same answer.
+ */
+const PANEL_CHOICE_ORDER = ["ParallelCoordinatesPlot", "ScatterPlot", "Grid"];
+const PANEL_CHOICE_NAMES = {
+  ParallelCoordinatesPlot: "Parallel coordinates",
+  ScatterPlot: "Scatterplot",
+  Grid: "Gallery",
+};
+
+export function panelChoices(layouts) {
+  var shown = {};
+  (layouts || []).forEach(function (panel) {
+    shown[panel.type] = true;
+  });
+  var open = PANEL_CHOICE_ORDER.filter(function (type) {
+    return shown[type];
+  }).length;
+  return PANEL_CHOICE_ORDER.map(function (type) {
+    var on = !!shown[type];
+    return {
+      type: type,
+      label: PANEL_CHOICE_NAMES[type] || PANEL_LABELS[type] || type,
+      shown: on,
+      // The inspected option is shown inside the gallery, so closing it
+      // would leave clicking a point or a line with nowhere to go.
+      locked: on && (type === "Grid" || open <= 1),
+      reason:
+        type === "Grid"
+          ? "The option you click is shown here"
+          : "The last panel stays",
+    };
+  });
+}
+
 /** Every edge in this arrangement that can be dragged. */
 export function layoutSeams(layouts) {
   if (!Array.isArray(layouts) || layouts.length < 2) return [];
