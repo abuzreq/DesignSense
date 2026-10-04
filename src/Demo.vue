@@ -196,6 +196,9 @@
         :names="[]"
         :actions="actions"
       >
+        <!-- The arrangements themselves, one click each, ahead of the menu
+             that holds the rest. On a short bar they fold back into it. -->
+        <LayoutPresetBar v-if="barLevel !== 'tight'" id="layout-presets" />
         <!-- The layout: editing, presets and reset in one menu. While editing,
              a Done button stands beside it so stopping is one click. The slot
              stays either way: a Vuetify tooltip places its activator in the bar
@@ -480,6 +483,24 @@
               <LoadDataModal />
             </div>
           </div>
+          <div class="ds-welcome-layout">
+            <span class="ds-welcome-layout-head">{{ layoutQuestion }}</span>
+            <button
+              v-for="preset in layoutPresets"
+              :key="preset.id"
+              type="button"
+              class="ds-welcome-layout-btn"
+              :class="{
+                'ds-welcome-layout-btn--on': layoutPreset === preset.id,
+              }"
+              :title="preset.name + ': ' + preset.description"
+              :aria-label="preset.name"
+              :aria-pressed="String(layoutPreset === preset.id)"
+              @click="chooseWelcomeLayout(preset.id)"
+            >
+              <LayoutPresetFigure :preset="preset.id" :width="44" />
+            </button>
+          </div>
           <p class="ds-welcome-privacy">
             <v-icon small color="green darken-2">mdi-shield-check-outline</v-icon>
             Your data is read in this browser and never uploaded; your work is
@@ -568,15 +589,7 @@
               :class="{ 'ds-preset--on': layoutPreset === preset.id }"
               @click="chooseLayoutPreset(preset.id)"
             >
-              <span class="ds-preset-figure">
-                <span
-                  v-for="panel in presetPanels(preset)"
-                  :key="panel.type"
-                  class="ds-preset-panel"
-                  :style="panel.style"
-                  >{{ panel.label }}</span
-                >
-              </span>
+              <LayoutPresetFigure :preset="preset.id" labelled />
               <span class="ds-preset-name">
                 {{ preset.name }}
                 <v-icon v-if="layoutPreset === preset.id" x-small color="primary"
@@ -589,7 +602,12 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn text @click="arrangeLayoutMyself">Arrange it myself</v-btn>
+          <v-btn
+            v-if="can('layoutEditing')"
+            text
+            @click="arrangeLayoutMyself"
+            >Arrange it myself</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -648,6 +666,16 @@
             :unitW="unitW"
             :unitH="unitH"
             :type="item.type"
+          />
+          <!-- The edges between panels, draggable without entering editing.
+               While editing, the panels carry their own handles instead. -->
+          <LayoutSeams
+            v-if="!isEditingMode"
+            :layouts="layouts"
+            :unitW="unitW"
+            :unitH="unitH"
+            @preview="onSeamPreview"
+            @commit="onSeamCommit"
           />
         </div>
         <StoryPanel />
@@ -1038,30 +1066,6 @@ body {
   border-color: #1565c0;
   box-shadow: 0 0 0 1px #1565c0 inset;
 }
-/* A scale drawing of the preset, on the same 48x24 grid as the workspace. */
-.ds-preset-figure {
-  position: relative;
-  display: block;
-  width: 100%;
-  padding-top: 50%;
-  background: #eceff1;
-  border-radius: 4px;
-  overflow: hidden;
-}
-.ds-preset-panel {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1px;
-  font-size: 9px;
-  line-height: 1;
-  color: #37474f;
-  text-align: center;
-  background: #fff;
-  border: 1px solid #b0bec5;
-  overflow: hidden;
-}
 .ds-preset-name {
   display: block;
   margin-top: 6px;
@@ -1074,6 +1078,37 @@ body {
   font-size: 12px;
   line-height: 1.35;
   color: #546e7a;
+}
+/* One row, not a fourth choice: it has to be worth reading on the tenth
+   visit too, not only the first. */
+.ds-welcome-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 18px;
+}
+.ds-welcome-layout-head {
+  margin-right: 4px;
+  font-size: 13px;
+  color: #546e7a;
+}
+.ds-welcome-layout-btn {
+  width: 44px;
+  padding: 2px;
+  border: 1px solid #cfd8dc;
+  border-radius: 5px;
+  background: #fff;
+  cursor: pointer;
+  line-height: 0;
+}
+.ds-welcome-layout-btn:hover {
+  border-color: #90caf9;
+}
+.ds-welcome-layout-btn--on {
+  border-color: #1565c0;
+  box-shadow: 0 0 0 1px #1565c0 inset;
 }
 .ds-shortcuts-heading {
   margin: 12px 0 4px;
@@ -1155,15 +1190,16 @@ import FilterBar from "@/components/FilterBar.vue";
 import ToolbarGroup from "@/components/ToolbarGroup.vue";
 import TipButton from "@/components/TipButton.vue";
 import { accessibleName } from "@/components/a11y.js";
-import { LAYOUT_COLUMNS, LAYOUT_PRESETS, LAYOUT_ROWS } from "@/layout.js";
-
-// Short names for the panels drawn in a preset's thumbnail.
-const PANEL_LABELS = {
-  Grid: "Gallery",
-  ScatterPlot: "Scatter",
-  ParallelCoordinatesPlot: "PCP",
-  SPLOM: "SPLOM",
-};
+import {
+  LAYOUT_COLUMNS,
+  LAYOUT_PRESETS,
+  LAYOUT_ROWS,
+  loadLayoutAsked,
+  saveLayoutAsked,
+} from "@/layout.js";
+import LayoutPresetBar from "@/components/LayoutPresetBar.vue";
+import LayoutPresetFigure from "@/components/LayoutPresetFigure.vue";
+import LayoutSeams from "@/components/LayoutSeams.vue";
 
 // What Expert adds to Lite, said the same way in the mode tooltip and the tour.
 // Outlive the workspace, which is mounted again for each dataset.
@@ -1276,6 +1312,9 @@ export default {
     StoryReportDialog,
     StoryPanel,
     StoryPresenter,
+    LayoutPresetBar,
+    LayoutPresetFigure,
+    LayoutSeams,
     ParCoordsView,
     AugmentedGridView,
     SPLOMView,
@@ -1562,7 +1601,9 @@ export default {
       isLayoutDialogOn: false,
       // Set while editing is turned on from the layout dialog, so answering
       // the prompt doesn't raise it again.
-      arrangeRequested: false,
+      layoutAsked: loadLayoutAsked(),
+      // The reader's own arrangement, held while the tour borrows one.
+      layoutBeforeTour: null,
       layoutPresets: LAYOUT_PRESETS,
       expertAdds: EXPERT_ADDS,
       dismissedNotice: "",
@@ -1720,6 +1761,9 @@ export default {
         "on the shortlist"
       );
     },
+    layoutQuestion() {
+      return this.layoutAsked ? "Your layout" : "Which arrangement suits you?";
+    },
     layoutPreset() {
       return this.$store.state.layoutPreset;
     },
@@ -1867,24 +1911,6 @@ export default {
     uiMode() {
       this.updateSelectionCursor();
     },
-    // Editing usually starts because the layout isn't right, so offer the
-    // presets first; they are one click, rearranging by hand is many.
-    isEditingMode(value) {
-      if (!value) {
-        this.arrangeRequested = false;
-        return;
-      }
-      // Editing asked for from the dialog itself is the answer to the prompt,
-      // not another reason to show it.
-      if (this.arrangeRequested) {
-        this.arrangeRequested = false;
-        return;
-      }
-      // A preset is one click and covers most of what editing gets opened for,
-      // so the presets come first and editing waits until it is chosen.
-      this.$store.commit("toggleEditingMode", { value: false });
-      this.isLayoutDialogOn = true;
-    },
   },
   methods: {
     accessibleName: accessibleName,
@@ -1902,6 +1928,14 @@ export default {
     startTour(options) {
       // The tour starts in Lite, then introduces Expert.
       this.$store.dispatch("setUiMode", "lite");
+      // Several steps point at a panel, and vue-tour ends the tour on a
+      // step whose target is not on screen. So the tour borrows an
+      // arrangement holding every panel, and endTour hands back theirs.
+      this.layoutBeforeTour = {
+        layouts: this.layouts.map((panel) => Object.assign({}, panel)),
+        preset: this.layoutPreset,
+      };
+      this.$store.commit("applyLayoutPreset", { id: "balanced" });
       if (options && options.reload === false) {
         this.$store.dispatch("clearFilters");
         this.$tours["onboardingTour"].start();
@@ -1916,19 +1950,6 @@ export default {
           tour.pending = false;
           /* loadState.error carries the message */
         });
-    },
-    /** The preset's panels as percentages, for its thumbnail. */
-    presetPanels(preset) {
-      return preset.build(this.workspaceWidth).map((panel) => ({
-        type: panel.type,
-        label: PANEL_LABELS[panel.type] || panel.type,
-        style: {
-          left: (panel.x / LAYOUT_COLUMNS) * 100 + "%",
-          top: (panel.y / LAYOUT_ROWS) * 100 + "%",
-          width: (panel.w / LAYOUT_COLUMNS) * 100 + "%",
-          height: (panel.h / LAYOUT_ROWS) * 100 + "%",
-        },
-      }));
     },
     chooseLayoutPreset(id) {
       this.$store.commit("applyLayoutPreset", { id: id });
@@ -1957,8 +1978,29 @@ export default {
     },
     arrangeLayoutMyself() {
       this.isLayoutDialogOn = false;
-      this.arrangeRequested = true;
-      this.$store.commit("toggleEditingMode", { value: true });
+      // The action, not the mutation: only Expert may edit the layout.
+      this.$store.dispatch("toggleEditingMode", { value: true });
+    },
+    /** Mid-drag: show it, but don't save it or forget the preset yet. */
+    onSeamPreview(layouts) {
+      this.$store.commit("setLayouts", {
+        layouts: layouts,
+        persist: false,
+        keepPreset: true,
+      });
+    },
+    /** A seam changes the panels' proportions, so the preset still applies. */
+    onSeamCommit() {
+      this.$store.commit("setLayouts", {
+        layouts: this.layouts,
+        keepPreset: true,
+      });
+    },
+    chooseWelcomeLayout(id) {
+      this.$store.commit("applyLayoutPreset", { id: id });
+      if (this.layoutAsked) return;
+      this.layoutAsked = true;
+      saveLayoutAsked();
     },
     resetLayout() {
       this.$store.commit("toggleEditingMode", { value: false });
@@ -2042,6 +2084,16 @@ export default {
     /** Leaves nothing the tour opened behind when it is finished or skipped. */
     endTour() {
       document.body.style.pointerEvents = "all";
+      if (this.layoutBeforeTour) {
+        this.$store.commit("setLayouts", {
+          layouts: this.layoutBeforeTour.layouts,
+          keepPreset: true,
+        });
+        this.$store.commit("setLayoutPreset", {
+          id: this.layoutBeforeTour.preset,
+        });
+        this.layoutBeforeTour = null;
+      }
       this.$store.dispatch("closeCompare");
       this.$store.dispatch("closeSensitivity");
       this.$store.commit("setSetsDrawer", { open: false });

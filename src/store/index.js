@@ -9,11 +9,14 @@ import * as d3Chromatic from "d3-scale-chromatic";
 
 import { encodeUrl } from "@/data/shareLink.js";
 import {
+  DEFAULT_PRESET_ID,
   saveLayouts,
   defaultLayouts,
   loadPresetId,
   presetLayouts,
   savePresetId,
+  withPanel,
+  withoutPanel,
 } from "@/layout.js";
 import { UI_MODES, canUse, normalizeMode } from "@/uiModes.js";
 import {
@@ -489,6 +492,29 @@ function builder(
         saveLayouts(state.layouts);
         forgetPreset(state);
       },
+      /**
+       * Replaces the whole arrangement. A seam drag commits this on every
+       * frame with `persist: false`, then once more when the pointer is let
+       * go; `updateLayout` could not be used for that, since it writes to
+       * localStorage and forgets the preset on every call. `keepPreset` is
+       * for a drag: it changes the panels' proportions, not which panel is
+       * where, so the preset stays lit and clicking it again snaps back.
+       */
+      setLayouts(state, payload) {
+        state.layouts = payload.layouts;
+        if (payload.persist === false) return;
+        saveLayouts(state.layouts);
+        if (!payload.keepPreset) forgetPreset(state);
+      },
+      /**
+       * Says which preset the arrangement on screen came from, without
+       * rearranging anything. Restoring a remembered arrangement needs
+       * both halves put back, and `setLayouts` only carries the panels.
+       */
+      setLayoutPreset(state, payload) {
+        state.layoutPreset = payload.id || null;
+        savePresetId(state.layoutPreset);
+      },
       /** Arranges the panels as one of the presets in layout.js. */
       applyLayoutPreset(state, payload) {
         let layouts = presetLayouts(payload.id);
@@ -498,12 +524,11 @@ function builder(
         state.layoutPreset = payload.id;
         savePresetId(payload.id);
       },
-      /** Adds a panel that is not open, at its default place (or a free corner). */
+      /** Adds a panel that is not open, taking room from its largest neighbour. */
       openLayout(state, payload) {
-        if (state.layouts.some((l) => l.type === payload.type)) return;
-        let preset = defaultLayouts().find((l) => l.type === payload.type);
-        let entry = preset || { type: payload.type, x: 0, y: 0, w: 16, h: 12 };
-        state.layouts.push(Object.assign({}, entry));
+        let next = withPanel(state.layouts, payload.type);
+        if (next === state.layouts) return;
+        state.layouts = next;
         saveLayouts(state.layouts);
         forgetPreset(state);
       },
@@ -511,13 +536,14 @@ function builder(
       resetLayouts(state) {
         state.layouts = defaultLayouts();
         saveLayouts(state.layouts);
-        state.layoutPreset = "balanced";
-        savePresetId("balanced");
+        state.layoutPreset = DEFAULT_PRESET_ID;
+        savePresetId(DEFAULT_PRESET_ID);
       },
+      /** Takes a panel off, giving its room to whoever shares an edge with it. */
       closeLayout(state, payload) {
-        let i = state.layouts.findIndex((l) => l.type === payload.type);
-        if (i < 0) return;
-        state.layouts.splice(i, 1);
+        let next = withoutPanel(state.layouts, payload.type);
+        if (next === state.layouts) return;
+        state.layouts = next;
         saveLayouts(state.layouts);
         forgetPreset(state);
       },
