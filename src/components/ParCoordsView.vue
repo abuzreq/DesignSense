@@ -139,6 +139,22 @@ const LINE_ALPHA = [
 ];
 // Room kept between neighbouring axis titles.
 const TITLE_PADDING = 8;
+/*
+ * Many axes leave each title a narrow slot, and a dozen names cut to four
+ * letters name nothing. So when they will not fit side by side the titles
+ * are spread over rows, each lifted clear of the one before: on r rows a
+ * title has the room of r slots, since the titles it can run into are the
+ * ones r axes away.
+ *
+ * Past two rows a title is wide enough to reach over a neighbouring axis, so
+ * a lifted one is joined to its own axis by a hairline, drawn behind
+ * everything else in the group.
+ */
+const MAX_TITLE_ROWS = 3;
+// A row's worth of 11px titles, which is also what the top margin grows by.
+const TITLE_ROW_HEIGHT = 13;
+// The library's own top margin, which fits one row (see .label in the style).
+const TITLE_MARGIN_TOP = 24;
 
 export default {
   mixins: [TemplateView],
@@ -155,6 +171,9 @@ export default {
       isSyncingBrush: false,
       // Where the current press began, to tell clicks on lines from drags.
       press: null,
+      // How many rows the axis titles are laid out on; fitAxisTitles works
+      // it out from the room they need, and the chart's top margin follows.
+      titleRows: 1,
       // Whether an option is inspected. The header reads this rather than
       // the inspected option, so it doesn't re-render as inspection moves.
       isInspecting: false,
@@ -235,6 +254,15 @@ export default {
     visibleAxisCount() {
       return this.axisOptions.filter((dim) => this.isAxisShown(dim)).length;
     },
+    /** Room above the axes for the titles: one row, or two. */
+    chartMargin() {
+      return {
+        top: TITLE_MARGIN_TOP + (this.titleRows - 1) * TITLE_ROW_HEIGHT,
+        right: 20,
+        bottom: 12,
+        left: 20,
+      };
+    },
     chartHeight() {
       // Never below zero: a panel is briefly unmeasured while it mounts, and
       // a negative height reaches the chart's svg as an invalid attribute.
@@ -285,6 +313,12 @@ export default {
   watch: {
     // The Rating axis appears with the first rating.
     hasRatings: function() {
+      this.scheduleRefresh();
+    },
+    // The margin is read when the chart is built, so a second row of titles
+    // needs a new one. The row count comes from the axis positions, which a
+    // taller margin does not move, so this settles after one rebuild.
+    titleRows: function() {
       this.scheduleRefresh();
     },
     // A goal changed: a title's mark, and which way its axis runs.
@@ -733,6 +767,10 @@ export default {
      * still too long, with the full name in a <title> for hovering. The
      * library only writes titles when it creates the axes, so this reruns
      * after renders, which also cover dragging an axis to reorder.
+     *
+     * Where a row of titles cannot hold them all whole, they go on two, every
+     * other title lifted by a row; `titleRows` then asks for the margin that
+     * second row needs, which is read when the chart is next built.
      */
     fitAxisTitles(chart) {
       if (!chart || !chart.svg) return;
@@ -763,28 +801,61 @@ export default {
         });
         if (!fresh) return;
       }
-      // Hidden panels measure every text as 0 wide; fit again once shown.
-      let measured = true;
       let xs = keys.map((dim) => positions[dim]).sort((a, b) => a - b);
       let leftEdge = -margin.left + 2;
       let rightEdge = innerWidth + margin.right - 2;
+      /*
+       * How much room the title at the `at`th axis has when the titles are
+       * spread over `rows` rows: halfway to the axes it shares its row with,
+       * which are `rows` apart, and the chart's edge beyond the outermost.
+       */
+      let roomAt = (at, rows) => {
+        let left =
+          at - rows >= 0
+            ? Math.max(leftEdge, (xs[at - rows] + xs[at]) / 2 + TITLE_PADDING / 2)
+            : leftEdge;
+        let right =
+          at + rows < xs.length
+            ? Math.min(rightEdge, (xs[at] + xs[at + rows]) / 2 - TITLE_PADDING / 2)
+            : rightEdge;
+        return { left: left, right: right, room: Math.max(0, right - left) };
+      };
+
+      // First the whole titles, to see what room they ask for. Hidden panels
+      // measure every text as 0 wide; fit again once shown.
+      let measured = true;
+      let entries = [];
       labels.each(function(dim) {
         let label = d3.select(this);
         let full = titleOf(dim);
-        let x = positions[dim];
-        let at = xs.indexOf(x);
-        let left =
-          at > 0 ? Math.max(leftEdge, (xs[at - 1] + x) / 2 + TITLE_PADDING / 2) : leftEdge;
-        let right =
-          at < xs.length - 1
-            ? Math.min(rightEdge, (x + xs[at + 1]) / 2 - TITLE_PADDING / 2)
-            : rightEdge;
-        let room = Math.max(0, right - left);
         // Setting the text also drops an earlier <title>.
         label.text(full).attr("data-full-title", full);
         let node = label.node();
         let width = node.getComputedTextLength();
         if (width === 0 && full.length > 0) measured = false;
+        entries.push({
+          dim: dim,
+          label: label,
+          node: node,
+          full: full,
+          width: width,
+          x: positions[dim],
+          at: xs.indexOf(positions[dim]),
+        });
+      });
+
+      let rows = 1;
+      while (
+        rows < MAX_TITLE_ROWS &&
+        entries.some((entry) => entry.width > roomAt(entry.at, rows).room)
+      ) {
+        rows++;
+      }
+
+      entries.forEach((entry) => {
+        let { label, node, full, x, at } = entry;
+        let { left, right, room } = roomAt(at, rows);
+        let width = entry.width;
         let hover = [];
         if (width > room) {
           // Keep the custom (✎), weighted (Σ) and goal (↑ ↓) marks; cut the
@@ -806,15 +877,34 @@ export default {
           width = node.getComputedTextLength();
           hover.push(full);
         }
-        if (hints[dim]) hover.push(hints[dim]);
+        if (hints[entry.dim]) hover.push(hints[entry.dim]);
         if (hover.length > 0) label.append("title").text(hover.join(": "));
         // Centred on the axis unless that would cross the room's edges.
         let center = x;
         if (center - width / 2 < left) center = left + width / 2;
         if (center + width / 2 > right) center = right - width / 2;
-        label.attr("x", center - x);
+        // Rows run from the one nearest the axes upward, so the leftmost
+        // title keeps the place a single row would have given it.
+        let row = at % rows;
+        label.attr("x", center - x).attr("y", -row * TITLE_ROW_HEIGHT);
+        // Down the axis's own x, whatever the title was nudged to.
+        let group = d3.select(node.parentNode);
+        let leader = group
+          .selectAll("line.ds-title-leader")
+          .data(row > 0 ? [row] : []);
+        leader.exit().remove();
+        leader
+          .enter()
+          .insert("line", ":first-child")
+          .attr("class", "ds-title-leader")
+          .merge(leader)
+          .attr("x1", 0)
+          .attr("x2", 0)
+          .attr("y1", (d) => -d * TITLE_ROW_HEIGHT - 6)
+          .attr("y2", -2);
       });
       this.fittedTitlesKey = measured ? key : null;
+      if (measured) this.titleRows = rows;
     },
     /*
      * Lite's axis brushes: several per axis, OR-ed, owned here. The library's
@@ -1385,6 +1475,7 @@ export default {
         highlightedLineWidth: 1.8,
         alpha: ink.alpha,
         lineWidth: ink.width,
+        margin: this.chartMargin,
         // Options missing a value cross below the axes, under a separator line.
         nullValueSeparator: "bottom",
        // markedShadowColor: "#ff0000",
@@ -1799,6 +1890,12 @@ function sameAxisItems(drawn, wanted, span) {
 ::v-deep .parcoords text.label {
   font-size: 11px;
   cursor: pointer;
+}
+/* Joins a lifted title to the axis below it. */
+::v-deep .parcoords line.ds-title-leader {
+  stroke: #cfd8dc;
+  stroke-width: 1px;
+  pointer-events: none;
 }
 
 </style>
