@@ -106,12 +106,18 @@ const DEFAULT_LINE_COLOR = "#4e79a7";
 
 /**
  * What to colour by before anyone says: the first result the file declares.
- * Arbitrary among the results, but a flat chart tells the reader nothing,
- * and a file with no "out:" column keeps its single colour.
+ * Arbitrary among the results, but a chart in one flat colour tells the
+ * reader nothing, and the picker beside it says what the colour means and
+ * changes it in a click.
+ *
+ * A file that declares no results at all -- no "out:" column, and its
+ * columns not yet given roles -- falls back to the first number there is,
+ * for the same reason.
  */
-function defaultColorColumn(allDimensions) {
+function defaultColorColumn(allDimensions, numericDimensions) {
   let output = (allDimensions || []).find((dim) => columnKind(dim) === OUTPUT);
-  return output || "";
+  if (output) return output;
+  return (numericDimensions || [])[0] || "";
 }
 
 const VIEW_TYPE_LABELS = {
@@ -228,7 +234,10 @@ function builder(
       isInspectionPinned: true,
 
       colorRange: d3Chromatic.schemeTableau10,
-      colorColumn: defaultColorColumn(Object.keys(dataTypesMap)),
+      colorColumn: defaultColorColumn(
+        Object.keys(dataTypesMap),
+        getNumericDimensions(dataTypesMap)
+      ),
 
       uiMode: readStoredUiMode(),
       // Lite mode's filters (see store/filters.js) and their undo history.
@@ -949,7 +958,10 @@ function builder(
           dimensions.names
         );
         if (!state.allDimensions.includes(state.colorColumn)) {
-          state.colorColumn = defaultColorColumn(state.allDimensions);
+          state.colorColumn = defaultColorColumn(
+            state.allDimensions,
+            state.numericDimensions
+          );
         }
       },
     },
