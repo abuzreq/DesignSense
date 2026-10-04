@@ -74,12 +74,15 @@
         />
       </div>
 
-      <!-- Ask or command, in the same row: the list of suggestions floats
-           below, so the bar stays one row tall. -->
+      <!-- Ask or command. In Lite it is a single button whose field opens
+           over the toolbar, which keeps the row short enough for the
+           arrangement controls; in Expert the field sits in the row, and on
+           a narrow window both collapse. The suggestions float below either
+           way, so the bar stays one row tall. -->
       <AssistantBar
         ref="assistant"
         id="assistant-bar"
-        :compact="barLevel === 'tight'"
+        :compact="barLevel === 'tight' || isLite"
       />
       <v-divider vertical class="ds-divider" />
 
