@@ -1,5 +1,8 @@
 <template>
-  <div class="scatter-view" :style="{ height: `${height}px` }">
+  <div
+    class="scatter-view"
+    :style="{ height: `${height}px`, '--ds-plot-cursor': plotCursor }"
+  >
     <PanelHeader
       icon="mdi-chart-scatter-plot"
       title="Scatterplot"
@@ -340,14 +343,14 @@ div ::v-deep svg.scatter-svg {
 }
 
 /*
- * d3's brush lays a rect over the whole plot and gives it a crosshair. A
- * crosshair is a hairline that Windows draws at its own size whatever the
- * pointer is set to, so over the plot -- most of the panel -- the pointer
- * appears to vanish. The ordinary arrow instead: the grips of a drawn
- * rectangle keep their resize cursors, which says enough about dragging.
+ * A crosshair over the plot, since that is where a rectangle is dragged out,
+ * but the one drawn in selectionCursors.js rather than the window system's
+ * hairline, which over a ruled white plot the reader cannot find. The grips
+ * of a drawn rectangle keep d3's own resize cursors.
  */
-div ::v-deep svg.scatter-svg .overlay {
-  cursor: default;
+div ::v-deep svg.scatter-svg .overlay,
+div ::v-deep svg.scatter-svg .lasso-area {
+  cursor: var(--ds-plot-cursor, crosshair);
 }
 
 /* Click-to-inspect: d3 sets a cursor on the brush rects, so target them. */
@@ -401,6 +404,7 @@ import { operations } from "@/components/operations.js";
 import TemplateView from "@/components/TemplateView.vue";
 import PanelHeader from "@/components/PanelHeader.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
+import { PLOT_CROSSHAIR } from "@/components/selectionCursors.js";
 
 // Below this a square plot is too small to read, so a narrow panel keeps
 // the height it has rather than matching its width.
@@ -459,6 +463,9 @@ export default {
       // `{ count, of, caveats }` for the front last drawn, for its tooltip.
       frontInfo: null,
       headerHeight: PANEL_HEADER_HEIGHT,
+      // Set on the panel as a custom property, so the rects d3 makes inside
+      // the svg can be given it from the stylesheet.
+      plotCursor: PLOT_CROSSHAIR,
     };
   },
   computed: {
