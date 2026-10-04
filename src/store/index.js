@@ -57,7 +57,14 @@ import { addIds, removeIds, uniqueSetName } from "./cart.js";
 import { asRows } from "./rows.js";
 import { isDerivedAssetKey } from "@/data/assets.js";
 import { INPUT, OUTPUT, columnKind } from "@/columns.js";
-import { TABLEAU_10, TABLEAU_20, TABLEAU_ORANGE_GOLD } from "@/palettes.js";
+import {
+  loadColorRamp,
+  loadColorScheme,
+  rampFor,
+  saveColorRamp,
+  saveColorScheme,
+  schemeColorsFor,
+} from "@/palettes.js";
 // The same count that decides whether a dimension is drawn as a set of bars
 // or as a histogram; see colorLevels for why the colours follow it.
 import { MAX_LEVELS } from "@/analysis/summary.js";
@@ -100,8 +107,14 @@ function persistUiMode(mode) {
  * colour-blind and rises steadily in lightness, so a dense bundle of
  * half-transparent lines still shows its value rather than only its density.
  */
-// A spline through Tableau's ordered ramp, the way d3 builds its own.
-const SEQUENTIAL = d3.interpolateRgbBasis(TABLEAU_ORANGE_GOLD);
+// A spline through the chosen ordered ramp, the way d3 builds its own.
+// Kept by id, since the ramps are twenty colours each and the scale is
+// rebuilt whenever the collection or the colour column changes.
+const RAMPS = {};
+function sequential(id) {
+  if (!RAMPS[id]) RAMPS[id] = d3.interpolateRgbBasis(rampFor(id).colors);
+  return RAMPS[id];
+}
 // A value a scale cannot place: the same grey the small plots use.
 const NO_COLOR = "#cfd8dc";
 // Every option the same, for a collection nothing is coloured by. The first
@@ -237,7 +250,11 @@ function builder(
       isInspectionMode: false,
       isInspectionPinned: true,
 
-      colorRange: TABLEAU_10,
+      // Which Tableau palette of each kind the reader has settled on; the
+      // kind to use is not theirs to pick, and follows the dimension (see
+      // colorLevels). Kept in this browser, not with the dataset.
+      colorRamp: loadColorRamp(),
+      colorScheme: loadColorScheme(),
       colorColumn: defaultColorColumn(
         Object.keys(dataTypesMap),
         getNumericDimensions(dataTypesMap)
@@ -357,16 +374,17 @@ function builder(
       colorScale: (state, getters) => {
         let levels = getters.colorLevels;
         if (levels) {
-          // The twenty once ten will not go round; past twenty they repeat,
-          // which is as much as any set of hues can do.
-          let range =
-            levels.length > state.colorRange.length ? TABLEAU_20 : state.colorRange;
           // An explicit domain, so a value keeps its colour as the
           // collection is filtered rather than taking whichever is next.
-          return d3.scaleOrdinal().domain(levels).range(range);
+          return d3
+            .scaleOrdinal()
+            .domain(levels)
+            .range(schemeColorsFor(state.colorScheme, levels.length));
         }
         let domain = getters.colorDomain;
-        if (domain) return d3.scaleSequential(SEQUENTIAL).domain(domain);
+        if (domain) {
+          return d3.scaleSequential(sequential(state.colorRamp)).domain(domain);
+        }
         return () => DEFAULT_LINE_COLOR;
       },
       /**
@@ -570,8 +588,15 @@ function builder(
         state.colorColumn = newColorColumn;
       },
 
-      changeColorRange(state, newColorRange) {
-        state.colorRange = newColorRange;
+      /** The ordered ramp, for dimensions that measure something. */
+      changeColorRamp(state, id) {
+        state.colorRamp = rampFor(id).id;
+        saveColorRamp(state.colorRamp);
+      },
+      /** The hue set, for dimensions whose values name things. */
+      changeColorScheme(state, id) {
+        state.colorScheme = id;
+        saveColorScheme(id);
       },
       setUiMode(state, payload) {
         let mode = normalizeMode(payload && payload.value);

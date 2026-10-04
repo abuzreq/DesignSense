@@ -17,6 +17,7 @@
           @change="setColorColumn"
         />
         <ColorKey />
+        <PaletteMenu />
         <span class="ph-divider" />
         <span class="ph-meta">{{ headerHint }}</span>
       </template>
@@ -88,6 +89,7 @@ import { mapGetters, mapState } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import PanelHeader from "@/components/PanelHeader.vue";
 import ColorKey from "@/components/ColorKey.vue";
+import PaletteMenu from "@/components/PaletteMenu.vue";
 import DimensionName from "@/components/DimensionName.vue";
 import DimensionPicker from "@/components/DimensionPicker.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
@@ -200,7 +202,13 @@ const TITLE_MARGIN_TOP = 24;
 
 export default {
   mixins: [TemplateView],
-  components: { PanelHeader, ColorKey, DimensionName, DimensionPicker },
+  components: {
+    PanelHeader,
+    ColorKey,
+    PaletteMenu,
+    DimensionName,
+    DimensionPicker,
+  },
   name: "ParCoordsView",
   data() {
     return {
