@@ -73,16 +73,16 @@
         </template>
       </PanelHeader>
 
-      <!-- The inspector takes at most INSPECTOR_SHARE of the panel's height;
-           the thumbnail list below gets the rest. -->
+      <!-- The inspected option and the thumbnails share the panel, and
+           which way they are laid out follows its shape: stacked while the
+           panel is tall or narrow, side by side once it is wide, with the
+           inspector on the side facing the rest of the workspace. -->
+      <div class="gallery-body" :class="'gallery-body--' + inspectorSide">
       <v-card
         v-if="inspectedItem || isInspectionViewPinned"
         cols="12"
         class="inspector_card"
-        :style="{
-          'max-height': inspectorHeight + 'px',
-          '--inspector-image-height': inspectorImageHeight + 'px',
-        }"
+        :style="inspectorStyle"
       >
         <div class="inspected_item_top_bar">
           <div style="display: flex; align-items: center;">
@@ -247,6 +247,7 @@
       <!-- A plain list rather than Vuetify's v-data-iterator: that kept its own
            copy of every option in reactive data, which made Vue track every
            value of every row, and re-sorted all of them on each selection. -->
+      <div class="gallery-list">
       <div v-if="galleryItems.length === 0" class="gallery-empty">
         {{ emptyMessage }}
       </div>
@@ -266,7 +267,7 @@
               column
               :style="{
                 'max-height': `calc(${height}px - ${
-                  hasInspectedItem ? inspectorHeight : 0
+                  hasInspectedItem && !isInspectorBeside ? inspectorHeight : 0
                 }px -  100px)`,
               }"
             >
@@ -349,11 +350,44 @@
             </v-layout>
           </drag-select-container>
       </template>
+      </div>
+      </div>
     </v-container>
   </v-container>
 </template>
 
 <style scoped>
+/* Stacked or side by side, from `inspectorSide`. The inspector comes first
+   in the markup, so "right" is a reversed row. */
+.gallery-body {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+}
+.gallery-body--top {
+  flex-direction: column;
+}
+.gallery-body--left {
+  flex-direction: row;
+}
+.gallery-body--right {
+  flex-direction: row-reverse;
+}
+.gallery-body--left .inspector_card,
+.gallery-body--right .inspector_card {
+  flex: 0 0 auto;
+}
+.gallery-list {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+.gallery-body--left .gallery-list {
+  margin-left: 10px;
+}
+.gallery-body--right .gallery-list {
+  margin-right: 10px;
+}
 .gallery-empty {
   padding: 32px 16px;
   text-align: center;
@@ -591,8 +625,20 @@ import { dimensionItems, optionName } from "@/columns.js";
 
 import PanelHeader from "@/components/PanelHeader.vue";
 
-// The largest share of the gallery panel's height the inspector may take.
+// The largest share of the gallery panel the inspector may take, of its
+// height when stacked and of its width when beside the thumbnails.
 const INSPECTOR_SHARE = 0.45;
+// Below this the inspector goes back on top: a column this narrow is worse
+// for a picture than a band across a short panel.
+const INSPECTOR_MIN_WIDTH = 300;
+// What the panel's header and padding take, the same figure the thumbnail
+// list already subtracts.
+const GALLERY_CHROME = 100;
+// A panel at least this wide, and this much wider than it is tall, has the
+// room to put the inspected option beside the thumbnails instead of over
+// them.
+const SIDE_BY_SIDE_WIDTH = 720;
+const SIDE_BY_SIDE_RATIO = 1.3;
 // The inspector's top bar (buttons, stars) and its details strip, in px.
 const INSPECTOR_BAR_HEIGHT = 42;
 // The note's strip under the bar, two lines at most, when there is a note.
@@ -831,11 +877,48 @@ export default {
         ? "Show only the selected options"
         : "Show all options while highlighting the selected options";
     },
-    /** The inspector's height in px: a share of the panel's height. */
+    /**
+     * Where the inspected option sits: "top" over the thumbnails, or "left"
+     * or "right" beside them. A gallery against the workspace's left edge
+     * opens to its right, so the inspector faces the charts rather than the
+     * edge of the screen.
+     */
+    inspectorSide() {
+      let w = Number(this.width);
+      let h = Number(this.height);
+      if (!(w > 0) || !(h > 0)) return "top";
+      if (w < SIDE_BY_SIDE_WIDTH || w / h < SIDE_BY_SIDE_RATIO) return "top";
+      if (w - this.inspectorWidth < INSPECTOR_MIN_WIDTH) return "top";
+      return Number(this.x) <= 2 ? "right" : "left";
+    },
+    isInspectorBeside() {
+      return this.inspectorSide !== "top";
+    },
+    /** The inspector's width in px when it is beside the thumbnails. */
+    inspectorWidth() {
+      let w = Number(this.width);
+      if (!(w > 0)) return INSPECTOR_MIN_WIDTH;
+      return Math.max(INSPECTOR_MIN_WIDTH, Math.round(w * INSPECTOR_SHARE));
+    },
+    /** The inspector's height in px: beside the thumbnails it takes all of it. */
     inspectorHeight() {
       let panel = Number(this.height);
       if (!(panel > 0)) return 400;
+      if (this.isInspectorBeside) {
+        return Math.max(160, panel - GALLERY_CHROME);
+      }
       return Math.round(panel * INSPECTOR_SHARE);
+    },
+    inspectorStyle() {
+      let style = {
+        "max-height": this.inspectorHeight + "px",
+        "--inspector-image-height": this.inspectorImageHeight + "px",
+      };
+      if (this.isInspectorBeside) {
+        style.width = this.inspectorWidth + "px";
+        style.height = this.inspectorHeight + "px";
+      }
+      return style;
     },
     /** The inspected image's height: the inspector less its top bar and note. */
     inspectorImageHeight() {
