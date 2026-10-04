@@ -139,6 +139,48 @@ const LINE_ALPHA = [
 ];
 // Room kept between neighbouring axis titles.
 const TITLE_PADDING = 8;
+
+/*
+ * The inspected option's line is drawn four pixels wide on a canvas of its
+ * own, and while it is inspected the rest drop to half their opacity. That
+ * lifts it off the other lines but not off the page: an ordered ramp is pale
+ * at one end by design, and four pixels of pale is still pale. So the line
+ * keeps its hue and is darkened until it reaches the contrast WCAG asks of a
+ * graphical object against what is behind it, which here is white.
+ *
+ * Nothing is lost by darkening it. Where the line crosses the axis of the
+ * dimension being coloured by says what its value is, more exactly than its
+ * colour could, and the key beside the picker says the rest.
+ */
+const MARK_CONTRAST = 3;
+// How far each step darkens, and how many are allowed: enough to bring white
+// itself down, and the loop stops as soon as the contrast is reached.
+const DARKEN_STEP = 0.1;
+const DARKEN_LIMIT = 40;
+
+function linearChannel(value) {
+  let c = Math.max(0, Math.min(255, value)) / 255;
+  return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+/** The WCAG contrast ratio between a colour and the white behind it. */
+function contrastOnWhite(rgb) {
+  let luminance =
+    0.2126 * linearChannel(rgb.r) +
+    0.7152 * linearChannel(rgb.g) +
+    0.0722 * linearChannel(rgb.b);
+  return 1.05 / (luminance + 0.05);
+}
+
+function standOut(value) {
+  let color = d3.color(value);
+  if (!color) return value;
+  let rgb = color.rgb();
+  for (let i = 0; i < DARKEN_LIMIT && contrastOnWhite(rgb) < MARK_CONTRAST; i++) {
+    rgb = rgb.darker(DARKEN_STEP);
+  }
+  return rgb.formatHex();
+}
 /*
  * Many axes leave each title a narrow slot, and a dozen names cut to four
  * letters name nothing. So when they will not fit side by side the titles
@@ -1147,6 +1189,18 @@ export default {
         this.writeAxisBrushes(dim, wanted);
       });
     },
+    /**
+     * What a line is drawn in: its own colour, except the inspected one,
+     * which is darkened until it can be found (see standOut). The library
+     * asks for this afresh each time it marks a line, so inspecting another
+     * option is enough to move the darkening to it.
+     */
+    lineColor(datum) {
+      let color = this.colorize(datum);
+      let hovered = this.$store.getters.getHovered;
+      if (!hovered || !datum || hovered._id !== datum._id) return color;
+      return standOut(color);
+    },
     hoverHandler: function() {
       this.cleanTooltip();
       this.chart.unmark();
@@ -1561,7 +1615,7 @@ export default {
           this.graphCentriodPoints = null;
         });
 
-      chart.color((d) => this.colorize(d)).render();
+      chart.color((d) => this.lineColor(d)).render();
       // Flipping an axis or brushing re-renders; knobs follow.
       chart.on("render.knobs", () => this.scheduleKnobRedraw());
       // Reordering moves axes and re-renders; titles are refitted to the new
