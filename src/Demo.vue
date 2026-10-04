@@ -487,22 +487,37 @@
             </div>
           </div>
           <div class="ds-welcome-layout">
-            <span class="ds-welcome-layout-head">{{ layoutQuestion }}</span>
-            <button
-              v-for="preset in layoutPresets"
-              :key="preset.id"
-              type="button"
-              class="ds-welcome-layout-btn"
-              :class="{
-                'ds-welcome-layout-btn--on': layoutPreset === preset.id,
-              }"
-              :title="preset.name + ': ' + preset.description"
-              :aria-label="preset.name"
-              :aria-pressed="String(layoutPreset === preset.id)"
-              @click="chooseWelcomeLayout(preset.id)"
-            >
-              <LayoutPresetFigure :preset="preset.id" :width="44" />
-            </button>
+            <div class="ds-welcome-layout-head">{{ layoutQuestion }}</div>
+            <p class="ds-welcome-layout-help">
+              The charts and the pictures share the screen. Pick where you
+              would like them; you can change it whenever you like from the
+              toolbar, or by dragging the edge between two panels.
+            </p>
+            <div class="ds-welcome-layout-choices">
+              <button
+                v-for="preset in layoutPresets"
+                :key="preset.id"
+                type="button"
+                class="ds-welcome-layout-btn"
+                :class="{
+                  'ds-welcome-layout-btn--on': layoutPreset === preset.id,
+                }"
+                :title="preset.description"
+                :aria-pressed="String(layoutPreset === preset.id)"
+                @click="chooseWelcomeLayout(preset.id)"
+              >
+                <LayoutPresetFigure :preset="preset.id" />
+                <span class="ds-welcome-layout-name">
+                  {{ preset.name }}
+                  <v-icon
+                    v-if="layoutPreset === preset.id"
+                    x-small
+                    color="primary"
+                    >mdi-check</v-icon
+                  >
+                </span>
+              </button>
+            </div>
           </div>
           <p class="ds-welcome-privacy">
             <v-icon small color="green darken-2">mdi-shield-check-outline</v-icon>
@@ -1082,29 +1097,39 @@ body {
   line-height: 1.35;
   color: #546e7a;
 }
-/* One row, not a fourth choice: it has to be worth reading on the tenth
-   visit too, not only the first. */
+/* A section of its own, not a fourth entry point: this is a choice about
+   the workspace, and it has to be worth reading on the tenth visit too. */
 .ds-welcome-layout {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 18px;
+  margin-top: 22px;
+  padding: 14px 16px 16px;
+  border: 1px solid #e0e6eb;
+  border-radius: 10px;
+  background: #fafbfc;
 }
 .ds-welcome-layout-head {
-  margin-right: 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #263238;
+}
+.ds-welcome-layout-help {
+  margin: 4px 0 12px;
   font-size: 13px;
+  line-height: 1.45;
   color: #546e7a;
 }
+.ds-welcome-layout-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
 .ds-welcome-layout-btn {
-  width: 44px;
-  padding: 2px;
+  display: block;
+  padding: 7px;
   border: 1px solid #cfd8dc;
-  border-radius: 5px;
+  border-radius: 8px;
   background: #fff;
   cursor: pointer;
-  line-height: 0;
+  text-align: center;
 }
 .ds-welcome-layout-btn:hover {
   border-color: #90caf9;
@@ -1112,6 +1137,14 @@ body {
 .ds-welcome-layout-btn--on {
   border-color: #1565c0;
   box-shadow: 0 0 0 1px #1565c0 inset;
+}
+.ds-welcome-layout-name {
+  display: block;
+  margin-top: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #37474f;
 }
 .ds-shortcuts-heading {
   margin: 12px 0 4px;
@@ -1765,7 +1798,9 @@ export default {
       );
     },
     layoutQuestion() {
-      return this.layoutAsked ? "Your layout" : "Which arrangement suits you?";
+      return this.layoutAsked
+        ? "How your workspace is arranged"
+        : "How would you like your workspace arranged?";
     },
     layoutPreset() {
       return this.$store.state.layoutPreset;

@@ -75,9 +75,10 @@
 
       <!-- The inspected option and the thumbnails share the panel, and
            which way they are laid out follows its shape: stacked while the
-           panel is tall or narrow, side by side once it is wide, with the
-           inspector on the side facing the rest of the workspace. -->
+           panel is tall or narrow, and side by side once it is wide, the
+           option on the left as Design Explorer has it. -->
       <div class="gallery-body" :class="'gallery-body--' + inspectorSide">
+      <transition name="inspector">
       <v-card
         v-if="inspectedItem || isInspectionViewPinned"
         cols="12"
@@ -243,6 +244,7 @@
           <div v-else class="inspector_no_image">No picture for this option.</div>
         </div>
       </v-card>
+      </transition>
 
       <!-- A plain list rather than Vuetify's v-data-iterator: that kept its own
            copy of every option in reactive data, which made Vue track every
@@ -376,6 +378,34 @@
 .gallery-body--left .inspector_card,
 .gallery-body--right .inspector_card {
   flex: 0 0 auto;
+}
+/* Opening an option pushes the thumbnails aside rather than replacing them
+   between frames, so it is clear where it came from and what moved. The
+   inline width and height are what collapse, hence !important. */
+.inspector_card {
+  transition: width 200ms ease, max-height 200ms ease, opacity 140ms ease;
+}
+.gallery-body--top .inspector-enter,
+.gallery-body--top .inspector-leave-to {
+  max-height: 0 !important;
+  opacity: 0;
+}
+.gallery-body--left .inspector-enter,
+.gallery-body--left .inspector-leave-to,
+.gallery-body--right .inspector-enter,
+.gallery-body--right .inspector-leave-to {
+  width: 0 !important;
+  opacity: 0;
+}
+/* Stacked, the list gives up its room over the same moment. */
+#scroll-flex-container {
+  transition: max-height 200ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .inspector_card,
+  #scroll-flex-container {
+    transition: none;
+  }
 }
 .gallery-list {
   flex: 1 1 auto;
@@ -878,10 +908,9 @@ export default {
         : "Show all options while highlighting the selected options";
     },
     /**
-     * Where the inspected option sits: "top" over the thumbnails, or "left"
-     * or "right" beside them. A gallery against the workspace's left edge
-     * opens to its right, so the inspector faces the charts rather than the
-     * edge of the screen.
+     * Where the inspected option sits: "top" over the thumbnails while the
+     * panel is tall or narrow, else "left" of them, which is where Design
+     * Explorer puts it and so where a reader coming from it will look.
      */
     inspectorSide() {
       let w = Number(this.width);
@@ -889,7 +918,7 @@ export default {
       if (!(w > 0) || !(h > 0)) return "top";
       if (w < SIDE_BY_SIDE_WIDTH || w / h < SIDE_BY_SIDE_RATIO) return "top";
       if (w - this.inspectorWidth < INSPECTOR_MIN_WIDTH) return "top";
-      return Number(this.x) <= 2 ? "right" : "left";
+      return "left";
     },
     isInspectorBeside() {
       return this.inspectorSide !== "top";

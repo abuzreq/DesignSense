@@ -11,7 +11,7 @@
           :aria-label="preset.name"
           @click="choose(preset.id)"
         >
-          <LayoutPresetFigure :preset="preset.id" :width="26" />
+          <LayoutPresetIcon :preset="preset.id" />
         </button>
       </template>
       <span
@@ -66,7 +66,7 @@
 <script>
 import { mapState } from "vuex";
 import { LAYOUT_PRESETS, PANEL_LABELS } from "@/layout.js";
-import LayoutPresetFigure from "@/components/LayoutPresetFigure.vue";
+import LayoutPresetIcon from "@/components/LayoutPresetIcon.vue";
 
 // In the order they are offered, not the order they happen to be in a layout.
 const PANEL_ORDER = ["ParallelCoordinatesPlot", "ScatterPlot", "Grid"];
@@ -84,7 +84,7 @@ const PANEL_NAMES = {
  */
 export default {
   name: "LayoutPresetBar",
-  components: { LayoutPresetFigure },
+  components: { LayoutPresetIcon },
   data() {
     return { presets: LAYOUT_PRESETS };
   },
@@ -133,21 +133,27 @@ export default {
   gap: 3px;
 }
 .lpb-btn {
-  display: block;
-  width: 26px;
-  padding: 2px;
-  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: 0;
   border-radius: 4px;
   background: transparent;
+  color: rgba(255, 255, 255, 0.72);
   cursor: pointer;
   line-height: 0;
+  transition: background 120ms, color 120ms;
 }
 .lpb-btn:hover {
-  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
 }
 .lpb-btn--on {
-  border-color: #fff;
-  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.24);
 }
 .lpb-btn:focus-visible {
   outline: 2px solid #fff;
