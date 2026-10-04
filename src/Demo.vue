@@ -247,7 +247,34 @@
             <div class="ds-layout-picks" id="layout-presets" @click.stop>
               <div class="ds-layout-picks-head">Arrangement</div>
               <LayoutPresetBar />
+              <div class="ds-layout-tip">{{ dragTip }}</div>
             </div>
+            <v-divider />
+            <!-- Which views are on the workspace at all. Clicks are stopped
+                 so turning two off doesn't shut the menu in between. -->
+            <div class="ds-layout-picks-head ds-layout-picks-head--mid">
+              Views
+            </div>
+            <v-list-item
+              v-for="panel in panelChoices"
+              :key="panel.type"
+              :disabled="panel.locked"
+              @click.stop="togglePanel(panel)"
+            >
+              <v-list-item-icon class="mr-3">
+                <v-icon small :color="panel.shown ? 'primary' : undefined">{{
+                  panel.shown
+                    ? "mdi-checkbox-marked"
+                    : "mdi-checkbox-blank-outline"
+                }}</v-icon>
+              </v-list-item-icon>
+              <v-list-item-content>
+                <v-list-item-title>{{ panel.label }}</v-list-item-title>
+                <v-list-item-subtitle v-if="panel.locked">{{
+                  panel.reason
+                }}</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
             <v-divider />
             <v-list-item
               v-if="can('layoutEditing')"
@@ -261,7 +288,7 @@
             </v-list-item>
             <v-list-item @click="isLayoutDialogOn = true">
               <v-list-item-icon><v-icon>mdi-view-grid-outline</v-icon></v-list-item-icon>
-              <v-list-item-title>Views and layout…</v-list-item-title>
+              <v-list-item-title>All layouts…</v-list-item-title>
             </v-list-item>
             <v-list-item @click="resetLayout">
               <v-list-item-icon><v-icon>mdi-view-dashboard-outline</v-icon></v-list-item-icon>
@@ -596,7 +623,7 @@
     <v-dialog v-model="isLayoutDialogOn" max-width="760px">
       <v-card>
         <v-card-title>
-          Views and layout
+          Layouts
           <v-spacer />
           <v-btn icon aria-label="Close" @click="isLayoutDialogOn = false">
             <v-icon>mdi-close</v-icon>
@@ -604,8 +631,9 @@
         </v-card-title>
         <v-card-text>
           <p class="ds-layout-intro">
-            Which views share the screen, and how they are arranged. Whatever
-            you settle on is remembered for next time.
+            Where the views sit on the screen. Whichever you pick is
+            remembered for next time; which views are shown at all is in the
+            layout menu, beside these.
           </p>
           <div class="ds-presets">
             <button
@@ -624,30 +652,6 @@
                 >
               </span>
               <span class="ds-preset-desc">{{ preset.description }}</span>
-            </button>
-          </div>
-
-          <div class="ds-layout-heading">Which views are shown</div>
-          <div class="ds-layout-panels">
-            <button
-              v-for="panel in panelChoices"
-              :key="panel.type"
-              type="button"
-              class="ds-panel-pick"
-              :class="{ 'ds-panel-pick--on': panel.shown }"
-              :disabled="panel.locked"
-              :aria-pressed="String(panel.shown)"
-              @click="togglePanel(panel)"
-            >
-              <v-icon small :color="panel.shown ? 'primary' : undefined">{{
-                panel.shown
-                  ? "mdi-checkbox-marked"
-                  : "mdi-checkbox-blank-outline"
-              }}</v-icon>
-              <span class="ds-panel-name">{{ panel.label }}</span>
-              <span v-if="panel.locked" class="ds-panel-why">{{
-                panel.reason
-              }}</span>
             </button>
           </div>
 
@@ -1119,47 +1123,18 @@ body {
   text-transform: uppercase;
   color: #78909c;
 }
-.ds-layout-heading {
-  margin: 22px 0 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #263238;
+.ds-layout-picks-head--mid {
+  padding: 8px 10px 2px;
 }
-.ds-layout-panels {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.ds-panel-pick {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 12px 7px 9px;
-  border: 1px solid #cfd8dc;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 13px;
-  color: #37474f;
-  cursor: pointer;
-}
-.ds-panel-pick:hover:not(:disabled) {
-  border-color: #90caf9;
-}
-.ds-panel-pick--on {
-  border-color: #1565c0;
-}
-.ds-panel-pick:disabled {
-  cursor: default;
-  background: #fafbfc;
-}
-.ds-panel-name {
-  font-weight: 500;
-}
-.ds-panel-why {
+/* The one thing the drawings cannot show. */
+.ds-layout-tip {
+  max-width: 230px;
+  margin-top: 7px;
   font-size: 11.5px;
+  line-height: 1.35;
   color: #78909c;
 }
-/* How to resize without any of the above. */
+/* How to resize, in the dialog too. */
 .ds-layout-hint {
   display: flex;
   align-items: flex-start;
@@ -1907,9 +1882,15 @@ export default {
         "on the shortlist"
       );
     },
-    /** Which views are on the workspace, for the dialog's checklist. */
+    /** Which views are on the workspace, for the layout menu's checklist. */
     panelChoices() {
       return panelChoices(this.layouts);
+    },
+    /** How to change the arrangement by hand, in a line. */
+    dragTip() {
+      return this.can("layoutEditing")
+        ? "Drag the edge between two panels to resize them, or edit the layout to move one."
+        : "Drag the edge between two panels to resize them.";
     },
     layoutQuestion() {
       return this.layoutAsked
@@ -2319,11 +2300,18 @@ export default {
       this.$store.commit("setSetsDrawer", { open: false });
       return 0;
     },
+    /**
+     * A workspace of no width is the element not laid out yet, not a real
+     * size: it is measured on mount, which a dialog over it or a style still
+     * loading can beat. Taking it would make every panel zero and every
+     * chart a negative width, so the window's own size, which the data
+     * started from, is kept until there is something true to replace it.
+     */
     measureWorkspace() {
       let el = this.$refs.workspace;
       if (!el) return;
-      this.workspaceWidth = el.clientWidth;
-      this.workspaceHeight = el.clientHeight;
+      if (el.clientWidth > 0) this.workspaceWidth = el.clientWidth;
+      if (el.clientHeight > 0) this.workspaceHeight = el.clientHeight;
     },
     // Resizing rebuilds every chart, so wait until the size settles.
     onWorkspaceResize() {
