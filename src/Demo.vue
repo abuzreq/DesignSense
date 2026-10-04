@@ -286,10 +286,6 @@
               }}</v-list-item-title>
               <v-list-item-action-text class="ml-4">`</v-list-item-action-text>
             </v-list-item>
-            <v-list-item @click="isLayoutDialogOn = true">
-              <v-list-item-icon><v-icon>mdi-view-grid-outline</v-icon></v-list-item-icon>
-              <v-list-item-title>All layouts…</v-list-item-title>
-            </v-list-item>
             <v-list-item @click="resetLayout">
               <v-list-item-icon><v-icon>mdi-view-dashboard-outline</v-icon></v-list-item-icon>
               <v-list-item-title>Reset layout</v-list-item-title>
@@ -617,64 +613,6 @@
             </tr>
           </table>
         </v-card-text>
-      </v-card>
-    </v-dialog>
-
-    <v-dialog v-model="isLayoutDialogOn" max-width="760px">
-      <v-card>
-        <v-card-title>
-          Layouts
-          <v-spacer />
-          <v-btn icon aria-label="Close" @click="isLayoutDialogOn = false">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-card-title>
-        <v-card-text>
-          <p class="ds-layout-intro">
-            Where the views sit on the screen. Whichever you pick is
-            remembered for next time; which views are shown at all is in the
-            layout menu, beside these.
-          </p>
-          <div class="ds-presets">
-            <button
-              v-for="preset in layoutPresets"
-              :key="preset.id"
-              type="button"
-              class="ds-preset"
-              :class="{ 'ds-preset--on': layoutPreset === preset.id }"
-              @click="chooseLayoutPreset(preset.id)"
-            >
-              <LayoutPresetFigure :preset="preset.id" labelled />
-              <span class="ds-preset-name">
-                {{ preset.name }}
-                <v-icon v-if="layoutPreset === preset.id" x-small color="primary"
-                  >mdi-check</v-icon
-                >
-              </span>
-              <span class="ds-preset-desc">{{ preset.description }}</span>
-            </button>
-          </div>
-
-          <p class="ds-layout-hint">
-            <v-icon small color="#546e7a">mdi-arrow-split-vertical</v-icon>
-            <span
-              >Drag the edge between two panels to give one of them more
-              room.<template v-if="can('layoutEditing')">
-                To move a panel somewhere else entirely, arrange it
-                yourself.</template
-              ></span
-            >
-          </p>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            v-if="can('layoutEditing')"
-            text
-            @click="arrangeLayoutMyself"
-            >Arrange it myself</v-btn
-          >
-        </v-card-actions>
       </v-card>
     </v-dialog>
 
@@ -1106,11 +1044,6 @@ body {
 .ds-welcome-actions .v-label {
   font-size: 13px;
 }
-.ds-layout-intro {
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: #37474f;
-}
 /* The arrangements at the head of the layout menu. */
 .ds-layout-picks {
   padding: 6px 10px 8px;
@@ -1133,53 +1066,6 @@ body {
   font-size: 11.5px;
   line-height: 1.35;
   color: #78909c;
-}
-/* How to resize, in the dialog too. */
-.ds-layout-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  margin: 16px 0 0;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: #f4f6f8;
-  font-size: 12.5px;
-  line-height: 1.45;
-  color: #546e7a;
-}
-.ds-presets {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-}
-.ds-preset {
-  display: block;
-  padding: 8px;
-  text-align: left;
-  border: 1px solid #cfd8dc;
-  border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-}
-.ds-preset:hover {
-  border-color: #90caf9;
-}
-.ds-preset--on {
-  border-color: #1565c0;
-  box-shadow: 0 0 0 1px #1565c0 inset;
-}
-.ds-preset-name {
-  display: block;
-  margin-top: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #263238;
-}
-.ds-preset-desc {
-  display: block;
-  font-size: 12px;
-  line-height: 1.35;
-  color: #546e7a;
 }
 /* A section of its own, not a fourth entry point: this is a choice about
    the workspace, and it has to be worth reading on the tenth visit too. */
@@ -1524,7 +1410,7 @@ export default {
           "The whole collection at a glance, rather than what is on screen. At the top, every dimension's average, standard deviation and spread. Then the outliers, which can be left out of the reading, and the best trade-offs by the goals set under Dimensions. Below, which inputs move which outputs: name the parameters and the results, or start their columns with in: and out: and the file names them for you. Each of the three measures answers a different question, and the panel says in the open that a reading is only as good as the sampling behind it.",
           () => this.openTourSensitivity()),
         tourStep(this, "expert", "#editing-mode", "Your layout",
-          "This menu turns on editing, to move and resize the panels, picks a preset arrangement, or resets it. Done, or the ` key, stops editing.",
+          "The arrangements are here, and which views are on screen at all. The edge between two panels can be dragged to resize them; this menu also turns on editing, to move a panel somewhere else, which Done or the ` key stops.",
           "bottom"),
         tourStep(this, "lite", "#designsense-title", "You're ready",
           "You're back in Lite. Switch to Expert whenever you need more control, and right-click the workspace for quick actions. The help menu has this tour and every shortcut. To tell us what works and what doesn't, use Help → Send feedback.",
@@ -1719,7 +1605,6 @@ export default {
       showWelcomeAtStart: readShowWelcome(),
       isClearWorkDialogOn: false,
       isTourDialogOn: false,
-      isLayoutDialogOn: false,
       // Set while editing is turned on from the layout dialog, so answering
       // the prompt doesn't raise it again.
       layoutAsked: loadLayoutAsked(),
@@ -2084,15 +1969,6 @@ export default {
           /* loadState.error carries the message */
         });
     },
-    chooseLayoutPreset(id) {
-      this.$store.commit("applyLayoutPreset", { id: id });
-      this.isLayoutDialogOn = false;
-    },
-    /** The one way out of the dialog that turns layout editing on. */
-    /**
-     * The layout menu's Edit: straight to editing, since the presets that
-     * editing otherwise offers first are the next item in the same menu.
-     */
     openFeedback(fromError) {
       this.feedbackFromError = fromError;
       this.isOpeningDialogOn = false;
@@ -2105,14 +1981,11 @@ export default {
     dismissError() {
       errorState.latest = null;
     },
+    /** The action, not the mutation: only Expert may edit the layout. */
     toggleLayoutEditing() {
-      if (this.isEditingMode) this.$store.dispatch("toggleEditingMode");
-      else this.arrangeLayoutMyself();
-    },
-    arrangeLayoutMyself() {
-      this.isLayoutDialogOn = false;
-      // The action, not the mutation: only Expert may edit the layout.
-      this.$store.dispatch("toggleEditingMode", { value: true });
+      this.$store.dispatch("toggleEditingMode", {
+        value: !this.isEditingMode,
+      });
     },
     /** Mid-drag: show it, but don't save it or forget the preset yet. */
     onSeamPreview(layouts) {
