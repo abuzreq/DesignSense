@@ -7,13 +7,15 @@
     >
       <template v-slot:default>
         <span class="ph-label">Colour</span>
+        <!-- Wide, not the narrow width beside it: that is sized for a
+             count, and cut "Total Steel Tonnage" to "Total". -->
         <DimensionPicker
           :value="colorColumn"
           :items="colorItems"
           dense
           outlined
           hide-details
-          class="ph-select ph-select--narrow"
+          class="ph-select ph-select--wide"
           @change="setColorColumn"
         />
         <ColorKey />
@@ -252,12 +254,16 @@ export default {
       let count = this.chartData ? this.chartData.length : 0;
       return LINE_ALPHA.find((step) => count <= step.upTo);
     },
-    /** What the colour can follow: any dimension, and "nothing". */
+    /** What the colour can follow: any dimension, or nothing at all. */
     colorItems() {
       let dims = this.numericDimensions
         .concat(this.nonNumericDimensions)
         .filter((dim) => !isAssetColumn(dim) && !this.keysBlackList.includes(dim));
-      return [{ text: "None", value: "" }].concat(dimensionItems(dims));
+      // Set apart by a rule, because leaving the colour off is a choice of
+      // its own rather than a dimension that happens to be called None.
+      return [{ text: "No colour", value: "" }, { divider: true }].concat(
+        dimensionItems(dims)
+      );
     },
     /** Axes drawn over a fixed range rather than their data's extent. */
     fixedAxisBounds() {

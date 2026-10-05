@@ -104,6 +104,13 @@ export default {
   flex: 0 0 68px;
   min-width: 68px;
 }
+/* For one holding a dimension's name, which runs to three words. The floor
+   keeps a crowded header from squeezing it back to an initial or two; the
+   hint beside it ellipsises, and gives way first. */
+.panel-header ::v-deep .ph-select--wide {
+  flex: 0 1 180px;
+  min-width: 150px;
+}
 .panel-header
   ::v-deep
   .ph-select.v-input--dense
