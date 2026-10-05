@@ -104,7 +104,10 @@
             v-for="item in cartItems"
             :key="'cart-' + item._id"
             class="cart-thumb"
-            :class="{ 'cart-thumb--away': !isShown(item._id) }"
+            :class="{
+              'cart-thumb--away': !isShown(item._id),
+              'cart-thumb--inspected': isInspected(item._id),
+            }"
             :title="
               isShown(item._id)
                 ? 'Inspect this option'
@@ -345,6 +348,7 @@ export default {
       setsMap: (state) => state.setsMap,
       dataLength: (state) => state.data.length,
       setsCounter: (state) => state.setsCounter,
+      hovered: (state) => state.hovered,
     }),
     ...mapGetters([
       "can",
@@ -402,6 +406,10 @@ export default {
     },
     inspect(item) {
       this.$store.dispatch("inspectByClick", { item: item });
+    },
+    /** Clicking here inspects, so the strip says which one it inspected. */
+    isInspected(id) {
+      return !!this.hovered && this.hovered._id === id;
     },
     removeFromCart(item) {
       this.$store.commit("removeFromCart", { ids: [item._id] });
@@ -570,6 +578,12 @@ export default {
 }
 .cart-thumb--away {
   opacity: 0.45;
+}
+/* Inward: the strip scrolls sideways, and a ring outside the thumbnail
+   would be clipped at either end of it. */
+.cart-thumb--inspected {
+  outline: 2px solid var(--ds-inspected);
+  outline-offset: -2px;
 }
 .cart-thumb-remove {
   position: absolute;

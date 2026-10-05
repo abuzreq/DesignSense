@@ -694,6 +694,9 @@ const textOrder = new Intl.Collator(undefined, {
   sensitivity: "base",
 });
 
+// Room left between the inspected row and the edge it was scrolled past.
+const SCROLL_MARGIN = 12;
+
 function compareForSort(a, b, desc) {
   let aMissing = isMissingValue(a);
   let bMissing = isMissingValue(b);
@@ -1069,6 +1072,9 @@ export default {
     // rendering writes it.
     this.cardKeys = null;
     this.nextCardKey = 0;
+    // Set by the two places this component inspects from, and read once by
+    // scrollInspectedIntoView: the gallery does not scroll itself about.
+    this.inspectedFromHere = false;
     // The store's marking for this view, read as the selection changes. Kept
     // off data() as well: made reactive, all of its entries -- one per option
     // -- would be observed, though the store mutates it in place and the cards
@@ -1169,7 +1175,52 @@ export default {
         checked: selected,
       };
     },
+    /**
+     * Brings the inspected option's card into view.
+     *
+     * Clicking a line in the parallel coordinates or a point in the
+     * scatterplot inspects an option whose card is usually elsewhere in a
+     * long grid, so whatever marks it cannot be seen. The card does not have
+     * to be mounted to be found: the rows are uniform, so its place is
+     * arithmetic from the order the gallery is in.
+     *
+     * Three things it does not do. It stays put when the row is already
+     * fully in view, so a card on screen is never shuffled. It stays put
+     * when the option is not in the gallery at all, which happens when a
+     * filter has taken it out and a chart inspects it anyway. And it stays
+     * put when the gallery itself did the inspecting -- hovering with Space
+     * held would otherwise pull the card out from under the pointer, and
+     * whichever card landed there would do it again.
+     */
+    scrollInspectedIntoView() {
+      let fromHere = this.inspectedFromHere;
+      this.inspectedFromHere = false;
+      if (fromHere) return;
+      let item = this.hovered;
+      let el = this.galleryScrollEl();
+      if (!item || !el) return;
+      let index = this.galleryItems.findIndex((row) => row._id === item._id);
+      if (index < 0) return;
+      let top = Math.floor(index / this.columnsPerRow) * this.rowHeight;
+      let bottom = top + this.rowHeight;
+      let viewTop = el.scrollTop;
+      let viewBottom = viewTop + el.clientHeight;
+      if (top >= viewTop && bottom <= viewBottom) return;
+      // Clear of the edge it was past, rather than flush against it.
+      let target =
+        top < viewTop
+          ? top - SCROLL_MARGIN
+          : bottom - el.clientHeight + SCROLL_MARGIN;
+      // Put there, not animated there. A smooth scroll is thrown away
+      // whenever the document is hidden -- the browser stops animating and
+      // the card is simply never reached -- and over the twenty rows this
+      // usually travels an animation is a blur rather than a thread to
+      // follow. The inspector panel changes in the same breath, so the
+      // gallery arriving at once reads as one event.
+      el.scrollTop = Math.max(0, target);
+    },
     onCardHover(item) {
+      this.inspectedFromHere = true;
       if (this.isHoveringEnabled) this.hover(item);
     },
     toggleInGallery(item) {
@@ -1531,6 +1582,7 @@ export default {
     },
     // A click inspects; clicking the inspected option again stops inspecting.
     inspect(item) {
+      this.inspectedFromHere = true;
       // With a model on screen the panel stays on its option while the pointer
       // wanders, so the store already counts the wandered-over option as the
       // hovered one: clicking it would read as "clicked the inspected option
@@ -1820,6 +1872,7 @@ export default {
       // A hover that just leaves an option (e.g. while Space-hovering) keeps
       // showing the option that was inspected. Stopping inspection on purpose
       // closes the panel instead: see `inspectionClears`.
+      this.scrollInspectedIntoView();
     },
     // Bumped by the store's clearInspection (Esc, cancel, the panel's X,
     // clicking the inspected option again).
