@@ -240,8 +240,10 @@
 .cluster-card.transparent {
   opacity: 0.35;
 }
+/* The inspected one, marked as the gallery marks it; inward because the
+   cards sit tight together here. */
 .cluster-card.hovered {
-  outline: 2px dashed var(--ds-selected);
+  outline: 2px solid var(--ds-inspected);
   outline-offset: -2px;
 }
 .cluster-image {

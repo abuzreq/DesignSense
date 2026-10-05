@@ -373,15 +373,36 @@ export default {
  * hovering is what inspects.
  *
  * An outline rather than a border. The card is sized by its picture, so a
- * border is three pixels the layout has not reserved: it grew the card by
- * six and the row under it by six, and every card to the right of it moved.
- * An outline is drawn over, not in, and just outside the card's edge, so the
- * ring sits in the coloured mat while a selected card's solid ring stays
- * inside the card. Outer dashed, inner solid: two rings that cannot be
- * mistaken for each other.
+ * border is pixels the layout has not reserved: it grew the card by six and
+ * the row under it by six, and every card to the right of it moved. An
+ * outline is drawn over the card rather than in it, so nothing shifts.
+ *
+ * Solid and near-black, not dashed and blue. Dashed says provisional, which
+ * this is not -- it is the option the whole inspector is given over to --
+ * and on a card dashed already means "the drag box is about to take this
+ * one in". The blue was worse: it is the selection's colour, and inspected
+ * was told from selected by the dash alone. Near-black is nobody else's,
+ * and it is what the matrix has always marked its hovered point with.
+ *
+ * Held two pixels off the card so a band of white separates it from the
+ * colour on the card's own edge; against it they read as one striped band.
  */
 .thumbnail_card.hovered {
-  outline: 3px dashed var(--ds-selected);
+  outline: 2px solid var(--ds-inspected);
+  outline-offset: 2px;
+}
+
+/*
+ * The global focus ring (App.vue) is offset outward, which here would draw
+ * it along the card's coloured edge in a blue a hair off the selection's.
+ * Inside the picture instead, as CompareDialog and SensitivityDialog
+ * already tighten it locally. The selector has to out-specify
+ * `.v-application [tabindex]:not([tabindex="-1"]):focus-visible`, which is
+ * four class-level parts; a bare `.card-image:focus-visible` is three and
+ * would quietly lose.
+ */
+.thumbnail_card .card-image[tabindex]:focus-visible {
+  outline-offset: -2px;
 }
 
 .view-badge {
