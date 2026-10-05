@@ -10,6 +10,7 @@
         <!-- Wide, not the narrow width beside it: that is sized for a
              count, and cut "Total Steel Tonnage" to "Total". -->
         <DimensionPicker
+          id="colour-picker"
           :value="colorColumn"
           :items="colorItems"
           dense
@@ -366,6 +367,9 @@ export default {
     // Axes turned over by double-clicking their titles, replayed on every
     // rebuild by applyGoalOrientation.
     this.flippedAxes = [];
+    // The order the axes were last seen in, so dragging one to a new place
+    // outlives the rebuilds a colour, a resize or a new goal sets off.
+    this.axisOrder = null;
     // A click on a title waiting to see whether a second one follows:
     // { dim, was, applied }.
     this.titleClick = null;
@@ -1657,7 +1661,12 @@ export default {
         .height(Math.max(0, this.chartHeight - 6));
       // The library reads each axis type from the first row, and hiding axes
       // renders, which fails for a type it can't scale: a blank first value.
-      declareNumberAxes(chart, this.chartData, this.numericDimensions);
+      declareNumberAxes(
+        chart,
+        this.chartData,
+        this.numericDimensions,
+        this.axisOrder
+      );
       chart.hideAxis(this.hiddenAxes());
       applyNumericTypes(chart, this.numericDimensions);
       applyFixedScales(chart, this.fixedAxisBounds, this.axisTitles);
@@ -1774,6 +1783,9 @@ export default {
       this.decorateAxes(chart);
       this.bindAxisTitles(chart);
       chart.on("render.axes", () => {
+        // Dragging an axis sorts the dimensions and renders, so this is
+        // where the order the reader left them in is read off.
+        this.axisOrder = chart.getOrderedDimensionKeys();
         this.decorateAxes(chart);
         this.bindAxisTitles(chart);
       });
@@ -1816,15 +1828,45 @@ export default {
 };
 
 /**
+ * The file's columns in the order the axes should stand in: the ones the
+ * reader has arranged take the places those same columns hold in the file,
+ * in the order they were left in, and every other column keeps its own place.
+ *
+ * Put the other way round, dragging axes about rearranges them among
+ * themselves and moves nothing else. So an axis switched off and on again
+ * comes back where the file put it rather than at the far right, and a
+ * column that arrives with new data lands where the file has it.
+ */
+function orderedColumns(columns, order) {
+  let known = (Array.isArray(order) ? order : []).filter((dim) =>
+    columns.includes(dim)
+  );
+  if (known.length === 0) return columns;
+  let result = columns.slice();
+  let at = 0;
+  columns.forEach((dim, i) => {
+    if (known.includes(dim)) result[i] = known[at++];
+  });
+  return result;
+}
+
+/**
  * Declares numeric axes before anything renders. Without this, a blank value
  * in the first row makes the library type the axis "undefined", which it has
  * no scale for.
+ *
+ * They are declared in `order` (see orderedColumns), which is how an axis
+ * dragged to a new place stays there: the library takes the order it is
+ * given, and a rebuild would otherwise go back to the file's.
  */
-function declareNumberAxes(chart, data, numericDimensions) {
+function declareNumberAxes(chart, data, numericDimensions, order) {
   if (!data || data.length === 0) return;
+  let columns = Object.keys(data[0]).filter(
+    (dim) => numericDimensions.indexOf(dim) !== -1
+  );
   let declared = {};
-  Object.keys(data[0]).forEach((dim) => {
-    if (numericDimensions.indexOf(dim) !== -1) declared[dim] = { type: "number" };
+  orderedColumns(columns, order).forEach((dim) => {
+    declared[dim] = { type: "number" };
   });
   if (Object.keys(declared).length > 0) chart.dimensions(declared);
 }
