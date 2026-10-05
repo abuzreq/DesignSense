@@ -2,8 +2,8 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import App from "@/App.vue";
 import Demo from "@/Demo.vue";
-import Info from "@/Info.vue";
 import VueGtag from "vue-gtag";
+import { guideHref } from "@/guide.js";
 
 Vue.use(VueRouter);
 
@@ -14,9 +14,13 @@ const routes = [
     component: Demo,
   },
   {
-    path: "/about",
+    // Where the guide used to be. It is a page of its own now (wiki/, see
+    // guide.js), so an old link to it, or to one of its sections, is sent on.
+    path: "/about/:section?",
     name: "about",
-    component: Info,
+    beforeEnter(to) {
+      window.location.replace(guideHref(to.params.section));
+    },
   },
   {
     path: "/demo",

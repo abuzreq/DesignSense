@@ -19,9 +19,9 @@
           </v-btn>
         </template>
 
-        <!-- A file can be dropped anywhere on the dialog. Enter and leave
-             fire for every element crossed, so a depth count says when the
-             file has really left. -->
+        <!-- A file or a folder can be dropped anywhere on the dialog. Enter
+             and leave fire for every element crossed, so a depth count says
+             when it has really left. -->
         <v-card
           :class="{ 'load-card--drop': dragDepth > 0 }"
           @dragenter.prevent="dragDepth += 1"
@@ -110,11 +110,35 @@
               (<a
                 href="https://tt-acm.github.io/DesignExplorer/design_explorer_data/example/online/example.zip"
                 target="_blank"
+                rel="noopener"
                 >Design Explorer example</a
               >). Keep everything in one folder on a web server, such as a
-              GitHub repository — for files on GitHub, use the Raw link. Google
-              Drive folders can't be read, and OneDrive folders only from some
-              accounts; download those and load the CSV from your computer.
+              GitHub repository — for a file on GitHub, the address of its
+              page works. Google Drive folders can't be read, and OneDrive
+              folders only from some accounts; download those and choose the
+              folder below.
+            </p>
+            <p class="load-hint">
+              Made in Grasshopper with Colibri? The guide has
+              <a
+                :href="guide.generate"
+                target="_blank"
+                @click.prevent="openGuide('generate')"
+                >how a study is made</a
+              >,
+              <a
+                :href="guide.format"
+                target="_blank"
+                @click.prevent="openGuide('format')"
+                >the file format</a
+              >
+              and
+              <a
+                :href="guide.link"
+                target="_blank"
+                @click.prevent="openGuide('link')"
+                >putting a study on GitHub</a
+              >.
             </p>
 
             <v-expansion-panels flat class="load-help">
@@ -149,10 +173,19 @@
                     weighted dimensions, which is how DesignSense writes them
                     when it saves a file.
                   </p>
-                  <p class="mb-0">
+                  <p>
                     <strong>Everything else</strong> is kept as it is: numbers
                     become axes to filter by, text shows in the details and in
-                    Compare. An <code>ID</code> column names each option.
+                    Compare. An <code>ID</code> column identifies each option,
+                    and a <code>name:</code> column says what to call it.
+                  </p>
+                  <p class="mb-0">
+                    <a
+                      :href="guide.format"
+                      target="_blank"
+                      @click.prevent="openGuide('format')"
+                      >The file format, in the guide</a
+                    >
                   </p>
                 </v-expansion-panel-content>
               </v-expansion-panel>
@@ -182,11 +215,11 @@
                     it is the one that always works.
                   </p>
                   <p class="mb-0">
-                    In a OneDrive folder, where DesignSense can read the list
-                    of files, you can skip the extra columns: a file named
+                    In a folder from your computer or from OneDrive, where
+                    DesignSense can read the list of files, you can skip the
+                    extra image columns: a file named
                     <code>12_2.png</code> beside
-                    <code>12.png</code> becomes that option's second view, and
-                    <code>12.glb</code> becomes its model.
+                    <code>12.png</code> becomes that option's second view.
                   </p>
                 </v-expansion-panel-content>
               </v-expansion-panel>
@@ -206,10 +239,18 @@
                     <em>Wavefront (.obj)</em> instead, ticking
                     <em>Map Rhino Z to OBJ Y</em> so the model stands upright.
                   </p>
-                  <p class="mb-0">
+                  <p>
                     <strong>Grasshopper</strong> — bake the geometry into Rhino
                     first (right-click ▸ Bake), then export as above. Export one
                     file per option and name it like that option's image.
+                  </p>
+                  <p class="mb-0">
+                    <a
+                      :href="guide.models"
+                      target="_blank"
+                      @click.prevent="openGuide('models')"
+                      >3D models, in the guide</a
+                    >
                   </p>
                 </v-expansion-panel-content>
               </v-expansion-panel>
@@ -218,25 +259,53 @@
             <v-divider class="my-4" />
 
             <div class="load-label">From your computer</div>
-            <v-file-input
-              :key="fileInputKey"
-              accept=".csv,.tsv,.txt,text/csv"
-              dense
-              outlined
-              hide-details
-              prepend-icon=""
-              prepend-inner-icon="mdi-paperclip"
-              :placeholder="
-                dragDepth > 0 ? 'Drop it to load' : 'Choose a CSV file, or drop one here'
-              "
-              :disabled="loadState.loading"
-              :loading="isLoading('file')"
-              @change="loadFile"
-            />
+            <div class="load-row">
+              <v-btn
+                color="primary"
+                outlined
+                class="load-folder-button"
+                :disabled="loadState.loading"
+                :loading="isLoading('folder')"
+                @click="$refs.folderInput.click()"
+              >
+                <v-icon left small>mdi-folder-open-outline</v-icon>Choose a
+                folder
+              </v-btn>
+              <!-- The browser's own folder picker; the button above is its
+                   face. -->
+              <input
+                ref="folderInput"
+                type="file"
+                webkitdirectory
+                multiple
+                hidden
+                @change="onFolderChosen"
+              />
+              <v-file-input
+                :key="fileInputKey"
+                accept=".csv,.tsv,.txt,text/csv"
+                dense
+                outlined
+                hide-details
+                prepend-icon=""
+                prepend-inner-icon="mdi-paperclip"
+                :placeholder="
+                  dragDepth > 0 ? 'Drop it to load' : 'or a CSV file on its own'
+                "
+                :disabled="loadState.loading"
+                :loading="isLoading('file')"
+                @change="loadFile"
+              />
+            </div>
             <p class="load-hint">
-              The image and 3D columns of a local file need public links (<a
+              Choose the folder that holds data.csv, or drop it here, and the
+              images and 3D files it names come with it: a Colibri folder
+              opens as it is. Your browser may call this an upload; the files
+              are read where they are and stay on this computer. A CSV file
+              on its own shows images only where its cells hold full links (<a
                 href="https://tt-acm.github.io/DesignExplorer/design_explorer_data/example/LocalCSV_example.csv"
                 target="_blank"
+                rel="noopener"
                 >example data.csv</a
               >).
             </p>
@@ -256,6 +325,13 @@
 import { loadDataset, loadState } from "@/data/loader.js";
 const isUrl = require("is-valid-http-url");
 import { PRESETS } from "@/data/presets.js";
+import {
+  entriesOfDrop,
+  filesOfDrop,
+  filesOfInput,
+  filesOfList,
+} from "@/data/localFolder.js";
+import { GUIDE_SECTIONS, guideHref } from "@/guide.js";
 
 export default {
   name: "LoadDataModal",
@@ -274,6 +350,14 @@ export default {
       // How many elements of the dialog a dragged file is over; above zero
       // while it is over the dialog at all.
       dragDepth: 0,
+      // Where the guide says more: its address, for opening it elsewhere.
+      // A click shows the same section over this dialog (see openGuide).
+      guide: {
+        generate: guideHref(GUIDE_SECTIONS.generate),
+        format: guideHref(GUIDE_SECTIONS.format),
+        models: guideHref(GUIDE_SECTIONS.models),
+        link: guideHref(GUIDE_SECTIONS.link),
+      },
     };
   },
   computed: {
@@ -288,6 +372,10 @@ export default {
     },
   },
   methods: {
+    /** The guide's section named `key` in guide.js, over this dialog. */
+    openGuide(key) {
+      this.$store.dispatch("openGuide", { section: GUIDE_SECTIONS[key] });
+    },
     isLoading(source) {
       return loadState.loading && loadState.source === source;
     },
@@ -299,16 +387,43 @@ export default {
       if (!this.selectedPreset || loadState.loading) return;
       this.load(this.selectedPreset.url, "preset");
     },
-    /** A file dropped on the dialog loads as one chosen with the input would. */
+    /**
+     * What is dropped on the dialog loads as if it had been chosen: one file
+     * as a CSV on its own, a folder -- or its files, dropped together -- as
+     * a folder.
+     */
     onDrop(event) {
       this.dragDepth = 0;
-      let files = event.dataTransfer && event.dataTransfer.files;
-      if (files && files.length > 0) this.loadFile(files[0]);
+      let transfer = event.dataTransfer;
+      if (!transfer) return;
+      let entries = entriesOfDrop(transfer);
+      if (entries.some((entry) => entry.isDirectory)) {
+        filesOfDrop(entries).then(this.loadFolder, () => {
+          loadState.error = "That folder couldn't be read.";
+        });
+        return;
+      }
+      let files = transfer.files;
+      if (!files || files.length === 0) return;
+      if (files.length === 1) this.loadFile(files[0]);
+      else this.loadFolder(filesOfList(files));
+    },
+    onFolderChosen(event) {
+      let files = filesOfInput(event.target.files);
+      // Emptied so that choosing the same folder again is still a change.
+      event.target.value = "";
+      this.loadFolder(files);
     },
     loadFile(file) {
       // Clearing the input reports no file.
       if (!file || loadState.loading) return;
       this.load({ file: file }, "file");
+    },
+    /** `files` as localFolder.js lists them: `[{ path, file }]`. */
+    loadFolder(files) {
+      // Cancelling the folder picker reports no files.
+      if (!files || files.length === 0 || loadState.loading) return;
+      this.load({ folder: files }, "folder");
     },
     /**
      * A load that succeeds mounts a new app, which replaces this dialog; one
@@ -337,6 +452,12 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+.load-folder-button {
+  flex: 0 0 auto;
+  height: 40px !important;
+  text-transform: none;
+  letter-spacing: 0;
 }
 .load-help {
   margin-top: 8px;

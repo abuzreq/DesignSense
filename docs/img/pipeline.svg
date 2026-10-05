@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="358" viewBox="0 0 980 358" role="img" aria-labelledby="t d" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title id="t">From a parametric model to a shared decision</title>
+  <desc id="d">Getting the data in takes three steps: generate the options, prepare one folder, load it. Then come understanding, narrowing, deciding and sharing, any of which can send you back to an earlier one.</desc>
+  <rect width="980" height="358" fill="#ffffff"/>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 10 5 0 10z" fill="#90a4ae"/>
+    </marker>
+  </defs>
+
+  <!-- Getting the data in -->
+  <text x="10" y="22" fill="#78909c" font-size="12" font-weight="700" letter-spacing="0.6">GETTING THE DATA IN</text>
+  <g fill="#ffffff" stroke="#cfd8dc" stroke-width="1.5">
+    <rect x="10" y="34" width="300" height="104" rx="8"/>
+    <rect x="340" y="34" width="300" height="104" rx="8"/>
+    <rect x="670" y="34" width="300" height="104" rx="8"/>
+  </g>
+  <g fill="#90a4ae">
+    <rect x="10" y="34" width="300" height="4" rx="2"/>
+    <rect x="340" y="34" width="300" height="4" rx="2"/>
+    <rect x="670" y="34" width="300" height="4" rx="2"/>
+  </g>
+  <g fill="#546e7a" font-size="12" font-weight="700">
+    <text x="24" y="62">GENERATE</text>
+    <text x="354" y="62">PREPARE</text>
+    <text x="684" y="62">LOAD</text>
+  </g>
+  <g fill="#263238" font-size="14" font-weight="600">
+    <text x="24" y="84">A parametric model</text>
+    <text x="354" y="84">One folder</text>
+    <text x="684" y="84">Into the browser</text>
+  </g>
+  <g fill="#546e7a" font-size="12">
+    <text x="24" y="105">Grasshopper and Colibri, or any tool</text>
+    <text x="24" y="121">that runs and records every option</text>
+    <text x="354" y="105">data.csv: a row for each option,</text>
+    <text x="354" y="121">beside its pictures and 3D files</text>
+    <text x="684" y="105">The folder from your computer,</text>
+    <text x="684" y="121">or a link to it on a web server</text>
+  </g>
+
+  <!-- Understand, narrow, decide, share -->
+  <g fill="#f5f9fe" stroke="#bbd6f2" stroke-width="1.5">
+    <rect x="10" y="194" width="220" height="104" rx="8"/>
+    <rect x="260" y="194" width="220" height="104" rx="8"/>
+    <rect x="510" y="194" width="220" height="104" rx="8"/>
+    <rect x="760" y="194" width="210" height="104" rx="8"/>
+  </g>
+  <g fill="#1976d2">
+    <rect x="10" y="194" width="220" height="4" rx="2"/>
+    <rect x="260" y="194" width="220" height="4" rx="2"/>
+    <rect x="510" y="194" width="220" height="4" rx="2"/>
+    <rect x="760" y="194" width="210" height="4" rx="2"/>
+  </g>
+  <g fill="#1976d2" font-size="12" font-weight="700">
+    <text x="24" y="222">UNDERSTAND</text>
+    <text x="274" y="222">NARROW</text>
+    <text x="524" y="222">DECIDE</text>
+    <text x="774" y="222">SHARE</text>
+  </g>
+  <g fill="#263238" font-size="14" font-weight="600">
+    <text x="24" y="244">Patterns and trade-offs</text>
+    <text x="274" y="244">The promising few</text>
+    <text x="524" y="244">Weighing the criteria</text>
+    <text x="774" y="244">The result, and why</text>
+  </g>
+  <g fill="#546e7a" font-size="12">
+    <text x="24" y="265">Linked pictures and charts;</text>
+    <text x="24" y="281">alternatives side by side</text>
+    <text x="274" y="265">Filter, zoom in, shortlist,</text>
+    <text x="274" y="281">save sets</text>
+    <text x="524" y="265">Goals, best trade-offs, your</text>
+    <text x="524" y="281">own dimensions, ratings</text>
+    <text x="774" y="265">Story and PDF, summary</text>
+    <text x="774" y="281">image, table, link</text>
+  </g>
+
+  <g fill="none" stroke="#90a4ae" stroke-width="1.5" marker-end="url(#a)">
+    <path d="M313 86h23"/>
+    <path d="M643 86h23"/>
+    <path d="M820 138v28H120v24"/>
+    <path d="M233 246h23"/>
+    <path d="M483 246h23"/>
+    <path d="M733 246h23"/>
+    <path d="M865 298v24H120v-20" stroke-dasharray="5 4"/>
+  </g>
+  <text x="490" y="344" fill="#78909c" font-size="12" text-anchor="middle">Any task can send you back to an earlier one</text>
+</svg>

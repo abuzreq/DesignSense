@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DesignSense guide: from a design space to a decision</title>
+    <meta
+      name="description"
+      content="How to use DesignSense: making a design study in Grasshopper with Colibri or an optimiser, the data.csv format, loading it, and then understanding the design space, narrowing it, deciding and sharing the result."
+    />
+    <link rel="canonical" href="<%= site %>wiki/" />
+    <!-- src/guide/guide.css, put here by the build so the guide below is
+         dressed before any script runs. -->
+    <style>
+<%= styles %>
+    </style>
+  </head>
+  <body class="gp-page">
+    <!-- The guide itself, docs/guide.md as the build renders it, so the page
+         reads without a script. src/guide/page.js then mounts the same guide
+         here with its contents, search and live examples. -->
+    <div id="guide" class="gp">
+      <header class="gp-bar">
+        <a class="gp-brand" href="../">DesignSense<sup>beta</sup></a>
+        <span class="gp-name">Guide</span>
+        <span class="gp-space"></span>
+        <a class="gp-open" href="../">Open DesignSense</a>
+      </header>
+      <div class="gp-body">
+        <div class="gd gd--folds">
+          <nav class="gd-nav"></nav>
+          <main class="gd-main">
+            <article class="gd-doc">
+<%= require('../docs/guide.md').default %>
+            </article>
+          </main>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

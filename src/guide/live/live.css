@@ -1,0 +1,224 @@
+/*
+ * The guide's live examples (see live/index.js). Plain CSS under .lv-, like
+ * guide.css: they are mounted inside the guide's own HTML, on the wiki page
+ * as in the app.
+ */
+.lv {
+  padding: 16px 18px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #37474f;
+  background: #fff;
+  border: 1px solid #dfe5e8;
+  border-radius: 8px;
+}
+.lv-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.lv .lv-choice {
+  padding: 5px 13px;
+  font: inherit;
+  font-size: 13px;
+  color: #455a64;
+  background: #fff;
+  border: 1px solid #cfd8dc;
+  border-radius: 16px;
+  cursor: pointer;
+}
+.lv .lv-choice:hover {
+  border-color: #90caf9;
+}
+.lv .lv-choice--on {
+  font-weight: 600;
+  color: #fff;
+  background: #1976d2;
+  border-color: #1976d2;
+}
+/* Over the guide's own rule for a paragraph. */
+.gd .lv p.lv-reads,
+.gd .lv p.lv-hint,
+.lv .lv-reads,
+.lv .lv-hint {
+  margin: 10px 0 0;
+}
+.lv .lv-hint {
+  font-size: 13px;
+  color: #607d8b;
+}
+.lv .lv-clear {
+  margin-left: 4px;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 12px;
+  color: #1565c0;
+  background: none;
+  border: 1px solid #90caf9;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* Patterns */
+.lv-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  touch-action: none;
+}
+.lv-chart text {
+  font-family: inherit;
+}
+.lv-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  fill: #78909c;
+}
+.lv-axis {
+  font-size: 13px;
+  font-weight: 600;
+  fill: #263238;
+  text-anchor: middle;
+}
+.lv-end {
+  font-size: 10px;
+  fill: #90a4ae;
+  text-anchor: end;
+}
+.lv-end--start {
+  text-anchor: start;
+}
+.lv-grip {
+  fill: transparent;
+  cursor: ns-resize;
+}
+.lv-brush {
+  fill: rgba(25, 118, 210, 0.16);
+  stroke: #1976d2;
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+/* Weights */
+.lv-sliders {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 6px 20px;
+  margin-bottom: 14px;
+}
+.lv-slider {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0 8px;
+}
+.lv-slider-name {
+  grid-column: 1 / -1;
+  font-weight: 600;
+  color: #263238;
+}
+.lv-slider-name small {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #78909c;
+}
+.lv-slider input[type="range"] {
+  width: 100%;
+  margin: 0;
+  accent-color: #1976d2;
+}
+.lv-share {
+  min-width: 38px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: #455a64;
+}
+.lv-table {
+  border: 1px solid #e3e8eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.lv-row {
+  display: grid;
+  grid-template-columns: 28px minmax(76px, 1fr) repeat(4, minmax(56px, 0.8fr)) minmax(110px, 1.5fr);
+  align-items: center;
+  gap: 0 10px;
+  padding: 6px 12px;
+  background: #fff;
+  border-top: 1px solid #eceff1;
+}
+.lv-row--head {
+  font-size: 12px;
+  font-weight: 600;
+  color: #546e7a;
+  background: #f4f6f8;
+  border-top: 0;
+}
+.lv-row--top {
+  background: #f1f7fe;
+}
+.lv-row--top .lv-option {
+  font-weight: 600;
+  color: #1565c0;
+}
+.lv-place {
+  font-variant-numeric: tabular-nums;
+  color: #78909c;
+}
+.lv-num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.lv-num small {
+  font-size: 11px;
+  color: #90a4ae;
+}
+.lv-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lv-bar {
+  flex: 1 1 auto;
+  height: 8px;
+  background: #eceff1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.lv-bar > span {
+  display: block;
+  height: 100%;
+  background: #1976d2;
+  border-radius: 4px;
+  transition: width 0.25s;
+}
+.lv-score-value {
+  min-width: 32px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.lv-rank-move {
+  transition: transform 0.35s;
+}
+@media (max-width: 600px) {
+  .lv {
+    padding: 12px;
+  }
+  .lv-row {
+    grid-template-columns: 18px minmax(52px, 1fr) repeat(4, minmax(34px, 0.7fr)) 34px;
+    gap: 0 4px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  /* No room for the bar: the number says it. */
+  .lv-bar {
+    display: none;
+  }
+  .lv-num small {
+    display: none;
+  }
+}

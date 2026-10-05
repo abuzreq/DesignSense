@@ -25,7 +25,7 @@
       </v-toolbar-title>
       <v-divider vertical class="ds-divider" />
 
-      <LoadDataModal id="loading-data-bar" compact> </LoadDataModal>
+      <LoadDataModal id="loading-data-bar" ref="loadData" compact> </LoadDataModal>
       <v-divider vertical class="ds-divider" />
 
       <v-tooltip bottom max-width="340">
@@ -398,7 +398,7 @@
             <v-list-item-title>Send feedback…</v-list-item-title>
           </v-list-item>
           <v-divider />
-          <v-list-item @click="requestTour">
+          <v-list-item @click="requestTour()">
             <v-list-item-icon><v-icon>mdi-map-marker-path</v-icon></v-list-item-icon>
             <v-list-item-title>Take the tour</v-list-item-title>
           </v-list-item>
@@ -416,9 +416,9 @@
             <v-list-item-title>Clear data…</v-list-item-title>
           </v-list-item>
           <v-divider />
-          <v-list-item to="/about">
-            <v-list-item-icon><v-icon>mdi-information-outline</v-icon></v-list-item-icon>
-            <v-list-item-title>Learn more</v-list-item-title>
+          <v-list-item @click="openGuide()">
+            <v-list-item-icon><v-icon>mdi-book-open-page-variant-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Guide</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
@@ -429,7 +429,12 @@
         <v-card-title>Share this dataset</v-card-title>
         <v-card-text>
           <template v-if="shareLink">
-            <p>Anyone with this link opens the same dataset.</p>
+            <p>
+              Anyone with this link opens the same dataset. It carries the
+              data only: your filters, sets, shortlist, ratings and notes stay
+              in this browser. To pass those on, send the summary image, the
+              story's report or the CSV download.
+            </p>
             <v-text-field
               ref="shareField"
               :value="shareLink"
@@ -448,7 +453,15 @@
           </template>
           <p v-else>
             Only datasets opened from a link (a CSV file or a shared online
-            folder) can be shared. Files from your computer can't.
+            folder) can be shared. Files from your computer can't: put the
+            folder on a web server first, as
+            <a
+              :href="guideLinks.link"
+              target="_blank"
+              @click.prevent="openGuide(guideSections.link)"
+              >the guide</a
+            >
+            shows.
           </p>
         </v-card-text>
         <v-card-actions>
@@ -470,8 +483,18 @@
         <v-card-text class="ds-welcome-body">
           <p class="ds-welcome-lead">
             Explore a collection of design options through their pictures and
-            data: narrow them down to the few worth keeping, see the trade-offs
-            between them, and share why.
+            data: understand the design space, narrow it to the options worth
+            pursuing, decide between them, and share the result.
+          </p>
+          <!-- The whole way, to read rather than to follow: the guide, linked
+               below, has a section for each step. -->
+          <p class="ds-welcome-steps">
+            <template v-for="(step, i) in guideSteps">
+              <v-icon v-if="i > 0" :key="'to-' + step" x-small
+                >mdi-arrow-right</v-icon
+              >
+              <span :key="step">{{ step }}</span>
+            </template>
           </p>
           <div class="ds-welcome-choices">
             <div class="ds-welcome-choice">
@@ -479,7 +502,7 @@
                 <v-icon color="blue darken-1">mdi-map-marker-path</v-icon>
                 New here?
               </div>
-              <p>A short tour of the views and what they do.</p>
+              <p>A short guided tour.</p>
               <v-btn
                 color="blue darken-1"
                 dark
@@ -511,7 +534,7 @@
                 <v-icon color="red lighten-2">mdi-folder-open-outline</v-icon>
                 Your own data
               </div>
-              <p>A CSV from your computer, a link, or another sample.</p>
+              <p>A folder, a CSV file or a link.</p>
               <LoadDataModal />
             </div>
           </div>
@@ -556,12 +579,10 @@
             Your data is read in this browser and never uploaded; your work is
             kept here too.
           </p>
-          <p class="ds-welcome-note">
-            DesignSense is a research project and still changing, so your
-            feedback shapes what it does next.
-          </p>
           <div class="ds-welcome-links">
-            <router-link to="/about">Learn more</router-link>
+            <a :href="guideLinks.home" target="_blank" @click.prevent="openGuide()"
+              >Guide</a
+            >
             <span>·</span>
             <a href="#" @click.prevent="openFeedback(false)">Send feedback</a>
             <span>·</span>
@@ -642,6 +663,25 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <!-- A link in the guide that opens a sample, with the user's own data on
+         screen. -->
+    <v-dialog :value="!!sampleAsked" max-width="460px" @input="sampleAsked = null">
+      <v-card v-if="sampleAsked">
+        <v-card-title>Open the sample?</v-card-title>
+        <v-card-text>
+          {{ sampleAsked.name }} replaces the dataset on screen. Your sets and
+          ratings for this dataset are saved and come back when you load it
+          again.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn text @click="sampleAsked = null">Cancel</v-btn>
+          <v-btn color="primary" text @click="openSample(sampleAsked)"
+            >Open the sample</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <DimensionsDialog />
     <CompareDialog />
     <SensitivityDialog />
@@ -650,6 +690,8 @@
     <ColumnsDialog />
     <StoryReportDialog />
     <StoryPresenter />
+    <!-- Fetched when the guide is first asked for. -->
+    <GuideDialog v-if="guideSeen" @app-link="followAppLink" />
     <v-main id="designsense-workspace" :style="{ padding: barHeight + 'px 0 0' }">
       <!-- The saved sets' rail takes a strip at the left; their drawer opens
            over the workspace from it. -->
@@ -980,6 +1022,14 @@ body {
   font-size: 15px;
   line-height: 1.5;
 }
+.ds-welcome-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  font-size: 13px;
+  color: #546e7a;
+}
 .ds-welcome-choices {
   display: flex;
   flex-wrap: wrap;
@@ -1022,10 +1072,6 @@ body {
   margin-bottom: 4px;
   font-size: 13px;
   color: #2e7d32;
-}
-.ds-welcome-note {
-  margin-bottom: 8px;
-  font-size: 13px;
 }
 .ds-welcome-links {
   display: flex;
@@ -1214,7 +1260,8 @@ import LayoutSeams from "@/components/LayoutSeams.vue";
 // it. Without storage, it always does.
 const SHOW_WELCOME_KEY = "designsense-show-welcome";
 const welcome = { pending: readShowWelcome() };
-const tour = { pending: false };
+// `at` is the task a link asked the tour to begin with (see appLinks.js).
+const tour = { pending: false, at: null };
 
 function readShowWelcome() {
   try {
@@ -1243,7 +1290,7 @@ const BAR_HEIGHT = 52;
 const BAR_ROOMY = 1600;
 const BAR_TIGHT = { lite: 1170, expert: 1280 };
 const EXPERT_ADDS =
-  "selection operations and the lasso, clusters, coloring, editing sets, inspection controls, the analysis panel, and layout editing";
+  "selection operations and the lasso, clusters, editing sets, inspection controls, the analysis panel, and layout editing";
 import { applySelectionCursor } from "@/components/selectionCursors.js";
 
 import AssistantBar from "@/components/AssistantBar.vue";
@@ -1257,7 +1304,9 @@ import ClearDataDialog from "@/components/ClearDataDialog.vue";
 import { loadColumnRoles } from "@/data/columnRoles.js";
 import { errorState } from "@/errors.js";
 import { APP_VERSION } from "@/feedback.js";
-import { presetFor } from "@/data/presets.js";
+import { GUIDE_SECTIONS, guideHref } from "@/guide.js";
+import { presetById, presetFor } from "@/data/presets.js";
+import { pendingAppLink } from "@/appLinks.js";
 import StoryReportDialog from "@/components/StoryReportDialog.vue";
 import StoryPanel from "@/components/StoryPanel.vue";
 import StoryPresenter from "@/components/StoryPresenter.vue";
@@ -1319,6 +1368,8 @@ export default {
     StoryReportDialog,
     StoryPanel,
     StoryPresenter,
+    GuideDialog: () =>
+      import(/* webpackChunkName: "guide" */ "@/guide/GuideDialog.vue"),
     LayoutPresetBar,
     LayoutPresetFigure,
     LayoutSeams,
@@ -1344,77 +1395,94 @@ export default {
         onSkip: () => this.endTour(),
         onFinish: () => this.endTour(),
       },
-      // Lite first, then what Expert adds. Each step names the mode it needs.
+      // The four tasks in turn -- understand, narrow, decide, share -- in
+      // Lite, then what Expert adds. Each step names the mode it needs.
+      // A step about the right-hand end of the toolbar is placed "bottom-end":
+      // its right edge on its target's, where centred it would leave the window.
       onboardingStudyTourSteps: [
         tourStep(this, "lite", "#designsense-title", "Welcome to DesignSense",
-          "Explore a collection of design options through their pictures and data: narrow them down, see the trade-offs, pick the few worth keeping, and share why. This tour takes a few minutes. Use the arrow keys or the buttons below.",
+          "DesignSense helps you with four tasks: <b>understand</b> a collection of design options through their pictures and data, <b>narrow</b> it to the options worth pursuing, <b>decide</b> between them, and <b>share</b> the result. This tour covers the tasks in that order and takes a few minutes. In real work you will move back and forth between them. Use the arrow keys or the buttons below to continue.",
           "bottom"),
         tourStep(this, "lite", "#ui-mode-toggle", "Lite and Expert",
-          "<b>Lite</b> keeps things simple: you narrow the options with filters. <b>Expert</b> adds " + EXPERT_ADDS + ". The tour starts in Lite.",
+          "In <b>Lite</b> mode you narrow the options with filters. <b>Expert</b> mode adds " + EXPERT_ADDS + ". The tour starts in Lite.",
           "bottom"),
         tourStep(this, "lite", "#loading-data-bar", "Load your data",
-          "Open one of the prepared datasets, a link or shared folder, or a file from your computer. It is read in your browser and never uploaded. With your own file, DesignSense then shows which columns it read as inputs, outputs and pictures, and you can correct them. This tour uses a small set of used cars.",
+          "A study is a table with one row per option, stored with its pictures and 3D files. Colibri writes one from Grasshopper, and so can any tool of your own (<a href=\"" + guideHref(GUIDE_SECTIONS.generate) + "\" target=\"_blank\">how a study is made</a>). Here you can open a sample study, a link, or a folder or CSV file from your computer. Your data is read in your browser and is never uploaded. When you load your own data, DesignSense shows which columns it read as inputs, outputs and pictures, and you can correct them. This tour uses a small sample of used cars.",
           "bottom"),
-        tourStep(this, "lite", '.v-card[type="Grid"]', "Gallery",
-          "Every option appears here as an image. Sort them from the menu at the top and change the image size on the right. Drag a box over images to keep just those; the others stay, dimmed. Click an image to inspect it, and click it again to stop.",
+
+        tourStep(this, "lite", '.v-card[type="Grid"]', "Understand · Gallery",
+          "Start by looking at the options. The gallery shows every option as an image. Use the menu at the top to sort by any column and see how the designs change with it. The buttons on the right change the image size. Click an image to inspect that option, and click it again to stop inspecting.",
           "right"),
-        tourStep(this, "lite", ".inspector_card", "A closer look",
-          "A bigger look at the option you clicked. The first button lists its values beside the image; an option with more than one view is switched there too, and one with a 3D model opens it with the cube button. On the right you can rate it, write a note on it, and keep it aside on the shortlist. Ratings become a Rating axis you can filter by.",
+        tourStep(this, "lite", ".inspector_card", "Understand · A closer look",
+          "The inspector shows the option you clicked. Its line and its dot are highlighted in the charts, so you can see its form and its performance together. The first button lists its values next to the image. If the option has several views, you can switch between them here, and if it has a 3D model, the cube button opens it. On the right you can rate the option, write a note on it, and add it to the shortlist.",
           "right", () => this.inspectTourOption()),
-        tourStep(this, "lite", ".v-card[type='ScatterPlot']", "Scatterplot",
-          "Each dot is an option. Drag a box to filter by both axes, and choose the axes at the top. Click a dot to inspect it.",
-          "left", () => this.showTourFilter()),
-        tourStep(this, "lite", '.v-card[type="ParallelCoordinatesPlot"]', "Parallel coordinates",
-          "Each line is an option and each axis is a dimension. Drag along an axis to filter it. Drag a title to reorder the axes, or pick them under Axes.",
+        tourStep(this, "lite", '.v-card[type="ParallelCoordinatesPlot"]', "Understand · Parallel coordinates",
+          "Each axis is a dimension and each line is an option, so the lines together show the patterns in the whole collection. Drag an axis title to put two axes next to each other. Lines that run level between them mean the two dimensions rise together. Lines that cross mean one goes up as the other goes down. Use Axes to choose which dimensions are shown.",
           "left"),
-        tourStep(this, "lite", "#dimensions-button", "Goals and your own criteria",
-          "Say which way is better for each output: lower cost, higher daylight. Arrows then mark it on the axes, and Expert's analysis finds the best trade-offs. Here you can also add criteria of your own, entered by hand or weighed from others.",
-          "left"),
-        tourStep(this, "lite", "#filter-bar", "Your filters",
-          "Each filter becomes a chip, and the count shows how many options match. Remove a chip to drop its filter. The arrows after them undo and redo, and the last button clears every filter; Esc stops inspecting, then clears too.",
+        tourStep(this, "lite", "#colour-picker", "Understand · Colour",
+          "One column sets the colours in every view: these lines, the dots in the scatterplot and the border of each image. Choose the column here, or click an axis title. The key next to it shows what the colours mean, and the palette button changes them.",
           "bottom"),
-        tourStep(this, "lite", "#assistant-bar", "Ask or command",
-          "Type what you want in plain words, like “price under 10000” or “what do these have in common”, and the assistant does it or answers. Press / to get here from anywhere.",
+        tourStep(this, "lite", ".v-card[type='ScatterPlot']", "Understand · Scatterplot and overview",
+          "Each dot is an option, positioned by the two dimensions chosen at the top, so the scatterplot shows that one relationship in detail. The overview next to it shows every pair of dimensions at once, and you can click a pair there to plot it. Click a dot to inspect that option.",
+          "left", () => this.openTourOverview()),
+
+        tourStep(this, "lite", "#filter-bar", "Narrow · Your filters",
+          "To keep only the options that meet your criteria, drag along an axis, or drag a box in the scatterplot or over images in the gallery. Each filter appears here as a chip, and the count shows how many options match. Remove a chip to remove its filter. The arrows undo and redo your changes, and the last button clears every filter. Esc stops inspecting, and pressing it again clears the filters.",
+          "bottom", () => this.showTourFilter()),
+        tourStep(this, "lite", "#assistant-bar", "Narrow · Ask or command",
+          "Type a request in plain words, such as “price under 10000” or “what do these have in common”. The assistant carries it out or answers the question. Press / to jump here from anywhere.",
           "bottom"),
-        tourStep(this, "lite", "#data-operations-bar", "Navigate",
-          "Zoom in on the selected options to focus on them, or exclude them instead. Step back undoes the last zoom, and Reset brings back the whole collection.",
+        tourStep(this, "lite", "#data-operations-bar", "Narrow · Navigate",
+          "Zoom in makes the remaining options the whole collection. The charts rescale to fit them, and you can filter again within them. Exclude removes those options from the collection instead. Step back undoes the last zoom or exclusion, and Reset restores the whole collection.",
           "bottom"),
-        tourStep(this, "lite", "#sets-drawer", "Saved sets",
-          "Save the current results along with their filters. Restore a set later to bring those filters back. They wait at the left edge: move the pointer there, or click the tab.",
+        tourStep(this, "lite", "#cart-chip", "Narrow · Your shortlist",
+          "An option that a filter removes may still be worth pursuing, so you can set options aside on the shortlist. The badge shows how many are on it. The shortlist is not affected by filtering, zooming or switching modes, so your candidates stay there while you keep looking. From this menu you can add everything currently shown to the shortlist, save the shortlist as a set, or compare its options.",
+          "bottom-end", () => this.fillTourCart()),
+        tourStep(this, "lite", "#sets-drawer", "Narrow · Saved sets",
+          "A set saves the current options together with the filters that produced them. Restore a set later to continue from that point. You can keep several sets as alternative directions and compare them. Sets are kept in a drawer at the left edge. Move the pointer there or click the tab to open it.",
           "right", () => this.openTourSets()),
-        tourStep(this, "lite", "#cart-chip", "Your shortlist",
-          "Options you set aside gather here, and the badge counts them. The shortlist outlasts filtering, zooming and switching modes, so it is where a few candidates wait while you keep looking. This menu shortlists everything currently shown, saves the shortlist as a set, or compares it.",
-          "bottom", () => this.fillTourCart()),
-        dialogTourStep(this, "lite", ".cmp-card", "Compare",
-          "Up to eight options side by side, each column with its image, its rating and its own shortlist button. Rows that read the same everywhere are dimmed, and in a numeric row the highest and lowest values are marked. Click a row name to sort the columns by it.",
+
+        dialogTourStep(this, "lite", ".dims-dialog", "Decide · Goals and your own criteria",
+          "Set which direction is better for each output. In this example, a lower price and a later year are better. Arrows on the axes then show the better direction, and DesignSense can find the best trade-offs. Further down you can add criteria that are not in the data. A custom dimension holds values you enter by hand, such as a score for looks. A weighted dimension combines several columns into one score.",
+          () => this.openTourDimensions()),
+        tourStep(this, "lite", ".v-card[type='ScatterPlot']", "Decide · Best trade-offs",
+          "When both axes have a goal, this line connects the options that no other option beats on both. The button for it is at the top right of this panel. To find the best trade-offs across all your goals at once, ask the assistant for “the best trade-offs”.",
+          "left", () => this.showTourTradeOffs()),
+        dialogTourStep(this, "lite", ".cmp-card", "Decide · Compare",
+          "Compare shows up to eight options side by side, with their measured values and your own judgements in one table. Each column has the option's image, its rating and a shortlist button. Rows where every option has the same value are dimmed, and in numeric rows the highest and lowest values are marked. Click a row name to sort the columns by that row.",
           () => this.openTourCompare()),
-        tourStep(this, "lite", "#share-menu", "Share and present",
-          "Capture views as you go, each with its filters, goals and shortlist and a note. Present them in a meeting, turn them into a PDF report, or make a one-image summary. The link to the dataset and a CSV download are here too.",
-          "bottom"),
+
+        tourStep(this, "lite", "#share-menu", "Share · Share and present",
+          "Capture views as you work. Each capture saves the filters, goals and shortlist, with a note. You can present your captures in a meeting or turn them into a PDF report. This menu also has a CSV download of the remaining options and a link that opens the same dataset for someone else. The link contains only the data, without your filters or sets.",
+          "bottom-end"),
+        dialogTourStep(this, "lite", ".sm-card", "Share · Summary image",
+          "The summary puts the outcome on one image. It shows the shortlisted options, how they compare with the rest, and findings that you can edit. Download the image, or copy it into a slide, an email or a chat.",
+          () => this.openTourSummary()),
+
         tourStep(this, "expert", "#ui-mode-toggle", "Expert mode",
-          "Expert keeps everything you have seen and adds " + EXPERT_ADDS + ". Instead of filtering, you build a selection.",
+          "Expert mode has everything you have seen so far and adds " + EXPERT_ADDS + ". In Expert you build a selection instead of filtering.",
           "bottom"),
-        tourStep(this, "expert", "#selection-operations-bar", "Selection operations",
-          "Choose how a new selection combines with the current one: replace, add, subtract, toggle, or intersect. Hold Shift to add, Ctrl to subtract, or both to intersect.",
+        tourStep(this, "expert", "#selection-operations-bar", "Expert · Selection operations",
+          "Choose how each new selection combines with the current one: replace, add, subtract, toggle or intersect. You can also hold Shift to add, Ctrl to subtract, or both to intersect.",
           "bottom"),
-        tourStep(this, "expert", "#sets-operations-bar", "Save and compare",
-          "Keep the selected on the shortlist, save them as a set, or compare them side by side. Inverting the selection is under Navigation, and undo, redo and clear sit beside the selection itself.",
+        tourStep(this, "expert", "#sets-operations-bar", "Expert · Save and compare",
+          "Add the selected options to the shortlist, save them as a set, or compare them side by side. Inverting the selection is under Navigate. Undo, redo and clear are next to the selection.",
           "bottom"),
-        tourStep(this, "expert", ".v-card[type='ScatterPlot'] div.cluster-view", "Clusters",
-          "Clusters group options that are similar on the dimensions you choose. Each image stands for a group. Click it to select the whole group.",
+        tourStep(this, "expert", ".v-card[type='ScatterPlot'] div.cluster-view", "Expert · Clusters",
+          "Clusters are another way to understand a large collection. They group options that are similar on the dimensions you choose. Each image represents one group. Click an image to select the whole group.",
           "left", () => this.$store.commit("setClusteringPanelOpen", { value: true })),
-        tourStep(this, "expert", ".inspector_card", "Inspection",
-          "Click any option to inspect it, or hold Space and move over options. The pointer button here inspects on hover without holding Space, and the pin keeps an option here after you let go. Both are in the right-click menu too.",
+        tourStep(this, "expert", ".inspector_card", "Expert · Inspection",
+          "Click any option to inspect it, or hold Space and move the pointer over options. The pointer button here turns on inspecting on hover, so you do not have to hold Space. The pin keeps an option in the inspector after you move away. Both are also in the right-click menu.",
           "right", () => this.inspectTourOption()),
-        dialogTourStep(this, "expert", ".sx-card", "Analysis",
-          "The whole collection at a glance, rather than what is on screen. At the top, every dimension's average, standard deviation and spread. Then the outliers, which can be left out of the reading, and the best trade-offs by the goals set under Dimensions. Below, which inputs move which outputs: name the parameters and the results, or start their columns with in: and out: and the file names them for you. Each of the three measures answers a different question, and the panel says in the open that a reading is only as good as the sampling behind it.",
+        dialogTourStep(this, "expert", ".sx-card", "Expert · Analysis",
+          "Analysis summarises the whole collection. At the top it shows the average, standard deviation and spread of every dimension. Next come the outliers, which you can leave out of the analysis, and the best trade-offs for the goals you set under Dimensions, which you can keep with one click. The last part shows which inputs affect which outputs. Tell it which columns are inputs and which are outputs, or start their names with in: and out: in the file. It offers three measures, and each answers a different question. The panel also notes that these results depend on how well the design space was sampled.",
           () => this.openTourSensitivity()),
-        tourStep(this, "expert", "#editing-mode", "Your layout",
-          "The arrangements are here, and which views are on screen at all. The edge between two panels can be dragged to resize them; this menu also turns on editing, to move a panel somewhere else, which Done or the ` key stops.",
-          "bottom"),
-        tourStep(this, "lite", "#designsense-title", "You're ready",
-          "You're back in Lite. Switch to Expert whenever you need more control, and right-click the workspace for quick actions. The help menu has this tour and every shortcut. To tell us what works and what doesn't, use Help → Send feedback.",
-          "bottom", () => this.clearTourExample()),
+        tourStep(this, "expert", "#editing-mode", "Expert · Your layout",
+          "Use this menu to choose an arrangement of the panels and which views are shown. Drag the edge between two panels to resize them. To move a panel, turn on editing from this menu. Press Done or the ` key when you have finished.",
+          "bottom-end"),
+        tourStep(this, "lite", "#help-menu", "You're ready",
+          "You are back in Lite. Switch to Expert whenever you need more control, and right-click the workspace for quick actions. This menu lets you take the tour again, see every keyboard shortcut, and open the guide. The guide follows a study from making the data through the same four tasks. To tell us what works and what does not, use Send feedback in this menu.",
+          "bottom-end", () => this.clearTourExample()),
       ],
       operationsList: operations,
       actions: {
@@ -1602,9 +1670,25 @@ export default {
       // Opened from the error notice rather than the help menu.
       feedbackFromError: false,
       appVersion: APP_VERSION,
+      // The way a study takes, as the welcome names it and the guide follows.
+      guideSteps: [
+        "Generate",
+        "Prepare",
+        "Load",
+        "Understand",
+        "Narrow",
+        "Decide",
+        "Share",
+      ],
+      guideSections: GUIDE_SECTIONS,
+      guideLinks: { home: guideHref(), link: guideHref(GUIDE_SECTIONS.link) },
+      // Whether the guide has been asked for in this workspace.
+      guideSeen: false,
       showWelcomeAtStart: readShowWelcome(),
       isClearWorkDialogOn: false,
       isTourDialogOn: false,
+      // The sample a link in the guide asked for, while that is confirmed.
+      sampleAsked: null,
       // Set while editing is turned on from the layout dialog, so answering
       // the prompt doesn't raise it again.
       layoutAsked: loadLayoutAsked(),
@@ -1634,6 +1718,7 @@ export default {
     clearTimeout(this.copiedTimer);
     clearTimeout(this.tourDialogTimer);
     clearTimeout(this.columnsTimer);
+    clearTimeout(this.linkTimer);
   },
   created() {
     document.title = "DesignSense";
@@ -1653,15 +1738,30 @@ export default {
     // up across the startup loads of a first visit, until it is closed or
     // the user loads data of their own.
     let startup = loadState.source === null || loadState.source === "startup";
+    // Someone who followed a link to a sample, the tour or a dialog came
+    // for that, not to be welcomed.
+    if (pendingAppLink.asked) welcome.pending = false;
     this.$store.commit("setIsOpeningDialogOn", {
       value: welcome.pending && startup && !tour.pending,
     });
+    this.$watch(
+      () => this.$store.state.guideDialog.open,
+      (open) => {
+        if (open) this.guideSeen = true;
+      }
+    );
     if (!startup) welcome.pending = false;
     // A tour started from other data loads the sample first; the workspace
     // that sample mounts starts the tour.
     if (tour.pending && loadState.source === "tour") {
       tour.pending = false;
-      setTimeout(() => this.$tours["onboardingTour"].start(), 300);
+      let at = this.takeTourStart();
+      setTimeout(() => this.$tours["onboardingTour"].start(at), 300);
+    } else if (pendingAppLink.tour && loadState.source === "tour") {
+      // The address asked for the tour: nothing has made room for it yet.
+      tour.at = pendingAppLink.tour;
+      pendingAppLink.tour = null;
+      setTimeout(() => this.startTour({ reload: false }), 300);
     }
   },
   mounted() {
@@ -1679,6 +1779,12 @@ export default {
       this.columnsTimer = setTimeout(() => {
         this.$store.commit("setColumnsDialog", { open: true });
       }, 700);
+    }
+    // A dialog the address asked for, once there is a dataset behind it.
+    if (pendingAppLink.open && this.$store.state.datasetKey) {
+      let what = pendingAppLink.open;
+      pendingAppLink.open = null;
+      this.linkTimer = setTimeout(() => this.openFromLink(what), 600);
     }
     // The observer also catches size changes no window resize event reports;
     // both feed the same delayed measurement.
@@ -1737,22 +1843,22 @@ export default {
     /** What the welcome screen says about the data open behind it. */
     welcomeDataset() {
       if (loadState.loading) {
-        return { title: "Look around", text: "The data is loading…" };
+        return { title: "Look around", text: "Loading…" };
       }
       let count = this.$store.state.rawData.length;
       let options = count.toLocaleString() + (count === 1 ? " option" : " options");
       let preset = presetFor(loadState.link);
       let shared = loadState.source === "startup" && loadState.link !== DEFAULT_DATASET_URL;
       if (shared && !preset) {
-        return { title: "Shared with you", text: "The link you opened holds " + options + "." };
+        return { title: "Shared with you", text: options + "." };
       }
       if (preset) {
         return {
           title: shared ? "Shared with you" : "Look around",
-          text: "The " + preset.name + " sample is open: " + options + ".",
+          text: preset.name + ": " + options + ".",
         };
       }
-      return { title: "Look around", text: "Your data is open: " + options + "." };
+      return { title: "Look around", text: "Your data: " + options + "." };
     },
     storeNotice() {
       return this.$store.state.notice;
@@ -1816,10 +1922,15 @@ export default {
      * What the last load left to say. The load dialog shows its own errors, so
      * only a load nobody watched reports one here.
      */
-    /** Whether the user loaded this dataset themselves, from a file or a link. */
+    /**
+     * Whether the user loaded this dataset themselves, from a file, a folder
+     * or a link.
+     */
     ownDataLoaded() {
       return (
-        (loadState.source === "file" || loadState.source === "url") &&
+        (loadState.source === "file" ||
+          loadState.source === "folder" ||
+          loadState.source === "url") &&
         !!loadState.columns
       );
     },
@@ -1942,8 +2053,12 @@ export default {
     track() {
       this.$gtag.pageview("/");
     },
-    /** The tour walks through the sample data; loading it replaces other data, so ask first. */
-    requestTour() {
+    /**
+     * The tour walks through the sample data; loading it replaces other data,
+     * so ask first. `at` is the task to begin with, from the start if none.
+     */
+    requestTour(at) {
+      tour.at = typeof at === "string" ? at : null;
       if (loadState.link === DEFAULT_DATASET_URL) {
         this.startTour({ reload: false });
       } else {
@@ -1959,11 +2074,15 @@ export default {
       this.layoutBeforeTour = {
         layouts: this.layouts.map((panel) => Object.assign({}, panel)),
         preset: this.layoutPreset,
+        // The scatterplot's side panel: the tour shows the overview, then
+        // the clusters in its place.
+        matrix: this.$store.state.isMatrixPanelOpen,
+        clusters: this.$store.state.isClusteringPanelOpen,
       };
       this.$store.commit("applyLayoutPreset", { id: "balanced" });
       if (options && options.reload === false) {
         this.$store.dispatch("clearFilters");
-        this.$tours["onboardingTour"].start();
+        this.$tours["onboardingTour"].start(this.takeTourStart());
         return;
       }
       tour.pending = true;
@@ -1975,6 +2094,63 @@ export default {
           tour.pending = false;
           /* loadState.error carries the message */
         });
+    },
+    /**
+     * The guide over the workspace: at `section` (one of guide.js's), or
+     * where it was last left.
+     */
+    openGuide(section) {
+      this.$store.dispatch(
+        "openGuide",
+        typeof section === "string" ? { section: section } : undefined
+      );
+    },
+    /**
+     * The step the tour was asked to begin with: the first of a task's,
+     * which sets up what it shows by itself. Asked once, then forgotten.
+     */
+    takeTourStart() {
+      let task = tour.at;
+      tour.at = null;
+      if (!task || task === "start") return 0;
+      let prefix = task.charAt(0).toUpperCase() + task.slice(1) + " ·";
+      let index = this.onboardingStudyTourSteps.findIndex(
+        (step) => step.header.title.indexOf(prefix) === 0
+      );
+      return index > 0 ? index : 0;
+    },
+    /**
+     * A link in the guide that asks something of the app (see appLinks.js):
+     * the guide steps aside, and the app does it here, on this screen.
+     */
+    followAppLink(link) {
+      this.$store.dispatch("closeGuide");
+      if (link.tour) {
+        this.requestTour(link.tour);
+      } else if (link.sample) {
+        let preset = presetById(link.sample);
+        if (!preset || loadState.link === preset.url) return;
+        // A sample's own work is kept either way; data of the user's own
+        // is not swapped out without a word.
+        if (this.ownDataLoaded) this.sampleAsked = preset;
+        else this.openSample(preset);
+      } else if (link.open) {
+        this.openFromLink(link.open);
+      }
+    },
+    openSample(preset) {
+      this.sampleAsked = null;
+      loadDataset(preset.url, { source: "preset" }).catch(() => {
+        /* loadState.error carries the message */
+      });
+    },
+    /** A dialog a link names: "load" or "dimensions". */
+    openFromLink(what) {
+      if (what === "load" && this.$refs.loadData) {
+        this.$refs.loadData.dialog = true;
+      } else if (what === "dimensions") {
+        this.$store.dispatch("openDimensionDialog", { mode: "manage" });
+      }
     },
     openFeedback(fromError) {
       this.feedbackFromError = fromError;
@@ -2088,8 +2264,7 @@ export default {
       // The steps that read a dialog or the sets' drawer open it themselves;
       // every other step is about the workspace, which those cover. Closing
       // here also means stepping backwards past one leaves nothing behind.
-      store.dispatch("closeCompare");
-      store.dispatch("closeSensitivity");
+      this.closeTourDialogs();
       store.commit("setSetsDrawer", { open: false });
       let switching = store.state.uiMode !== mode;
       if (switching) store.dispatch("setUiMode", mode);
@@ -2111,11 +2286,24 @@ export default {
         this.$store.commit("setLayoutPreset", {
           id: this.layoutBeforeTour.preset,
         });
+        this.$store.commit("setClusteringPanelOpen", {
+          value: this.layoutBeforeTour.clusters,
+        });
+        this.$store.commit("setMatrixPanelOpen", {
+          value: this.layoutBeforeTour.matrix,
+        });
         this.layoutBeforeTour = null;
       }
+      this.closeTourDialogs();
+      this.$store.commit("setSetsDrawer", { open: false });
+    },
+    /** Every dialog a step of the tour opens. */
+    closeTourDialogs() {
       this.$store.dispatch("closeCompare");
       this.$store.dispatch("closeSensitivity");
-      this.$store.commit("setSetsDrawer", { open: false });
+      this.$store.dispatch("closeDimensionDialog");
+      this.$store.dispatch("closeSummary");
+      this.$store.dispatch("closeGuide");
     },
     /** Filters the tour's used-car data, so the filter chips have something to show. */
     showTourFilter() {
@@ -2154,6 +2342,46 @@ export default {
     openTourCompare() {
       this.fillTourCart();
       this.$store.dispatch("openCompare", { source: "cart" });
+      return this.settleTourDialog();
+    },
+    /** The overview of dimension pairs, beside the scatterplot. */
+    openTourOverview() {
+      this.$store.commit("setMatrixPanelOpen", { value: true });
+      return 300;
+    },
+    /**
+     * Goals for the tour's used-car data, so the arrows, the Dimensions
+     * dialog and the best trade-offs have something to show. Only where
+     * nothing has been said yet: a goal the user set or took away is theirs.
+     */
+    setTourGoals() {
+      let store = this.$store;
+      let dims = store.state.numericDimensions;
+      [["price", "min"], ["year", "max"]].forEach((pair) => {
+        if (!dims.includes(pair[0])) return;
+        if (store.getters.goalSource(pair[0]) !== null) return;
+        store.dispatch("setGoal", { dim: pair[0], goal: pair[1] });
+      });
+    },
+    openTourDimensions() {
+      this.setTourGoals();
+      this.$store.dispatch("openDimensionDialog", { mode: "manage" });
+      return this.settleTourDialog();
+    },
+    /** The two dimensions with goals on the scatterplot, which then draws their front. */
+    showTourTradeOffs() {
+      this.setTourGoals();
+      let store = this.$store;
+      let dims = store.state.numericDimensions;
+      if (dims.includes("price") && dims.includes("year")) {
+        store.commit("setViewSetting", { key: "scatterX", value: "year" });
+        store.commit("setViewSetting", { key: "scatterY", value: "price" });
+      }
+      return 300;
+    },
+    openTourSummary() {
+      this.fillTourCart();
+      this.$store.dispatch("openSummary");
       return this.settleTourDialog();
     },
     openTourSensitivity() {

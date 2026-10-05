@@ -4,22 +4,25 @@ import { b64EncodeUnicode } from "./shareLink.js";
 
 /*
  * Where datasets come from: a CSV link, a folder on a web server, a Google
- * Drive or OneDrive folder, or a file on the user's computer. Every failure is
- * a LoadError with a message for the user.
+ * Drive or OneDrive folder, or a file or a folder on the user's computer.
+ * Every failure is a LoadError with a message for the user.
  */
 
 const ONEDRIVE_SHARES_API = "https://api.onedrive.com/v1.0/shares/";
 
 // What to do when a shared cloud folder can't be read from the browser.
 const CLOUD_HINT =
-  "Download the folder and open its data.csv from your computer, or put the folder on a web server (a GitHub repository works) and use that link.";
+  "Download the folder and choose it under From your computer, or put the folder on a web server (a GitHub repository works) and use that link.";
 
 /**
- * Works out what `input` is: `{ file }` for a local file, otherwise a link.
- * Returns `{ kind, ... }` with kind "file", "csv", "server" or "onedrive". `link` is what reopens the dataset from a share link.
+ * Works out what `input` is: `{ file }` for a local file, `{ folder }` for a
+ * local folder (its files as `[{ path, file }]`, each path counted from the
+ * folder), otherwise a link.
+ * Returns `{ kind, ... }` with kind "file", "folder", "csv", "server" or "onedrive". `link` is what reopens the dataset from a share link.
  */
 export function resolveSource(input) {
   if (input && input.file) return { kind: "file", file: input.file };
+  if (input && input.folder) return { kind: "folder", entries: input.folder };
   let url = parseHttpUrl(typeof input === "string" ? input : "");
   let host = url.hostname.toLowerCase();
 
@@ -87,12 +90,14 @@ function parseHttpUrl(text) {
  * Downloads a resolved source as `{ text, baseUrl, files, rawFiles, link }`:
  * the CSV text, where relative file names resolve from, a folder's files by
  * name (`rawFiles` holding the originals, companions included), and the link
- * that reopens the dataset (none for local files).
+ * that reopens the dataset (none for local files). A local folder also comes
+ * with its CSV's `name` and a `release` to call once it is off the screen.
  */
 export function fetchSource(source) {
   if (source.kind === "file") {
     return readFileText(source.file).then((text) => ({ text: text }));
   }
+  if (source.kind === "folder") return readLocalFolder(source.entries);
   if (source.kind === "csv" || source.kind === "server") {
     let notFound =
       source.kind === "server"
@@ -315,22 +320,78 @@ export function listOneDriveFolder(link) {
   });
 }
 
-/** The folder's data.csv (any case), or its only CSV file. */
-export function pickDataCsv(folder) {
+/**
+ * The folder's data.csv (any case), or its only CSV file. A local folder
+ * names its files by path, so a data.csv one folder down is found too, when
+ * it is the only one. `noCsvMessage` replaces what is said of a shared folder
+ * that holds none.
+ */
+export function pickDataCsv(folder, noCsvMessage) {
   let names = Object.keys(folder.csv);
+  let isDataCsv = (name) => name.toLowerCase() === "data.csv";
+  let nested = names.filter((name) => isDataCsv(name.split("/").pop()));
   let match =
-    names.filter((name) => name.toLowerCase() === "data.csv")[0] ||
+    names.filter(isDataCsv)[0] ||
+    (nested.length === 1 ? nested[0] : null) ||
     (names.length === 1 ? names[0] : null);
   if (!match) {
     throw new LoadError(
       names.length === 0
-        ? "No data.csv was found in that folder. Check that it holds data.csv and is shared publicly."
+        ? noCsvMessage ||
+          "No data.csv was found in that folder. Check that it holds data.csv and is shared publicly."
         : "That folder has several CSV files (" +
           names.join(", ") +
           ") but none named data.csv."
     );
   }
   return folder.csv[match];
+}
+
+/**
+ * A folder on the user's computer, read where it is. Each picture and model
+ * gets an object URL, which is to a local file what a download link is to a
+ * shared one, so the rest of the loader treats the folder as it does
+ * OneDrive's. Nothing but the CSV is read until a view asks for a file.
+ */
+function readLocalFolder(entries) {
+  let folder = emptyFolder();
+  let csvFiles = {};
+  let urls = [];
+  let release = () => urls.forEach((url) => URL.revokeObjectURL(url));
+  (entries || []).forEach((entry) => {
+    let file = entry.file;
+    let name = entry.path || file.name;
+    if (/\.(csv|tsv)$/i.test(name) || file.type === "text/csv") {
+      csvFiles[name] = file;
+      folder.csv[name] = name;
+      return;
+    }
+    let url = URL.createObjectURL(file);
+    urls.push(url);
+    // Windows knows a .json's type only when some program has registered it.
+    let type = file.type || (/\.json$/i.test(name) ? "application/json" : "");
+    addToFolder(folder, name, type, url);
+  });
+  return Promise.resolve()
+    .then(() =>
+      pickDataCsv(
+        folder,
+        "No CSV file was found in that folder. Choose the folder that holds data.csv."
+      )
+    )
+    .then((name) =>
+      readFileText(csvFiles[name]).then((text) => ({
+        text: text,
+        files: folder.files,
+        rawFiles: folder.raw,
+        name: name.split("/").pop(),
+        release: release,
+      }))
+    )
+    .catch((error) => {
+      release();
+      throw error;
+    });
 }
 
 function readFileText(file) {

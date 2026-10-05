@@ -1,0 +1,862 @@
+/*
+ * How the guide looks, wherever it is shown: the dialog in the app and the
+ * wiki page (which also carries this file in its own HTML, so the guide is
+ * dressed before any script runs). Plain CSS with every rule under .gd-, as
+ * the guide's elements come from Markdown and no component owns them.
+ */
+
+.gd {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 860px);
+  gap: 40px;
+  justify-content: center;
+  color: #263238;
+}
+.gd-main {
+  min-width: 0;
+}
+
+/* The contents: a search box, then the sections under their parts. */
+.gd-nav {
+  position: sticky;
+  top: var(--gd-top, 0px);
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--gd-top, 0px) - 24px);
+  overflow-y: auto;
+}
+.gd-search {
+  position: relative;
+  margin-bottom: 14px;
+}
+.gd-search input {
+  width: 100%;
+  padding: 7px 28px 7px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: #263238;
+  background: #fff;
+  border: 1px solid #cfd8dc;
+  border-radius: 6px;
+  outline: none;
+}
+.gd-search input:focus {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+}
+.gd-search-clear {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 20px;
+  color: #78909c;
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.gd-search-clear:hover {
+  color: #263238;
+  background: #eceff1;
+}
+.gd-group {
+  margin: 10px 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #78909c;
+}
+.gd-group:first-child {
+  margin-top: 0;
+}
+.gd .gd-link {
+  display: block;
+  padding: 5px 10px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: #455a64;
+  text-decoration: none;
+  border-left: 2px solid #e3e8eb;
+}
+.gd .gd-link:hover {
+  color: #1565c0;
+}
+.gd .gd-link--on {
+  font-weight: 600;
+  color: #1565c0;
+  border-left-color: #1976d2;
+}
+.gd-all {
+  align-self: flex-start;
+  margin-top: 14px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: #546e7a;
+  background: none;
+  border: 1px solid #dfe5e8;
+  border-radius: 16px;
+  cursor: pointer;
+}
+.gd-all:hover {
+  color: #1565c0;
+  border-color: #90caf9;
+}
+
+/* What a search found, in place of the contents. */
+.gd-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gd .gd-result {
+  display: block;
+  padding: 7px 10px;
+  text-decoration: none;
+  border-left: 2px solid #e3e8eb;
+}
+.gd .gd-result:hover {
+  background: #f1f4f6;
+  border-left-color: #1976d2;
+}
+.gd .gd-result-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #263238;
+}
+.gd .gd-result-text {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #607d8b;
+}
+.gd .gd-result-text mark,
+.gd .gd-doc mark.gd-hit {
+  padding: 0 1px;
+  color: inherit;
+  background: #fff2a8;
+  border-radius: 2px;
+}
+.gd-none {
+  padding: 6px 2px;
+  font-size: 13px;
+  color: #78909c;
+}
+
+/* Previous and next, under a section shown on its own. */
+.gd-pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid #e3e8eb;
+}
+.gd-pager button {
+  max-width: 48%;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  color: #1565c0;
+  background: #fff;
+  border: 1px solid #dfe5e8;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.gd-pager button:hover {
+  border-color: #90caf9;
+}
+.gd-pager button small {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #78909c;
+}
+.gd-pager .gd-pager-next {
+  margin-left: auto;
+  text-align: right;
+}
+
+/* The guide itself. */
+.gd .gd-doc {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #37474f;
+}
+.gd .gd-doc h1 {
+  margin: 0 0 12px;
+  font-size: 32px;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #263238;
+}
+.gd .gd-doc h1 + p {
+  font-size: 17px;
+  line-height: 1.55;
+  color: #455a64;
+}
+.gd .gd-doc h2 {
+  margin: 44px 0 14px;
+  padding-top: 28px;
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: #263238;
+  border-top: 1px solid #e3e8eb;
+  scroll-margin-top: var(--gd-top, 0px);
+}
+.gd .gd-doc h3 {
+  margin: 28px 0 8px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #263238;
+  scroll-margin-top: calc(var(--gd-top, 0px) + 16px);
+}
+.gd .gd-doc p {
+  margin: 0 0 14px;
+}
+.gd .gd-doc a {
+  color: #1565c0;
+  text-decoration: none;
+}
+.gd .gd-doc a:hover {
+  text-decoration: underline;
+}
+.gd .gd-doc ul,
+.gd .gd-doc ol {
+  margin: 0 0 14px;
+  padding-left: 24px;
+}
+.gd .gd-doc li {
+  margin-bottom: 5px;
+}
+.gd .gd-doc img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 20px 0 10px;
+  border: 1px solid #dfe5e8;
+  border-radius: 8px;
+  background: #fff;
+}
+/* Screenshots stand out; the diagrams sit flat. */
+.gd .gd-doc img[src$=".jpg"] {
+  box-shadow: 0 6px 24px rgba(38, 50, 56, 0.12);
+}
+/* A line of italics on its own under a picture is its caption. A picture
+   written as an <img>, to give it a width, stands outside any paragraph. */
+.gd .gd-doc img + p > em:only-child,
+.gd .gd-doc p:has(> img) + p > em:only-child,
+.gd .gd-doc .md-live + p > em:only-child {
+  display: block;
+  font-size: 13px;
+  font-style: normal;
+  color: #607d8b;
+}
+/* The same at the head of a section says what the section's task is. */
+.gd .gd-doc .md-section-body > p:first-child > em:only-child {
+  display: block;
+  padding-left: 14px;
+  font-size: 16px;
+  line-height: 1.55;
+  color: #455a64;
+  border-left: 3px solid #1976d2;
+}
+.gd .gd-doc .md-table {
+  margin: 0 0 18px;
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e3e8eb;
+  border-radius: 8px;
+}
+.gd .gd-doc table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.gd .gd-doc th,
+.gd .gd-doc td {
+  padding: 9px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #eceff1;
+}
+.gd .gd-doc th {
+  font-weight: 600;
+  white-space: nowrap;
+  color: #263238;
+  background: #f4f6f8;
+}
+.gd .gd-doc tr:last-child td {
+  border-bottom: 0;
+}
+.gd .gd-doc code {
+  padding: 1px 5px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #263238;
+  background: #eceff1;
+  border-radius: 4px;
+  box-shadow: none;
+}
+.gd .gd-doc pre {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  line-height: 1.5;
+  background: #fff;
+  border: 1px solid #e3e8eb;
+  border-radius: 8px;
+}
+.gd .gd-doc pre code {
+  padding: 0;
+  background: none;
+}
+.gd .gd-doc blockquote {
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  background: #eef5fc;
+  border-left: 4px solid #1976d2;
+  border-radius: 0 8px 8px 0;
+}
+.gd .gd-doc blockquote p:last-child {
+  margin-bottom: 0;
+}
+/* A <details> the guide itself writes, such as the paper's abstract. */
+.gd .gd-doc details:not(.md-section) {
+  margin: 12px 0 18px;
+  padding: 10px 16px;
+  background: #fff;
+  border: 1px solid #e3e8eb;
+  border-radius: 8px;
+}
+.gd .gd-doc details:not(.md-section) > summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: #37474f;
+}
+.gd .gd-doc details:not(.md-section) p {
+  margin: 10px 0 4px;
+}
+
+/* The contents the guide writes for itself, which GitHub shows. Here the
+   side of the page has them, so they are kept for a page without scripts
+   and put away once the shell is up. */
+.gd--ready .md-contents {
+  display: none;
+}
+
+/* The guide's sections, each folded under its heading (see
+   build/markdown-loader.js): closed, the page is the list of them. */
+.gd .gd-doc .md-section {
+  border-top: 1px solid #e3e8eb;
+}
+.gd .gd-doc .md-section:first-of-type {
+  margin-top: 28px;
+}
+.gd .gd-doc .md-section:last-of-type {
+  border-bottom: 1px solid #e3e8eb;
+}
+.gd .gd-doc .md-section > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 4px;
+  cursor: pointer;
+  list-style: none;
+  border-radius: 6px;
+}
+.gd .gd-doc .md-section > summary::-webkit-details-marker {
+  display: none;
+}
+.gd .gd-doc .md-section > summary:hover {
+  background: #f1f4f6;
+}
+.gd .gd-doc .md-section > summary:hover h2 {
+  color: #1565c0;
+}
+/* A chevron: pointing along while folded, down once open. */
+.gd .gd-doc .md-section > summary::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  margin: 0 4px 0 2px;
+  border-right: 2px solid #78909c;
+  border-bottom: 2px solid #78909c;
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+}
+.gd .gd-doc .md-section[open] > summary::before {
+  transform: rotate(45deg);
+}
+.gd .gd-doc .md-section > summary h2 {
+  margin: 0;
+  padding: 0;
+  font-size: 21px;
+  border: 0;
+}
+.gd .gd-doc .md-section-body {
+  padding: 4px 0 20px;
+}
+
+/* One section at a time, as the dialog shows the guide: the section is the
+   page, so its heading is a title and nothing folds. */
+.gd--single .md-intro[hidden],
+.gd--single .md-section[hidden] {
+  display: none;
+}
+.gd--single .gd-doc .md-section {
+  margin-top: 0;
+  border: 0;
+}
+.gd--single .gd-doc .md-section > summary {
+  padding: 0 0 6px;
+  cursor: default;
+  pointer-events: none;
+}
+.gd--single .gd-doc .md-section > summary::before {
+  display: none;
+}
+.gd--single .gd-doc .md-section > summary h2 {
+  font-size: 26px;
+}
+
+/* Under 1000px the contents go across the top as one scrolling row. */
+@media (max-width: 1000px) {
+  .gd {
+    display: block;
+  }
+  .gd-nav {
+    top: var(--gd-top, 0px);
+    z-index: 2;
+    max-height: none;
+    margin: 0 -16px 20px;
+    padding: 8px 16px;
+    background: #fafbfc;
+    border-bottom: 1px solid #e3e8eb;
+  }
+  .gd-search {
+    margin-bottom: 8px;
+  }
+  .gd-list {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+  }
+  .gd-group {
+    display: none;
+  }
+  .gd .gd-link {
+    flex: 0 0 auto;
+    padding: 4px 12px;
+    font-size: 13px;
+    white-space: nowrap;
+    background: #fff;
+    border: 1px solid #dfe5e8;
+    border-radius: 16px;
+  }
+  .gd .gd-link--on {
+    color: #fff;
+    background: #1976d2;
+    border-color: #1976d2;
+  }
+  .gd .gd-link--on:hover {
+    color: #fff;
+  }
+  .gd-all {
+    flex: 0 0 auto;
+    align-self: center;
+    margin-top: 0;
+    white-space: nowrap;
+    background: #fff;
+  }
+  .gd-results {
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+  .gd .gd-doc h2 {
+    scroll-margin-top: calc(var(--gd-top, 0px) + 96px);
+  }
+  .gd .gd-doc h3 {
+    scroll-margin-top: calc(var(--gd-top, 0px) + 112px);
+  }
+}
+@media (max-width: 600px) {
+  .gd .gd-doc h1 {
+    font-size: 25px;
+  }
+  .gd .gd-doc h2 {
+    font-size: 21px;
+  }
+}
+
+/* A printed guide is the whole guide and nothing around it. */
+@media print {
+  .gd {
+    display: block;
+  }
+  .gd-nav,
+  .gd-pager {
+    display: none;
+  }
+}
+
+/* ---- What the Markdown asks for beyond Markdown (build/markdown-loader.js) ---- */
+
+.gd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* A callout: GitHub's "> [!TIP]" and its kin. */
+.gd .gd-doc .md-callout {
+  padding: 12px 16px 12px 14px;
+  background: #eef5fc;
+  border-left: 4px solid #1976d2;
+}
+.gd .gd-doc .md-callout-title {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1565c0;
+}
+.gd .gd-doc .md-callout--tip {
+  background: #edf7ee;
+  border-left-color: #43a047;
+}
+.gd .gd-doc .md-callout--tip .md-callout-title {
+  color: #2e7d32;
+}
+.gd .gd-doc .md-callout--warning,
+.gd .gd-doc .md-callout--caution {
+  background: #fff6e5;
+  border-left-color: #f59f00;
+}
+.gd .gd-doc .md-callout--warning .md-callout-title,
+.gd .gd-doc .md-callout--caution .md-callout-title {
+  color: #b26a00;
+}
+.gd .gd-doc .md-callout--important {
+  background: #f4effb;
+  border-left-color: #7e57c2;
+}
+.gd .gd-doc .md-callout--important .md-callout-title {
+  color: #5e35b1;
+}
+
+/* A picture with the text beside it. */
+.gd .gd-doc img[align="right"] {
+  float: right;
+  max-width: 46%;
+  margin: 4px 0 14px 28px;
+}
+.gd .gd-doc img[align="left"] {
+  float: left;
+  max-width: 46%;
+  margin: 4px 28px 14px 0;
+}
+.gd .gd-doc h2,
+.gd .gd-doc h3,
+.gd .gd-doc .md-section,
+.gd .gd-doc .md-table,
+.gd .gd-doc .md-tabs,
+.gd .gd-doc pre {
+  clear: both;
+}
+.gd .gd-doc .md-section-body::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+/* A picture shown smaller than it is opens at full size. */
+.gd .gd-doc img[src*=".jpg"] {
+  cursor: zoom-in;
+}
+.gd-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(20, 28, 33, 0.82);
+  cursor: zoom-out;
+}
+.gd-zoom img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+}
+
+/* A list as cards. */
+.gd .gd-doc ul.md-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+.gd .gd-doc ul.md-cards > li {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  background: #fff;
+  border: 1px solid #e3e8eb;
+  border-radius: 8px;
+}
+.gd .gd-doc ul.md-cards > li > a:first-child,
+.gd .gd-doc ul.md-cards > li > strong:first-child {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Sections as tabs, once a script has put the row of titles above them;
+   until then, and on paper, they read one under another. */
+.gd .gd-doc .md-tabbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin: 22px 0 0;
+  border-bottom: 1px solid #dfe5e8;
+}
+.gd .gd-doc .md-tabbtn {
+  margin-bottom: -1px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 14px;
+  color: #546e7a;
+  background: none;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+}
+.gd .gd-doc .md-tabbtn:hover {
+  color: #1565c0;
+}
+.gd .gd-doc .md-tabbtn--on {
+  font-weight: 600;
+  color: #1565c0;
+  background: #fff;
+  border-color: #dfe5e8;
+}
+.gd .gd-doc .md-tabs--on {
+  margin-bottom: 22px;
+}
+.gd .gd-doc .md-tabs--on > .md-tab {
+  display: none;
+  padding: 18px 18px 6px;
+  background: #fff;
+  border: 1px solid #dfe5e8;
+  border-top: 0;
+  border-radius: 0 0 8px 8px;
+}
+.gd .gd-doc .md-tabs--on > .md-tab--on {
+  display: block;
+}
+.gd .gd-doc .md-tabs--on > .md-tab > h3:first-child {
+  display: none;
+}
+
+/* A link into the app: something to try. */
+.gd .gd-doc a.md-try {
+  display: inline-block;
+  margin: 2px 0;
+  padding: 3px 12px 3px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1565c0;
+  background: #fff;
+  border: 1px solid #90caf9;
+  border-radius: 16px;
+  white-space: nowrap;
+}
+.gd .gd-doc a.md-try::before {
+  content: "▸ ";
+}
+.gd .gd-doc a.md-try:hover {
+  text-decoration: none;
+  background: #e3f2fd;
+}
+
+/* A live example, in the place of the picture it stands in for. */
+.gd .gd-doc .md-live {
+  margin: 20px 0 10px;
+}
+.gd .gd-doc .md-live--on > p,
+.gd .gd-doc .md-live--on > img {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .gd .gd-doc img[align="right"],
+  .gd .gd-doc img[align="left"] {
+    float: none;
+    max-width: 100%;
+    margin: 20px 0 10px;
+  }
+}
+@media print {
+  .gd .gd-doc .md-tabbar {
+    display: none;
+  }
+  .gd .gd-doc .md-tabs--on > .md-tab {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+  .gd .gd-doc .md-tabs--on > .md-tab > h3:first-child {
+    display: block;
+  }
+  .gd-zoom {
+    display: none;
+  }
+}
+
+/* ---- The guide as a page of its own (GuidePage.vue, public/wiki.html) ---- */
+
+.gp-page {
+  margin: 0;
+  background: #fafbfc;
+}
+.gp {
+  min-height: 100vh;
+  font-family: Roboto, "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: #263238;
+  background: #fafbfc;
+}
+.gp,
+.gp *,
+.gp *::before,
+.gp *::after {
+  box-sizing: border-box;
+}
+.gp-bar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 56px;
+  padding: 0 24px;
+  background: #272727;
+}
+.gp-brand {
+  font-size: 20px;
+  font-weight: 500;
+  color: #fff;
+  text-decoration: none;
+}
+.gp-brand sup {
+  margin-left: 2px;
+  font-size: 10px;
+  color: deepskyblue;
+}
+.gp-name {
+  padding-left: 14px;
+  font-size: 15px;
+  color: #cfd8dc;
+  border-left: 1px solid #546e7a;
+}
+.gp-space {
+  flex: 1 1 auto;
+}
+.gp-open {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  text-decoration: none;
+  background: #1976d2;
+  border-radius: 4px;
+}
+.gp-open:hover {
+  background: #1e88e5;
+}
+.gp-body {
+  --gd-top: 80px;
+  padding: 32px 24px 48px;
+}
+.gp-foot {
+  margin-top: 40px;
+  padding-top: 16px;
+  font-size: 13px;
+  color: #78909c;
+  border-top: 1px solid #e3e8eb;
+}
+.gp-foot a {
+  color: #1565c0;
+}
+.gp button {
+  font-family: inherit;
+}
+@media (max-width: 1000px) {
+  .gp-body {
+    --gd-top: 56px;
+    padding: 0 16px 40px;
+  }
+}
+@media (max-width: 600px) {
+  .gp-bar {
+    padding: 0 16px;
+  }
+  .gp-name {
+    display: none;
+  }
+}
+@media print {
+  .gp-bar {
+    display: none;
+  }
+}
+.gd .gd-doc ul.md-cards br {
+  display: none;
+}
+/* A row of tabs is gone to by the heading of one of them. */
+.gd .gd-doc .md-tabs {
+  scroll-margin-top: calc(var(--gd-top, 0px) + 8px);
+}
+/* The caption of a picture that has its text beside it follows that text. */
+.gd .gd-doc img[align] + p + p > em:only-child {
+  display: block;
+  font-size: 13px;
+  font-style: normal;
+  color: #607d8b;
+}
+/* Last, so it wins over the column the contents are on a wide page. */
+@media (max-width: 1000px) {
+  .gd .gd-list {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+}

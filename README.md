@@ -5,6 +5,14 @@ options — their images, their 3D models, and the inputs and outputs behind
 them — then filter it, compare options side by side, keep a shortlist, rate
 what you like, and read which inputs drive which outputs.
 
+**[Open DesignSense](https://designsense.app/)** ·
+**[Read the guide](docs/guide.md)**: how a study is made (Grasshopper and
+Colibri, or any tool that writes a CSV), the file format, loading it, and the
+four tasks DesignSense is for: understand the design space, narrow it, decide,
+and share the result. The same file is the guide inside the app (Help ▸ Guide)
+and the page at [designsense.app/wiki](https://designsense.app/wiki/), where
+it also has a search and examples to try.
+
 DesignSense came out of a design study with practitioners in the built
 environment; the [paper](https://journals.sagepub.com/doi/10.1177/14780771241260854)
 describes the research behind it.
@@ -16,26 +24,19 @@ along with panel editing, clustering and the sensitivity reading.
 
 ## Loading data
 
-A study is a CSV, optionally beside its images and models. It can come from a
-link to a CSV, a file on your computer, or a link to a folder on a web server
-holding `data.csv` and its assets.
+A study is a folder: `data.csv`, with a row for each option, beside the
+images and 3D models it names. Open the folder (or the CSV alone) from your
+computer, or paste a link to it on a web server. A study written for
+[Design Explorer](https://tt-acm.github.io/DesignExplorer/), such as a folder
+from Colibri in Grasshopper, loads as it is.
 
-Columns follow a convention:
+The guide has the rest: [how the data is made](docs/guide.md#generate),
+[what the column names mean](docs/guide.md#prepare) and
+[the ways to load it](docs/guide.md#load).
 
-| Column | Meaning |
-| --- | --- |
-| `in:width` | a design parameter |
-| `out:cost` | a result |
-| `min:cost`, `max:daylight` | a result where lower, or higher, is better |
-| `img`, `img_2`, `image 3` | views of the option, in that order |
-| `model3d` | a 3D model: `.glb`, `.gltf`, `.obj` or `.json` |
-
-Anything else is read as a plain dimension. A study written for
-[Design Explorer](https://tt-acm.github.io/DesignExplorer/) loads as it is:
-the `in:`/`out:` columns and `img` are the same convention, and its `threeD`
-column of three.js `.json` scenes is read too. `testdata/` holds a small
-synthetic study — 24 options, several with more than one view, four with
-models — for trying the media and sensitivity features without a server.
+`testdata/` holds a small synthetic study — 24 options, several with more than
+one view, four with models — for trying the media and sensitivity features
+without a server.
 
 ## Running it
 

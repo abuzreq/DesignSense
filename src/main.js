@@ -17,6 +17,12 @@ import {
   loadState,
 } from "@/data/loader.js";
 import { readShareParams } from "@/data/shareLink.js";
+import { presetById } from "@/data/presets.js";
+import {
+  pendingAppLink,
+  readAppLink,
+  withoutAppLink,
+} from "@/appLinks.js";
 import { datasetKey } from "@/customDimensions.js";
 import { installErrorCapture } from "@/errors.js";
 import { applyStateColors } from "@/stateColors.js";
@@ -101,23 +107,51 @@ function loadDefaultDataset() {
   );
 }
 
-// A shared link names its own dataset; otherwise the default one opens.
-let sharedDataset = readShareParams(window.location);
-if (sharedDataset === null) {
-  loadDefaultDataset().catch(() => {
-    /* loadState.error carries the message */
-  });
-} else {
-  loadDataset(sharedDataset, { source: "startup" })
+// A link into the app (see appLinks.js) asks for a sample, the tour or a
+// dialog. It is taken out of the address at once, so a reload or a bookmark
+// doesn't ask again; the workspace does the rest when it is up (Demo.vue).
+let asked = readAppLink(window.location);
+if (asked) {
+  window.history.replaceState(
+    window.history.state,
+    "",
+    withoutAppLink(window.location)
+  );
+  pendingAppLink.asked = true;
+  pendingAppLink.tour = asked.tour || null;
+  pendingAppLink.open = asked.open || null;
+}
+let sample = asked && !asked.tour ? presetById(asked.sample) : null;
+
+/** Loads what the address named, or the default with the reason it couldn't. */
+function loadNamed(link, source, what) {
+  loadDataset(link, { source: source })
     .catch((error) => {
       let reason = error.userMessage || "it could not be loaded";
       return loadDefaultDataset().then(() => {
-        loadState.error = "The shared link couldn't be opened: " + reason;
+        loadState.error = what + " couldn't be opened: " + reason;
       });
     })
     .catch(() => {
       /* already reported */
     });
+}
+
+// A shared link names its own dataset; otherwise the default one opens.
+let sharedDataset = readShareParams(window.location);
+if (pendingAppLink.tour) {
+  // The tour has its own sample; the workspace that mounts it starts the tour.
+  loadDataset(DEFAULT_DATASET_URL, { source: "tour" }).catch(() => {
+    /* loadState.error carries the message */
+  });
+} else if (sample) {
+  loadNamed(sample.url, "preset", "The sample");
+} else if (sharedDataset === null) {
+  loadDefaultDataset().catch(() => {
+    /* loadState.error carries the message */
+  });
+} else {
+  loadNamed(sharedDataset, "startup", "The shared link");
 }
 
 /**

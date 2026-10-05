@@ -3,6 +3,51 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin');
+const fs = require('fs');
+
+// The site's own address, for what a search engine reads: the guide's
+// canonical link and the sitemap.
+const SITE = 'https://designsense.app/';
+
+/**
+ * Writes the two small files a search engine asks a site for. The guide is a
+ * page of its own (wiki/) so that it can be found apart from the app, whose
+ * routes all sit behind a "#" and so count as one page.
+ */
+class DiscoveryFilesPlugin {
+  apply(compiler) {
+    const { RawSource } = compiler.webpack.sources;
+    compiler.hooks.thisCompilation.tap('DiscoveryFilesPlugin', (compilation) => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'DiscoveryFilesPlugin',
+          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
+        },
+        () => {
+          const pages = [SITE, SITE + 'wiki/'];
+          compilation.emitAsset(
+            'sitemap.xml',
+            new RawSource(
+              [
+                '<?xml version="1.0" encoding="UTF-8"?>',
+                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+                ...pages.map((page) => '  <url><loc>' + page + '</loc></url>'),
+                '</urlset>',
+                '',
+              ].join('\n')
+            )
+          );
+          compilation.emitAsset(
+            'robots.txt',
+            new RawSource(
+              ['User-agent: *', 'Allow: /', '', 'Sitemap: ' + SITE + 'sitemap.xml', ''].join('\n')
+            )
+          );
+        }
+      );
+    });
+  }
+}
 
 // Where the app is served from. Netlify serves it at the domain root.
 const ASSET_PATH = process.env.ASSET_PATH || '/';
@@ -18,11 +63,17 @@ module.exports = (env, argv) => {
     // Named explicitly so the "@" alias and every relative path resolve
     // against this file rather than whichever directory npm was run from.
     context: __dirname,
-    entry: './src/main.js',
+    // The app, and the guide as a page of its own (see src/guide/page.js),
+    // which never loads the app: Vue and the guide's shell, a twentieth of
+    // the app's size.
+    entry: {
+      bundle: './src/main.js',
+      wiki: './src/guide/page.js',
+    },
 
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: 'bundle.js',
+      filename: '[name].js',
       // Code fetched on demand, such as the 3D viewer. Hashed, so a new
       // release never serves a chunk cached from the last one.
       chunkFilename: '[name].[contenthash:8].js',
@@ -62,6 +113,18 @@ module.exports = (env, argv) => {
           test: /\.vue$/,
           loader: 'vue-loader',
           options: { hotReload: isServed },
+        },
+
+        // docs/guide.md is the guide (see src/guide/GuideDoc.vue): rendered
+        // to HTML here, with html-loader turning the pictures it names by
+        // relative path -- the paths GitHub follows too -- into assets of the
+        // build.
+        {
+          test: /\.md$/i,
+          use: [
+            { loader: 'html-loader', options: { minimize: false } },
+            path.resolve(__dirname, 'build/markdown-loader.js'),
+          ],
         },
 
         // An .svg is either a Vue component or a URL, never both: `oneOf`
@@ -152,7 +215,25 @@ module.exports = (env, argv) => {
       new HtmlWebpackPlugin({
         template: path.resolve(__dirname, 'public/index.html'),
         title: 'DesignSense',
+        chunks: ['bundle'],
       }),
+      // The guide's page carries the guide in its HTML, so it reads without a
+      // script and a search engine sees all of it; the template asks for
+      // docs/guide.md itself, through the rule above. Its stylesheet goes in
+      // the page too, so the text is dressed before the script arrives.
+      new HtmlWebpackPlugin({
+        template: path.resolve(__dirname, 'public/wiki.html'),
+        filename: 'wiki/index.html',
+        chunks: ['wiki'],
+        templateParameters: {
+          site: SITE,
+          styles: fs.readFileSync(
+            path.resolve(__dirname, 'src/guide/guide.css'),
+            'utf8'
+          ),
+        },
+      }),
+      new DiscoveryFilesPlugin(),
     ],
 
     devServer: {

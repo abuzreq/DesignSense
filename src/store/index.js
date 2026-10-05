@@ -269,6 +269,9 @@ function builder(
       appliedScopeSignature: "",
 
       isOpeningDialogOn: true,
+      // The guide, over the workspace (see guide/GuideDialog.vue), and the
+      // heading of it to show: "" is its opening.
+      guideDialog: { open: false, section: "" },
       isStudySharable: false,
       shareLink: null,
 
@@ -736,6 +739,9 @@ function builder(
         } else {
           state.isInspectionPinned = !state.isInspectionPinned;
         }
+      },
+      setGuideDialog(state, payload) {
+        state.guideDialog = Object.assign({}, state.guideDialog, payload);
       },
       setIsOpeningDialogOn(state, payload) {
         if (payload) {
@@ -1320,6 +1326,17 @@ function builder(
           context,
           removeFilterByKey(context.state.filters, GALLERY_KEY)
         );
+      },
+      /** Opens the guide, at `{ section }` (see guide.js) or where it was left. */
+      openGuide(context, payload) {
+        let section = payload && typeof payload.section === "string" ? payload.section : null;
+        context.commit(
+          "setGuideDialog",
+          section === null ? { open: true } : { open: true, section: section }
+        );
+      },
+      closeGuide(context) {
+        context.commit("setGuideDialog", { open: false });
       },
       processShareLink(context, payload)
       {

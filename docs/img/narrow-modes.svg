@@ -1,0 +1,285 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="532" viewBox="0 0 980 532" role="img" aria-labelledby="t d" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title id="t">Narrowing with filters in Lite, and with a selection in Expert</title>
+  <desc id="d">In Lite a brush on an axis keeps the options inside it; a second brush on the same axis is an alternative, so options in either range are kept; a brush on another axis must hold as well, which narrows. In Expert a new brush is combined with the current selection by one of five operations: replace, add, subtract, toggle and intersect. Toggle adds the brushed options, or removes them when all of them were selected already.</desc>
+  <rect width="980" height="532" fill="#ffffff"/>
+  <defs>
+    <mask id="notN0"><rect x="14" y="374" width="180" height="100" fill="#fff"/><circle cx="125" cy="424" r="36" fill="#000"/></mask>
+    <mask id="notS0"><rect x="14" y="374" width="180" height="100" fill="#fff"/><circle cx="83" cy="424" r="36" fill="#000"/></mask>
+    <clipPath id="inS0"><circle cx="83" cy="424" r="36"/></clipPath>
+    <mask id="notN1"><rect x="206" y="374" width="180" height="100" fill="#fff"/><circle cx="317" cy="424" r="36" fill="#000"/></mask>
+    <mask id="notS1"><rect x="206" y="374" width="180" height="100" fill="#fff"/><circle cx="275" cy="424" r="36" fill="#000"/></mask>
+    <clipPath id="inS1"><circle cx="275" cy="424" r="36"/></clipPath>
+    <mask id="notN2"><rect x="398" y="374" width="180" height="100" fill="#fff"/><circle cx="509" cy="424" r="36" fill="#000"/></mask>
+    <mask id="notS2"><rect x="398" y="374" width="180" height="100" fill="#fff"/><circle cx="467" cy="424" r="36" fill="#000"/></mask>
+    <clipPath id="inS2"><circle cx="467" cy="424" r="36"/></clipPath>
+    <mask id="notInner"><rect x="686" y="384" width="80" height="80" fill="#fff"/><circle cx="734" cy="424" r="12" fill="#000"/></mask>
+    <mask id="notN4"><rect x="782" y="374" width="180" height="100" fill="#fff"/><circle cx="893" cy="424" r="36" fill="#000"/></mask>
+    <mask id="notS4"><rect x="782" y="374" width="180" height="100" fill="#fff"/><circle cx="851" cy="424" r="36" fill="#000"/></mask>
+    <clipPath id="inS4"><circle cx="851" cy="424" r="36"/></clipPath>
+  </defs>
+  <text x="10" y="24" fill="#263238" font-size="15" font-weight="600">Lite: every brush is a filter</text>
+  <text x="10" y="44" fill="#546e7a" font-size="12">Brushes on the same axis are alternatives (OR). An option must pass the filters on every axis (AND).</text>
+  <text x="10" y="78" fill="#263238" font-size="13" font-weight="600">1 · Brush axis A</text>
+  <rect x="72" y="96" width="200" height="124" fill="#fafbfc" stroke="#cfd8dc"/>
+  <rect x="112.0" y="96" width="40.0" height="124" fill="#1976d2" fill-opacity="0.10"/>
+  <rect x="112.0" y="217" width="40.0" height="6" rx="2" fill="#1976d2"/>
+  <circle cx="82.2" cy="208.0" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="259.8" cy="135.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="175.9" cy="168.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="165.8" cy="187.7" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="181.8" cy="131.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="127.4" cy="197.2" r="3.4" fill="#1976d2"/>
+  <circle cx="220.6" cy="155.9" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="116.3" cy="173.1" r="3.4" fill="#1976d2"/>
+  <circle cx="134.0" cy="154.0" r="3.4" fill="#1976d2"/>
+  <circle cx="134.5" cy="103.5" r="3.4" fill="#1976d2"/>
+  <circle cx="125.5" cy="114.9" r="3.4" fill="#1976d2"/>
+  <circle cx="115.1" cy="198.7" r="3.4" fill="#1976d2"/>
+  <circle cx="108.5" cy="181.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="180.8" cy="128.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="93.7" cy="110.9" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="181.9" cy="144.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="205.1" cy="104.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="194.9" cy="109.9" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="232.3" cy="210.5" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="112.2" cy="174.3" r="3.4" fill="#1976d2"/>
+  <circle cx="158.3" cy="212.7" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="96.2" cy="127.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="147.9" cy="166.4" r="3.4" fill="#1976d2"/>
+  <circle cx="166.2" cy="107.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="209.4" cy="136.5" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="140.8" cy="174.4" r="3.4" fill="#1976d2"/>
+  <circle cx="105.5" cy="199.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="248.0" cy="178.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="115.0" cy="142.9" r="3.4" fill="#1976d2"/>
+  <circle cx="142.0" cy="210.1" r="3.4" fill="#1976d2"/>
+  <circle cx="205.9" cy="109.9" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="180.8" cy="120.7" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="200.6" cy="110.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="101.5" cy="154.6" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="199.4" cy="113.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="256.7" cy="119.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="189.3" cy="105.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="258.0" cy="152.5" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="230.6" cy="214.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="175.0" cy="177.6" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="213.3" cy="152.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="219.0" cy="103.6" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="182.6" cy="121.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="159.1" cy="141.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="215.9" cy="152.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="137.5" cy="188.0" r="3.4" fill="#1976d2"/>
+  <circle cx="81.7" cy="212.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="253.6" cy="120.0" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="196.0" cy="213.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="193.9" cy="147.2" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="211.9" cy="101.5" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="131.2" cy="102.5" r="3.4" fill="#1976d2"/>
+  <circle cx="199.6" cy="123.2" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="194.9" cy="120.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="105.6" cy="101.6" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="173.3" cy="150.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="109.6" cy="169.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="118.8" cy="122.2" r="3.4" fill="#1976d2"/>
+  <circle cx="238.5" cy="131.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="201.2" cy="102.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <text x="172" y="240" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">A</text>
+  <text x="58" y="162" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">B</text>
+  <rect x="10" y="254" width="302" height="30" rx="6" fill="#272727"/>
+  <text x="20" y="273" fill="#ffffff" font-size="11"><tspan font-weight="700">14</tspan> of 60</text>
+  <rect x="72" y="259" width="68" height="20" rx="10" fill="#1976d2"/>
+  <text x="106" y="273" fill="#ffffff" font-size="11" text-anchor="middle">A 20 – 40</text>
+  <text x="10" y="304" fill="#546e7a" font-size="12" font-style="italic">Keeps the options inside the range</text>
+  <text x="335" y="78" fill="#263238" font-size="13" font-weight="600">2 · Brush axis A again</text>
+  <rect x="397" y="96" width="200" height="124" fill="#fafbfc" stroke="#cfd8dc"/>
+  <rect x="437.0" y="96" width="40.0" height="124" fill="#1976d2" fill-opacity="0.10"/>
+  <rect x="437.0" y="217" width="40.0" height="6" rx="2" fill="#1976d2"/>
+  <rect x="537.0" y="96" width="30.0" height="124" fill="#1976d2" fill-opacity="0.10"/>
+  <rect x="537.0" y="217" width="30.0" height="6" rx="2" fill="#1976d2"/>
+  <circle cx="407.2" cy="208.0" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="584.8" cy="135.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="500.9" cy="168.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="490.8" cy="187.7" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="506.8" cy="131.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="452.4" cy="197.2" r="3.4" fill="#1976d2"/>
+  <circle cx="545.6" cy="155.9" r="3.4" fill="#1976d2"/>
+  <circle cx="441.3" cy="173.1" r="3.4" fill="#1976d2"/>
+  <circle cx="459.0" cy="154.0" r="3.4" fill="#1976d2"/>
+  <circle cx="459.5" cy="103.5" r="3.4" fill="#1976d2"/>
+  <circle cx="450.5" cy="114.9" r="3.4" fill="#1976d2"/>
+  <circle cx="440.1" cy="198.7" r="3.4" fill="#1976d2"/>
+  <circle cx="433.5" cy="181.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="505.8" cy="128.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="418.7" cy="110.9" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="506.9" cy="144.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="530.1" cy="104.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="519.9" cy="109.9" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="557.3" cy="210.5" r="3.4" fill="#1976d2"/>
+  <circle cx="437.2" cy="174.3" r="3.4" fill="#1976d2"/>
+  <circle cx="483.3" cy="212.7" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="421.2" cy="127.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="472.9" cy="166.4" r="3.4" fill="#1976d2"/>
+  <circle cx="491.2" cy="107.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="534.4" cy="136.5" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="465.8" cy="174.4" r="3.4" fill="#1976d2"/>
+  <circle cx="430.5" cy="199.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="573.0" cy="178.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="440.0" cy="142.9" r="3.4" fill="#1976d2"/>
+  <circle cx="467.0" cy="210.1" r="3.4" fill="#1976d2"/>
+  <circle cx="530.9" cy="109.9" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="505.8" cy="120.7" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="525.6" cy="110.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="426.5" cy="154.6" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="524.4" cy="113.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="581.7" cy="119.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="514.3" cy="105.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="583.0" cy="152.5" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="555.6" cy="214.4" r="3.4" fill="#1976d2"/>
+  <circle cx="500.0" cy="177.6" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="538.3" cy="152.4" r="3.4" fill="#1976d2"/>
+  <circle cx="544.0" cy="103.6" r="3.4" fill="#1976d2"/>
+  <circle cx="507.6" cy="121.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="484.1" cy="141.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="540.9" cy="152.1" r="3.4" fill="#1976d2"/>
+  <circle cx="462.5" cy="188.0" r="3.4" fill="#1976d2"/>
+  <circle cx="406.7" cy="212.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="578.6" cy="120.0" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="521.0" cy="213.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="518.9" cy="147.2" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="536.9" cy="101.5" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="456.2" cy="102.5" r="3.4" fill="#1976d2"/>
+  <circle cx="524.6" cy="123.2" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="519.9" cy="120.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="430.6" cy="101.6" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="498.3" cy="150.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="434.6" cy="169.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="443.8" cy="122.2" r="3.4" fill="#1976d2"/>
+  <circle cx="563.5" cy="131.1" r="3.4" fill="#1976d2"/>
+  <circle cx="526.2" cy="102.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <text x="497" y="240" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">A</text>
+  <text x="383" y="162" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">B</text>
+  <rect x="335" y="254" width="302" height="30" rx="6" fill="#272727"/>
+  <text x="345" y="273" fill="#ffffff" font-size="11"><tspan font-weight="700">21</tspan> of 60</text>
+  <rect x="397" y="259" width="68" height="20" rx="10" fill="#1976d2"/>
+  <text x="431" y="273" fill="#ffffff" font-size="11" text-anchor="middle">A 20 – 40</text>
+  <text x="474" y="273" fill="#cfd8dc" font-size="9" font-weight="700" text-anchor="middle">OR</text>
+  <rect x="483" y="259" width="68" height="20" rx="10" fill="#1976d2"/>
+  <text x="517" y="273" fill="#ffffff" font-size="11" text-anchor="middle">A 70 – 85</text>
+  <text x="335" y="304" fill="#546e7a" font-size="12" font-style="italic">Keeps the options in either range</text>
+  <text x="660" y="78" fill="#263238" font-size="13" font-weight="600">3 · Brush axis B too</text>
+  <rect x="722" y="96" width="200" height="124" fill="#fafbfc" stroke="#cfd8dc"/>
+  <rect x="762.0" y="96" width="40.0" height="124" fill="#1976d2" fill-opacity="0.10"/>
+  <rect x="762.0" y="217" width="40.0" height="6" rx="2" fill="#1976d2"/>
+  <rect x="862.0" y="96" width="30.0" height="124" fill="#1976d2" fill-opacity="0.10"/>
+  <rect x="862.0" y="217" width="30.0" height="6" rx="2" fill="#1976d2"/>
+  <rect x="722" y="96.0" width="200" height="55.8" fill="#1976d2" fill-opacity="0.10"/>
+  <rect x="719" y="96.0" width="6" height="55.8" rx="2" fill="#1976d2"/>
+  <circle cx="732.2" cy="208.0" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="909.8" cy="135.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="825.9" cy="168.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="815.8" cy="187.7" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="831.8" cy="131.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="777.4" cy="197.2" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="870.6" cy="155.9" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="766.3" cy="173.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="784.0" cy="154.0" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="784.5" cy="103.5" r="3.4" fill="#1976d2"/>
+  <circle cx="775.5" cy="114.9" r="3.4" fill="#1976d2"/>
+  <circle cx="765.1" cy="198.7" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="758.5" cy="181.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="830.8" cy="128.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="743.7" cy="110.9" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="831.9" cy="144.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="855.1" cy="104.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="844.9" cy="109.9" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="882.3" cy="210.5" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="762.2" cy="174.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="808.3" cy="212.7" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="746.2" cy="127.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="797.9" cy="166.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="816.2" cy="107.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="859.4" cy="136.5" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="790.8" cy="174.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="755.5" cy="199.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="898.0" cy="178.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="765.0" cy="142.9" r="3.4" fill="#1976d2"/>
+  <circle cx="792.0" cy="210.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="855.9" cy="109.9" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="830.8" cy="120.7" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="850.6" cy="110.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="751.5" cy="154.6" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="849.4" cy="113.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="906.7" cy="119.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="839.3" cy="105.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="908.0" cy="152.5" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="880.6" cy="214.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="825.0" cy="177.6" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="863.3" cy="152.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="869.0" cy="103.6" r="3.4" fill="#1976d2"/>
+  <circle cx="832.6" cy="121.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="809.1" cy="141.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="865.9" cy="152.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="787.5" cy="188.0" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="731.7" cy="212.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="903.6" cy="120.0" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="846.0" cy="213.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="843.9" cy="147.2" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="861.9" cy="101.5" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="781.2" cy="102.5" r="3.4" fill="#1976d2"/>
+  <circle cx="849.6" cy="123.2" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="844.9" cy="120.3" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="755.6" cy="101.6" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="823.3" cy="150.4" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="759.6" cy="169.8" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <circle cx="768.8" cy="122.2" r="3.4" fill="#1976d2"/>
+  <circle cx="888.5" cy="131.1" r="3.4" fill="#1976d2"/>
+  <circle cx="851.2" cy="102.1" r="2.6" fill="#b0bec5" fill-opacity="0.7"/>
+  <text x="822" y="240" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">A</text>
+  <text x="708" y="162" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">B</text>
+  <rect x="660" y="254" width="302" height="30" rx="6" fill="#272727"/>
+  <text x="670" y="273" fill="#ffffff" font-size="11"><tspan font-weight="700">7</tspan> of 60</text>
+  <rect x="722" y="259" width="68" height="20" rx="10" fill="#1976d2"/>
+  <text x="756" y="273" fill="#ffffff" font-size="11" text-anchor="middle">A 20 – 40</text>
+  <text x="799" y="273" fill="#cfd8dc" font-size="9" font-weight="700" text-anchor="middle">OR</text>
+  <rect x="808" y="259" width="68" height="20" rx="10" fill="#1976d2"/>
+  <text x="842" y="273" fill="#ffffff" font-size="11" text-anchor="middle">A 70 – 85</text>
+  <rect x="882" y="259" width="52" height="20" rx="10" fill="#1976d2"/>
+  <text x="908" y="273" fill="#ffffff" font-size="11" text-anchor="middle">B ≥ 55</text>
+  <text x="660" y="304" fill="#546e7a" font-size="12" font-style="italic">Keeps the options that pass both filters</text>
+  <line x1="10" y1="316" x2="970" y2="316" stroke="#e3e8eb"/>
+  <text x="10" y="344" fill="#263238" font-size="15" font-weight="600">Expert: one selection, and you choose how each brush changes it</text>
+  <text x="10" y="364" fill="#546e7a" font-size="12">S is what is selected, N the new brush. Blue is what is selected afterwards.</text>
+  <g opacity="0.55"><g fill="#1976d2"><circle cx="125" cy="424" r="36"/></g></g>
+  <g fill="none" stroke="#546e7a" stroke-width="1.5"><circle cx="83" cy="424" r="36"/><circle cx="125" cy="424" r="36"/></g>
+  <text x="37" y="428" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">S</text>
+  <text x="171" y="428" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">N</text>
+  <text x="104" y="486" fill="#263238" font-size="13" font-weight="600" text-anchor="middle">Replace</text>
+  <text x="104" y="503" fill="#546e7a" font-size="12" text-anchor="middle">Only the new brush</text>
+  <g opacity="0.55"><g fill="#1976d2"><circle cx="275" cy="424" r="36"/><circle cx="317" cy="424" r="36"/></g></g>
+  <g fill="none" stroke="#546e7a" stroke-width="1.5"><circle cx="275" cy="424" r="36"/><circle cx="317" cy="424" r="36"/></g>
+  <text x="229" y="428" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">S</text>
+  <text x="363" y="428" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">N</text>
+  <text x="296" y="486" fill="#263238" font-size="13" font-weight="600" text-anchor="middle">Add</text>
+  <text x="296" y="503" fill="#546e7a" font-size="12" text-anchor="middle">In either</text>
+  <text x="296" y="519" fill="#90a4ae" font-size="11" text-anchor="middle">hold Shift</text>
+  <g opacity="0.55"><g fill="#1976d2" mask="url(#notN2)"><circle cx="467" cy="424" r="36"/></g></g>
+  <g fill="none" stroke="#546e7a" stroke-width="1.5"><circle cx="467" cy="424" r="36"/><circle cx="509" cy="424" r="36"/></g>
+  <text x="421" y="428" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">S</text>
+  <text x="555" y="428" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">N</text>
+  <text x="488" y="486" fill="#263238" font-size="13" font-weight="600" text-anchor="middle">Subtract</text>
+  <text x="488" y="503" fill="#546e7a" font-size="12" text-anchor="middle">S without N</text>
+  <text x="488" y="519" fill="#90a4ae" font-size="11" text-anchor="middle">hold Ctrl</text>
+  <g opacity="0.55" fill="#1976d2"><circle cx="622" cy="424" r="23"/><circle cx="646" cy="424" r="23"/><g mask="url(#notInner)"><circle cx="726" cy="424" r="28"/></g></g>
+  <g fill="none" stroke="#546e7a" stroke-width="1.5"><circle cx="622" cy="424" r="23"/><circle cx="646" cy="424" r="23"/><circle cx="726" cy="424" r="28"/><circle cx="734" cy="424" r="12"/></g>
+  <text x="680" y="428" fill="#90a4ae" font-size="11" text-anchor="middle">or</text>
+  <text x="680" y="486" fill="#263238" font-size="13" font-weight="600" text-anchor="middle">Toggle</text>
+  <text x="680" y="503" fill="#546e7a" font-size="12" text-anchor="middle">Adds N, or removes it</text>
+  <text x="680" y="519" fill="#546e7a" font-size="12" text-anchor="middle">when all of N was selected</text>
+  <g opacity="0.55"><g fill="#1976d2" clip-path="url(#inS4)"><circle cx="893" cy="424" r="36"/></g></g>
+  <g fill="none" stroke="#546e7a" stroke-width="1.5"><circle cx="851" cy="424" r="36"/><circle cx="893" cy="424" r="36"/></g>
+  <text x="805" y="428" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">S</text>
+  <text x="939" y="428" fill="#263238" font-size="12" font-weight="600" text-anchor="middle">N</text>
+  <text x="872" y="486" fill="#263238" font-size="13" font-weight="600" text-anchor="middle">Intersect</text>
+  <text x="872" y="503" fill="#546e7a" font-size="12" text-anchor="middle">In both</text>
+  <text x="872" y="519" fill="#90a4ae" font-size="11" text-anchor="middle">hold Shift + Ctrl</text>
+</svg>

@@ -590,7 +590,9 @@ export default {
      * ModelObj reports a missing .mtl as a load failure.
      */
     async findMtl(url, controller) {
-      let stem = fileNameOf(url).replace(/\.obj$/i, "");
+      // By the file's name, not the url's: a folder's files are reached by
+      // addresses (a download link, a blob: URL) that don't carry it.
+      let stem = fileNameOf(this.fileName).replace(/\.obj$/i, "");
       // A folder listing (Drive, OneDrive) knows the sharing url of every file
       // beside the model, and returns undefined when the dataset came from a
       // plain link that has no listing.

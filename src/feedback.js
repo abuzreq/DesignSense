@@ -36,6 +36,7 @@ function datasetText() {
   if (preset) return "sample \"" + preset.name + "\" (" + preset.url + ")";
   if (loadState.link) return "the user's own, from a link (not reported)";
   if (loadState.source === "file") return "the user's own, from a local file";
+  if (loadState.source === "folder") return "the user's own, from a local folder";
   return "unknown";
 }
 

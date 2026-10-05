@@ -283,11 +283,13 @@ export function makeAssetResolver(options) {
         let match = /^(.*?)[\s_-](\d+)\.([a-z0-9]+)$/i.exec(name);
         if (!match || match[1] !== base) return;
         if (extensions.indexOf(match[3].toLowerCase()) === -1) return;
-        found.push({ number: parseInt(match[2], 10), url: byFileName[name] });
+        found.push({
+          number: parseInt(match[2], 10),
+          url: byFileName[name],
+          named: name,
+        });
       });
-      return found
-        .sort((a, b) => a.number - b.number)
-        .map((entry) => entry.url);
+      return found.sort((a, b) => a.number - b.number);
     },
     get missing() {
       return missing;
@@ -295,9 +297,13 @@ export function makeAssetResolver(options) {
   };
 }
 
-/** The URLs a row's asset columns point at, in view order and without repeats. */
+/**
+ * What a row's asset columns point at, in view order and without repeats:
+ * each as `{ url, named }`, the URL to fetch and what the data or the folder
+ * calls the file.
+ */
 function resolveViews(resolver, row, columns, extensions) {
-  let urls = [];
+  let views = [];
   let seen = {};
   let firstCell = null;
   columns.forEach((column) => {
@@ -305,15 +311,31 @@ function resolveViews(resolver, row, columns, extensions) {
     if (url === undefined || seen[url]) return;
     if (firstCell === null) firstCell = row[column];
     seen[url] = true;
-    urls.push(url);
+    views.push({ url: url, named: String(row[column]).trim() });
   });
   // Further views of the same file, for folders that list what they hold.
-  resolver.related(firstCell, extensions).forEach((url) => {
-    if (seen[url]) return;
-    seen[url] = true;
-    urls.push(url);
+  resolver.related(firstCell, extensions).forEach((view) => {
+    if (seen[view.url]) return;
+    seen[view.url] = true;
+    views.push({ url: view.url, named: view.named });
   });
-  return urls;
+  return views;
+}
+
+/**
+ * A model as the viewer takes it. A folder's files are reached by addresses
+ * that say nothing of the file -- OneDrive's download links, the blob: URLs
+ * of a folder on this computer -- so where the URL names no model format,
+ * the name and the format come from what the data called it.
+ */
+function describeModel(view) {
+  let format = modelFormat(view.url);
+  let named = format ? view.url : view.named;
+  return {
+    url: view.url,
+    name: fileName(named),
+    format: format || modelFormat(named),
+  };
 }
 
 /**
@@ -326,7 +348,12 @@ export function prepareRows(rows, resolver, columns) {
   let modelColumns = (columns && columns.models) || [];
   rows.forEach((row) => {
     if (!row.Tags) row.Tags = [];
-    let views = resolveViews(resolver, row, imageColumns, IMAGE_EXTENSIONS);
+    let views = resolveViews(
+      resolver,
+      row,
+      imageColumns,
+      IMAGE_EXTENSIONS
+    ).map((view) => view.url);
     row.images = views;
     // The gallery, the clusters and the exports read `image`, so it stays the
     // first view for the life of the dataset; which view the inspector shows
@@ -337,11 +364,7 @@ export function prepareRows(rows, resolver, columns) {
       row,
       modelColumns,
       MODEL_EXTENSIONS
-    ).map((url) => ({
-      url: url,
-      name: fileName(url),
-      format: modelFormat(url),
-    }));
+    ).map(describeModel);
   });
   return rows;
 }
@@ -421,9 +444,15 @@ export function buildDataset(text, options) {
     );
   }
   if (resolver.missing > 0) {
+    // A CSV opened on its own from this computer: there is nowhere to look
+    // for the files it names, and opening its folder is what fixes that.
+    let alone = !(options && (options.baseUrl || options.files));
     warnings.push(
       plural(resolver.missing, "image or model file", "image or model files") +
-        " named in the data could not be found."
+        " named in the data could not be found." +
+        (alone
+          ? " To bring them along, choose the folder that holds them rather than the CSV alone."
+          : "")
     );
   }
   return {

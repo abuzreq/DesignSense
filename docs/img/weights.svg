@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="310" viewBox="0 0 980 310" role="img" aria-labelledby="t d" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title id="t">Six options ranked under four weightings</title>
+  <desc id="d">The same six options scored on daylight, cooling, cost and looks, the last judged by hand. Putting daylight first ranks option A highest; putting energy first ranks option C highest; putting cost first ranks option F highest; putting looks first ranks option D highest.</desc>
+  <rect width="980" height="310" fill="#ffffff"/>
+  <text x="10" y="24" fill="#263238" font-size="15" font-weight="600">Daylight first</text>
+  <text x="10" y="44" fill="#546e7a" font-size="12">57% of the weight, 14% for each other</text>
+  <text x="10" y="70" fill="#78909c" font-size="10" font-weight="700" letter-spacing="0.6">RANK</text>
+  <text x="235" y="70" fill="#78909c" font-size="10" font-weight="700" letter-spacing="0.6" text-anchor="end">SCORE</text>
+  <rect x="6" y="81" width="233" height="26" rx="5" fill="#f1f7fe"/>
+  <text x="14" y="98" fill="#78909c" font-size="12">1</text>
+  <text x="32" y="98" fill="#1565c0" font-size="13" font-weight="600">Option A</text>
+  <rect x="102" y="89" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="102" y="89" width="69.3" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="235" y="98" fill="#455a64" font-size="12" text-anchor="end">0.75</text>
+  <text x="14" y="128" fill="#78909c" font-size="12">2</text>
+  <text x="32" y="128" fill="#263238" font-size="13" font-weight="600">Option F</text>
+  <rect x="102" y="119" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="102" y="119" width="61.0" height="9" rx="4.5" fill="#ef6c00"/>
+  <text x="235" y="128" fill="#455a64" font-size="12" text-anchor="end">0.66</text>
+  <text x="14" y="158" fill="#78909c" font-size="12">3</text>
+  <text x="32" y="158" fill="#263238" font-size="13" font-weight="400">Option D</text>
+  <rect x="102" y="149" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="102" y="149" width="58.1" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="235" y="158" fill="#455a64" font-size="12" text-anchor="end">0.63</text>
+  <text x="14" y="188" fill="#78909c" font-size="12">4</text>
+  <text x="32" y="188" fill="#263238" font-size="13" font-weight="400">Option B</text>
+  <rect x="102" y="179" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="102" y="179" width="50.2" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="235" y="188" fill="#455a64" font-size="12" text-anchor="end">0.54</text>
+  <text x="14" y="218" fill="#78909c" font-size="12">5</text>
+  <text x="32" y="218" fill="#263238" font-size="13" font-weight="400">Option E</text>
+  <rect x="102" y="209" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="102" y="209" width="33.0" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="235" y="218" fill="#455a64" font-size="12" text-anchor="end">0.35</text>
+  <text x="14" y="248" fill="#78909c" font-size="12">6</text>
+  <text x="32" y="248" fill="#263238" font-size="13" font-weight="400">Option C</text>
+  <rect x="102" y="239" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="102" y="239" width="30.6" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="235" y="248" fill="#455a64" font-size="12" text-anchor="end">0.33</text>
+  <text x="255" y="24" fill="#263238" font-size="15" font-weight="600">Energy first</text>
+  <text x="255" y="44" fill="#546e7a" font-size="12">57% of the weight, 14% for each other</text>
+  <text x="255" y="70" fill="#78909c" font-size="10" font-weight="700" letter-spacing="0.6">RANK</text>
+  <text x="480" y="70" fill="#78909c" font-size="10" font-weight="700" letter-spacing="0.6" text-anchor="end">SCORE</text>
+  <rect x="251" y="81" width="233" height="26" rx="5" fill="#f1f7fe"/>
+  <text x="259" y="98" fill="#78909c" font-size="12">1</text>
+  <text x="277" y="98" fill="#1565c0" font-size="13" font-weight="600">Option C</text>
+  <rect x="347" y="89" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="347" y="89" width="70.4" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="480" y="98" fill="#455a64" font-size="12" text-anchor="end">0.76</text>
+  <text x="259" y="128" fill="#78909c" font-size="12">2</text>
+  <text x="277" y="128" fill="#263238" font-size="13" font-weight="400">Option E</text>
+  <rect x="347" y="119" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="347" y="119" width="56.2" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="480" y="128" fill="#455a64" font-size="12" text-anchor="end">0.60</text>
+  <text x="259" y="158" fill="#78909c" font-size="12">3</text>
+  <text x="277" y="158" fill="#263238" font-size="13" font-weight="600">Option F</text>
+  <rect x="347" y="149" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="347" y="149" width="55.3" height="9" rx="4.5" fill="#ef6c00"/>
+  <text x="480" y="158" fill="#455a64" font-size="12" text-anchor="end">0.59</text>
+  <text x="259" y="188" fill="#78909c" font-size="12">4</text>
+  <text x="277" y="188" fill="#263238" font-size="13" font-weight="400">Option B</text>
+  <rect x="347" y="179" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="347" y="179" width="54.6" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="480" y="188" fill="#455a64" font-size="12" text-anchor="end">0.59</text>
+  <text x="259" y="218" fill="#78909c" font-size="12">5</text>
+  <text x="277" y="218" fill="#263238" font-size="13" font-weight="400">Option D</text>
+  <rect x="347" y="209" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="347" y="209" width="40.1" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="480" y="218" fill="#455a64" font-size="12" text-anchor="end">0.43</text>
+  <text x="259" y="248" fill="#78909c" font-size="12">6</text>
+  <text x="277" y="248" fill="#263238" font-size="13" font-weight="400">Option A</text>
+  <rect x="347" y="239" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="347" y="239" width="29.5" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="480" y="248" fill="#455a64" font-size="12" text-anchor="end">0.32</text>
+  <text x="500" y="24" fill="#263238" font-size="15" font-weight="600">Cost first</text>
+  <text x="500" y="44" fill="#546e7a" font-size="12">57% of the weight, 14% for each other</text>
+  <text x="500" y="70" fill="#78909c" font-size="10" font-weight="700" letter-spacing="0.6">RANK</text>
+  <text x="725" y="70" fill="#78909c" font-size="10" font-weight="700" letter-spacing="0.6" text-anchor="end">SCORE</text>
+  <rect x="496" y="81" width="233" height="26" rx="5" fill="#f1f7fe"/>
+  <text x="504" y="98" fill="#78909c" font-size="12">1</text>
+  <text x="522" y="98" fill="#1565c0" font-size="13" font-weight="600">Option F</text>
+  <rect x="592" y="89" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="592" y="89" width="71.9" height="9" rx="4.5" fill="#ef6c00"/>
+  <text x="725" y="98" fill="#455a64" font-size="12" text-anchor="end">0.77</text>
+  <text x="504" y="128" fill="#78909c" font-size="12">2</text>
+  <text x="522" y="128" fill="#263238" font-size="13" font-weight="400">Option C</text>
+  <rect x="592" y="119" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="592" y="119" width="70.4" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="725" y="128" fill="#455a64" font-size="12" text-anchor="end">0.76</text>
+  <text x="504" y="158" fill="#78909c" font-size="12">3</text>
+  <text x="522" y="158" fill="#263238" font-size="13" font-weight="400">Option B</text>
+  <rect x="592" y="149" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="592" y="149" width="56.8" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="725" y="158" fill="#455a64" font-size="12" text-anchor="end">0.61</text>
+  <text x="504" y="188" fill="#78909c" font-size="12">4</text>
+  <text x="522" y="188" fill="#263238" font-size="13" font-weight="400">Option A</text>
+  <rect x="592" y="179" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="592" y="179" width="46.1" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="725" y="188" fill="#455a64" font-size="12" text-anchor="end">0.50</text>
+  <text x="504" y="218" fill="#78909c" font-size="12">5</text>
+  <text x="522" y="218" fill="#263238" font-size="13" font-weight="400">Option E</text>
+  <rect x="592" y="209" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="592" y="209" width="33.0" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="725" y="218" fill="#455a64" font-size="12" text-anchor="end">0.35</text>
+  <text x="504" y="248" fill="#78909c" font-size="12">6</text>
+  <text x="522" y="248" fill="#263238" font-size="13" font-weight="400">Option D</text>
+  <rect x="592" y="239" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="592" y="239" width="26.8" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="725" y="248" fill="#455a64" font-size="12" text-anchor="end">0.29</text>
+  <text x="745" y="24" fill="#263238" font-size="15" font-weight="600">Looks first</text>
+  <text x="745" y="44" fill="#546e7a" font-size="12">57% of the weight, 14% for each other</text>
+  <text x="745" y="70" fill="#78909c" font-size="10" font-weight="700" letter-spacing="0.6">RANK</text>
+  <text x="970" y="70" fill="#78909c" font-size="10" font-weight="700" letter-spacing="0.6" text-anchor="end">SCORE</text>
+  <rect x="741" y="81" width="233" height="26" rx="5" fill="#f1f7fe"/>
+  <text x="749" y="98" fill="#78909c" font-size="12">1</text>
+  <text x="767" y="98" fill="#1565c0" font-size="13" font-weight="600">Option D</text>
+  <rect x="837" y="89" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="837" y="89" width="62.7" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="970" y="98" fill="#455a64" font-size="12" text-anchor="end">0.67</text>
+  <text x="749" y="128" fill="#78909c" font-size="12">2</text>
+  <text x="767" y="128" fill="#263238" font-size="13" font-weight="400">Option A</text>
+  <rect x="837" y="119" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="837" y="119" width="61.3" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="970" y="128" fill="#455a64" font-size="12" text-anchor="end">0.66</text>
+  <text x="749" y="158" fill="#78909c" font-size="12">3</text>
+  <text x="767" y="158" fill="#263238" font-size="13" font-weight="600">Option F</text>
+  <rect x="837" y="149" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="837" y="149" width="59.2" height="9" rx="4.5" fill="#ef6c00"/>
+  <text x="970" y="158" fill="#455a64" font-size="12" text-anchor="end">0.64</text>
+  <text x="749" y="188" fill="#78909c" font-size="12">4</text>
+  <text x="767" y="188" fill="#263238" font-size="13" font-weight="400">Option B</text>
+  <rect x="837" y="179" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="837" y="179" width="50.2" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="970" y="188" fill="#455a64" font-size="12" text-anchor="end">0.54</text>
+  <text x="749" y="218" fill="#78909c" font-size="12">5</text>
+  <text x="767" y="218" fill="#263238" font-size="13" font-weight="400">Option C</text>
+  <rect x="837" y="209" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="837" y="209" width="42.5" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="970" y="218" fill="#455a64" font-size="12" text-anchor="end">0.46</text>
+  <text x="749" y="248" fill="#78909c" font-size="12">6</text>
+  <text x="767" y="248" fill="#263238" font-size="13" font-weight="400">Option E</text>
+  <rect x="837" y="239" width="93.0" height="9" rx="4.5" fill="#eceff1"/>
+  <rect x="837" y="239" width="39.0" height="9" rx="4.5" fill="#1976d2"/>
+  <text x="970" y="248" fill="#455a64" font-size="12" text-anchor="end">0.42</text>
+  <text x="490" y="296" fill="#546e7a" font-size="12" font-style="italic" text-anchor="middle">4 views, 4 different first places. Option F, in orange, is in the top three under every one.</text>
+</svg>

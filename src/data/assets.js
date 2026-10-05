@@ -175,6 +175,13 @@ export function folderFileUrl(name) {
   for (let i = 0; i < names.length; i++) {
     if (names[i].toLowerCase() === lower) return folderFiles[names[i]];
   }
+  // A folder on this computer names its files by path; the file beside a
+  // model in a subfolder is still found by its name alone.
+  for (let i = 0; i < names.length; i++) {
+    if (names[i].toLowerCase().split("/").pop() === lower) {
+      return folderFiles[names[i]];
+    }
+  }
   return undefined;
 }
 

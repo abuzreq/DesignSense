@@ -8,7 +8,7 @@ export const DEFAULT_DATASET_URL =
 
 /**
  * The latest load, for the load dialogs and the workspace. `source` says who
- * started it: "url", "preset", "file", "startup" or "tour".
+ * started it: "url", "preset", "file", "folder", "startup" or "tour".
  */
 export const loadState = Vue.observable({
   loading: false,
@@ -29,6 +29,8 @@ let mount = null;
 let lastMounted = null;
 let latestLoad = 0;
 const STALE = { stale: true };
+// Lets go of what the dataset on screen holds open: a local folder's files.
+let releaseMounted = null;
 
 /**
  * Keeps the address bar naming the dataset on screen, in the form a share link
@@ -66,7 +68,8 @@ export function remountDataset(notice) {
 
 /**
  * Loads a dataset from a link (a CSV file, a folder on a web server, or a
- * Google Drive or OneDrive folder) or from `{ file }`, and mounts it. Only the
+ * Google Drive or OneDrive folder), from `{ file }` or from `{ folder }` (see
+ * resolveSource), and mounts it. Only the
  * most recent load mounts, so a slow earlier load can't replace a later one.
  * Resolves with the dataset, or null when a newer load took over; rejects with
  * the error, whose `userMessage` is also shown in `loadState.error`.
@@ -84,13 +87,18 @@ export function loadDataset(input, options) {
   };
 
   let resolved = null;
+  // What this load holds open, until its dataset is mounted or it fails.
+  let release = null;
   return Promise.resolve(input)
     .then(resolveSource)
     .then((source) => {
       resolved = source;
       return fetchSource(source);
     })
-    .then(stillLatest)
+    .then((fetched) => {
+      release = fetched.release || null;
+      return stillLatest(fetched);
+    })
     .then((fetched) => {
       let dataset = buildDataset(fetched.text, {
         baseUrl: fetched.baseUrl,
@@ -103,16 +111,30 @@ export function loadDataset(input, options) {
         dataset.dataTypesMap,
         {
           link: fetched.link || null,
-          // A local file has no link; its name helps tell it from others.
-          name: resolved && resolved.kind === "file" ? resolved.file.name : null,
+          // A local file has no link; its name helps tell it from others. A
+          // folder goes by its CSV's, so work done on the file alone is found
+          // again when the whole folder is opened.
+          name:
+            resolved && resolved.kind === "file"
+              ? resolved.file.name
+              : fetched.name || null,
         },
       ];
       mount.apply(null, lastMounted);
+      // The dataset this one replaced is off the screen now.
+      if (releaseMounted) releaseMounted();
+      releaseMounted = release;
+      release = null;
       loadState.warnings = dataset.warnings;
       loadState.link = fetched.link || null;
       rememberInAddressBar(loadState.link);
       let source = loadState.source;
-      if (source === "url" || source === "preset" || source === "file") {
+      if (
+        source === "url" ||
+        source === "preset" ||
+        source === "file" ||
+        source === "folder"
+      ) {
         let n = dataset.data.length;
         loadState.notice = "Loaded " + n + (n === 1 ? " option." : " options.");
       }
@@ -120,6 +142,7 @@ export function loadDataset(input, options) {
       return dataset;
     })
     .catch((error) => {
+      if (release) release();
       if (error === STALE) return null;
       if (token === latestLoad) {
         loadState.loading = false;
