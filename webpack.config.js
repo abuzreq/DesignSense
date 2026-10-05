@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin');
 const fs = require('fs');
+const { execSync } = require('child_process');
 
 // The site's own address, for what a search engine reads: the guide's
 // canonical link and the sitemap.
@@ -49,6 +50,98 @@ class DiscoveryFilesPlugin {
   }
 }
 
+// Where a written production build leaves its source maps: beside `dist`
+// rather than inside it, because `dist` is the directory Netlify publishes.
+const SOURCEMAP_DIR = 'sourcemaps';
+
+/** The commit a build was made from, for the note in the stash. */
+function commitRef() {
+  // Netlify sets this; a local build has git to ask instead.
+  if (process.env.COMMIT_REF) return process.env.COMMIT_REF;
+  try {
+    return execSync('git rev-parse HEAD', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .toString()
+      .trim();
+  } catch (e) {
+    return 'unknown';
+  }
+}
+
+/**
+ * Moves the source maps out of the directory that gets published.
+ *
+ * `hidden-source-map` writes the maps but leaves no "//# sourceMappingURL"
+ * comment in the bundles, so nothing asks for one and no visitor fetches one.
+ * They are still worth keeping, because a map is the only way to read a
+ * minified frame from a bug report back to a file and a line -- src/errors.js
+ * reports the stack as the engine wrote it, and nothing rewrites that on its
+ * own. What they must not do is sit in `dist`, where all fifteen megabytes are
+ * uploaded with the site and anyone who guesses a filename can read the whole
+ * of src/ out of them.
+ *
+ * The stash holds one build's maps: it is emptied as each build fills it, so
+ * what is in it always belongs to what is in `dist`. Copy the directory
+ * somewhere else to keep a release's maps for longer than the next build.
+ */
+class StashSourceMapsPlugin {
+  apply(compiler) {
+    compiler.hooks.afterEmit.tap('StashSourceMapsPlugin', (compilation) => {
+      const log = compilation.getLogger('StashSourceMapsPlugin');
+      const maps = Object.keys(compilation.assets).filter((name) =>
+        name.endsWith('.map')
+      );
+      if (!maps.length) return;
+
+      const from = compiler.options.output.path;
+      const to = path.resolve(__dirname, SOURCEMAP_DIR);
+      try {
+        fs.rmSync(to, { recursive: true, force: true });
+      } catch (e) {
+        // Not fatal: the files below are overwritten anyway. It only means an
+        // earlier build's hashed chunks may still be lying there.
+        log.warn('Could not empty ' + SOURCEMAP_DIR + '/: ' + e.message);
+      }
+
+      let moved = 0;
+      for (const name of maps) {
+        const source = path.join(from, name);
+        // `output.compareBeforeEmit` skips writing an asset whose file is
+        // already on disk with the same content. A map that was moved out
+        // last time is not on disk, so it gets written again -- but a build
+        // that somehow skips one should not fail here.
+        if (!fs.existsSync(source)) continue;
+        const target = path.join(to, name);
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.renameSync(source, target);
+        moved += 1;
+      }
+
+      // A map only reads a stack from the bundle it was written with, so the
+      // stash says which build that was.
+      fs.writeFileSync(
+        path.join(to, 'BUILD.txt'),
+        [
+          'Source maps for the DesignSense build that was in dist/.',
+          'They are deliberately not deployed; see StashSourceMapsPlugin in',
+          'webpack.config.js.',
+          '',
+          'Written ' + new Date().toISOString(),
+          'Commit  ' + commitRef(),
+          '',
+        ].join('\n')
+      );
+      log.info(
+        moved +
+          ' source maps moved to ' +
+          SOURCEMAP_DIR +
+          '/, out of the published build'
+      );
+    });
+  }
+}
+
 // Where the app is served from. Netlify serves it at the domain root.
 const ASSET_PATH = process.env.ASSET_PATH || '/';
 
@@ -82,7 +175,9 @@ module.exports = (env, argv) => {
       clean: true,
     },
 
-    devtool: isProduction ? 'source-map' : 'eval-cheap-module-source-map',
+    // Hidden, not linked: the maps are written but the bundles do not point at
+    // them, and StashSourceMapsPlugin then takes them out of `dist` entirely.
+    devtool: isProduction ? 'hidden-source-map' : 'eval-cheap-module-source-map',
 
     cache: {
       type: 'filesystem',
@@ -234,6 +329,10 @@ module.exports = (env, argv) => {
         },
       }),
       new DiscoveryFilesPlugin(),
+      // Only for a production build that is written: `webpack serve` keeps its
+      // assets in memory, where there is no file to move and no deploy to keep
+      // them out of.
+      ...(isProduction && !isServed ? [new StashSourceMapsPlugin()] : []),
     ],
 
     devServer: {

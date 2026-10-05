@@ -3,6 +3,8 @@
 coverage/
 dist/
 !dist/index.html
+# The production build's source maps, which are kept but never deployed.
+sourcemaps/
 node_modules/
 *.log
 
