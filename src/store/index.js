@@ -56,6 +56,7 @@ import { emptySets, openSession } from "./session.js";
 import { addIds, removeIds, uniqueSetName } from "./cart.js";
 import { asRows } from "./rows.js";
 import { isDerivedAssetKey } from "@/data/assets.js";
+import { loadState } from "@/data/loader.js";
 import { INPUT, OUTPUT, columnKind } from "@/columns.js";
 import {
   loadColorRamp,
@@ -1361,9 +1362,14 @@ function builder(
         var fileName =
           "designsense-" + new Date().toISOString().slice(0, 10) + ".csv";
         // The app's own keys go; the columns that named the pictures and the
-        // models stay, so an exported file reloads with its media.
+        // models stay, so an exported file reloads with its media. Tags is
+        // the app's too (see prepareRows), unless the file had the column.
+        var fileColumns = (loadState.columns && loadState.columns.fields) || [];
         var selectDims = context.state.allDimensions.filter(
-          (x) => x !== "_id" && !isDerivedAssetKey(x)
+          (x) =>
+            x !== "_id" &&
+            !isDerivedAssetKey(x) &&
+            (x !== "Tags" || fileColumns.indexOf("Tags") !== -1)
         );
         // Rows list the header's columns, quoted where needed; a missing
         // value is an empty cell.
