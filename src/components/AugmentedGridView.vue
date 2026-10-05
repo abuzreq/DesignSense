@@ -1220,8 +1220,13 @@ export default {
       el.scrollTop = Math.max(0, target);
     },
     onCardHover(item) {
+      // Set only when the hover actually inspects. Set on every crossing of
+      // a card, it stayed true long after the pointer had moved on, so the
+      // next inspection ordered from a chart was taken for one of the
+      // gallery's own and the card was never scrolled to.
+      if (!this.isHoveringEnabled) return;
       this.inspectedFromHere = true;
-      if (this.isHoveringEnabled) this.hover(item);
+      this.hover(item);
     },
     toggleInGallery(item) {
       this.$store.dispatch("toggleGallerySelection", { id: item._id });
