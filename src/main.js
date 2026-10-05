@@ -17,7 +17,7 @@ import {
   loadState,
 } from "@/data/loader.js";
 import { readShareParams } from "@/data/shareLink.js";
-import { presetById } from "@/data/presets.js";
+import { defaultsFor, presetById } from "@/data/presets.js";
 import {
   pendingAppLink,
   readAppLink,
@@ -26,7 +26,13 @@ import {
 import { datasetKey } from "@/customDimensions.js";
 import { installErrorCapture } from "@/errors.js";
 import { applyStateColors } from "@/stateColors.js";
-import { nameColumnFor, setColumnRoles, setNameColumn } from "@/columns.js";
+import {
+  nameColumnFor,
+  setColumnRoles,
+  setIgnoredColumns,
+  setNameColumn,
+} from "@/columns.js";
+import { setDatasetGoals } from "@/store/goals.js";
 import { loadColumnRoles } from "@/data/columnRoles.js";
 
 require("vue-tour/dist/vue-tour.css");
@@ -65,6 +71,12 @@ function mountApp(data, dataTypesMap, options) {
         ids: data.map((d) => d._id),
       })
     : null;
+  // What a sample of ours says about its own columns, where its file cannot
+  // (see data/presets.js). Set on every mount, so the next dataset is not
+  // left with the last one's, and before anything reads them.
+  let sample = defaultsFor(link);
+  setIgnoredColumns(sample.ignore);
+  setDatasetGoals(sample.goals);
   // Roles the user gave this dataset's columns, before anything reads them.
   let columnChoices = loadColumnRoles(key);
   setColumnRoles(columnChoices.roles);
@@ -80,7 +92,10 @@ function mountApp(data, dataTypesMap, options) {
     vuetify,
     vdr,
     router,
-    store: store(data, dataTypesMap, loadLayouts(), {}, { datasetKey: key }),
+    store: store(data, dataTypesMap, loadLayouts(), {}, {
+      datasetKey: key,
+      color: sample.color,
+    }),
     el: "#app",
     render: (h) => h(App),
   });

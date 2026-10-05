@@ -90,9 +90,9 @@
             </div>
             <div v-for="dim in goalRows" :key="dim" class="goal-row">
               <DimensionName class="goal-name" :name="dim" truncate />
-              <span v-if="goalSource(dim) === 'file'" class="dims-origin"
-                >from file</span
-              >
+              <span v-if="goalOrigin(dim)" class="dims-origin">{{
+                goalOrigin(dim)
+              }}</span>
               <v-spacer />
               <span v-if="goalSource(dim) === 'fixed'" class="goal-fixed">{{
                 fixedGoalText(dim)
@@ -789,6 +789,14 @@ export default {
         dim: dim,
         goal: choice === "none" ? null : choice,
       });
+    },
+    /** Where a goal nobody chose came from, for the note beside its name. */
+    goalOrigin(dim) {
+      let source = this.goalSource(dim);
+      if (source === "file") return "from file";
+      // One of our samples, speaking for a file that says nothing itself.
+      if (source === "sample") return "from the sample";
+      return "";
     },
     fixedGoalText(dim) {
       return dim === RATING_DIMENSION

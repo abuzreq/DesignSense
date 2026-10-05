@@ -83,6 +83,25 @@ export function setColumnRoles(roles) {
   roleOverrides = Object.assign({}, roles || {});
 }
 
+// Numbers a sample says are not dimensions of the design (see
+// data/presets.js): a used car's latitude measures where it is sitting, not
+// anything about the car. Unlike a role of "none", which still plots the
+// column, these are left out of the dimensions altogether.
+let ignoredColumns = {};
+
+/** Sets the columns this dataset is not to treat as dimensions. */
+export function setIgnoredColumns(names) {
+  ignoredColumns = {};
+  (names || []).forEach((name) => {
+    ignoredColumns[name] = true;
+  });
+}
+
+/** Whether this column is a number the options are not judged by. */
+export function isIgnoredColumn(name) {
+  return ignoredColumns[name] === true;
+}
+
 /**
  * Says which column names the options: a column name, or "" for none. Null
  * hands the choice back to the file, which `nameColumnFor` reads.

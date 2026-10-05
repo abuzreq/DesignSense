@@ -110,6 +110,7 @@ import {
   WEIGHTED,
   dimensionItems,
   displayName,
+  isIgnoredColumn,
 } from "@/columns.js";
 import { isAssetColumn } from "@/data/assets.js";
 
@@ -367,7 +368,12 @@ export default {
     this.allKeys = Object.keys(this.chartData[0]);
 
     // A copy, so the store's list of categorical dimensions is left alone.
-    this.excludedDimensions = this.nonNumericDimensions.concat(["selected"]);
+    // The library takes its axes from the data's own keys, so a number the
+    // sample has asked us not to treat as a dimension is still in the rows
+    // and has to be hidden here by name (see columns.js).
+    this.excludedDimensions = this.nonNumericDimensions
+      .concat(this.allKeys.filter(isIgnoredColumn))
+      .concat(["selected"]);
     // Lite's own axis brushes by dimension. Not in data(): d3 state, not view state.
     this.liteBrushes = null;
     // The knob being dragged: { dim, id, y, value, moved }.

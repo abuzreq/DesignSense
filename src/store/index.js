@@ -57,7 +57,7 @@ import { addIds, removeIds, uniqueSetName } from "./cart.js";
 import { asRows } from "./rows.js";
 import { isDerivedAssetKey } from "@/data/assets.js";
 import { loadState } from "@/data/loader.js";
-import { INPUT, OUTPUT, columnKind } from "@/columns.js";
+import { INPUT, OUTPUT, columnKind, isIgnoredColumn } from "@/columns.js";
 import {
   loadColorRamp,
   loadColorScheme,
@@ -131,11 +131,17 @@ const DEFAULT_LINE_COLOR = "#4e79a7";
  * A file that declares no results at all -- no "out:" column, and its
  * columns not yet given roles -- falls back to the first number there is,
  * for the same reason.
+ *
+ * A sample of ours may name the column instead (see data/presets.js), which
+ * wins where the data has it: for the used cars that is the price, which the
+ * first-number rule only reaches by the order the columns happen to be in.
  */
-function defaultColorColumn(allDimensions, numericDimensions) {
+function defaultColorColumn(allDimensions, numericDimensions, preferred) {
+  let numeric = numericDimensions || [];
+  if (preferred && numeric.indexOf(preferred) !== -1) return preferred;
   let output = (allDimensions || []).find((dim) => columnKind(dim) === OUTPUT);
   if (output) return output;
-  return (numericDimensions || [])[0] || "";
+  return numeric[0] || "";
 }
 
 const VIEW_TYPE_LABELS = {
@@ -169,6 +175,10 @@ function builder(
   );
   // Which way is better for each dimension (see store/goals.js).
   const goals = createGoalsStore(options);
+  // What a sample asks the colour to follow (see data/presets.js), when the
+  // data has it. Read in two places below: once as the store is built, and
+  // again if a later load leaves the colour pointing at nothing.
+  const preferredColorColumn = (options && options.color) || "";
   // The summary image and the captured story (see store/story.js).
   const story = createStoryStore(options);
   const store = new Vuex.Store({
@@ -258,7 +268,8 @@ function builder(
       colorScheme: loadColorScheme(),
       colorColumn: defaultColorColumn(
         Object.keys(dataTypesMap),
-        getNumericDimensions(dataTypesMap)
+        getNumericDimensions(dataTypesMap),
+        preferredColorColumn
       ),
 
       uiMode: readStoredUiMode(),
@@ -1052,7 +1063,8 @@ function builder(
         if (!state.allDimensions.includes(state.colorColumn)) {
           state.colorColumn = defaultColorColumn(
             state.allDimensions,
-            state.numericDimensions
+            state.numericDimensions,
+            preferredColorColumn
           );
         }
       },
@@ -2495,6 +2507,9 @@ function getNonNumericDimensions(typesMap) {
 function getNumericDimensions(typesMap) {
   var numeric = [];
   for (var dim in typesMap) {
+    // Left out here rather than in each view, so no axis, picker or colour
+    // offers a number the sample says is not a dimension (see columns.js).
+    if (isIgnoredColumn(dim)) continue;
     if (typesMap[dim] == "Float" || typesMap[dim] == "Number") {
       numeric.push(dim);
     }

@@ -102,7 +102,7 @@ export function buildSchema(state) {
     goalDims: numeric.filter((c) => {
       let source = goalSourceFor(c, state.goalChoices);
       return (
-        (source === "user" || source === "file") &&
+        (source === "user" || source === "file" || source === "sample") &&
         goalFor(c, state.goalChoices) !== null
       );
     }),

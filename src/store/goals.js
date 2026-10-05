@@ -11,6 +11,8 @@ import { applyFilters, narrowingFilters } from "./filters.js";
  *   - the user's choice in the Dimensions dialog, saved per dataset, where
  *     "none" clears a goal the file declared;
  *   - the file's, from a "min:" or "max:" column prefix (see columns.js);
+ *   - the sample's, for one of ours whose file carries no prefixes (see
+ *     data/presets.js);
  *   - its own: weighted dimensions and the rating are built so that higher
  *     is better.
  * Nothing else is assumed; a dimension with none of these has no goal.
@@ -51,10 +53,23 @@ export function parseGoals(text) {
   return choices;
 }
 
-/** A goal the dimension has without anyone choosing it: the file's, or its own. */
+// Goals a sample declares for its own columns, set before a dataset's store
+// is built, the way columns.js takes its roles -- so the pure functions below
+// answer the same for every reader, including assistant/schema.js.
+let sampleGoals = {};
+
+/** Sets the goals this dataset's sample declares, `{ dim: "max" | "min" }`. */
+export function setDatasetGoals(goals) {
+  sampleGoals = Object.assign({}, goals || {});
+}
+
+/** A goal the dimension has without anyone choosing it: the file's, the
+ * sample's, or its own. */
 function givenGoal(dim) {
   let declared = fileGoal(dim);
   if (declared) return declared;
+  let sample = sampleGoals[dim];
+  if (sample === MAX || sample === MIN) return sample;
   if (columnKind(dim) === WEIGHTED || dim === RATING_DIMENSION) return MAX;
   return null;
 }
@@ -68,14 +83,16 @@ export function goalFor(dim, choices) {
 }
 
 /**
- * Where a dimension's goal comes from: "user", "file", "fixed" (weighted
- * dimensions and the rating, which can't be changed), or null for none.
+ * Where a dimension's goal comes from: "user", "file", "sample" (one of ours,
+ * declaring what its file does not), "fixed" (weighted dimensions and the
+ * rating, which can't be changed), or null for none.
  */
 export function goalSourceFor(dim, choices) {
   if (columnKind(dim) === WEIGHTED || dim === RATING_DIMENSION) return "fixed";
   let choice = choices && choices[dim];
   if (choice) return "user";
-  return fileGoal(dim) ? "file" : null;
+  if (fileGoal(dim)) return "file";
+  return sampleGoals[dim] ? "sample" : null;
 }
 
 /** The store's goals; see the top of this file. */
@@ -116,14 +133,15 @@ export function createGoalsStore(options) {
       goalOf: (state) => (dim) => goalFor(dim, state.goalChoices),
       goalSource: (state) => (dim) => goalSourceFor(dim, state.goalChoices),
       /**
-       * The numeric dimensions with a goal the user or the file set: what a
-       * Pareto front over every goal, or a new weighted dimension, starts from.
+       * The numeric dimensions with a goal somebody set -- the user, the file
+       * or the sample: what a Pareto front over every goal, or a new weighted
+       * dimension, starts from.
        */
       goalDims: (state) =>
         state.numericDimensions.filter((dim) => {
           let source = goalSourceFor(dim, state.goalChoices);
           return (
-            (source === "user" || source === "file") &&
+            (source === "user" || source === "file" || source === "sample") &&
             goalFor(dim, state.goalChoices) !== null
           );
         }),

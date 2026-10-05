@@ -12,6 +12,18 @@ export const PRESETS = [
     url:
       "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv",
     info: "Used cars with their price, year and mileage",
+    // Craigslist's columns carry no "min:"/"max:" prefix and no way to say
+    // that a number measures something other than the car, so the sample
+    // says it here instead of asking the file to change.
+    defaults: {
+      // Cylinders is left out on purpose: more of them is neither better nor
+      // worse, it is a kind of car.
+      goals: { price: "min", year: "max", odometer: "min" },
+      // Where the listing is, not anything to judge it by. They stay on the
+      // card and in an export; they are just not dimensions.
+      ignore: ["lat", "long"],
+      color: "price",
+    },
   },
   {
     id: "box",
@@ -90,4 +102,15 @@ export function presetById(id) {
 export function presetFor(link) {
   if (!link) return null;
   return PRESETS.find((preset) => preset.url === link) || null;
+}
+
+/**
+ * What a sample says about its own columns where its file cannot:
+ * `{ goals, ignore, color }`, any of them absent, and nothing at all for a
+ * dataset of the user's own. Applied when the dataset is mounted (see
+ * main.js), under whatever the user has since chosen for it.
+ */
+export function defaultsFor(link) {
+  let preset = presetFor(link);
+  return (preset && preset.defaults) || {};
 }
