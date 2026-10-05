@@ -486,16 +486,6 @@
             data: understand the design space, narrow it to the options worth
             pursuing, decide between them, and share the result.
           </p>
-          <!-- The whole way, to read rather than to follow: the guide, linked
-               below, has a section for each step. -->
-          <p class="ds-welcome-steps">
-            <template v-for="(step, i) in guideSteps">
-              <v-icon v-if="i > 0" :key="'to-' + step" x-small
-                >mdi-arrow-right</v-icon
-              >
-              <span :key="step">{{ step }}</span>
-            </template>
-          </p>
           <!-- Two pairs, because there are two questions a first visit asks:
                how this works, and what to look at. The tour walks it and the
                guide reads it; the sample is at hand and your own data is a
@@ -538,10 +528,7 @@
                 <v-icon color="teal">mdi-eye-outline</v-icon>
                 {{ welcomeDataset.title }}
               </div>
-              <p>
-                {{ welcomeDataset.text }} Or bring your own: a folder, a CSV
-                file or a link.
-              </p>
+              <p>Bring your own: a folder, a CSV file or a link.</p>
               <div class="ds-welcome-choice-actions">
                 <v-btn
                   color="teal"
@@ -549,9 +536,9 @@
                   depressed
                   :disabled="loadState.loading"
                   @click="isOpeningDialogOn = false"
-                  >Explore it</v-btn
+                  >{{ welcomeDataset.action }}</v-btn
                 >
-                <LoadDataModal />
+                <LoadDataModal label="Load own data" />
               </div>
             </div>
           </div>
@@ -1036,14 +1023,6 @@ body {
   font-size: 15px;
   line-height: 1.5;
 }
-.ds-welcome-steps {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
-  font-size: 13px;
-  color: #546e7a;
-}
 .ds-welcome-choices {
   display: flex;
   flex-wrap: wrap;
@@ -1327,7 +1306,7 @@ import { loadColumnRoles } from "@/data/columnRoles.js";
 import { errorState } from "@/errors.js";
 import { APP_VERSION } from "@/feedback.js";
 import { GUIDE_SECTIONS, guideHref } from "@/guide.js";
-import { presetById, presetFor } from "@/data/presets.js";
+import { presetById } from "@/data/presets.js";
 import { pendingAppLink } from "@/appLinks.js";
 import StoryReportDialog from "@/components/StoryReportDialog.vue";
 import StoryPanel from "@/components/StoryPanel.vue";
@@ -1692,16 +1671,6 @@ export default {
       // Opened from the error notice rather than the help menu.
       feedbackFromError: false,
       appVersion: APP_VERSION,
-      // The way a study takes, as the welcome names it and the guide follows.
-      guideSteps: [
-        "Generate",
-        "Prepare",
-        "Load",
-        "Understand",
-        "Narrow",
-        "Decide",
-        "Share",
-      ],
       guideSections: GUIDE_SECTIONS,
       guideLinks: { home: guideHref(), link: guideHref(GUIDE_SECTIONS.link) },
       // Whether the guide has been asked for in this workspace.
@@ -1885,23 +1854,15 @@ export default {
     },
     /** What the welcome screen says about the data open behind it. */
     welcomeDataset() {
-      if (loadState.loading) {
-        return { title: "Look around", text: "Loading…" };
-      }
-      let count = this.$store.state.rawData.length;
-      let options = count.toLocaleString() + (count === 1 ? " option" : " options");
-      let preset = presetFor(loadState.link);
-      let shared = loadState.source === "startup" && loadState.link !== DEFAULT_DATASET_URL;
-      if (shared && !preset) {
-        return { title: "Shared with you", text: options + "." };
-      }
-      if (preset) {
-        return {
-          title: shared ? "Shared with you" : "Look around",
-          text: preset.name + ": " + options + ".",
-        };
-      }
-      return { title: "Look around", text: "Your data: " + options + "." };
+      // The button closes the dialog on whatever is already loaded, which is
+      // the sample at an ordinary startup but somebody else's collection when
+      // a share link brought you here -- so it cannot call it a sample then.
+      let shared =
+        loadState.source === "startup" &&
+        loadState.link !== DEFAULT_DATASET_URL;
+      return shared
+        ? { title: "Shared with you", action: "Look at it" }
+        : { title: "Look around", action: "Try on a sample dataset" };
     },
     storeNotice() {
       return this.$store.state.notice;

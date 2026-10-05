@@ -8,14 +8,14 @@
             dark
             :small="compact"
             class="load-data-button"
-            title="Load data"
+            :title="label"
             v-bind="attrs"
             v-on="on"
           >
             <v-icon left :small="compact" class="load-data-icon"
               >mdi-folder-open-outline</v-icon
             >
-            <span class="load-data-label">Load Data</span>
+            <span class="load-data-label">{{ label }}</span>
           </v-btn>
         </template>
 
@@ -338,6 +338,10 @@ export default {
   props: {
     // A smaller button, for the app bar.
     compact: { type: Boolean, default: false },
+    // What the button says. The welcome calls it "Load own data", where it
+    // stands beside the sample; the dialog offers both a sample and your own,
+    // so everywhere else keeps the shorter name.
+    label: { type: String, default: "Load Data" },
   },
   data() {
     return {
