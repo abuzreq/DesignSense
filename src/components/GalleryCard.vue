@@ -328,18 +328,13 @@ export default {
   border: 2px dashed rgb(33, 119, 180);
 }
 
-.thumbnail_card:not(.hovered) .card-image.outlined {
+.card-image.outlined {
   border: 3px solid rgb(33, 119, 180);
   background-color: lightgray;
 }
 
-.thumbnail_card:not(.hovered) .card-image.outlined > .card-image__img {
+.card-image.outlined > .card-image__img {
   scale: 0.9;
-}
-
-.thumbnail_card.hovered .card-image.outlined {
-  margin: 2px;
-  border: 3px solid rgb(33, 119, 180);
 }
 
 .thumbnail_card .card-image:not(.transparent) {
@@ -356,13 +351,22 @@ export default {
   opacity: 0.3;
 }
 
+/*
+ * The option the inspector is showing -- which is the hovered one, since
+ * hovering is what inspects.
+ *
+ * An outline rather than a border. The card is sized by its picture, so a
+ * border is three pixels the layout has not reserved: it grew the card by
+ * six and the row under it by six, and every card to the right of it moved.
+ * An outline is drawn over, not in, and just outside the card's edge, so the
+ * ring sits in the coloured mat while a selected card's solid ring stays
+ * inside the card. Outer dashed, inner solid: two rings that cannot be
+ * mistaken for each other.
+ */
 .thumbnail_card.hovered {
-  border: 3px dashed rgb(33, 119, 180);
+  outline: 3px dashed rgb(33, 119, 180);
 }
 
-/* Bottom right: Expert's checkbox holds the top left, Lite's select button
-   the top right. Shortlisted cards keep it visible, so membership reads while
-   scrolling. */
 .view-badge {
   position: absolute;
   bottom: 4px;
@@ -378,6 +382,9 @@ export default {
   line-height: 18px;
 }
 
+/* Its own corner, so it is never mistaken for Lite's select button above
+   it. Shortlisted cards keep it visible, so membership reads while
+   scrolling. */
 .cart-toggle {
   position: absolute;
   bottom: 4px;
@@ -401,8 +408,12 @@ export default {
 .cart-toggle--on {
   background-color: rgba(245, 124, 0, 0.95);
 }
+/* Added to the card's elevation, not instead of it: box-shadow is one
+   property, so the bare `inset` here was throwing the three layers above
+   away and leaving every shortlisted card flat on the page. */
 .thumbnail_card--shortlisted {
-  box-shadow: inset 3px 0 0 #f57c00 !important;
+  box-shadow: inset 3px 0 0 #f57c00, 0 3px 1px -2px rgba(0, 0, 0, 0.2),
+    0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
 }
 
 .gallery-toggle {
