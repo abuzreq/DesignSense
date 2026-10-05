@@ -1306,7 +1306,7 @@ import { loadColumnRoles } from "@/data/columnRoles.js";
 import { errorState } from "@/errors.js";
 import { APP_VERSION } from "@/feedback.js";
 import { GUIDE_SECTIONS, guideHref } from "@/guide.js";
-import { presetById } from "@/data/presets.js";
+import { presetById, presetFor } from "@/data/presets.js";
 import { pendingAppLink } from "@/appLinks.js";
 import StoryReportDialog from "@/components/StoryReportDialog.vue";
 import StoryPanel from "@/components/StoryPanel.vue";
@@ -1855,11 +1855,15 @@ export default {
     /** What the welcome screen says about the data open behind it. */
     welcomeDataset() {
       // The button closes the dialog on whatever is already loaded, which is
-      // the sample at an ordinary startup but somebody else's collection when
-      // a share link brought you here -- so it cannot call it a sample then.
+      // a sample at an ordinary startup but somebody else's collection when a
+      // share link brought you here -- so it cannot call it a sample then.
+      // A link to one of the samples is not somebody else's work, and the
+      // preset list is what says so: against the default dataset alone,
+      // opening the AIA building by link read as a stranger's study.
       let shared =
         loadState.source === "startup" &&
-        loadState.link !== DEFAULT_DATASET_URL;
+        !!loadState.link &&
+        !presetFor(loadState.link);
       return shared
         ? { title: "Shared with you", action: "Look at it" }
         : { title: "Look around", action: "Try on a sample dataset" };
