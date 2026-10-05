@@ -496,46 +496,63 @@
               <span :key="step">{{ step }}</span>
             </template>
           </p>
+          <!-- Two pairs, because there are two questions a first visit asks:
+               how this works, and what to look at. The tour walks it and the
+               guide reads it; the sample is at hand and your own data is a
+               folder away. -->
           <div class="ds-welcome-choices">
             <div class="ds-welcome-choice">
               <div class="ds-welcome-choice-head">
                 <v-icon color="blue darken-1">mdi-map-marker-path</v-icon>
                 New here?
               </div>
-              <p>A short guided tour.</p>
-              <v-btn
-                color="blue darken-1"
-                dark
-                depressed
-                @click="
-                  isOpeningDialogOn = false;
-                  requestTour();
-                "
-                >Take the tour</v-btn
-              >
+              <p>Walk through it once, or read it up front.</p>
+              <div class="ds-welcome-choice-actions">
+                <v-btn
+                  color="blue darken-1"
+                  dark
+                  depressed
+                  @click="
+                    isOpeningDialogOn = false;
+                    requestTour();
+                  "
+                  >Take the tour</v-btn
+                >
+                <!-- A real link, so it can be opened in a tab of its own,
+                     though a plain click keeps it in the dialog. -->
+                <v-btn
+                  color="blue darken-1"
+                  outlined
+                  depressed
+                  :href="guideLinks.home"
+                  target="_blank"
+                  @click.prevent="openGuide()"
+                >
+                  <v-icon left small>mdi-book-open-page-variant-outline</v-icon>
+                  Read the guide</v-btn
+                >
+              </div>
             </div>
             <div class="ds-welcome-choice">
               <div class="ds-welcome-choice-head">
                 <v-icon color="teal">mdi-eye-outline</v-icon>
                 {{ welcomeDataset.title }}
               </div>
-              <p>{{ welcomeDataset.text }}</p>
-              <v-btn
-                color="teal"
-                dark
-                depressed
-                :disabled="loadState.loading"
-                @click="isOpeningDialogOn = false"
-                >Explore it</v-btn
-              >
-            </div>
-            <div class="ds-welcome-choice">
-              <div class="ds-welcome-choice-head">
-                <v-icon color="red lighten-2">mdi-folder-open-outline</v-icon>
-                Your own data
+              <p>
+                {{ welcomeDataset.text }} Or bring your own: a folder, a CSV
+                file or a link.
+              </p>
+              <div class="ds-welcome-choice-actions">
+                <v-btn
+                  color="teal"
+                  dark
+                  depressed
+                  :disabled="loadState.loading"
+                  @click="isOpeningDialogOn = false"
+                  >Explore it</v-btn
+                >
+                <LoadDataModal />
               </div>
-              <p>A folder, a CSV file or a link.</p>
-              <LoadDataModal />
             </div>
           </div>
           <div class="ds-welcome-layout">
@@ -579,11 +596,8 @@
             Your data is read in this browser and never uploaded; your work is
             kept here too.
           </p>
+          <!-- The guide is a button above now, so it is not repeated here. -->
           <div class="ds-welcome-links">
-            <a :href="guideLinks.home" target="_blank" @click.prevent="openGuide()"
-              >Guide</a
-            >
-            <span>·</span>
             <a href="#" @click.prevent="openFeedback(false)">Send feedback</a>
             <span>·</span>
             <span
@@ -1036,8 +1050,16 @@ body {
   gap: 12px;
   margin: 4px 0 14px;
 }
+/* The two actions in a card sit on one line, and wrap rather than squeeze. */
+.ds-welcome-choice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .ds-welcome-choice {
-  flex: 1 1 180px;
+  flex: 1 1 260px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1734,16 +1756,37 @@ export default {
     document.addEventListener("click", this.onDocumentClick);
 
     this.track();
-    // Each loaded dataset mounts a new workspace. The welcome screen stays
-    // up across the startup loads of a first visit, until it is closed or
-    // the user loads data of their own.
+    // Each loaded dataset mounts a new workspace, and a first visit mounts
+    // two of them: main.js puts a placeholder collection up at once and then
+    // replaces the whole application when the sample arrives.
     let startup = loadState.source === null || loadState.source === "startup";
     // Someone who followed a link to a sample, the tour or a dialog came
     // for that, not to be welcomed.
     if (pendingAppLink.asked) welcome.pending = false;
+    // So the welcome waits for the mount that has the data. Opened on the
+    // placeholder it was shown, torn down with that application and shown
+    // again a moment later, which reads as the welcome arriving twice -- and
+    // the wait between the two grew with the bundle until it plainly was.
+    // `startup` still counts the placeholder, because the line further down
+    // has to treat both mounts as one arrival.
     this.$store.commit("setIsOpeningDialogOn", {
-      value: welcome.pending && startup && !tour.pending,
+      value: welcome.pending && loadState.source === "startup" && !tour.pending,
     });
+    // Unless the second mount never comes. A startup load that fails puts its
+    // reason on loadState and returns without mounting (loader.js), so this
+    // placeholder application is the one the reader is left looking at, and
+    // the only thing left that can open the welcome.
+    if (loadState.source === null) {
+      let stopWaiting = this.$watch(
+        () => loadState.error,
+        (error) => {
+          if (!error) return;
+          if (stopWaiting) stopWaiting();
+          if (!welcome.pending || tour.pending) return;
+          this.$store.commit("setIsOpeningDialogOn", { value: true });
+        }
+      );
+    }
     this.$watch(
       () => this.$store.state.guideDialog.open,
       (open) => {
