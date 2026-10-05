@@ -38,7 +38,7 @@ export default {
 .v-application a:focus-visible,
 .v-application [role="button"]:focus-visible,
 .v-application [tabindex]:not([tabindex="-1"]):focus-visible {
-  outline: 2px solid #1976d2;
+  outline: 2px solid var(--ds-focus);
   outline-offset: 2px;
 }
 .v-application .v-app-bar button:focus-visible,

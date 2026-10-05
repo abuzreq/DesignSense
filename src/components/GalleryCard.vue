@@ -342,11 +342,11 @@ export default {
 }
 
 .thumbnail_card:not(.hovered) .card-image.under_drag_selection {
-  border: 2px dashed rgb(33, 119, 180);
+  border: 2px dashed var(--ds-selected);
 }
 
 .card-image.outlined {
-  border: 3px solid rgb(33, 119, 180);
+  border: 3px solid var(--ds-selected);
   background-color: lightgray;
 }
 
@@ -381,7 +381,7 @@ export default {
  * mistaken for each other.
  */
 .thumbnail_card.hovered {
-  outline: 3px dashed rgb(33, 119, 180);
+  outline: 3px dashed var(--ds-selected);
 }
 
 .view-badge {
@@ -423,13 +423,13 @@ export default {
   opacity: 1;
 }
 .cart-toggle--on {
-  background-color: rgba(245, 124, 0, 0.95);
+  background-color: var(--ds-shortlist);
 }
 /* Added to the card's elevation, not instead of it: box-shadow is one
    property, so the bare `inset` here was throwing the three layers above
    away and leaving every shortlisted card flat on the page. */
 .thumbnail_card--shortlisted {
-  box-shadow: inset 3px 0 0 #f57c00, 0 3px 1px -2px rgba(0, 0, 0, 0.2),
+  box-shadow: inset 3px 0 0 var(--ds-shortlist), 0 3px 1px -2px rgba(0, 0, 0, 0.2),
     0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
 }
 

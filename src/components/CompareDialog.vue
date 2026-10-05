@@ -606,7 +606,7 @@ export default {
   color: #37474f;
 }
 .cmp-sortable:focus-visible {
-  outline: 2px solid #1976d2;
+  outline: 2px solid var(--ds-focus);
   outline-offset: -2px;
 }
 /* Visible on every row, quiet until it matters. */

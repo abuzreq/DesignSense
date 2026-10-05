@@ -19,6 +19,7 @@ import {
 import { readShareParams } from "@/data/shareLink.js";
 import { datasetKey } from "@/customDimensions.js";
 import { installErrorCapture } from "@/errors.js";
+import { applyStateColors } from "@/stateColors.js";
 import { nameColumnFor, setColumnRoles, setNameColumn } from "@/columns.js";
 import { loadColumnRoles } from "@/data/columnRoles.js";
 
@@ -29,6 +30,10 @@ Vue.use(VueTour);
 Vue.config.productionTip = false;
 // Errors nothing handled are kept, so feedback can carry them (see errors.js).
 installErrorCapture();
+// The colours that say what state an option is in, where the stylesheets can
+// read them back (see stateColors.js). Before anything renders, so no rule
+// ever sees an unset property.
+applyStateColors(document.documentElement);
 
 let app = null;
 

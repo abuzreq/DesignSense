@@ -123,6 +123,7 @@ import DimensionPicker from "@/components/DimensionPicker.vue";
 import { columnKind, dimensionItems, displayName, INPUT, OUTPUT } from "@/columns.js";
 import { summarize } from "@/analysis/summary.js";
 import { isMissingFor } from "@/store/dimensions.js";
+import { SELECTED } from "@/stateColors.js";
 
 // Past this many dimensions the cells get too small to read in a side column.
 export const MAX_MATRIX_DIMS = 6;
@@ -130,7 +131,6 @@ const DEFAULT_MATRIX_DIMS = 4;
 // Space between cells, and between a cell's edge and its outermost points.
 const GAP = 3;
 const INSET = 4;
-const SELECTED_STROKE = "rgb(33, 119, 180)";
 
 /**
  * A scatterplot matrix of a few chosen dimensions, for picking the pair the
@@ -514,7 +514,7 @@ export default {
           pass(false, 0.25);
           // Selected points on top, with the scatterplot's blue edge.
           ctx.globalAlpha = 1;
-          ctx.strokeStyle = SELECTED_STROKE;
+          ctx.strokeStyle = SELECTED;
           ctx.lineWidth = 1;
           for (let i = 0; i < n; i++) {
             if (!selected[i]) continue;
@@ -628,6 +628,8 @@ export default {
 }
 .matrix-cell--current,
 .matrix-cell--current:hover {
+  /* Not --ds-selected: this says which pair the scatterplot is
+     showing, and sharing that blue's value is a coincidence. */
   border: 2px solid rgb(33, 119, 180) !important;
 }
 .matrix-cell--diag {
@@ -673,7 +675,7 @@ export default {
   width: 9px;
   height: 9px;
   margin: -5px 0 0 -5px;
-  border: 2px solid #263238;
+  border: 2px solid var(--ds-inspected);
   border-radius: 50%;
   pointer-events: none;
 }

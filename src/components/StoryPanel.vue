@@ -247,7 +247,7 @@ export default {
   resize: vertical;
 }
 .sp-note:focus {
-  border-color: #1976d2;
+  border-color: var(--ds-focus);
   outline: none;
 }
 .sp-actions {

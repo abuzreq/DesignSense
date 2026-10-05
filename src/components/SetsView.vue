@@ -540,7 +540,7 @@ export default {
   min-width: 20px;
   padding: 0 6px;
   border-radius: 10px;
-  background: #f57c00;
+  background: var(--ds-shortlist);
   color: #fff;
   font-size: 11px;
   line-height: 18px;
@@ -664,7 +664,7 @@ export default {
   border-color: rgba(0, 0, 0, 0.15);
 }
 .set-name:focus {
-  border-color: #1976d2;
+  border-color: var(--ds-focus);
   background: #fff;
 }
 .set-count {
@@ -733,6 +733,6 @@ export default {
   outline: none;
 }
 .set-note:focus {
-  border-color: #1976d2;
+  border-color: var(--ds-focus);
 }
 </style>

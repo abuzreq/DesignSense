@@ -235,13 +235,13 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 .cluster-card.outlined {
-  border: 2px solid rgb(33, 119, 180);
+  border: 2px solid var(--ds-selected);
 }
 .cluster-card.transparent {
   opacity: 0.35;
 }
 .cluster-card.hovered {
-  outline: 2px dashed rgb(33, 119, 180);
+  outline: 2px dashed var(--ds-selected);
   outline-offset: -2px;
 }
 .cluster-image {

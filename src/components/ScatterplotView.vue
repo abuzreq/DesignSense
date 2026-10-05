@@ -327,7 +327,7 @@ div ::v-deep circle.hidden:not(.mark-circle) {
 }
 
 div ::v-deep g.has-selection circle.point:not(.hidden) {
-  stroke: rgb(33, 119, 180);
+  stroke: var(--ds-selected);
   stroke-width: 1.5px;
 }
 
@@ -405,6 +405,7 @@ import TemplateView from "@/components/TemplateView.vue";
 import PanelHeader from "@/components/PanelHeader.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
 import { PLOT_CROSSHAIR } from "@/components/selectionCursors.js";
+import { SELECTED } from "@/stateColors.js";
 
 // Below this a square plot is too small to read, so a narrow panel keeps
 // the height it has rather than matching its width.
@@ -1357,7 +1358,7 @@ class ScatterPlot {
               ctx.fillStyle = colorScale(s[colorColumn]);
               ctx.arc(xScale(s[xColumn]), yScale(s[yColumn]), r, 0, Math.PI * 2);
               ctx.fill();
-              ctx.strokeStyle = "rgb(33, 119, 180)";
+              ctx.strokeStyle = SELECTED;
               ctx.lineWidth = 1.5;
               ctx.stroke();
             }

@@ -12,6 +12,7 @@
 import * as d3 from "d3";
 import { operations } from "@/components/operations.js";
 import TemplateView from "@/components/TemplateView.vue";
+import { SELECTED } from "@/stateColors.js";
 
 export default {
   mixins: [TemplateView],
@@ -240,7 +241,9 @@ export default {
         .append("style")
         .text(
           "circle.hidden { opacity: 0.35; } " +
-            "g.has-selection circle:not(.hidden) { stroke: rgb(33, 119, 180); stroke-width: 1px; }"
+            "g.has-selection circle:not(.hidden) { stroke: " +
+            SELECTED +
+            "; stroke-width: 1px; }"
         );
 
       const cells = svg
