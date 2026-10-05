@@ -524,10 +524,17 @@ export default {
   margin: 0;
 }
 
+/* Where the checkbox it stands in for sits, so turning "show only the
+   selected options" on and off does not move the control between corners.
+   It was placed in percentages of the card -- top: -6%, left: -4% -- which
+   put it outside .card-image, whose overflow is hidden: at a 173px card
+   seven of its eighteen pixels were cut off against the top-left corner,
+   with the rest sitting on the card's coloured edge, and the overhang grew
+   with the thumbnails. */
 .xbtn {
   position: absolute;
-  top: -6%;
-  left: -4%;
+  top: 7px;
+  left: 7px;
   height: 18px;
   line-height: 18px;
   width: 18px;
