@@ -393,6 +393,60 @@ export default {
 }
 
 /*
+ * Two rings let go of the resting one as it arrives, so the eye is told
+ * where to look rather than left to find it.
+ *
+ * Once, on arrival, and never again. Inspection lasts as long as the
+ * inspector is being read, so anything that kept moving would keep moving
+ * for minutes, in the corner of the eye, while the reader was busy
+ * elsewhere. The problem this answers is momentary -- a click in a chart
+ * scrolls the gallery and the card lands somewhere new -- so the answer is
+ * momentary too. The class moving from one card to the next is what starts
+ * it; nothing in script has to notice.
+ *
+ * A ring of its own rather than the resting one grown: the mark itself
+ * never moves, so which card it is on is never for a moment in doubt. It
+ * starts exactly where the resting ring is -- two to four pixels out, with
+ * the card's seven-pixel corners plus the four it stands off them -- so it
+ * reads as that ring letting go rather than as a second mark appearing.
+ *
+ * It travels a fixed ten pixels, which is why it animates its own edges
+ * rather than a transform: a ring scaled by a tenth covers seventeen pixels
+ * on the largest thumbnail and three on the smallest, which is two
+ * different gestures rather than one. The cost is laying out one absolutely
+ * positioned pseudo-element per frame instead of compositing a transform,
+ * for nine hundred milliseconds after a click.
+ */
+.thumbnail_card.hovered::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--ds-inspected);
+  border-radius: 11px;
+  pointer-events: none;
+  opacity: 0;
+  animation: ds-inspected-arrived 450ms ease-out 2;
+}
+@keyframes ds-inspected-arrived {
+  from {
+    opacity: 0.85;
+    inset: -4px;
+    border-radius: 11px;
+  }
+  to {
+    opacity: 0;
+    inset: -14px;
+    border-radius: 21px;
+  }
+}
+/* The ring still says which one; only the motion goes. */
+@media (prefers-reduced-motion: reduce) {
+  .thumbnail_card.hovered::after {
+    animation: none;
+  }
+}
+
+/*
  * The global focus ring (App.vue) is offset outward, which here would draw
  * it along the card's coloured edge in a blue a hair off the selection's.
  * Inside the picture instead, as CompareDialog and SensitivityDialog
