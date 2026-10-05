@@ -107,8 +107,14 @@
       </v-tooltip>
 
       <template v-slot:actions>
+        <!-- These four come and go together -- three with the UI mode, one
+             with the axes -- and they are all v-tooltip, so without a key of
+             its own each one is a candidate for being patched into the next.
+             Switching to Lite and back dropped the trend line that way: Vue
+             reused the surviving tooltips for the first of them and never
+             built the last. -->
         <!-- Only when both axes have a goal: then the plot has a front. -->
-        <v-tooltip v-if="frontGoals" bottom max-width="320">
+        <v-tooltip v-if="frontGoals" key="front" bottom max-width="320">
           <template v-slot:activator="{ on }">
             <v-btn
               v-on="on"
@@ -127,7 +133,7 @@
         </v-tooltip>
         <!-- Beside the front, the plot's other drawn-on line. Expert's
              only: see uiModes.js. -->
-        <v-tooltip v-if="can('trendLine')" bottom max-width="320">
+        <v-tooltip v-if="can('trendLine')" key="trend" bottom max-width="320">
           <template v-slot:activator="{ on }">
             <v-btn
               v-on="on"
@@ -144,7 +150,7 @@
           </template>
           <span>{{ trendTip }}</span>
         </v-tooltip>
-        <v-tooltip v-if="can('lassoBrush')" bottom>
+        <v-tooltip v-if="can('lassoBrush')" key="lasso" bottom>
           <template v-slot:activator="{ on }">
             <!-- A disabled button swallows pointer events, so the tooltip
                  listens on a wrapper instead. -->
@@ -206,7 +212,7 @@
               : "Show an overview of dimension pairs, and pick the plot from it."
           }}</span>
         </v-tooltip>
-        <v-tooltip v-if="can('clustering')" bottom max-width="300">
+        <v-tooltip v-if="can('clustering')" key="clusters" bottom max-width="300">
           <template v-slot:activator="{ on }">
             <v-btn
               v-on="on"
