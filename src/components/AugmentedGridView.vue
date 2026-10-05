@@ -316,7 +316,7 @@
                         :card-id="cardSelector + card.item._id"
                         :control="cardControl"
                         :show-details="possibleColSpans[colSpan] > 3"
-                        :detail-keys="filteredKeys"
+                        :detail-keys="detailKeys"
                         v-bind="cardState(card.item)"
                         @hover="onCardHover"
                         @inspect="inspect"
@@ -1018,6 +1018,17 @@ export default {
         (x) => DETAIL_BLACKLIST.indexOf(x) === -1 && !isAssetColumn(x)
       );
     },
+    /**
+     * What a card lists when it is large enough to show its values, with
+     * whatever the colours follow at the top. The mat says which options are
+     * high or low; the first row says by how much.
+     */
+    detailKeys() {
+      let keys = this.filteredKeys;
+      let coloured = this.colorColumn;
+      if (!coloured || keys.indexOf(coloured) === -1) return keys;
+      return [coloured].concat(keys.filter((key) => key !== coloured));
+    },
     columnsPerRow() {
       return Math.max(
         1,
@@ -1618,9 +1629,17 @@ export default {
     },
     /**
      * The colour the charts give an option, as a mat around its picture, so
-     * a card can be read against the chart it came from. Painted here rather
-     * than bound in the template: the cards are built by hand for speed, and
-     * windowing mounts only the ones on screen.
+     * a card can be read against the chart it came from. Design Explorer puts
+     * the same colour on the thumbnail's own border; the mat is the four
+     * pixels of column padding, which comes to the same thing from outside.
+     *
+     * At full strength, not faded: a third of a colour over white lands every
+     * value in the top of the range and flattens the ramp just where the
+     * chart's own alpha already does. Four pixels of a weak colour is nothing
+     * to read; four pixels of the real one lines up down a column.
+     *
+     * Painted here rather than bound in the template: the cards are built by
+     * hand for speed, and windowing mounts only the ones on screen.
      */
     paintCardTints() {
       let cards = this.getAllCards();
@@ -1631,7 +1650,7 @@ export default {
         let datum = this.$store.getters.dataMap[id];
         d3.select(node.parentNode).style(
           "background-color",
-          on && datum ? this.colorize(datum) + "55" : null
+          on && datum ? this.colorize(datum) : null
         );
       });
     },
