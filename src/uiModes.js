@@ -39,6 +39,10 @@ const FEATURES = {
   clustering: [false, true],
   // Reading which inputs drive which outputs.
   sensitivity: [false, true],
+  // The fitted line over the scatterplot. A line through the points is a
+  // claim about them rather than a reading of them, and reading a drawn
+  // line as a law is the easiest mistake in the room.
+  trendLine: [false, true],
   // Clicking a point or line inspects it. Hovering inspects only while Space
   // is held, or in Expert while continuous inspection is on.
   clickToInspect: [true, true],

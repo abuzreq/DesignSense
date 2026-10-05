@@ -125,6 +125,25 @@
           </template>
           <span>{{ frontTip }}</span>
         </v-tooltip>
+        <!-- Beside the front, the plot's other drawn-on line. Expert's
+             only: see uiModes.js. -->
+        <v-tooltip v-if="can('trendLine')" bottom max-width="320">
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              small
+              class="ph-btn"
+              :class="{ 'ph-btn--on': showTrend }"
+              aria-label="Trend line"
+              :aria-pressed="String(showTrend)"
+              @click="showTrend = !showTrend"
+            >
+              <v-icon small>mdi-trending-up</v-icon>
+            </v-btn>
+          </template>
+          <span>{{ trendTip }}</span>
+        </v-tooltip>
         <v-tooltip v-if="can('lassoBrush')" bottom>
           <template v-slot:activator="{ on }">
             <!-- A disabled button swallows pointer events, so the tooltip
@@ -304,6 +323,29 @@ div ::v-deep .front-point {
   pointer-events: none;
 }
 
+/* The least-squares line (Expert), the plot's other drawn-on line. It
+   shares the front's near-black because it means the same kind of thing --
+   something the tool worked out and drew over the options, not a reading of
+   them -- and is told from it by being one straight line rather than a
+   dashed staircase with a ring on every option it passes through. */
+div ::v-deep .trend-line {
+  stroke: #263238;
+  stroke-width: 1.5px;
+  pointer-events: none;
+}
+div ::v-deep .trend-label {
+  fill: #263238;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-anchor: end;
+  pointer-events: none;
+  /* Legible where the line runs through a crowd of points. */
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
 div ::v-deep .axis path {
   display: none;
 }
@@ -420,6 +462,7 @@ import {
   paretoFront,
   rowsWithValues,
 } from "@/analysis/pareto.js";
+import { MIN_TREND_ROWS, linearFit } from "@/analysis/trend.js";
 import { isMissingFor } from "@/store/dimensions.js";
 import { RATING_DIMENSION } from "@/ratings.js";
 import ClusterIcon from "@/assets/cluster_icon.svg?component";
@@ -463,6 +506,11 @@ export default {
       showFront: true,
       // `{ count, of, caveats }` for the front last drawn, for its tooltip.
       frontInfo: null,
+      // Whether the fitted line is drawn. Off until asked for: it is a
+      // claim about the options rather than one of them.
+      showTrend: false,
+      // `{ fit, scope, reason }` for the line last fitted, for its tooltip.
+      trendInfo: null,
       headerHeight: PANEL_HEADER_HEIGHT,
       // Set on the panel as a custom property, so the rects d3 makes inside
       // the svg can be given it from the stylesheet.
@@ -564,6 +612,56 @@ export default {
       }
       return text + " Click to hide.";
     },
+    /**
+     * The plotted pair's least-squares line, in words. Off, it offers; on,
+     * it says what was fitted, over how many options, and how much of the
+     * variation the line accounts for.
+     */
+    trendTip() {
+      if (!this.showTrend) {
+        return (
+          "Fit a straight line through the options and say how much of the " +
+          "variation it accounts for. It reports how closely they follow " +
+          "the line, not that one brings the other about."
+        );
+      }
+      let info = this.trendInfo;
+      if (!info || !info.fit) {
+        let reason = info && info.reason ? info.reason : "there is nothing to fit";
+        return "No line: " + reason + ". Click to hide.";
+      }
+      let fit = info.fit;
+      let yLabel = this.label(this.yColumn);
+      let text =
+        "The least-squares line through the " +
+        fit.n +
+        (info.scope === "result" ? " options in the result" : " options plotted") +
+        ". ";
+      if (fit.r2 === null) {
+        text +=
+          "Every one of them has the same " +
+          yLabel +
+          ", so there is no variation for it to account for.";
+      } else {
+        let step = formatSlope(Math.abs(fit.slope));
+        text +=
+          "R\u00b2 " +
+          formatR2(fit.r2) +
+          ": it accounts for " +
+          Math.round(fit.r2 * 100) +
+          "% of the variation in " +
+          yLabel +
+          ". Up 1 in " +
+          this.label(this.xColumn) +
+          ", and " +
+          yLabel +
+          (Number(step) === 0
+            ? " barely moves."
+            : (fit.slope > 0 ? " rises " : " falls ") + step + " with it.");
+      }
+      return text + " Click to hide.";
+    },
+
     axisItems() {
       return dimensionItems(this.numericDimensions);
     },
@@ -614,6 +712,9 @@ export default {
     },
     showFront: function() {
       this.drawFront();
+    },
+    showTrend: function() {
+      this.drawTrend();
     },
     // Set from outside (the assistant), not only through the dropdowns.
     xColumn: function() {
@@ -701,6 +802,47 @@ export default {
     },
 
     /**
+     * Draws the least-squares line of the plotted pair, over the options in
+     * the result or over all of them when nothing has been narrowed down --
+     * what the eye is reading either way -- and takes it away when it is
+     * hidden or there is nothing a straight line can say.
+     */
+    drawTrend: function() {
+      if (!this.chart || typeof this.chart.showTrend !== "function") return;
+      let clear = (reason) => {
+        this.chart.showTrend(null);
+        this.trendInfo = reason ? { fit: null, reason: reason } : null;
+      };
+      if (!this.can("trendLine") || !this.showTrend) return clear(null);
+      let x = this.xColumn;
+      let y = this.yColumn;
+      if (!x || !y) return clear("no pair is plotted");
+      // A dimension against itself is the diagonal, which needs no fitting.
+      if (x === y) return clear("both axes are the same dimension");
+      let result = this.$store.getters.selectedDataInView(this.viewID);
+      let scope = result.length > 0 ? "result" : "all";
+      let rows = rowsWithValues(
+        scope === "result" ? result : this.chartData || [],
+        [x, y],
+        isMissingFor
+      ).rows;
+      let fit = linearFit(rows, x, y);
+      if (!fit) {
+        return clear(
+          rows.length < MIN_TREND_ROWS
+            ? "fewer than " + MIN_TREND_ROWS + " options have both values"
+            : "every one of them has the same " + this.label(x)
+        );
+      }
+      this.chart.showTrend({
+        slope: fit.slope,
+        intercept: fit.intercept,
+        label: fit.r2 === null ? null : "R\u00b2 " + formatR2(fit.r2),
+      });
+      this.trendInfo = { fit: fit, scope: scope, reason: null };
+    },
+
+    /**
      * The pair the other way round. The direction of each axis travels with
      * its dimension, so the plot is the same cloud reflected about the
      * diagonal rather than a differently arranged one.
@@ -733,12 +875,15 @@ export default {
         this.chart.highlight(result, this.isFilterActive);
         this.syncLiteBrush();
       }
-      // The front is of the current result, which a filter changes.
+      // The front is of the current result, which a filter changes; so,
+      // when there is a result, is the line fitted through it.
       this.drawFront();
+      this.drawTrend();
     },
     afterChartRebuilt: function() {
       this.syncLiteBrush();
       this.drawFront();
+      this.drawTrend();
     },
     /** The dimensions this plot's rectangles constrain: the pair, or one plotted against itself. */
     plotDims: function() {
@@ -968,6 +1113,63 @@ export default {
     },
   },
 };
+/**
+ * The part of the segment from `a` to `b` that falls inside the plot, in
+ * pixels, or null when none of it does. Liang-Barsky, which is four lines
+ * of the same test rather than the dozen cases of handling each edge.
+ *
+ * A fitted line is drawn across the whole x range, and at a steep enough
+ * slope that leaves the plot through the top or the foot rather than the
+ * sides; cutting it here keeps it off the axes without a clip path.
+ */
+function clipToPlot(a, b, width, height) {
+  let dx = b[0] - a[0];
+  let dy = b[1] - a[1];
+  let limits = [
+    [-dx, a[0]],
+    [dx, width - a[0]],
+    [-dy, a[1]],
+    [dy, height - a[1]],
+  ];
+  let from = 0;
+  let to = 1;
+  for (let i = 0; i < limits.length; i++) {
+    let p = limits[i][0];
+    let q = limits[i][1];
+    if (p === 0) {
+      // Parallel to this edge: either wholly inside it or wholly outside.
+      if (q < 0) return null;
+      continue;
+    }
+    let t = q / p;
+    if (p < 0) {
+      if (t > to) return null;
+      if (t > from) from = t;
+    } else {
+      if (t < from) return null;
+      if (t < to) to = t;
+    }
+  }
+  return [
+    [a[0] + from * dx, a[1] + from * dy],
+    [a[0] + to * dx, a[1] + to * dy],
+  ];
+}
+
+/**
+ * A slope, written as the chips and the axes write a value: its span is
+ * its own size, so a slope of 1315 keeps no decimals where one of 0.0023
+ * keeps four.
+ */
+function formatSlope(value) {
+  return formatValue(value, Math.abs(value));
+}
+
+/** An R², which always lies between 0 and 1, so always to two decimals. */
+function formatR2(value) {
+  return formatValue(value, 1);
+}
+
 /** An extent with no values in it becomes 0-1, so the axes still draw. */
 function fallbackDomain(extent) {
   return extent[0] === undefined ? [0, 1] : extent;
@@ -1746,6 +1948,58 @@ class ScatterPlot {
             .merge(rings)
             .attr("cx", (p) => xScale(p[0]))
             .attr("cy", (p) => yScale(p[1]));
+        };
+
+        // The least-squares line of the plotted pair, `{ slope, intercept,
+        // label }` in data units: one straight line across the plot, cut to
+        // the drawing area, with its R² at the end it leaves by. Over the
+        // points and letting the pointer through. Null clears it.
+        chart.showTrend = function(trend) {
+          let segment = null;
+          if (trend) {
+            let domain = xScale.domain();
+            let at = (value) => [
+              xScale(value),
+              yScale(trend.slope * value + trend.intercept),
+            ];
+            segment = clipToPlot(
+              at(domain[0]),
+              at(domain[1]),
+              innerWidth,
+              innerHeight
+            );
+          }
+          let line = g.selectAll("line.trend-line").data(segment ? [segment] : []);
+          line.exit().remove();
+          line
+            .enter()
+            .append("line")
+            .attr("class", "trend-line")
+            .merge(line)
+            .attr("x1", (s) => s[0][0])
+            .attr("y1", (s) => s[0][1])
+            .attr("x2", (s) => s[1][0])
+            .attr("y2", (s) => s[1][1]);
+          // The caption carries its own text: `.text(trend.label)` would
+          // read the label before d3 looked at how many elements there are,
+          // and throw on the null that clears the line.
+          let caption =
+            segment && trend.label ? [{ at: segment, label: trend.label }] : [];
+          let text = g.selectAll("text.trend-label").data(caption);
+          text.exit().remove();
+          text
+            .enter()
+            .append("text")
+            .attr("class", "trend-label")
+            .merge(text)
+            .attr("x", (d) => Math.max(d.at[0][0], d.at[1][0]) - 4)
+            // Just above the end the line leaves by, and never off the top
+            // or the foot of the plot.
+            .attr("y", (d) => {
+              let end = d.at[0][0] >= d.at[1][0] ? d.at[0] : d.at[1];
+              return Math.min(innerHeight - 4, Math.max(12, end[1] - 6));
+            })
+            .text((d) => d.label);
         };
 
         if (multiBrush && useRect) {
