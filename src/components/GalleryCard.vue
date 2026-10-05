@@ -270,7 +270,23 @@ export default {
   position: relative;
   display: block;
   max-width: 100%;
-  border-radius: 4px;
+  /*
+   * The edge the chart's colour is painted on (see paintCardEdges). Reserved
+   * whether or not there is a colour for it, the way SensitivityDialog's
+   * .ax-orow reserves its marker: a card is sized by its picture, so an edge
+   * that came and went would resize every picture in the gallery the moment
+   * a colour dimension was chosen or cleared.
+   *
+   * The colour goes here and not in the four pixels of column padding around
+   * the card, where it started: each card's four pixels meet its neighbour's,
+   * so every gutter became an eight-pixel band and the grid read as a
+   * coloured lattice rather than as cards. Design Explorer rings its own
+   * thumbnails and scales the cells to nine tenths for the same reason --
+   * white has to separate one from the next.
+   */
+  border: 3px solid transparent;
+  /* Three for the edge outside the picture's own four. */
+  border-radius: 7px;
   background-color: #fff;
   color: rgba(0, 0, 0, 0.87);
   box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
@@ -280,7 +296,8 @@ export default {
 .card-image {
   position: relative;
   overflow: hidden;
-  border-radius: inherit;
+  /* Not inherit: that is now the outer radius, with the edge outside it. */
+  border-radius: 4px;
   cursor: pointer;
 }
 

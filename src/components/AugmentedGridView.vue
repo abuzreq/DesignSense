@@ -1061,7 +1061,7 @@ export default {
     // Scrolling hands a mounted card a different option, so its colour has
     // to be put on again. Only a style is written, nothing is read back, so
     // this costs no layout.
-    this.paintCardTints();
+    this.paintCardEdges();
   },
   created() {
     this.viewID = "id" + this._uid;
@@ -1624,32 +1624,33 @@ export default {
     },
     updateAuxiliaries() {
       this.updateScrollbar();
-      this.paintCardTints();
+      this.paintCardEdges();
       //this.updateAxis();
     },
     /**
-     * The colour the charts give an option, as a mat around its picture, so
-     * a card can be read against the chart it came from. Design Explorer puts
-     * the same colour on the thumbnail's own border; the mat is the four
-     * pixels of column padding, which comes to the same thing from outside.
+     * The colour the charts give an option, on the edge of its card, so a
+     * card can be read against the chart it came from. Design Explorer does
+     * the same thing, putting the scale on its thumbnails' own border.
      *
-     * At full strength, not faded: a third of a colour over white lands every
-     * value in the top of the range and flattens the ramp just where the
-     * chart's own alpha already does. Four pixels of a weak colour is nothing
-     * to read; four pixels of the real one lines up down a column.
+     * At full strength, not faded: a third of a colour over white lands
+     * every value in the top of the range and flattens the ramp just where
+     * the chart's own alpha already does. The edge is thin enough to take
+     * the real colour, where the card's whole surround was not -- see the
+     * .thumbnail_card rule in GalleryCard.vue for why that came off.
      *
-     * Painted here rather than bound in the template: the cards are built by
-     * hand for speed, and windowing mounts only the ones on screen.
+     * Clearing it leaves the transparent edge the card reserves, so nothing
+     * resizes. Painted here rather than bound in the template: the cards are
+     * built by hand for speed, and windowing mounts only the ones on screen.
      */
-    paintCardTints() {
+    paintCardEdges() {
       let cards = this.getAllCards();
       if (!cards) return;
       let on = this.colorColumn !== "";
       cards.forEach((node) => {
         let id = node.id.substring(this.cardSelector.length);
         let datum = this.$store.getters.dataMap[id];
-        d3.select(node.parentNode).style(
-          "background-color",
+        d3.select(node).style(
+          "border-color",
           on && datum ? this.colorize(datum) : null
         );
       });
@@ -1834,11 +1835,11 @@ export default {
       }
     },
     colorColumn: function() {
-      this.paintCardTints();
+      this.paintCardEdges();
     },
     // The ramp restretches when a zoom narrows the collection.
     colorScale: function() {
-      this.paintCardTints();
+      this.paintCardEdges();
     },
   },
 };
