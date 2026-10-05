@@ -241,10 +241,28 @@
   opacity: 0.35;
 }
 /* The inspected one, marked as the gallery marks it; inward because the
-   cards sit tight together here. */
+   cards sit tight together here. Two pixels rather than the gallery's
+   three: nothing is drawn beside it here to be outweighed by. */
 .cluster-card.hovered {
   outline: 2px solid var(--ds-inspected);
   outline-offset: -2px;
+}
+/* Pulsing inward, since the card clips its own children and these sit
+   tight against each other: an inset shadow is the same gesture turned
+   around, and it cannot be cut off because it never leaves. Four pixels of
+   spread rather than the gallery's five, for cards that are smaller. The
+   element is the padding box, inside the card's own one-pixel border. The
+   gesture is in App.vue. */
+.cluster-card.hovered::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  pointer-events: none;
+  color: var(--ds-inspected);
+  box-shadow: inset 0 0 2px 4px currentColor;
+  opacity: 1;
+  animation: ds-inspected-pulse var(--ds-pulse);
 }
 .cluster-image {
   background: #f5f7fa;

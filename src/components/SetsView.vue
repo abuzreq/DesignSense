@@ -585,6 +585,23 @@ export default {
   outline: 2px solid var(--ds-inspected);
   outline-offset: -2px;
 }
+/* Pulsing inward for the same reason as the clusters, and because the strip
+   scrolls sideways and clips anything outside a thumbnail. Smaller again:
+   these are seventy-two pixels wide, and a band sized for a cluster card
+   would close over the picture. The gesture is in App.vue; the strip is the
+   view where it earns the most, since clicking a thumbnail here used to say
+   nothing back at all. */
+.cart-thumb--inspected::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 5px;
+  pointer-events: none;
+  color: var(--ds-inspected);
+  box-shadow: inset 0 0 2px 3px currentColor;
+  opacity: 1;
+  animation: ds-inspected-pulse var(--ds-pulse);
+}
 .cart-thumb-remove {
   position: absolute;
   top: 2px;

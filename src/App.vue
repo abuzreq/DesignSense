@@ -46,6 +46,65 @@ export default {
   outline-color: #fff;
 }
 
+/*
+ * The inspected option's mark, pulsing.
+ *
+ * A near-solid band of the mark's own colour sits against the card and goes
+ * from full strength to all but out on a sine, one and a third seconds
+ * round. It is at full strength the instant the class lands: inspection is
+ * usually ordered from somewhere else -- a line in the parallel
+ * coordinates, a point in the scatterplot -- so the mark has to be loudest
+ * first and settle afterwards rather than the other way round.
+ *
+ * Drawn as a shadow and not as a border, because a shadow is sized by its
+ * spread and softened by its blur independently, and that is what made it
+ * tunable. Five pixels of spread with two of blur fills the gutter to about
+ * six and stops short of the neighbour's own edge at eight, with just
+ * enough softness not to read as a second frame around the first. At its
+ * peak it covers the resting ring, so the two read as one mark thickening;
+ * at its trough the ring is what is left.
+ *
+ * Earlier attempts were a second ring, which had nowhere to go -- the gap
+ * between two cards is eight pixels and the resting ring already stands in
+ * two to five of them -- and then a wide, soft wash, which read as a smudge
+ * rather than as a mark. This is the middle: a shadow's shape, used at a
+ * ring's hardness.
+ *
+ * Outward in the gallery, inward in the clusters and the shortlist strip,
+ * which clip their own children; an inset shadow is the same gesture turned
+ * around, sized down for cards a third the size.
+ *
+ * The colour comes from `color` so that the shadows can say currentColor
+ * and keep the state token; the strength is opacity, which is also the one
+ * property here that composites, so nothing is laid out per frame.
+ */
+/* Duration and curve in one place, since all three use them and this has
+   taken some tuning to settle. cubic-bezier(0.37, 0, 0.63, 1) is the usual
+   stand-in for a sine ease, which CSS has no keyword for. */
+:root {
+  --ds-pulse: 1300ms cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+@keyframes ds-inspected-pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.06;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+/* Only the breathing goes, and each rule rests at full strength, so what is
+   left without it is the mark at its loudest rather than nothing. */
+@media (prefers-reduced-motion: reduce) {
+  .thumbnail_card.hovered::after,
+  .cluster-card.hovered::after,
+  .cart-thumb--inspected::after {
+    animation: none;
+  }
+}
+
 a {
   color: #000;
   text-decoration: none;
