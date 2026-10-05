@@ -145,6 +145,20 @@ const LINE_ALPHA = [
 // Room kept between neighbouring axis titles.
 const TITLE_PADDING = 8;
 
+/** How solid and how thick this many lines should be drawn. */
+function inkFor(count) {
+  return LINE_ALPHA.find((step) => count <= step.upTo);
+}
+
+/**
+ * How faint the selection is allowed to get, whatever its size. Left to the
+ * table alone, a brush taking in most of the collection is drawn at the
+ * collection's own alpha and has only the unselected lines' dimming to tell
+ * it apart; the floor keeps a wide selection about four times the ink of
+ * what it left behind rather than three.
+ */
+const MIN_SELECTION_ALPHA = 0.45;
+
 /*
  * The inspected option's line is drawn four pixels wide on a canvas of its
  * own, and while it is inspected the rest drop to half their opacity. That
@@ -254,8 +268,7 @@ export default {
     ]),
     /** How solid and how thick to draw the lines, for this many of them. */
     lineInk() {
-      let count = this.chartData ? this.chartData.length : 0;
-      return LINE_ALPHA.find((step) => count <= step.upTo);
+      return inkFor(this.chartData ? this.chartData.length : 0);
     },
     /** What the colour can follow: any dimension, or nothing at all. */
     colorItems() {
@@ -598,6 +611,38 @@ export default {
       }
       this.refresh();
     },
+    /**
+     * The selection, drawn on a canvas of its own over the rest.
+     *
+     * That canvas is the one the library leaves solid: autoscale gives the
+     * foreground and brushed contexts `config.alpha` and gives the highlight
+     * context only a line width, so a brushed line was drawn at full
+     * strength however faint its neighbours were -- eight times the ink at
+     * 648 rows. Worse than bright: solid lines stop accumulating where they
+     * overlap, so brushing threw away the density the alpha is there to
+     * show, in exactly the set that had just been asked about.
+     *
+     * Its ink follows the number of lines drawn on it, through the table the
+     * rest of the chart uses, so a handful stays solid and hundreds are as
+     * translucent as hundreds should be, down to MIN_SELECTION_ALPHA. Never
+     * fainter than its neighbours: a selection is a subset, so its step is
+     * never past theirs.
+     *
+     * Set on every call, not once, because a render resizes the canvases and
+     * setting a canvas's width wipes its context.
+     */
+    highlight(selection) {
+      if (!this.chart || typeof this.chart.highlight !== "function") return;
+      let ctx = this.chart.ctx && this.chart.ctx.highlight;
+      if (ctx) {
+        ctx.globalAlpha = Math.max(
+          MIN_SELECTION_ALPHA,
+          inkFor(selection ? selection.length : 0).alpha
+        );
+      }
+      // With filters active, an empty selection means "nothing matches".
+      this.chart.highlight(selection, this.isFilterActive);
+    },
     markingChangeHandler: function(reset) {
       if (reset) {
         if (this.liteBrushes) this.clearLiteBrushes();
@@ -609,7 +654,7 @@ export default {
         //this.chart.brushReset();
         //this.chart.unhighlight();
         var result = this.$store.getters.selectedDataInView(this.viewID);
-        this.chart.highlight(result);
+        this.highlight(result);
         this.syncLiteBrushes();
       }
       let hovered = this.$store.getters.getHovered;
@@ -847,7 +892,7 @@ export default {
       if (this._refreshTimer) return;
       this.chart.render();
       // Rendering clears the canvas the selection is drawn on.
-      this.chart.highlight(this.$store.getters.selectedDataInView(this.viewID));
+      this.highlight(this.$store.getters.selectedDataInView(this.viewID));
       this.updateStyleGivenHovered(this.hovered);
       this.cleanTooltip();
       if (this.knobGesture) this.showKnobTooltip();
@@ -1643,9 +1688,9 @@ export default {
       let ink = this.lineInk;
       const chart = ParCoords({
         markedLineWidth: 4,
-        // The highlight canvas is drawn without `alpha`, so a selected line
-        // is solid whatever the rest are; a little thicker separates it from
-        // them without reaching the inspected line's 4.
+        // A little thicker than the rest, which with the selection's own
+        // alpha (see highlight) separates it from them without reaching the
+        // inspected line's 4.
         highlightedLineWidth: 1.8,
         alpha: ink.alpha,
         lineWidth: ink.width,
