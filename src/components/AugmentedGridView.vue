@@ -1,6 +1,12 @@
 <template>
-  <v-container :id="viewID" justify-start align-start>
-    <v-container class="pa-0 ma-0">
+  <!-- Both containers are fluid. A v-container is built for a page, and
+       carries a max-width per breakpoint -- 1185px at lg -- which is the
+       right idea for a column of prose and the wrong one for a panel that
+       should fill whatever the layout hands it. In the chart-over-gallery
+       arrangement on a 1600px window it was costing the thumbnails 382 of
+       the panel's 1569 pixels, with nothing drawn in them. -->
+  <v-container fluid :id="viewID" justify-start align-start>
+    <v-container fluid class="pa-0 ma-0">
       <PanelHeader
         icon="mdi-image-multiple-outline"
         title="Gallery"
@@ -655,9 +661,15 @@ import { dimensionItems, optionName } from "@/columns.js";
 
 import PanelHeader from "@/components/PanelHeader.vue";
 
-// The largest share of the gallery panel the inspector may take, of its
-// height when stacked and of its width when beside the thumbnails.
+// The largest share of the gallery panel the inspector may take when it is
+// stacked above the thumbnails -- of the panel's height, which is what bounds
+// the picture there.
 const INSPECTOR_SHARE = 0.45;
+// And of its width when it is beside them, where the two are bounded by
+// different things: the picture by the panel's height, and the details list,
+// which reads down the same column, by the width. So the width can afford to
+// be the larger share.
+const INSPECTOR_WIDTH_SHARE = 0.5;
 // Below this the inspector goes back on top: a column this narrow is worse
 // for a picture than a band across a short panel.
 const INSPECTOR_MIN_WIDTH = 300;
@@ -930,7 +942,10 @@ export default {
     inspectorWidth() {
       let w = Number(this.width);
       if (!(w > 0)) return INSPECTOR_MIN_WIDTH;
-      return Math.max(INSPECTOR_MIN_WIDTH, Math.round(w * INSPECTOR_SHARE));
+      return Math.max(
+        INSPECTOR_MIN_WIDTH,
+        Math.round(w * INSPECTOR_WIDTH_SHARE)
+      );
     },
     /** The inspector's height in px: beside the thumbnails it takes all of it. */
     inspectorHeight() {
