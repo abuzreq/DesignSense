@@ -311,9 +311,20 @@ export function unwatchSemantic(onChange) {
   if (at >= 0) semantic.listeners.splice(at, 1);
 }
 
+/**
+ * Hears about status changes without asking for any. A bar subscribes at
+ * mount so that it follows an encoder another bar has already started, and
+ * calls warmSemantic only when its own reader shows an interest.
+ */
+export function watchSemantic(onChange) {
+  if (onChange && semantic.listeners.indexOf(onChange) < 0) {
+    semantic.listeners.push(onChange);
+  }
+}
+
 /** Starts loading the encoder once; `onChange` hears about status changes. */
 export function warmSemantic(onChange) {
-  if (onChange && semantic.listeners.indexOf(onChange) < 0) semantic.listeners.push(onChange);
+  watchSemantic(onChange);
   if (semantic.status !== "idle") return;
   if (typeof window === "undefined") return;
   semantic.status = "loading";

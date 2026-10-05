@@ -35,6 +35,21 @@
       <!-- Everything else floats under the input, so the toolbar stays one row:
            what was understood or answered, then the nearest instructions. -->
       <div v-if="open && (items.length || reply || !text)" class="assistant-suggest" @mousedown.prevent>
+        <!-- The download begins on the first focus, which is this moment, so
+             this is where to say so. The bar is working meanwhile, by wording;
+             the only thing waiting is the better ranking. -->
+        <div v-if="encoder === 'loading'" class="assistant-loading">
+          <v-progress-circular
+            indeterminate
+            size="12"
+            width="2"
+            color="amber lighten-2"
+          />
+          <span
+            >Loading the meaning model, 23&nbsp;MB, once. Matching by wording
+            until it arrives.</span
+          >
+        </div>
         <div v-if="reply" class="assistant-reply" :class="'assistant-reply--' + reply.kind">
           <template v-if="reply.kind === 'clarify'">
             <span class="assistant-reply-text">{{ reply.message }}</span>
@@ -145,6 +160,7 @@ import {
   suggest,
   acceptSuggestion,
   warmSemantic,
+  watchSemantic,
   unwatchSemantic,
   prepareSemantic,
   semanticStatus,
@@ -169,7 +185,7 @@ const HINTS = [
 ];
 
 const ENCODER_TEXT = {
-  idle: "Suggestions are ranked by wording.",
+  idle: "Suggestions are ranked by wording; the meaning model loads when you use the bar.",
   loading: "Loading the meaning model (23 MB, once). Suggestions are ranked by wording until it arrives.",
   ready: "Suggestions are ranked by meaning and wording.",
   failed: "The meaning model could not load; suggestions are ranked by wording.",
@@ -277,9 +293,13 @@ export default {
       }
     };
     document.addEventListener("keydown", this.onGlobalKeydown);
-    // The encoder loads in the background; the bar works before it arrives,
-    // and the table's index is built while the page is idle so the first
-    // click does not wait for it.
+    // The encoder is not started here. It is twenty-three megabytes of model
+    // and runtime pulled from two other hosts, and on a published site that is
+    // a cost every first visit pays whether or not anyone ever types in this
+    // bar -- so it waits for a focus (see onFocus). Subscribing costs nothing
+    // and is done now, so that this bar follows an encoder that some other bar
+    // may already have started. The table's index is still built while the
+    // page is idle, once the encoder is there.
     // Kept, so beforeDestroy can take the same function off again: the
     // encoder's listeners outlive this bar, and one left behind would keep
     // this whole app alive after the next dataset replaces it.
@@ -288,7 +308,7 @@ export default {
       if (status === "ready") prepareSemantic(this.$store);
       if (this.open) this.refresh();
     };
-    warmSemantic(this.onEncoderStatus);
+    watchSemantic(this.onEncoderStatus);
   },
   beforeDestroy() {
     unwatchSemantic(this.onEncoderStatus);
@@ -331,6 +351,9 @@ export default {
     /* ------------------------------------------------------- suggestions -- */
 
     onFocus() {
+      // The reader has asked for the bar, so now the encoder is worth its
+      // download. Idempotent: every focus after the first returns at once.
+      warmSemantic(this.onEncoderStatus);
       clearTimeout(this.blurTimer);
       if (!this.floating) this.place();
       this.focused = true;
@@ -659,6 +682,18 @@ export default {
 .assistant-input::placeholder {
   color: rgba(255, 255, 255, 0.45);
 }
+/* Said in the panel and not only on the dot, because the download now starts
+   under the reader's eyes rather than long before they looked. */
+.assistant-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 7px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.72);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .assistant-dot {
   position: absolute;
   right: 8px;
