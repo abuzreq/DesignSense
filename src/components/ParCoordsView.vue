@@ -1061,8 +1061,11 @@ export default {
       this.cleanTooltip();
       let raw = d3.event.selection;
       if (!raw || !d3.event.sourceEvent) return;
-      // In the coordinates the tooltip is drawn in, wherever the panel sits.
-      let x = d3.mouse(this.chart.svg.node())[0];
+      // On the axis the brush is on, not under the pointer. A brush moves
+      // only up and down, so a drag that wanders sideways -- which every
+      // drag does -- was carrying the two values away from their own axis.
+      let x = this.chart.xscale(dim);
+      if (!Number.isFinite(x)) return;
       let yscale = this.liteBrushes[dim].yscale;
       this.createTooltip([
         [x, raw[0], round(yscale.invert(raw[0]), 4) + ""],
@@ -1606,8 +1609,9 @@ export default {
 
           if (args && d3.event.type === "brush") {
             let sel = args.selection;
-            if (sel.raw.length > 0) {
-              let x = d3.mouse(this.chart.svg.node())[0];
+            // On the axis, not under the pointer (see onAxisBrushMove).
+            let x = this.chart.xscale(args.axis);
+            if (sel.raw.length > 0 && Number.isFinite(x)) {
               let rawY = sel.raw;
               let scaledY = sel.scaled;
               // console.log(sel, sel.scaled);
