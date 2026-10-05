@@ -201,6 +201,8 @@ const MAX_TITLE_ROWS = 3;
 const TITLE_ROW_HEIGHT = 13;
 // The library's own top margin, which fits one row (see .label in the style).
 const TITLE_MARGIN_TOP = 24;
+// How long a click on an axis title waits to see whether a second follows.
+const DOUBLE_CLICK_MS = 300;
 
 export default {
   mixins: [TemplateView],
@@ -333,7 +335,8 @@ export default {
       let hint =
         (this.isLite
           ? "Drag along an axis to filter"
-          : "Drag along an axis to select") + " · drag a title to reorder";
+          : "Drag along an axis to select") +
+        " · drag a title to reorder, double-click it to flip its axis";
       if (this.customDimensionNames.some((dim) => this.isAxisShown(dim))) {
         hint += this.isInspecting
           ? " · drag the knob on \u270e axes to edit"
@@ -360,11 +363,19 @@ export default {
     this.titleFrame = null;
     // Positions and titles the axis titles were last fitted to.
     this.fittedTitlesKey = null;
+    // Axes turned over by double-clicking their titles, replayed on every
+    // rebuild by applyGoalOrientation.
+    this.flippedAxes = [];
+    // A click on a title waiting to see whether a second one follows:
+    // { dim, was, applied }.
+    this.titleClick = null;
+    this.titleClickTimer = null;
   },
   beforeDestroy() {
     if (this.lineFrame) cancelAnimationFrame(this.lineFrame);
     if (this.knobFrame) cancelAnimationFrame(this.knobFrame);
     if (this.titleFrame) cancelAnimationFrame(this.titleFrame);
+    this.cancelTitleClick();
   },
   watch: {
     // The Rating axis appears with the first rating.
@@ -460,12 +471,15 @@ export default {
       this.$store.commit("changeColorColumn", dim || "");
     },
     /**
-     * Clicking an axis title colours the chart by it, and clicking it again
-     * takes the colour off. Two of the library's own handlers are taken off
-     * the titles to make room: double-click flipped the axis, which fires
-     * this twice on the way and is undone by the next rebuild anyway since
-     * applyGoalOrientation re-reads the goals; and the wheel rotated every
-     * title to a diagonal, which a stray scroll was enough to trigger.
+     * What an axis title answers to: a click colours the chart by that
+     * dimension and a second click takes the colour off, and a double-click
+     * turns the axis over, as the benchmark's does.
+     *
+     * The flip is the library's idea but not the library's handler. Its own
+     * lasted only until the next rebuild, which makes the scales afresh from
+     * the goals; flipAxis keeps a record, so an axis stays the way it was
+     * put. Its wheel handler, which rotated every title to a diagonal on a
+     * stray scroll over the chart, is simply dropped.
      */
     bindAxisTitles(chart) {
       if (!chart || !chart.svg) return;
@@ -473,12 +487,97 @@ export default {
       chart.svg
         .selectAll("g.dimension text.label")
         .classed("ds-colour-by", (dim) => dim === this.colorColumn)
-        .on("dblclick", null)
         .on("wheel", null)
         .on("click", function(dim) {
           d3.event.stopPropagation();
-          vm.setColorColumn(dim === vm.colorColumn ? "" : dim);
+          vm.onTitleClick(dim, d3.event);
+        })
+        .on("dblclick", function(dim) {
+          d3.event.stopPropagation();
+          d3.event.preventDefault();
+          vm.onTitleDoubleClick(dim);
         });
+    },
+    /**
+     * A press on a title that turned out to be a click rather than the start
+     * of a drag to reorder: moving an axis must not also recolour the chart.
+     * The distance is the one onChartClick uses to tell a click from a drag.
+     *
+     * The colour then waits out the double-click window, so a double-click
+     * only flips. A system set slower than that window lets the colour
+     * through first, and onTitleDoubleClick puts it back.
+     */
+    onTitleClick(dim, event) {
+      let press = this.press;
+      this.press = null;
+      // The second press of a double-click: hold back the first one's
+      // colour, and leave its record for onTitleDoubleClick to read.
+      if (event.detail > 1) {
+        this.stopTitleClickTimer();
+        return;
+      }
+      // Any other press ends whatever the press before it was waiting on.
+      this.cancelTitleClick();
+      // This one travelled, so it was the start of a drag to reorder.
+      if (
+        press &&
+        Math.hypot(event.clientX - press.x, event.clientY - press.y) >= 3
+      ) {
+        return;
+      }
+      let pending = { dim: dim, was: this.colorColumn, applied: false };
+      this.titleClick = pending;
+      this.titleClickTimer = setTimeout(() => {
+        this.titleClickTimer = null;
+        pending.applied = true;
+        this.setColorColumn(dim === pending.was ? "" : dim);
+      }, DOUBLE_CLICK_MS);
+    },
+    onTitleDoubleClick(dim) {
+      let pending = this.titleClick;
+      this.cancelTitleClick();
+      // Only if the window was too short for this system's double-click.
+      if (pending && pending.applied && pending.dim === dim) {
+        this.setColorColumn(pending.was);
+      }
+      this.flipAxis(dim);
+    },
+    stopTitleClickTimer() {
+      if (this.titleClickTimer) clearTimeout(this.titleClickTimer);
+      this.titleClickTimer = null;
+    },
+    cancelTitleClick() {
+      this.stopTitleClickTimer();
+      this.titleClick = null;
+    },
+    /**
+     * Turns an axis over, its low end where its high end was. Written down
+     * as well as done: every rebuild makes the scales again, so
+     * applyGoalOrientation replays the flips beside the goals' own
+     * reversals. Flipping itself does not rebuild, so axes dragged into an
+     * order keep it.
+     */
+    flipAxis(dim) {
+      let chart = this.chart;
+      let axis = chart && chart.dimensions()[dim];
+      if (!axis || !axis.yscale || typeof axis.yscale.invert !== "function") {
+        return;
+      }
+      let at = this.flippedAxes.indexOf(dim);
+      if (at < 0) this.flippedAxes.push(dim);
+      else this.flippedAxes.splice(at, 1);
+      axis.yscale.domain(axis.yscale.domain().slice().reverse());
+      // This axis redrawn on the spot: d3's axis touches only the ticks and
+      // the domain line, so the title above it keeps its colour and its fit.
+      chart.svg
+        .selectAll("g.dimension")
+        .filter((d) => d === dim)
+        .select("g.axis")
+        .call(chart.applyAxisConfig(null, axis));
+      // The lines, the selection over them and the knobs follow the scale.
+      this.redrawLinesInPlace();
+      // A brush stands for a range of values, not a stretch of pixels.
+      this.syncLiteBrushes();
     },
     isAxisShown(dim) {
       return !this.excludedDimensions.includes(dim);
@@ -1562,7 +1661,11 @@ export default {
       chart.hideAxis(this.hiddenAxes());
       applyNumericTypes(chart, this.numericDimensions);
       applyFixedScales(chart, this.fixedAxisBounds, this.axisTitles);
-      applyGoalOrientation(chart, this.goalOf);
+      // A dimension that has gone takes its flip with it.
+      this.flippedAxes = this.flippedAxes.filter((dim) =>
+        this.numericDimensions.includes(dim)
+      );
+      applyGoalOrientation(chart, this.goalOf, this.flippedAxes);
       applyTickCounts(chart);
 
       chart.createAxes();
@@ -1776,12 +1879,20 @@ function applyFixedScales(chart, boundsByDim, titles) {
  * its goal runs from its highest value at the foot to its lowest at the top.
  * The library makes a scale only for an axis without one, and keeps it
  * through renders, so the axes are scaled first and the reversed ones stay
- * reversed; a double-click still flips an axis until the chart is rebuilt.
+ * reversed.
+ *
+ * `flipped` are the axes the reader turned over by double-clicking a title
+ * (see flipAxis). A goal's reversal and a reader's cancel each other out:
+ * asking for the other way round on an axis already the other way round
+ * puts it back as it was.
  */
-function applyGoalOrientation(chart, goalOf) {
+function applyGoalOrientation(chart, goalOf, flipped) {
   let dimensions = chart.dimensions();
   if (!dimensions) return;
-  let reversed = Object.keys(dimensions).filter((dim) => goalOf(dim) === MIN);
+  let turned = new Set(flipped || []);
+  let reversed = Object.keys(dimensions).filter(
+    (dim) => (goalOf(dim) === MIN) !== turned.has(dim)
+  );
   if (reversed.length === 0) return;
   chart.autoscale();
   reversed.forEach((dim) => {
