@@ -1117,8 +1117,13 @@ export default {
         // The marking is mutated in place, so Vue cannot tell which
         // thumbnails changed state.
         this.$forceUpdate();
+        // A reading taken mid-drag (Lite, see the store's commitFilters)
+        // skips the scrollbar's markers, rebuilt from every item each time;
+        // the drag's end brings them up to date.
+        let preview = !!(mutation.payload && mutation.payload.preview);
         Vue.nextTick(() => {
-          this.updateAuxiliaries();
+          if (preview) this.paintCardEdges();
+          else this.updateAuxiliaries();
         });
       }
     });

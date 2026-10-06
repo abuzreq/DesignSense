@@ -454,6 +454,7 @@ import PanelHeader from "@/components/PanelHeader.vue";
 import { PANEL_HEADER_HEIGHT } from "@/layout.js";
 import { PLOT_CROSSHAIR } from "@/components/selectionCursors.js";
 import { SELECTED } from "@/stateColors.js";
+import { brushPreviewer } from "@/brushPreview.js";
 
 // Below this a square plot is too small to read, so a narrow panel keeps
 // the height it has rather than matching its width.
@@ -588,6 +589,8 @@ export default {
     }),
     ...mapGetters([
       "dimensionStructure",
+      "liveBrushing",
+      "liveFiltering",
       "unfilterableDimensions",
       "goalOf",
       "goalSignature",
@@ -749,10 +752,20 @@ export default {
     //To give access to d3-lasso to the d3 object
     window["d3"] = d3;
 
+    // Lite, while one of this plot's rectangles is being dragged: its result
+    // is shown as it goes, and the plot leaves its rectangles alone (see
+    // onLiteBrushing, syncLiteBrush). Not in data(): gesture state, not view
+    // state.
+    this.liveBrush = false;
+    this.previewer = brushPreviewer();
+
     this.xFallback = this.numericDimensions[0];
     this.yFallback = this.numericDimensions.includes("out:Percent Planar")
       ? "out:Percent Planar"
       : this.numericDimensions[1];
+  },
+  beforeDestroy() {
+    this.previewer.cancel();
   },
   methods: {
     label: displayName,
@@ -904,13 +917,66 @@ export default {
      * it was mirroring as a rectangle. Every other filter stays.
      */
     onLiteBrush: function(rects) {
-      let x = this.xColumn;
-      let y = this.yColumn;
+      // The drag's end commits on its own; a reading still waiting is stale.
+      this.previewer.cancel();
+      this.liveBrush = false;
       // Custom dimensions can't be filtered by; take the rectangle back.
       if (this.lockedAxes.length > 0) {
         if (rects && rects.length > 0) this.clearDrawnBrush();
         return;
       }
+      this.$store.dispatch("setBoxFilter", this.boxFilterFor(rects));
+    },
+    /**
+     * Lite, mid-drag: the result follows the rectangle as it goes, one
+     * reading a frame, on collections small enough for that (see the store's
+     * liveFiltering). Meanwhile the plot leaves its own rectangles alone (see
+     * syncLiteBrush), since the stored box can differ from the drawn one (it
+     * is clamped to the data) and moving the brush under the pointer would
+     * break the drag; every other view follows the store as usual.
+     */
+    onLiteBrushing: function(rects) {
+      if (!this.liveFiltering || this.lockedAxes.length > 0) {
+        return;
+      }
+      this.liveBrush = true;
+      this.previewer.push(() => {
+        if (!this.liveBrush) return;
+        this.$store.dispatch(
+          "setBoxFilter",
+          Object.assign(this.boxFilterFor(rects), { preview: true })
+        );
+      });
+    },
+    /**
+     * Expert, mid-drag: the selection the rectangle would give under the
+     * current operation, one reading a frame, computed each time from the
+     * selection before the drag (see `preview` in the store's update). The
+     * end commits as usual, or, when it has nothing to commit, puts the
+     * selection back. Not under Intersect, which waits for the end.
+     */
+    onExpertBrushing: function(brushedIDs, extent) {
+      if (!this.liveBrushing || this.lockedAxes.length > 0) return;
+      // An intersection with a rectangle still being drawn is near empty
+      // until the rectangle reaches the selection, so showing it as it goes
+      // would blank the selection at the start of every drag.
+      if (this.currentSelectionOperation === operations.INTERSECT) return;
+      this.liveBrush = true;
+      this.previewer.push(() => {
+        if (!this.liveBrush) return;
+        this.$store.dispatch("update", {
+          view: this.viewID,
+          selection: brushedIDs,
+          operation: this.currentSelectionOperation,
+          step: this.brushStep(brushedIDs, extent),
+          preview: true,
+        });
+      });
+    },
+    /** The setBoxFilter payload for these rectangles (see onLiteBrush). */
+    boxFilterFor: function(rects) {
+      let x = this.xColumn;
+      let y = this.yColumn;
       let boxes = (rects || []).map((rect) => {
         // A dimension plotted against itself gives two readings of one range.
         if (x === y) {
@@ -920,11 +986,11 @@ export default {
         }
         return { [x]: rect.x, [y]: rect.y };
       });
-      this.$store.dispatch("setBoxFilter", {
+      return {
         dims: this.plotDims(),
         boxes: boxes,
         replace: this.mirrored ? [x, y] : [],
-      });
+      };
     },
     /**
      * Draws this plot's boxes as its rectangles. With none of its own, the
@@ -937,6 +1003,9 @@ export default {
      */
     syncLiteBrush: function() {
       if (!this.isLite || !this.chart || !this.chart.showBrush) return;
+      // The rectangle under the pointer is the one source of truth until
+      // the drag ends; the end's own commit syncs (see onLiteBrushing).
+      if (this.liveBrush) return;
       let x = this.xColumn;
       let y = this.yColumn;
       this.mirrored = false;
@@ -1078,14 +1147,24 @@ export default {
         // Custom and weighted axes span their fixed range.
         .xDomain(this.$store.getters.fixedBoundsOf(this.xColumn))
         .yDomain(this.$store.getters.fixedBoundsOf(this.yColumn))
+        .onBrushing((brushedIDs, extent) => {
+          if (this.isLite) this.onLiteBrushing(extent);
+          else this.onExpertBrushing(brushedIDs, extent);
+        })
         .onBrushed((brushedIDs, extent) => {
           if (this.isLite) {
             this.onLiteBrush(extent);
             return;
           }
+          // The drag's end commits on its own; a reading still waiting is
+          // stale, and one shown already is taken back unless committed.
+          this.previewer.cancel();
+          let previewed = this.liveBrush;
+          this.liveBrush = false;
           // Brushing custom dimensions would select by values still being
           // decided; an empty brush still clears the selection.
           if (this.lockedAxes.length > 0 && brushedIDs.length > 0) {
+            if (previewed) this.$store.commit("cancelSelectionPreview");
             this.clearDrawnBrush();
             return;
           }
@@ -1096,6 +1175,7 @@ export default {
             brushedIDs.length === 0 &&
             this.currentSelectionOperation !== operations.REPLACE
           ) {
+            if (previewed) this.$store.commit("cancelSelectionPreview");
             return;
           }
           this.$store.dispatch("update", {
@@ -1225,6 +1305,9 @@ class ScatterPlot {
 
     var useLassoBrush;
     var onBrushed;
+    // Called during a rectangle drag with what onBrushed gets at its end,
+    // the ids and the rectangles in data units; unset, nothing follows a drag.
+    var onBrushing;
     var onHovered;
     // Called for a click (a brush gesture that barely moved) with the point
     // under the pointer, or null. Returning false, or leaving it unset, lets
@@ -1235,6 +1318,9 @@ class ScatterPlot {
     var multiBrush = false;
     var CLICK_RADIUS = 7;
     var CLICK_SLOP = 3;
+    // Whether the drag in progress has been handed to onBrushing: once it
+    // has, its end is a drag's end, however close to its start it comes.
+    var previewed = false;
 
     var keyFunc;
     // Past CANVAS_THRESHOLD (module level, shared with the lasso toggle) the
@@ -1620,22 +1706,26 @@ class ScatterPlot {
           };
         }
 
+        /** How far the pointer, now at `p`, has come since the press. */
+        function movedSince(pressed, p) {
+          return Math.hypot(p[0] - pressed.point[0], p[1] - pressed.point[1]);
+        }
+
         function brushend() {
           if (syncingBrush) return;
           if (useRect) showBrushLabel(null);
           var pressed = press;
+          var wasPreviewed = previewed;
           press = null;
+          previewed = false;
           // d3 keeps an unmoved brush's selection (and nulls it on the overlay),
           // so a click is recognised by how little the pointer moved, on the
-          // lasso as on the rectangle.
-          if (onClicked && pressed && d3.event.sourceEvent) {
+          // lasso as on the rectangle. A drag whose result has been shown
+          // already is a drag, wherever it ends.
+          if (!wasPreviewed && onClicked && pressed && d3.event.sourceEvent) {
             var p = d3.mouse(g.node());
-            var moved = Math.hypot(
-              p[0] - pressed.point[0],
-              p[1] - pressed.point[1]
-            );
             if (
-              moved < CLICK_SLOP &&
+              movedSince(pressed, p) < CLICK_SLOP &&
               onClicked(
                 findNearest(p[0], p[1], CLICK_RADIUS),
                 pressed.onOverlay
@@ -1644,39 +1734,58 @@ class ScatterPlot {
               return;
             }
           }
-          let brushedIDs = [];
-          // The rectangles in data units, one per brush; empty when nothing is brushed.
-          let ranges = [];
+          let brushed;
           if (multiBrush && useRect) {
             reconcileBrushes(this);
-            var rects = currentRects();
-            var seen = new Set();
-            rects.forEach((rect) => {
-              idsInRect(rect).forEach((id) => {
-                if (!seen.has(id)) {
-                  seen.add(id);
-                  brushedIDs.push(id);
-                }
-              });
-            });
-            ranges = rects.map(extentToRanges);
+            brushed = readRects(currentRects());
           } else if (rectBrush) {
-            if (d3.event.selection !== null) {
-              brushedIDs = idsInRect(d3.event.selection);
-              ranges = [extentToRanges(d3.event.selection)];
+            brushed = readRects(
+              d3.event.selection === null ? [] : [d3.event.selection]
+            );
+          } else {
+            brushed = { ids: [], ranges: [] };
+            if (lassoBrush) {
+              lassoBrush.selectedItems().each((d) => {
+                brushed.ids.push(keyFunc(d));
+              });
             }
-          } else if (lassoBrush) {
-            var selected = lassoBrush.selectedItems();
-            selected.each((d) => {
-              brushedIDs.push(keyFunc(d));
-            });
           }
-          onBrushed(brushedIDs, ranges);
+          onBrushed(brushed.ids, brushed.ranges);
+        }
+
+        /** The ids inside these pixel rectangles, once each, and the rectangles in data units. */
+        function readRects(rects) {
+          var ids = [];
+          var seen = new Set();
+          rects.forEach((rect) => {
+            idsInRect(rect).forEach((id) => {
+              if (!seen.has(id)) {
+                seen.add(id);
+                ids.push(id);
+              }
+            });
+          });
+          return { ids: ids, ranges: rects.map(extentToRanges) };
         }
 
         function brushmove() {
           if (syncingBrush || !useRect) return;
           showBrushLabel(d3.event.selection);
+          // The rectangles as they stand, once the gesture is a drag rather
+          // than a click. The one being dragged reads through brushSelection
+          // like the rest, so no bookkeeping is needed before the end.
+          if (!onBrushing || !press || !d3.event.sourceEvent) return;
+          if (!previewed && movedSince(press, d3.mouse(g.node())) < CLICK_SLOP) {
+            return;
+          }
+          previewed = true;
+          var rects = multiBrush
+            ? currentRects()
+            : d3.event.selection === null || emptyRect(d3.event.selection)
+            ? []
+            : [d3.event.selection];
+          var brushed = readRects(rects);
+          onBrushing(brushed.ids, brushed.ranges);
         }
 
         /* ---- several rectangles, after Bostock's multiple-brush pattern ---- */
@@ -2066,6 +2175,11 @@ class ScatterPlot {
     chart.onBrushed = function(_) {
       if (!arguments.length) return onBrushed;
       onBrushed = _;
+      return chart;
+    };
+    chart.onBrushing = function(_) {
+      if (!arguments.length) return onBrushing;
+      onBrushing = _;
       return chart;
     };
     chart.xDomain = function(_) {

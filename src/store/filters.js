@@ -31,6 +31,14 @@ const SCOPE_PREFIX = "scope:";
 /** Two ranges closer than this share of the dimension's span are the same brush. */
 export const RANGE_TOLERANCE = 1e-4;
 
+/**
+ * Up to this many options (of those in scope) the result follows a brush as
+ * it is dragged; past it, the filters change when the drag ends. A commit
+ * passes over the whole collection and redraws every view, so the ceiling
+ * keeps a drag smooth rather than merely live.
+ */
+export const LIVE_FILTER_LIMIT = 2000;
+
 export const GALLERY_KEY = "gallery";
 const GALLERY_SELECTED_LABEL = "Selected in gallery";
 const GALLERY_UNSELECTED_LABEL = "Unselected in gallery";

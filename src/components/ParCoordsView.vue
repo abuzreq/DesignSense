@@ -102,6 +102,7 @@ import { axisTickFormat } from "@/components/axisFormat.js";
 import { operations } from "@/components/operations.js";
 import { RATING_BOUNDS, RATING_DIMENSION, isRating, starsOf } from "@/ratings.js";
 import { snapValue } from "@/customDimensions.js";
+import { brushPreviewer } from "@/brushPreview.js";
 import {
   CUSTOM,
   GOAL_MARKS,
@@ -260,6 +261,8 @@ export default {
       "inputDimensions",
       "outputDimensions",
       "hasRatings",
+      "liveBrushing",
+      "liveFiltering",
       "customDimensionNames",
       "weightedDimensionNames",
       "unfilterableDimensions",
@@ -376,6 +379,13 @@ export default {
       .concat(["selected"]);
     // Lite's own axis brushes by dimension. Not in data(): d3 state, not view state.
     this.liteBrushes = null;
+    // The axis whose brush is being dragged while its result is shown as it
+    // goes, and the frame that shows it (see onAxisBrushMove).
+    this.liveAxis = null;
+    this.previewer = brushPreviewer();
+    // Expert: whether the library brush being dragged has had a reading
+    // shown, so an end that commits nothing can put the selection back.
+    this.expertPreviewed = false;
     // The knob being dragged: { dim, id, y, value, moved }.
     this.knobGesture = null;
     this.lineFrame = null;
@@ -398,6 +408,7 @@ export default {
     if (this.lineFrame) cancelAnimationFrame(this.lineFrame);
     if (this.knobFrame) cancelAnimationFrame(this.knobFrame);
     if (this.titleFrame) cancelAnimationFrame(this.titleFrame);
+    this.previewer.cancel();
     this.cancelTitleClick();
   },
   watch: {
@@ -1210,11 +1221,50 @@ export default {
           .style("pointer-events", d === last ? "all" : "none");
       });
     },
+    /**
+     * Expert, mid-drag: the selection the library's brush would give under
+     * the current operation, one reading a frame, computed each time from
+     * the selection before the drag (see `preview` in the store's update).
+     * Not under Intersect, which would blank the selection until the brush
+     * reached it; the end commits as usual. The library redraws its own
+     * brush, so nothing here moves it.
+     */
+    previewExpertBrush(brushed, args) {
+      // The library passes `args` only from a brush under the pointer; a
+      // reset or a programmatic move emits without them.
+      if (!this.liveBrushing || !Array.isArray(brushed) || !args) return;
+      if (!d3.event || d3.event.type !== "brush" || !d3.event.sourceEvent) return;
+      if (this.currentSelectionOperation === operations.INTERSECT) return;
+      this.expertPreviewed = true;
+      let payload = {
+        view: this.viewID,
+        selection: brushed.map((d) => d._id),
+        operation: this.currentSelectionOperation,
+        step: this.axisStep(brushed, args),
+        preview: true,
+      };
+      this.previewer.push(() => {
+        if (this.expertPreviewed) this.$store.dispatch("update", payload);
+      });
+    },
+    /**
+     * Mid-drag: the two values under the brush's ends, and, on collections
+     * small enough for it (see the store's liveFiltering), the result the
+     * brush would give, one reading a frame. Meanwhile the axes are left as
+     * drawn (see syncLiteBrushes): the stored range can differ from the drawn
+     * one, and rebuilding the brush under the pointer would break the drag.
+     */
     onAxisBrushMove(dim) {
       if (this.isSyncingBrush) return;
       this.cleanTooltip();
       let raw = d3.event.selection;
       if (!raw || !d3.event.sourceEvent) return;
+      if (this.liveFiltering && raw[0] !== raw[1]) {
+        this.liveAxis = dim;
+        this.previewer.push(() => {
+          if (this.liveAxis === dim) this.pushAxisBrushes(dim, true);
+        });
+      }
       // On the axis the brush is on, not under the pointer. A brush moves
       // only up and down, so a drag that wanders sideways -- which every
       // drag does -- was carrying the two values away from their own axis.
@@ -1236,6 +1286,8 @@ export default {
      */
     onAxisBrushEnd(dim, node) {
       if (this.isSyncingBrush || !d3.event.sourceEvent) return;
+      // The end commits on its own; a reading still waiting is stale.
+      this.previewer.cancel();
       this.cleanTooltip();
       let entry = this.liteBrushes[dim];
       let item = d3.select(node).datum();
@@ -1249,7 +1301,15 @@ export default {
         entry.list = entry.list.filter((b) => b !== item);
       }
       this.drawAxisBrushes(dim);
-
+      this.liveAxis = null;
+      this.pushAxisBrushes(dim, false);
+    },
+    /**
+     * What the axis shows, as the filters: its own brushes as its range
+     * filter, and each rectangle's brush as that rectangle's range on this
+     * dimension. `preview` marks a reading taken mid-drag.
+     */
+    pushAxisBrushes(dim, preview) {
       let shown = this.readAxisBrushes()[dim] || [];
       let pairs = [];
       this.$store.state.filters.forEach((filter) => {
@@ -1271,6 +1331,7 @@ export default {
         dim: dim,
         ranges: shown.filter((s) => !s.from).map((s) => s.range),
         pairs: pairs,
+        preview: !!preview,
       });
     },
     /**
@@ -1348,6 +1409,9 @@ export default {
      */
     syncLiteBrushes() {
       if (!this.isLite || !this.chart || !this.liteBrushes) return;
+      // The brush under the pointer is the one source of truth until the
+      // drag ends; the end's own commit syncs (see onAxisBrushMove).
+      if (this.liveAxis !== null) return;
       let drawn = this.readAxisBrushes();
       Object.keys(this.liteBrushes).forEach((dim) => {
         let wanted = this.axisItemsFor(dim);
@@ -1739,7 +1803,15 @@ export default {
         .render()
         .on("brushend", (brushed, args) => {
           if (this.isSyncingBrush) return;
-          if (d3.event.selection === null) return;
+          // The end commits on its own; a reading still waiting is stale,
+          // and one shown already is taken back unless committed.
+          this.previewer.cancel();
+          let previewed = this.expertPreviewed;
+          this.expertPreviewed = false;
+          if (d3.event.selection === null) {
+            if (previewed) this.$store.commit("cancelSelectionPreview");
+            return;
+          }
           //To clear the brush/strum once done
           // d3.select("#"+this.viewID).selectAll('.selection').style("display", "none");
 
@@ -1757,7 +1829,14 @@ export default {
               operation: operations.REPLACE,
             });
           } else {
-            this.chart.brushReset();
+            // Resetting moves every axis brush, and each move emits its own
+            // brush and end events; the flag keeps them from reading as drags.
+            this.isSyncingBrush = true;
+            try {
+              this.chart.brushReset();
+            } finally {
+              this.isSyncingBrush = false;
+            }
             this.$store.dispatch("update", {
               view: this.viewID,
               selection: brushed.map((d) => d._id),
@@ -1769,6 +1848,7 @@ export default {
         .on("brush", (brushed, args) => {
           if (this.isSyncingBrush) return;
           this.cleanTooltip();
+          this.previewExpertBrush(brushed, args);
 
           if (args && d3.event.type === "brush") {
             let sel = args.selection;
