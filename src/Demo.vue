@@ -508,7 +508,7 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="isOpeningDialogOn" max-width="650px">
+    <v-dialog v-model="isOpeningDialogOn" max-width="840px">
       <v-card class="ds-welcome">
         <v-card-title class="text-h5">
           Welcome to DesignSense
@@ -1070,6 +1070,7 @@ body {
 .ds-welcome .v-card__title {
   flex-wrap: nowrap;
   word-break: normal;
+  padding: 20px 28px 8px !important;
 }
 @media (max-width: 600px) {
   .ds-welcome .v-card__title {
@@ -1077,18 +1078,27 @@ body {
   }
 }
 .ds-welcome-body {
-  padding-bottom: 8px !important;
+  padding: 8px 28px 12px !important;
   color: #37474f !important;
 }
+@media (max-width: 600px) {
+  .ds-welcome .v-card__title {
+    padding: 16px 20px 4px !important;
+  }
+  .ds-welcome-body {
+    padding: 4px 20px 8px !important;
+  }
+}
 .ds-welcome-lead {
+  margin-bottom: 20px;
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 .ds-welcome-choices {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin: 4px 0 14px;
+  gap: 16px;
+  margin: 4px 0 20px;
 }
 /* The two actions in a card sit on one line, and wrap rather than squeeze. */
 .ds-welcome-choice-actions {
@@ -1103,7 +1113,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 12px 14px;
+  padding: 16px 18px;
   border: 1px solid #e3e8eb;
   border-radius: 8px;
 }
@@ -1111,16 +1121,16 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   font-size: 15px;
   font-weight: 600;
   color: #263238;
 }
 .ds-welcome-choice p {
   flex: 1 1 auto;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 /* The load dialog's own button, brought in line with the other two. */
 .ds-welcome-choice .container {
@@ -1131,7 +1141,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
+  margin: 20px 0 8px;
   font-size: 13px;
   color: #2e7d32;
 }
@@ -1143,7 +1153,7 @@ body {
   color: #78909c;
 }
 .ds-welcome-actions {
-  padding: 4px 16px 10px 20px !important;
+  padding: 10px 20px 14px 28px !important;
   border-top: 1px solid #eceff1;
 }
 .ds-welcome-actions .v-input--selection-controls {
@@ -1178,8 +1188,8 @@ body {
 /* A section of its own, not a fourth entry point: this is a choice about
    the workspace, and it has to be worth reading on the tenth visit too. */
 .ds-welcome-layout {
-  margin-top: 22px;
-  padding: 14px 16px 16px;
+  margin-top: 24px;
+  padding: 18px 20px 20px;
   border: 1px solid #e0e6eb;
   border-radius: 10px;
   background: #fafbfc;
@@ -1190,7 +1200,7 @@ body {
   color: #263238;
 }
 .ds-welcome-layout-help {
-  margin: 4px 0 12px;
+  margin: 6px 0 14px;
   font-size: 13px;
   line-height: 1.45;
   color: #546e7a;
