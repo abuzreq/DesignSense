@@ -1,3 +1,5 @@
+<img src="icons/favicon.svg" width="96" height="96" alt="DesignSense logo: a D with five brushed ranges inside it that spell an S">
+
 # DesignSense
 
 A design space exploration interface. Load a collection of generated design
