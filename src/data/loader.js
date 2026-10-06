@@ -3,8 +3,16 @@ import { buildDataset } from "./table.js";
 import { fetchSource, resolveSource } from "./sources.js";
 import { addressFor } from "./shareLink.js";
 
-export const DEFAULT_DATASET_URL =
-  "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv";
+// The sample the app opens with ships with the app (samples/used-cars, which
+// webpack copies into the build), so the first screen asks nothing of another
+// host. It used to be fetched from raw.githubusercontent together with 46
+// photographs kept as PNG -- fourteen megabytes, on every visit, from a host
+// that is not a CDN. Resolved against the page, so one build serves a domain
+// root, a subdirectory and localhost alike.
+export const DEFAULT_DATASET_URL = new URL(
+  "samples/used-cars/data.csv",
+  document.baseURI
+).href;
 
 /**
  * The latest load, for the load dialogs and the workspace. `source` says who

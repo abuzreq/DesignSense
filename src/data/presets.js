@@ -5,12 +5,14 @@
  * (see appLinks.js), so it must not change once links to it are out.
  */
 
+import { DEFAULT_DATASET_URL } from "./loader.js";
+
 export const PRESETS = [
   {
     id: "used-cars",
     name: "Craigslist - Used Cars",
-    url:
-      "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/used_cars/data.csv",
+    // The one sample that travels with the app; the rest are fetched.
+    url: DEFAULT_DATASET_URL,
     info: "Used cars with their price, year and mileage",
     // Craigslist's columns carry no "min:"/"max:" prefix and no way to say
     // that a number measures something other than the car, so the sample

@@ -152,6 +152,56 @@ class StashSourceMapsPlugin {
   }
 }
 
+// The sample dataset that ships with the app: a CSV and its pictures, which
+// nothing imports -- the CSV names its own files and the loader fetches them
+// by URL (see src/data/loader.js).
+const SAMPLE_DIR = 'samples';
+
+/** Every file under `dir`, deepest included, as absolute paths. */
+function filesUnder(dir) {
+  let found = [];
+  fs.readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) found = found.concat(filesUnder(full));
+    else found.push(full);
+  });
+  return found;
+}
+
+/**
+ * Copies the sample dataset into the build, byte for byte.
+ *
+ * As emitted assets rather than a copy on disk, so that `webpack serve` hands
+ * them out of memory too -- the app's first screen reads this sample, in
+ * development as much as in a deployed build -- and so that `output.clean`
+ * counts them as part of the build rather than sweeping them away.
+ */
+class CopySamplePlugin {
+  apply(compiler) {
+    const { RawSource } = compiler.webpack.sources;
+    const root = path.resolve(__dirname, SAMPLE_DIR);
+    compiler.hooks.thisCompilation.tap('CopySamplePlugin', (compilation) => {
+      // So a picture added to the folder is picked up on a rebuild.
+      compilation.contextDependencies.add(root);
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'CopySamplePlugin',
+          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
+        },
+        () => {
+          filesUnder(root).forEach((file) => {
+            const name =
+              SAMPLE_DIR +
+              '/' +
+              path.relative(root, file).split(path.sep).join('/');
+            compilation.emitAsset(name, new RawSource(fs.readFileSync(file)));
+          });
+        }
+      );
+    });
+  }
+}
+
 // Where the app is served from. Netlify serves it at the domain root.
 const ASSET_PATH = process.env.ASSET_PATH || '/';
 
@@ -339,6 +389,7 @@ module.exports = (env, argv) => {
         },
       }),
       new DiscoveryFilesPlugin(),
+      new CopySamplePlugin(),
       // Only for a production build that is written: `webpack serve` keeps its
       // assets in memory, where there is no file to move and no deploy to keep
       // them out of.
