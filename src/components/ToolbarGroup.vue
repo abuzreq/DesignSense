@@ -45,20 +45,23 @@ export default {
   justify-content: center;
   flex: 0 0 auto;
 }
-/* 32px buttons and a 10px label: the pair fits the 52px bar with room above
-   and below, where 40px buttons and an 11px label needed 60. */
+/* 36px buttons under an 11px label, which is 48 of the bar's 60 with six
+   pixels above and below. The same two numbers are set on the bar itself (see
+   Demo.vue, .v-app-bar .v-toolbar__content), since a group is not the only
+   thing in it; they are kept in step by hand, and this is the narrower of the
+   two selectors, so it wins where both apply. */
 .toolbar-group-buttons {
   display: flex;
   align-items: center;
-  height: 32px;
+  height: 36px;
 }
 .toolbar-group-buttons ::v-deep .v-btn.v-btn--icon {
-  width: 32px !important;
-  height: 32px !important;
+  width: 36px !important;
+  height: 36px !important;
 }
 .toolbar-group-label {
-  font-size: 10px;
-  line-height: 11px;
+  font-size: 11px;
+  line-height: 12px;
   letter-spacing: 0.02em;
   color: #b0bec5;
   white-space: nowrap;

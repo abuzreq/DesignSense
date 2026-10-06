@@ -103,7 +103,7 @@ export default {
   padding: 5px 14px;
   border-radius: 16px;
   background: #eceff1;
-  font-size: 17px;
+  font-size: 18px;
 }
 .rc-contents {
   flex: 1;

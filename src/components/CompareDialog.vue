@@ -554,7 +554,7 @@ export default {
   padding: 8px 12px 8px 16px !important;
 }
 .cmp-title-text {
-  font-size: 1.1rem;
+  font-size: 18px;
   font-weight: 500;
 }
 .cmp-count {

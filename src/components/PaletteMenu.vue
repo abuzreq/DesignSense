@@ -165,7 +165,7 @@ export default {
   font-size: 13px;
 }
 .pm-note {
-  font-size: 11.5px;
+  font-size: 12px;
   white-space: normal;
   line-height: 1.3;
 }
@@ -181,7 +181,7 @@ export default {
 }
 .pm-foot {
   padding: 8px 12px 4px;
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.35;
   color: #78909c;
 }

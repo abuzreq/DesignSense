@@ -340,7 +340,7 @@ export default {
   padding: 5px 14px;
   border-radius: 16px;
   background: #eceff1;
-  font-size: 17px;
+  font-size: 18px;
   white-space: nowrap;
 }
 .sc-label {
@@ -504,7 +504,7 @@ export default {
 }
 .sc-name {
   margin-top: 8px;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;

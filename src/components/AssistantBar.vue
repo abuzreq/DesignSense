@@ -689,7 +689,7 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 6px 12px 7px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.72);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -741,7 +741,7 @@ export default {
   margin-bottom: 2px;
 }
 .assistant-reply-text {
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.35;
   opacity: 0.92;
 }

@@ -29,6 +29,36 @@ export default {
 </script>
 <style>
 /*
+ * The type scale.
+ *
+ *   10  the smallest thing drawn: a badge, the label inside a layout figure
+ *   11  a label under an icon, a caption, an axis tick
+ *   12  dense controls -- chips, menu notes, a table's cells
+ *   13  the interface's ordinary text
+ *   14  prose in a dialog
+ *   15  a dialog's opening paragraph
+ *   16  a subheading
+ *   18  a dialog's title, the app's name
+ *   20  and above: a report's headings, which are print rather than interface
+ *
+ * Sizes between those steps are worth nothing: half a pixel is invisible and
+ * an unlearnable system costs more than it saves. The 9, 11.5, 12.5, 17px and
+ * 1.1rem that had accumulated are gone, each rounded to the step above it.
+ *
+ * Two deliberate exceptions. The guide (src/guide/guide.css) keeps a scale of
+ * its own: it is a document to read, not an interface to use, and its sizes
+ * answer to line length rather than to this list. And a few sizes are relative
+ * on purpose -- the goal arrow after a dimension's name is 0.85em, so it
+ * follows whatever it is set beside rather than any step here.
+ *
+ * Some of the rules below are measured against nothing: about half the class
+ * names in this stylesheet (authors, journal, papers, affiliation, course)
+ * appear in no template, and are the stylesheet of whatever page this project
+ * was started from. They were left where they are rather than swept out in a
+ * pass about type, but they are worth deleting on their own.
+ */
+
+/*
  * The wordmark's typeface, for the app's name in the bar and nothing else.
  * One variable file covering 300 to 700, the latin subset, 36 kB, served from
  * here rather than from Google: the name is worth a light weight beside a bold
@@ -182,7 +212,7 @@ b {
 
 .header #title {
   margin-left: 12px;
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 100;
   color: #666;
   text-transform: uppercase;
@@ -400,7 +430,7 @@ div.lead {
 /* --- */
 
 .pub > .title {
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -628,7 +658,7 @@ div.lead {
 
 .group .name {
   margin-top: 2em;
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 500;
 }
 

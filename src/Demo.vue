@@ -940,16 +940,18 @@ body {
   padding-right: 8px;
 }
 
-/* The bar's icons are a size below Vuetify's 24px, so the row of buttons
-   reads lighter, and its buttons 32px rather than the toolbar's 48. */
+/* The bar's icons are a size below Vuetify's 24px, so the row reads lighter,
+   and its buttons 36px rather than the toolbar's 48. Squeezed to 20px icons in
+   32px buttons under a 10px label, the group had become hard to read and
+   hard to hit; a 60px bar buys all three a step back. */
 .v-app-bar .v-btn--icon.v-size--default .v-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
 }
 .v-app-bar .v-toolbar__content .v-btn--icon.v-size--default {
-  width: 32px !important;
-  height: 32px !important;
+  width: 36px !important;
+  height: 36px !important;
 }
 .ui-mode-toggle {
   margin: 0 2px;
@@ -979,8 +981,8 @@ body {
 }
 .ds-mark {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
 }
 .ds-wordmark {
   font-family: "DM Sans", Roboto, sans-serif;
@@ -1057,13 +1059,13 @@ body {
 }
 /* Undo, redo and clear sit a size down, beside the text they act on. */
 .v-app-bar .ds-history .v-btn.v-btn--icon.v-size--default {
-  width: 28px !important;
-  height: 28px !important;
+  width: 32px !important;
+  height: 32px !important;
 }
 .ds-history .v-btn--icon.v-size--default .v-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
 }
 .ds-welcome .v-card__title {
   flex-wrap: nowrap;
@@ -1169,7 +1171,7 @@ body {
 .ds-layout-tip {
   max-width: 230px;
   margin-top: 7px;
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.35;
   color: #78909c;
 }
@@ -1217,7 +1219,7 @@ body {
 .ds-welcome-layout-name {
   display: block;
   margin-top: 7px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.25;
   color: #37474f;
@@ -1343,9 +1345,9 @@ function writeShowWelcome(value) {
     /* kept for this visit only */
   }
 }
-// The app bar's height: 32px buttons with a 10px label under them, and room
+// The app bar's height: 36px buttons with an 11px label under them, and room
 // around. Everything that sits below the bar is offset by this.
-const BAR_HEIGHT = 52;
+const BAR_HEIGHT = 60;
 /**
  * Where the toolbar changes shape, by window width. Measured against what the
  * bar holds rather than guessed; see barLevel.
@@ -1353,7 +1355,10 @@ const BAR_HEIGHT = 52;
  *  - Below TIGHT, the assistant becomes a button that opens over the bar.
  */
 const BAR_ROOMY = 1600;
-const BAR_TIGHT = { lite: 1170, expert: 1280 };
+// Each icon button grew four pixels when the bar did, and the bar carries
+// fourteen of them in Lite and twenty in Expert: the two thresholds moved by
+// exactly that much, 56 and 80, rather than by a fresh guess.
+const BAR_TIGHT = { lite: 1226, expert: 1360 };
 const EXPERT_ADDS =
   "selection operations and the lasso, clusters, editing sets, inspection controls, the analysis panel, and layout editing";
 import { applySelectionCursor } from "@/components/selectionCursors.js";

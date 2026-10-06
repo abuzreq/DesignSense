@@ -71,7 +71,7 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 1px;
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1;
   color: #37474f;
   text-align: center;

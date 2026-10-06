@@ -1174,7 +1174,7 @@ export default {
   padding: 10px 12px 10px 16px !important;
 }
 .dims-title-text {
-  font-size: 1.1rem;
+  font-size: 18px;
   font-weight: 500;
   min-width: 0;
   overflow: hidden;
