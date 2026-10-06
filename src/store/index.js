@@ -20,6 +20,7 @@ import {
 import { UI_MODES, canUse, normalizeMode } from "@/uiModes.js";
 import {
   GALLERY_KEY,
+  LIVE_FILTER_LIMIT,
   applyFilters,
   compileFilters,
   describeFilter,
@@ -74,6 +75,17 @@ import Papa from "papaparse";
 const UI_MODE_KEY = "designsense-uiMode";
 // Undo depth for both the Expert selection and the Lite filters.
 const HISTORY_LIMIT = 50;
+
+// The filters as they were before the brush now being dragged, while its
+// previews come in; the drag's end records them as the one undo step. Filter
+// arrays are never mutated, so the reference is enough. Nothing renders it,
+// so it is not state.
+let previewBase = null;
+// Expert's counterpart: the default marking's selection and steps from before
+// the rectangle now being dragged, so each reading applies the operation to
+// that, not to the reading before it (adding as the rectangle shrinks would
+// otherwise never take anything back, and a toggle would flip every frame).
+let selectionBase = null;
 
 function readStoredUiMode() {
   try {
@@ -510,6 +522,12 @@ function builder(
         state.uiMode === UI_MODES.LITE &&
         narrowingFilters(state.filters).length > 0,
       narrowingFilters: (state) => narrowingFilters(state.filters),
+      // Whether a brush being dragged shows its result as it goes (Lite, and
+      // few enough options for a commit per frame; see LIVE_FILTER_LIMIT).
+      liveFiltering: (state, getters) =>
+        state.uiMode === UI_MODES.LITE && getters.liveBrushing,
+      // The size condition alone: Expert's scatterplot rectangle previews too.
+      liveBrushing: (state) => state.data.length <= LIVE_FILTER_LIMIT,
       // Whether the data shown is a zoomed or excluded part of the collection.
       hasScope: (state) =>
         state.uiMode === UI_MODES.LITE
@@ -626,8 +644,11 @@ function builder(
       setFilters(state, payload) {
         state.filters = payload.filters;
       },
-      recordFilters(state) {
-        state.filterHistory.push(state.filters);
+      /** Pushes the current filters, or `payload.filters` when given. */
+      recordFilters(state, payload) {
+        state.filterHistory.push(
+          payload && payload.filters ? payload.filters : state.filters
+        );
         if (state.filterHistory.length > HISTORY_LIMIT) {
           state.filterHistory.shift();
         }
@@ -645,6 +666,7 @@ function builder(
       clearFilterHistory(state) {
         state.filterHistory = [];
         state.filterFuture = [];
+        previewBase = null;
       },
       clearDataStack(state) {
         state.dataStack = [];
@@ -777,6 +799,7 @@ function builder(
         if (before) {
           pushSelectionHistory(state, before, [], state.selectionSteps);
           state.selectionSteps = [];
+          selectionBase = null;
         }
         state.selectionVersion += 1;
       },
@@ -855,8 +878,24 @@ function builder(
           // Only the default marking is user-facing, so only it is undoable
           // and described.
           let isDefault = markingID === state.defaultMarkingID;
+          // A reading taken mid-drag (`preview`) applies the operation to
+          // the selection from before the drag, and records nothing; the
+          // drag's end starts from that selection too, and records as usual.
+          // Other markings wait for the end.
+          if (payload.preview && !isDefault) return;
+          if (isDefault && payload.preview && selectionBase === null) {
+            selectionBase = {
+              ids: getSelectedIDs(marking),
+              steps: state.selectionSteps,
+            };
+          }
+          if (isDefault && selectionBase !== null) {
+            operate(marking, selectionBase.ids, operations.REPLACE);
+            state.selectionSteps = selectionBase.steps;
+            if (!payload.preview) selectionBase = null;
+          }
           let before =
-            isDefault && payload.record !== false
+            isDefault && payload.record !== false && !payload.preview
               ? getSelectedIDs(marking)
               : null;
           let stepsBefore = state.selectionSteps;
@@ -872,6 +911,18 @@ function builder(
             );
           }
         });
+        state.selectionVersion += 1;
+      },
+      /**
+       * Puts the selection back as it was before a drag whose readings were
+       * shown (see `preview` in update), when the drag ends without a commit.
+       */
+      cancelSelectionPreview(state) {
+        if (selectionBase === null) return;
+        let marking = state.markingsMap[state.defaultMarkingID];
+        if (marking) operate(marking, selectionBase.ids, operations.REPLACE);
+        state.selectionSteps = selectionBase.steps;
+        selectionBase = null;
         state.selectionVersion += 1;
       },
       hover(state, payload) {
@@ -1239,6 +1290,7 @@ function builder(
        * own brushes as `ranges`, and for each scatterplot rectangle filter
        * with a range on the axis, that filter's boxes as edited there
        * (`pairs: [{ key, boxes }]`; an empty list removes the filter).
+       * `preview` marks a reading taken mid-drag; see commitFilters.
        */
       setAxisBrushes(context, payload) {
         let state = context.state;
@@ -1253,7 +1305,7 @@ function builder(
               : makeRangeFilter(current.dims, pair.boxes, boundsFor(state.data, current.dims));
           next = filter ? upsertFilter(next, filter) : removeFilterByKey(next, pair.key);
         });
-        commitFilters(context, next);
+        commitFilters(context, next, payload.preview);
       },
       /**
        * The rectangles of a scatterplot, as boxes over its two dimensions
@@ -1261,7 +1313,8 @@ function builder(
        * `replace` names dimensions whose own filter the plot was drawing as
        * its rectangle (a lone axis brush mirrored there), so that brush moves
        * into the boxes rather than staying behind as a second constraint.
-       * Filters the plot does not draw are never touched.
+       * Filters the plot does not draw are never touched. `preview` marks
+       * a reading taken mid-drag; see commitFilters.
        */
       setBoxFilter(context, payload) {
         let state = context.state;
@@ -1283,7 +1336,7 @@ function builder(
         next = filter
           ? upsertFilter(next, filter)
           : removeFilterByKey(next, rangeKey(dims));
-        commitFilters(context, next);
+        commitFilters(context, next, payload.preview);
       },
       /** Drops one brush of a range filter from its chip. */
       removeFilterBox(context, payload) {
@@ -1985,8 +2038,33 @@ function viewLabelForPayload(context, payload) {
   return "View";
 }
 
-function commitFilters(context, next) {
-  if (next === context.state.filters) return;
+/**
+ * Makes `next` the filters and the marking their result. A `preview` is a
+ * reading taken while a brush is still being dragged: it shows like any
+ * other commit but records no undo step of its own. The drag's end commits
+ * without `preview`, which records the filters from before the drag as the
+ * one step (none when the drag ended where it began) and always applies, so
+ * every view gets one commit it can tell from the previews.
+ */
+function commitFilters(context, next, preview) {
+  let state = context.state;
+  if (preview) {
+    if (previewBase === null) previewBase = state.filters;
+    if (next !== state.filters) context.commit("setFilters", { filters: next });
+    applyFiltersToMarking(context, true);
+    return;
+  }
+  if (previewBase !== null) {
+    let base = previewBase;
+    previewBase = null;
+    if (!sameFilterList(next, base)) {
+      context.commit("recordFilters", { filters: base });
+    }
+    if (next !== state.filters) context.commit("setFilters", { filters: next });
+    applyFiltersToMarking(context);
+    return;
+  }
+  if (next === state.filters) return;
   context.commit("recordFilters");
   context.commit("setFilters", { filters: next });
   applyFiltersToMarking(context);
@@ -1995,8 +2073,10 @@ function commitFilters(context, next) {
 /**
  * Lite keeps the default marking equal to the filter result, so every view
  * that already reads markings follows the filters without knowing about them.
+ * `preview` is passed on in the mutation, for views that leave slow work
+ * until the drag ends.
  */
-function applyFiltersToMarking(context) {
+function applyFiltersToMarking(context, preview) {
   let state = context.state;
   syncScopedData(context);
   let narrowing = narrowingFilters(state.filters);
@@ -2006,6 +2086,7 @@ function applyFiltersToMarking(context) {
     selection: ids,
     operation: operations.REPLACE,
     record: false,
+    preview: !!preview,
     // Carried into Expert as the selection's first steps.
     steps: stepsFromFilters(narrowing),
   });
