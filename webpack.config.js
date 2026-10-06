@@ -152,10 +152,15 @@ class StashSourceMapsPlugin {
   }
 }
 
-// The sample dataset that ships with the app: a CSV and its pictures, which
-// nothing imports -- the CSV names its own files and the loader fetches them
-// by URL (see src/data/loader.js).
-const SAMPLE_DIR = 'samples';
+// Directories copied into the build as they are: each `from` in the
+// repository lands at `to` in the build. Nothing imports either of them -- the
+// sample's CSV names its own pictures and the loader fetches them by URL (see
+// src/data/loader.js), and a browser asks for the icons by fixed names at the
+// site root.
+const COPIED = [
+  { from: 'samples', to: 'samples/' },
+  { from: 'icons', to: '' },
+];
 
 /** Every file under `dir`, deepest included, as absolute paths. */
 function filesUnder(dir) {
@@ -169,32 +174,36 @@ function filesUnder(dir) {
 }
 
 /**
- * Copies the sample dataset into the build, byte for byte.
+ * Copies those directories into the build, byte for byte.
  *
  * As emitted assets rather than a copy on disk, so that `webpack serve` hands
- * them out of memory too -- the app's first screen reads this sample, in
+ * them out of memory too -- the app's first screen reads the sample, in
  * development as much as in a deployed build -- and so that `output.clean`
  * counts them as part of the build rather than sweeping them away.
  */
-class CopySamplePlugin {
+class CopyFilesPlugin {
   apply(compiler) {
     const { RawSource } = compiler.webpack.sources;
-    const root = path.resolve(__dirname, SAMPLE_DIR);
-    compiler.hooks.thisCompilation.tap('CopySamplePlugin', (compilation) => {
-      // So a picture added to the folder is picked up on a rebuild.
-      compilation.contextDependencies.add(root);
+    compiler.hooks.thisCompilation.tap('CopyFilesPlugin', (compilation) => {
+      COPIED.forEach((entry) => {
+        const root = path.resolve(__dirname, entry.from);
+        // So a file added to the folder is picked up on a rebuild.
+        compilation.contextDependencies.add(root);
+      });
       compilation.hooks.processAssets.tap(
         {
-          name: 'CopySamplePlugin',
+          name: 'CopyFilesPlugin',
           stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
         },
         () => {
-          filesUnder(root).forEach((file) => {
-            const name =
-              SAMPLE_DIR +
-              '/' +
-              path.relative(root, file).split(path.sep).join('/');
-            compilation.emitAsset(name, new RawSource(fs.readFileSync(file)));
+          COPIED.forEach((entry) => {
+            const root = path.resolve(__dirname, entry.from);
+            filesUnder(root).forEach((file) => {
+              const name =
+                entry.to +
+                path.relative(root, file).split(path.sep).join('/');
+              compilation.emitAsset(name, new RawSource(fs.readFileSync(file)));
+            });
           });
         }
       );
@@ -389,7 +398,7 @@ module.exports = (env, argv) => {
         },
       }),
       new DiscoveryFilesPlugin(),
-      new CopySamplePlugin(),
+      new CopyFilesPlugin(),
       // Only for a production build that is written: `webpack serve` keeps its
       // assets in memory, where there is no file to move and no deploy to keep
       // them out of.
