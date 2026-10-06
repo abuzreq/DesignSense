@@ -21,7 +21,44 @@
       :class="'ds-bar--' + barLevel"
     >
       <v-toolbar-title id="designsense-title" class="ds-title">
-        DesignSense<sup class="ds-stage">beta</sup>
+        <!-- The mark itself rather than a link to the file: no second request,
+             and the bar wants its own colours -- the frame lifted and the rails
+             dropped, since on this grey the pale rails of the favicon would be
+             the brightest thing in the bar. Hidden from a screen reader, which
+             has the name beside it. -->
+        <svg
+          class="ds-mark"
+          viewBox="0 0 48 48"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            d="M4.5 3 H24 A21 21 0 0 1 24 45 H4.5 Z"
+            fill="none"
+            stroke="#5b9bd0"
+            stroke-width="3.5"
+            stroke-linejoin="round"
+          />
+          <g fill="#4a5b68">
+            <rect x="9" y="7.75" width="23.5" height="2.5" rx="1.25" />
+            <rect x="9" y="15.25" width="30.5" height="2.5" rx="1.25" />
+            <rect x="9" y="22.75" width="32.25" height="2.5" rx="1.25" />
+            <rect x="9" y="30.25" width="30.5" height="2.5" rx="1.25" />
+            <rect x="9" y="37.75" width="23.5" height="2.5" rx="1.25" />
+          </g>
+          <g fill="#f57c00">
+            <rect x="18" y="6" width="14" height="6" rx="1" />
+            <rect x="10" y="13.5" width="6" height="6" rx="1" />
+            <rect x="10" y="21" width="22" height="6" rx="1" />
+            <rect x="26" y="28.5" width="6" height="6" rx="1" />
+            <rect x="10" y="36" width="14" height="6" rx="1" />
+          </g>
+        </svg>
+        <span class="ds-wordmark"
+          ><span class="ds-name-strong">design</span
+          ><span class="ds-name-light">sense</span
+          ><sup class="ds-stage">beta</sup></span
+        >
       </v-toolbar-title>
       <v-divider vertical class="ds-divider" />
 
@@ -934,6 +971,28 @@ body {
   flex: 0 0 auto;
   margin-right: 2px;
   font-size: 18px !important;
+  /* The mark and the name side by side; the name stays one inline run so the
+     "beta" above it is still a superscript rather than a third flex item. */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ds-mark {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+}
+.ds-wordmark {
+  font-family: "DM Sans", Roboto, sans-serif;
+  letter-spacing: -0.01em;
+}
+/* One word, two weights: the halves are told apart by their weight rather
+   than by a capital or a space. */
+.ds-name-strong {
+  font-weight: 700;
+}
+.ds-name-light {
+  font-weight: 300;
 }
 .ds-stage {
   margin-left: 2px;
@@ -1201,6 +1260,11 @@ body {
 }
 /* Short of room (see barLevel): the rest gives way a little too. */
 .ds-bar--tight .ds-stage {
+  display: none;
+}
+/* At the tightest bar the name gives way to the mark, which says as much in a
+   third of the room -- and the room is what is short there. */
+.ds-bar--tight .ds-wordmark {
   display: none;
 }
 .ds-bar--tight .v-divider--vertical.ds-divider {

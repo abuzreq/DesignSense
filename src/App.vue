@@ -29,6 +29,23 @@ export default {
 </script>
 <style>
 /*
+ * The wordmark's typeface, for the app's name in the bar and nothing else.
+ * One variable file covering 300 to 700, the latin subset, 36 kB, served from
+ * here rather than from Google: the name is worth a light weight beside a bold
+ * one, and the font the bar had offers only regular and bold -- 300, 400 and
+ * 500 all drew the same glyphs. `swap` so the name is readable in the fallback
+ * while the file arrives. DM Sans, SIL Open Font License 1.1 (see
+ * assets/DM-Sans-OFL.txt).
+ */
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("~@/assets/dm-sans-latin.woff2") format("woff2");
+}
+
+/*
  * Where keyboard focus is. Vuetify only tints a focused button, by 12% on a
  * light panel and 24% on the dark bar, which is easy to lose among a row of
  * icons. :focus-visible leaves mouse clicks without a ring; the keyboard gets
