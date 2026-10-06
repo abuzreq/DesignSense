@@ -7,8 +7,18 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 
 // The site's own address, for what a search engine reads: the guide's
-// canonical link and the sitemap.
-const SITE = 'https://designsense.app/';
+// canonical link and the sitemap. Netlify sets URL to the site's primary
+// address -- designsense-beta.netlify.app while that is where it lives, and
+// designsense.app once that domain is attached -- so the move needs no edit
+// here, and a canonical link never points at a domain that is not serving the
+// site yet. SITE_URL overrides it; the fallback is for a local build, which
+// nothing indexes.
+const SITE = asOrigin(process.env.SITE_URL || process.env.URL || 'https://designsense.app');
+
+/** One trailing slash, since every use below appends a path to this. */
+function asOrigin(url) {
+  return String(url).trim().replace(/\/+$/, '') + '/';
+}
 
 /**
  * Writes the two small files a search engine asks a site for. The guide is a
