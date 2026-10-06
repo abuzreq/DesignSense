@@ -1724,7 +1724,6 @@ export default {
     };
     document.addEventListener("click", this.onDocumentClick);
 
-    this.track();
     // Each loaded dataset mounts a new workspace, and a first visit mounts
     // two of them: main.js puts a placeholder collection up at once and then
     // replaces the whole application when the sample arrives.
@@ -2058,9 +2057,6 @@ export default {
   },
   methods: {
     accessibleName: accessibleName,
-    track() {
-      this.$gtag.pageview("/");
-    },
     /**
      * The tour walks through the sample data; loading it replaces other data,
      * so ask first. `at` is the task to begin with, from the start if none.

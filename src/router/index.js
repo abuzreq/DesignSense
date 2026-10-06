@@ -2,7 +2,6 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import App from "@/App.vue";
 import Demo from "@/Demo.vue";
-import VueGtag from "vue-gtag";
 import { guideHref } from "@/guide.js";
 
 Vue.use(VueRouter);
@@ -33,23 +32,5 @@ const routes = [
 const router = new VueRouter({
     routes,
 });
-
-Vue.use(
-  VueGtag,
-  {
-    config: {
-      id: "G-R9H6P1BD0H",
-      params: {
-        anonymize_ip: true,
-      },
-      debug: {
-        enabled: process.env.NODE_ENV === "development", // default value
-        trace: true, // default value
-        sendHitTask: true, // default value
-      },
-    },
-  },
-  router
-);
 
 export default router;
