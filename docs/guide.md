@@ -2,7 +2,7 @@
 
 DesignSense shows a table of generated design options, with their pictures and 3D models, as a set of linked views. You use it for four tasks: understanding the design space, narrowing it down, deciding between the options that are left, and sharing the result.
 
-**[Open DesignSense](https://designsense.app/)** · [Source on GitHub](https://github.com/abuzreq/DesignSense) · [The paper](https://journals.sagepub.com/doi/10.1177/14780771241260854)
+**[Open DesignSense](https://designsense.app/)** · [Watch the one-minute intro](https://youtu.be/4A_yEZ4cex4) · [Source on GitHub](https://github.com/abuzreq/DesignSense) · [The paper](https://journals.sagepub.com/doi/10.1177/14780771241260854)
 
 ![DesignSense exploring 648 window designs](img/designsense_windows.jpg)
 
@@ -29,6 +29,8 @@ This guide follows one study from start to finish. It covers how the data is mad
 
 > [!TIP]
 > **New here?** The app has a guided tour that takes a few minutes. It uses a small sample dataset and goes through the same four tasks, pointing at each view and control as it goes. Start it from the welcome screen, or from **Help ▸ Take the tour** at any time. [Take the tour](https://designsense.app/?tour=start)
+>
+> If you would rather watch, the [video tutorial](https://youtu.be/KHVPWmzlfpQ) (8 minutes) goes through the same steps.
 
 ## The process at a glance
 
@@ -249,7 +251,7 @@ All the views show the same options and stay in step: when you filter, select or
 | Orange | On the shortlist |
 | Bright blue outline | Keyboard focus |
 
-**Lite and Expert.** DesignSense starts in Lite mode, where you narrow the options with filters. Switch to Expert with the toggle in the toolbar. In Expert you build a selection step by step instead of filtering, and you also get clusters, the Analysis panel and layout editing. Everything below works in Lite unless stated otherwise.
+**Lite and Expert.** DesignSense starts in Lite mode, where you narrow the options with filters. Switch to Expert with the toggle in the toolbar. In Expert you build a selection step by step instead of filtering, and you also get clusters, the Analysis panel and layout editing ([watch Expert mode](https://youtu.be/KHVPWmzlfpQ?t=305)). Everything below works in Lite unless stated otherwise.
 
 The next four sections cover the four tasks. You will rarely do them once and in order. What you learn while deciding may send you back to narrow in a different way, and sharing a result often starts another round. The examples all use the 648 window designs shown at the top of this guide. Imagine an architect who has to choose a few of them to show a client.
 
@@ -261,7 +263,7 @@ The next four sections cover the four tasks. You will rarely do them once and in
 
 *All 648 options, coloured by cooling. One option is inspected, so its picture is open on the left and its line is drawn thicker across the axes, with its values. In the scatterplot, the dashed line connects the best trade-offs between daylight (DA) and cooling. The overview next to it shows the other pairs.*
 
-**Try it:** [Open the Windows study](https://designsense.app/?sample=windows) · [Tour this task](https://designsense.app/?tour=understand)
+**Try it:** [Open the Windows study](https://designsense.app/?sample=windows) · [Tour this task](https://designsense.app/?tour=understand) · [Watch this part](https://youtu.be/KHVPWmzlfpQ?t=45)
 
 - **Patterns.** The lines in the parallel coordinates show where options are concentrated and where there are few. Drag an axis title to put two axes next to each other. If the lines between them run roughly level, the two dimensions rise together. If the lines cross, one goes up as the other goes down.
 - **Relationships.** The scatterplot shows one pair of dimensions in detail. The Overview shows every pair at once, which helps you spot the pairs worth a closer look. Colour by a third dimension to see what else changes with them.
@@ -287,7 +289,7 @@ Expert mode adds two more aids. **Clusters** group similar options and show one 
 
 *Two filters, daylight of at least 56% and cooling of at most 1,850 kWh, leave 210 of the 648 options, and the charts highlight them. The drawer on the left holds a shortlist of three options and the set saved from these filters.*
 
-**Try it:** [Open the Windows study](https://designsense.app/?sample=windows) · [Tour this task](https://designsense.app/?tour=narrow)
+**Try it:** [Open the Windows study](https://designsense.app/?sample=windows) · [Tour this task](https://designsense.app/?tour=narrow) · [Watch this part](https://youtu.be/KHVPWmzlfpQ?t=131)
 
 - **Filter.** Drag along an axis in the parallel coordinates, or drag a box in the scatterplot. Each filter appears as a chip in the bar at the top, next to a count of the options that are left. Remove a chip to remove its filter. Undo and redo step through your filter changes.
 - **Pick by eye.** Drag a box over pictures in the gallery to keep only those options. This lets you narrow by what the designs look like as well as by their numbers.
@@ -351,7 +353,7 @@ Deciding is difficult. Goals conflict, the people involved weigh them differentl
 - **[Score the options](#score-the-options)**<br>Combine the goals into one number, and try more than one weighting.
 - **[Add your own judgement](#add-your-own-judgement)**<br>Rate options, write notes, and add criteria that are not in the data.
 
-**Try it:** [Tour this task](https://designsense.app/?tour=decide)
+**Try it:** [Tour this task](https://designsense.app/?tour=decide) · [Watch this part](https://youtu.be/KHVPWmzlfpQ?t=215)
 
 ### Say what better means
 
@@ -429,7 +431,7 @@ You can give custom dimensions and ratings a weight in a [weighted dimension](#s
 
 *Share your results with others to support the decision.*
 
-All of the options below are in the **Share** menu in the toolbar. [Tour this task](https://designsense.app/?tour=share)
+All of the options below are in the **Share** menu in the toolbar. [Tour this task](https://designsense.app/?tour=share) · [Watch this part](https://youtu.be/KHVPWmzlfpQ?t=271)
 
 | You want to share | Use | What the other person gets |
 | --- | --- | --- |

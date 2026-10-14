@@ -15,6 +15,12 @@ and share the result. The same file is the guide inside the app (Help ▸ Guide)
 and the page at [designsense.app/wiki](https://designsense.app/wiki/), where
 it also has a search and examples to try.
 
+<a href="https://youtu.be/4A_yEZ4cex4"><img src="docs/img/video-intro.jpg" width="640" alt="DesignSense in one minute: 648 generated window designs, and the four worth keeping. Opens the video on YouTube."></a>
+
+**Watch:** [the one-minute intro](https://youtu.be/4A_yEZ4cex4) ·
+[the video tutorial](https://youtu.be/KHVPWmzlfpQ), eight minutes that go
+through the app's guided tour step by step.
+
 DesignSense came out of a design study with practitioners in the built
 environment; the [paper](https://journals.sagepub.com/doi/10.1177/14780771241260854)
 describes the research behind it.

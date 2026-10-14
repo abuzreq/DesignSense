@@ -439,6 +439,10 @@
             <v-list-item-icon><v-icon>mdi-map-marker-path</v-icon></v-list-item-icon>
             <v-list-item-title>Take the tour</v-list-item-title>
           </v-list-item>
+          <v-list-item :href="videoLinks.tutorial" target="_blank" rel="noopener">
+            <v-list-item-icon><v-icon>mdi-play-circle-outline</v-icon></v-list-item-icon>
+            <v-list-item-title>Video tutorial</v-list-item-title>
+          </v-list-item>
           <v-list-item @click="isOpeningDialogOn = true">
             <v-list-item-icon><v-icon>mdi-home-outline</v-icon></v-list-item-icon>
             <v-list-item-title>Welcome screen</v-list-item-title>
@@ -522,18 +526,26 @@
             Explore a collection of design options through their pictures and
             data: understand the design space, narrow it to the options worth
             pursuing, decide between them, and share the result.
+            <a
+              class="ds-welcome-video"
+              :href="videoLinks.intro"
+              target="_blank"
+              rel="noopener"
+              ><v-icon small color="blue darken-1">mdi-play-circle-outline</v-icon>
+              Watch the one-minute intro</a
+            >
           </p>
           <!-- Two pairs, because there are two questions a first visit asks:
-               how this works, and what to look at. The tour walks it and the
-               guide reads it; the sample is at hand and your own data is a
-               folder away. -->
+               how this works, and what to look at. The tour walks it, the
+               video shows it and the guide reads it; the sample is at hand
+               and your own data is a folder away. -->
           <div class="ds-welcome-choices">
             <div class="ds-welcome-choice">
               <div class="ds-welcome-choice-head">
                 <v-icon color="blue darken-1">mdi-map-marker-path</v-icon>
                 New here?
               </div>
-              <p>Walk through it once, or read it up front.</p>
+              <p>Walk through it once, watch it, or read it up front.</p>
               <div class="ds-welcome-choice-actions">
                 <v-btn
                   color="blue darken-1"
@@ -544,6 +556,19 @@
                     requestTour();
                   "
                   >Take the tour</v-btn
+                >
+                <!-- On YouTube, in a tab of its own: nothing of theirs loads
+                     here until it is asked for. -->
+                <v-btn
+                  color="blue darken-1"
+                  outlined
+                  depressed
+                  :href="videoLinks.tutorial"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <v-icon left small>mdi-play-circle-outline</v-icon>
+                  Watch the video</v-btn
                 >
                 <!-- A real link, so it can be opened in a tab of its own,
                      though a plain click keeps it in the dialog. -->
@@ -909,6 +934,11 @@
   line-height: 1.5;
   text-align: left;
 }
+/* Links in a step, light enough to read on its dark background (5:1). */
+.v-tour .v-step__content a {
+  color: #bbdefb;
+  text-decoration: underline;
+}
 
 .v-tour__target--highlighted {
   box-shadow: 0 0 0 99999px rgba(0, 0, 0, 0.4) !important;
@@ -1093,6 +1123,13 @@ body {
   margin-bottom: 20px;
   font-size: 15px;
   line-height: 1.6;
+}
+.ds-welcome-video {
+  white-space: nowrap;
+  text-decoration: none;
+}
+.ds-welcome-video:hover {
+  text-decoration: underline;
 }
 .ds-welcome-choices {
   display: flex;
@@ -1385,6 +1422,7 @@ import { loadColumnRoles } from "@/data/columnRoles.js";
 import { errorState } from "@/errors.js";
 import { APP_VERSION } from "@/feedback.js";
 import { GUIDE_SECTIONS, guideHref } from "@/guide.js";
+import { videoHref } from "@/videos.js";
 import { presetById, presetFor } from "@/data/presets.js";
 import { pendingAppLink } from "@/appLinks.js";
 import StoryReportDialog from "@/components/StoryReportDialog.vue";
@@ -1481,7 +1519,7 @@ export default {
       // its right edge on its target's, where centred it would leave the window.
       onboardingStudyTourSteps: [
         tourStep(this, "lite", "#designsense-title", "Welcome to DesignSense",
-          "DesignSense helps you with four tasks: <b>understand</b> a collection of design options through their pictures and data, <b>narrow</b> it to the options worth pursuing, <b>decide</b> between them, and <b>share</b> the result. This tour covers the tasks in that order and takes a few minutes. In real work you will move back and forth between them. Use the arrow keys or the buttons below to continue.",
+          "DesignSense helps you with four tasks: <b>understand</b> a collection of design options through their pictures and data, <b>narrow</b> it to the options worth pursuing, <b>decide</b> between them, and <b>share</b> the result. This tour covers the tasks in that order and takes a few minutes. In real work you will move back and forth between them. Use the arrow keys or the buttons below to continue. If you would rather watch, the <a href=\"" + videoHref("tutorial") + "\" target=\"_blank\" rel=\"noopener\">video tutorial</a> goes through the same steps.",
           "bottom"),
         tourStep(this, "lite", "#ui-mode-toggle", "Lite and Expert",
           "In <b>Lite</b> mode you narrow the options with filters. <b>Expert</b> mode adds " + EXPERT_ADDS + ". The tour starts in Lite.",
@@ -1561,7 +1599,7 @@ export default {
           "Use this menu to choose an arrangement of the panels and which views are shown. Drag the edge between two panels to resize them. To move a panel, turn on editing from this menu. Press Done or the ` key when you have finished.",
           "bottom-end"),
         tourStep(this, "lite", "#help-menu", "You're ready",
-          "You are back in Lite. Switch to Expert whenever you need more control, and right-click the workspace for quick actions. This menu lets you take the tour again, see every keyboard shortcut, and open the guide. The guide follows a study from making the data through the same four tasks. To tell us what works and what does not, use Send feedback in this menu.",
+          "You are back in Lite. Switch to Expert whenever you need more control, and right-click the workspace for quick actions. This menu lets you take the tour again, watch the video tutorial, see every keyboard shortcut, and open the guide. The guide follows a study from making the data through the same four tasks. To tell us what works and what does not, use Send feedback in this menu.",
           "bottom-end", () => this.clearTourExample()),
       ],
       operationsList: operations,
@@ -1752,6 +1790,7 @@ export default {
       appVersion: APP_VERSION,
       guideSections: GUIDE_SECTIONS,
       guideLinks: { home: guideHref(), link: guideHref(GUIDE_SECTIONS.link) },
+      videoLinks: { intro: videoHref("intro"), tutorial: videoHref("tutorial") },
       // Whether the guide has been asked for in this workspace.
       guideSeen: false,
       showWelcomeAtStart: readShowWelcome(),
