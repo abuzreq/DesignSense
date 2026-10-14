@@ -1,7 +1,7 @@
 <template>
   <div id="guide" class="gp">
     <header class="gp-bar">
-      <a class="gp-brand" :href="appHref">DesignSense<sup>beta</sup></a>
+      <a class="gp-brand" :href="appHref">DesignSense</a>
       <span class="gp-name">Guide</span>
       <span class="gp-space"></span>
       <a class="gp-open" :href="appHref">Open DesignSense</a>

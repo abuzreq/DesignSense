@@ -56,8 +56,7 @@
         </svg>
         <span class="ds-wordmark"
           ><span class="ds-name-strong">design</span
-          ><span class="ds-name-light">sense</span
-          ><sup class="ds-stage">beta</sup></span
+          ><span class="ds-name-light">sense</span></span
         >
       </v-toolbar-title>
       <v-divider vertical class="ds-divider" />
@@ -1003,8 +1002,8 @@ body {
   flex: 0 0 auto;
   margin-right: 2px;
   font-size: 18px !important;
-  /* The mark and the name side by side; the name stays one inline run so the
-     "beta" above it is still a superscript rather than a third flex item. */
+  /* The mark and the name side by side; the name stays one inline run, its
+     two halves set close rather than spaced as flex items. */
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1025,13 +1024,6 @@ body {
 }
 .ds-name-light {
   font-weight: 300;
-}
-.ds-stage {
-  margin-left: 2px;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: deepskyblue;
 }
 /* Loading data happens about once a visit: an icon, red so it is found. */
 #loading-data-bar .load-data-label {
@@ -1307,11 +1299,7 @@ body {
   min-width: 0;
   height: 100%;
 }
-/* Short of room (see barLevel): the rest gives way a little too. */
-.ds-bar--tight .ds-stage {
-  display: none;
-}
-/* At the tightest bar the name gives way to the mark, which says as much in a
+/* Short of room (see barLevel): the rest gives way a little too. At the tightest bar the name gives way to the mark, which says as much in a
    third of the room -- and the room is what is short there. */
 .ds-bar--tight .ds-wordmark {
   display: none;
