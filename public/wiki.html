@@ -9,6 +9,26 @@
       content="How to use DesignSense: making a design study in Grasshopper with Colibri or an optimiser, the data.csv format, loading it, and then understanding the design space, narrowing it, deciding and sharing the result."
     />
     <link rel="canonical" href="<%= site %>wiki/" />
+    <!-- What a link to this page shows where it is shared (LinkedIn, Slack,
+         X and the like), which read these tags and run no script. The
+         picture is 1200x630, the shape they crop to; the addresses must be
+         absolute (see SITE in webpack.config.js). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DesignSense" />
+    <meta property="og:title" content="DesignSense guide: from a design space to a decision" />
+    <meta
+      property="og:description"
+      content="How to use DesignSense: make a design study, load it, then understand the design space, narrow it, decide between the options and share the result."
+    />
+    <meta property="og:url" content="<%= site %>wiki/" />
+    <meta property="og:image" content="<%= site %>social-card.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="DesignSense: make sense of generated design options. The app showing a study of 648 window designs in linked views."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
     <!-- The SVG carries both palettes and follows the browser's theme; the
          .ico is for anything that will not take one, and the PNG is what iOS
          puts on a home screen (see icons/). -->

@@ -380,6 +380,7 @@ module.exports = (env, argv) => {
         template: path.resolve(__dirname, 'public/index.html'),
         title: 'DesignSense',
         chunks: ['bundle'],
+        templateParameters: { site: SITE },
       }),
       // The guide's page carries the guide in its HTML, so it reads without a
       // script and a search engine sees all of it; the template asks for
