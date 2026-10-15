@@ -368,6 +368,14 @@ module.exports = (env, argv) => {
       // so the two can't drift apart.
       new webpack.DefinePlugin({
         __APP_VERSION__: JSON.stringify(require('./package.json').version),
+        // The key that reads a Google Drive folder, taken from the build's
+        // environment rather than written down here: the repository keeps no
+        // key, a fork builds without one, and the deployed site has whichever
+        // key its own Netlify settings hold. It is public once compiled in --
+        // a browser has to carry it -- so it is meant to be restricted to
+        // this site's referrer in the Cloud console. Unset, Drive folders are
+        // refused exactly as they were before (see data/sources.js).
+        __GOOGLE_API_KEY__: JSON.stringify(process.env.GOOGLE_API_KEY || ''),
       }),
       new VueLoaderPlugin(),
       // src/plugins/vuetify.js imports vuetify/lib, which registers nothing on

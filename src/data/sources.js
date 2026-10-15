@@ -1,6 +1,8 @@
+/* global __GOOGLE_API_KEY__ */
 import { LoadError } from "./errors.js";
 import { looksLikeHtml } from "./table.js";
 import { b64EncodeUnicode } from "./shareLink.js";
+import { IMAGE_WIDTH, driveThumbnail } from "./assets.js";
 
 /*
  * Where datasets come from: a CSV link, a folder on a web server, a Google
@@ -9,6 +11,26 @@ import { b64EncodeUnicode } from "./shareLink.js";
  */
 
 const ONEDRIVE_SHARES_API = "https://api.onedrive.com/v1.0/shares/";
+
+/*
+ * Reading a Google Drive folder costs an API key, which a browser has to
+ * carry and so cannot keep secret. Restricting it to this site's referrer in
+ * the Cloud console is the mitigation, and it is a speed bump rather than a
+ * lock: anything that is not a browser sends whatever referrer it likes.
+ *
+ * What the key buys is narrow. The listing is 100 quota units and the data
+ * file 200; a folder's pictures come from the thumbnail service, which asks
+ * for no key and spends nothing (see assets.js). So a visit costs 300 units
+ * however many photographs the folder holds, against a free allowance of
+ * 400,000,000 a day.
+ *
+ * With no key compiled in, a Drive folder is refused as it always was.
+ */
+const DRIVE_KEY =
+  typeof __GOOGLE_API_KEY__ !== "undefined" ? __GOOGLE_API_KEY__ : "";
+const DRIVE_API = "https://www.googleapis.com/drive/v3/files";
+const DRIVE_FOLDER_PATH = /\/folders\/([A-Za-z0-9_-]{10,})/;
+const DRIVE_ID = /^[A-Za-z0-9_-]{10,}$/;
 
 // What to do when a shared cloud folder can't be read from the browser.
 const CLOUD_HINT =
@@ -42,10 +64,11 @@ export function resolveSource(input) {
     host = url.hostname;
   }
 
-  // Google Drive folders are not read any more: listing one needs an API
-  // key of the site's own, which every visitor's browser would carry (see the
-  // README). A folder on a web server needs none, so that is what we ask for.
   if (host === "drive.google.com") {
+    let folderId = driveFolderId(url);
+    if (folderId && DRIVE_KEY) {
+      return { kind: "gdrive", folderId: folderId, link: url.href };
+    }
     throw new LoadError(
       "DesignSense can't read Google Drive folders. " +
         CLOUD_HINT +
@@ -112,6 +135,21 @@ export function fetchSource(source) {
       link: source.link,
     }));
   }
+  if (source.kind === "gdrive") {
+    return listDriveFolder(source.folderId).then((folder) =>
+      fetchText(
+        pickDataCsv(
+          folder,
+          "No data.csv was found in that Drive folder. Check that it holds one, and that the folder is shared so anyone with the link can view it."
+        )
+      ).then((text) => ({
+        text: text,
+        files: folder.files,
+        rawFiles: folder.raw,
+        link: source.link,
+      }))
+    );
+  }
   return listOneDriveFolder(source.link).then((folder) =>
     fetchText(pickDataCsv(folder)).then((text) => ({
       text: text,
@@ -125,7 +163,7 @@ export function fetchSource(source) {
 
 /** Fetches a text file, turning each kind of failure into a LoadError. */
 export function fetchText(url, notFoundMessage) {
-  return fetch(url).then(
+  return fetch(url, keyedRequest(url)).then(
     (response) => {
       if (!response.ok) throw httpError(response, url, notFoundMessage);
       return response.text().then((text) => {
@@ -184,8 +222,21 @@ function hostOf(url) {
   }
 }
 
+/*
+ * The page tells the browser to send no referrer (see public/index.html), so
+ * that a gallery's dozens of picture requests are not counted against it and
+ * a reader's address is not handed to whoever hosts their images. A
+ * referrer-restricted API key wants the opposite: with no referrer there is
+ * nothing for Google to match, and the key is refused. These two requests, and
+ * only these, send the site's origin -- not the path, which is what carries
+ * the dataset's link.
+ */
+function keyedRequest(url) {
+  return url.indexOf(DRIVE_API) === 0 ? { referrerPolicy: "origin" } : undefined;
+}
+
 function fetchJson(url, service) {
-  return fetch(url).then(
+  return fetch(url, keyedRequest(url)).then(
     (response) => {
       if (response.ok) return response.json();
       // The service explains the refusal in the body; that reason decides the
@@ -278,6 +329,55 @@ function addToFolder(folder, name, mimeType, url, imageUrl) {
     // Design Explorer's 3D files: kept so the loader can say it can't show them.
     folder.files[name] = url;
   }
+}
+
+/** The folder id in a Drive link, from its path or its `id`, or "". */
+function driveFolderId(url) {
+  let inPath = DRIVE_FOLDER_PATH.exec(url.pathname);
+  if (inPath) return inPath[1];
+  let id = url.searchParams.get("id") || "";
+  return DRIVE_ID.test(id) ? id : "";
+}
+
+/**
+ * Everything in a public Drive folder, by name.
+ *
+ * One listing request per thousand files, and then the files themselves are
+ * reached two ways: the data, the settings and the models through the API,
+ * which is what the key is for, and every picture through the thumbnail
+ * service, which needs none and lets the gallery ask for the size it draws.
+ */
+export function listDriveFolder(folderId) {
+  let folder = emptyFolder();
+  function page(token) {
+    let url =
+      DRIVE_API +
+      "?q=" +
+      encodeURIComponent("'" + folderId + "' in parents and trashed = false") +
+      "&key=" +
+      encodeURIComponent(DRIVE_KEY) +
+      "&fields=" +
+      encodeURIComponent("nextPageToken,files(id,name,mimeType)") +
+      "&pageSize=1000" +
+      (token ? "&pageToken=" + encodeURIComponent(token) : "");
+    return fetchJson(url, "Google Drive").then((body) => {
+      (body.files || []).forEach((item) => {
+        let media =
+          DRIVE_API +
+          "/" +
+          encodeURIComponent(item.id) +
+          "?alt=media&key=" +
+          encodeURIComponent(DRIVE_KEY);
+        let picture =
+          String(item.mimeType || "").indexOf("image/") === 0
+            ? driveThumbnail(item.id, IMAGE_WIDTH.large)
+            : undefined;
+        addToFolder(folder, item.name, item.mimeType, media, picture);
+      });
+      return body.nextPageToken ? page(body.nextPageToken) : folder;
+    });
+  }
+  return page("");
 }
 
 /** The OneDrive API's id for a sharing link: "u!" and unpadded base64url. */
