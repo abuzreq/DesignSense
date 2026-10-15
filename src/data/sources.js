@@ -47,7 +47,10 @@ export function resolveSource(input) {
   // README). A folder on a web server needs none, so that is what we ask for.
   if (host === "drive.google.com") {
     throw new LoadError(
-      "DesignSense can't read Google Drive folders. " + CLOUD_HINT
+      "DesignSense can't read Google Drive folders. " +
+        CLOUD_HINT +
+        " The pictures can stay in Drive either way: a CSV whose img column" +
+        " holds Drive links is read as it should be."
     );
   }
   if (host === "1drv.ms" || host === "onedrive.live.com") {
@@ -294,6 +297,21 @@ export function toOneDriveShareId(link) {
  * has moved to SharePoint, whatever the folder is shared with, so this works
  * for some accounts and not others; a refusal says what to do instead.
  */
+/**
+ * The largest thumbnail OneDrive has already made of a file, or nothing.
+ *
+ * It is asked for with the listing rather than fetched per file. A gallery
+ * wants a picture the size of a card, and `@content.downloadUrl` is the
+ * original: a folder of 46 photographs sends about fifteen megabytes that way
+ * and perhaps two this way.
+ */
+function oneDriveThumbnail(item) {
+  let set = item && item.thumbnails && item.thumbnails[0];
+  if (!set) return undefined;
+  let pick = set.large || set.medium || set.small;
+  return pick && pick.url;
+}
+
 export function listOneDriveFolder(link) {
   let items = [];
   function nextPage(url) {
@@ -303,21 +321,31 @@ export function listOneDriveFolder(link) {
       return next ? nextPage(next) : items;
     });
   }
-  let first =
-    ONEDRIVE_SHARES_API + toOneDriveShareId(link) + "/root?expand=children";
-  return nextPage(first).then((all) => {
-    let folder = emptyFolder();
-    all.forEach((item) => {
-      if (!item.file) return;
-      addToFolder(
-        folder,
-        item.name,
-        item.file.mimeType,
-        item["@content.downloadUrl"]
-      );
+  let root = ONEDRIVE_SHARES_API + toOneDriveShareId(link) + "/root";
+  // Thumbnails are asked for with the children. Not every share answers with
+  // them -- an older link, or a file the service has not rendered yet -- and
+  // a request it will not parse fails the whole listing, so a refusal is
+  // retried plainly and the gallery falls back to the download URLs, which is
+  // what it used before.
+  return nextPage(root + "?expand=children(expand=thumbnails)")
+    .catch(() => {
+      items = [];
+      return nextPage(root + "?expand=children");
+    })
+    .then((all) => {
+      let folder = emptyFolder();
+      all.forEach((item) => {
+        if (!item.file) return;
+        addToFolder(
+          folder,
+          item.name,
+          item.file.mimeType,
+          item["@content.downloadUrl"],
+          oneDriveThumbnail(item)
+        );
+      });
+      return folder;
     });
-    return folder;
-  });
 }
 
 /**

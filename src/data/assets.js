@@ -13,6 +13,75 @@
 
 // "img", "image_2", "IMG 3" -- but not "image_url" or "imgur_link".
 export const IMAGE_NAME = /^(img|image)(?:[\s_-]?(\d+))?$/i;
+
+/*
+ * Google Drive serves the same picture from several addresses and only one of
+ * them is any use to a browser. Measured in October 2026 against a public
+ * file, from a page on another origin:
+ *
+ *   drive.google.com/thumbnail?id=...&sz=w200     loaded  200x100    16 kB
+ *   drive.google.com/thumbnail?id=...&sz=w1000    loaded  1000x500  274 kB
+ *   docs.google.com/uc?id=...&export=download     failed
+ *   drive.usercontent.google.com/download?id=...  failed
+ *
+ * curl is answered 200 and an image/png by all four: it is the browser that
+ * refuses the two download endpoints, which is why a Drive link pasted into an
+ * image column shows as a broken picture. Design Explorer hit the same wall
+ * and moved to the thumbnail service; this does too.
+ *
+ * The width is the other half of it. A gallery card is 170 pixels wide and was
+ * being sent 274 kB to fill them; the same picture at the width it is drawn at
+ * is 16. So the address is built where the picture is used rather than once at
+ * load, and `imageAtWidth` can be handed its own output -- the id is read back
+ * out of a thumbnail URL as readily as out of a share link.
+ *
+ * Nothing here can list a Drive folder: that needs files.list and an API key
+ * of the site's own (see sources.js). Showing a picture needs neither.
+ */
+const DRIVE_HOST = /^(drive|docs)\.google\.com$|^drive\.usercontent\.google\.com$/i;
+const DRIVE_PATH_ID = /\/file\/d\/([A-Za-z0-9_-]{10,})/;
+const DRIVE_ID = /^[A-Za-z0-9_-]{10,}$/;
+
+/** What a picture is asked for at: a card's worth, or the inspector's. */
+export const IMAGE_WIDTH = { card: 500, large: 1200 };
+
+/** The file id in any shape of Google Drive link, or "" for anything else. */
+export function driveFileId(value) {
+  let text = String(value == null ? "" : value).trim();
+  if (!/^https?:\/\//i.test(text)) return "";
+  let url;
+  try {
+    url = new URL(text);
+  } catch (err) {
+    return "";
+  }
+  if (!DRIVE_HOST.test(url.hostname)) return "";
+  let inPath = DRIVE_PATH_ID.exec(url.pathname);
+  if (inPath) return inPath[1];
+  let id = url.searchParams.get("id") || "";
+  return DRIVE_ID.test(id) ? id : "";
+}
+
+/** A Drive picture at a width, through the one address a browser accepts. */
+export function driveThumbnail(id, width) {
+  return (
+    "https://drive.google.com/thumbnail?id=" +
+    encodeURIComponent(id) +
+    "&sz=w" +
+    Math.round(width)
+  );
+}
+
+/**
+ * The same picture at the width it is about to be drawn at, where its host
+ * offers the choice. Anything that is not a Drive link -- a folder's blob,
+ * OneDrive's own thumbnail, a file served beside the data -- is handed back
+ * untouched, since nobody else lets us ask.
+ */
+export function imageAtWidth(url, width) {
+  let id = driveFileId(url);
+  return id ? driveThumbnail(id, width) : url;
+}
 // Names that can only mean a 3D model, whatever the values look like.
 export const STRICT_MODEL_NAME = /^(model3d|model_3d|3d|3d_model|threed)(?:[\s_-]?(\d+))?$/i;
 // Names that often mean something else ("model" is a car model in the sample

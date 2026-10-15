@@ -3,8 +3,10 @@ import { LoadError } from "./errors.js";
 import { CUSTOM, WEIGHTED, columnKind, displayName } from "@/columns.js";
 import {
   IMAGE_EXTENSIONS,
+  IMAGE_WIDTH,
   MODEL_EXTENSIONS,
   classifyColumns,
+  imageAtWidth,
   modelFormat,
   setClaimedColumns,
   setFolderFiles,
@@ -348,12 +350,14 @@ export function prepareRows(rows, resolver, columns) {
   let modelColumns = (columns && columns.models) || [];
   rows.forEach((row) => {
     if (!row.Tags) row.Tags = [];
+    // Pictures only: a model's address is the file itself, and a thumbnail
+    // of a .glb would be a picture of nothing.
     let views = resolveViews(
       resolver,
       row,
       imageColumns,
       IMAGE_EXTENSIONS
-    ).map((view) => view.url);
+    ).map((view) => imageAtWidth(view.url, IMAGE_WIDTH.large));
     row.images = views;
     // The gallery, the clusters and the exports read `image`, so it stays the
     // first view for the life of the dataset; which view the inspector shows

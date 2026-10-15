@@ -135,6 +135,7 @@ import {
 import { formatValue } from "@/store/filters.js";
 import { optionName } from "@/columns.js";
 import { FALLBACK_IMAGE } from "@/components/constants.js";
+import { IMAGE_WIDTH, imageAtWidth } from "@/data/assets.js";
 import DimensionName from "@/components/DimensionName.vue";
 
 const ICONS = Object.freeze({
@@ -214,7 +215,11 @@ export default {
     // An option with no picture shows the fallback, as one whose picture
     // failed does.
     shownSrc() {
-      return this.failed || !this.item.image ? FALLBACK_IMAGE : this.item.image;
+      if (this.failed || !this.item.image) return FALLBACK_IMAGE;
+      // A card is 170 pixels wide at the usual size and 340 at the largest.
+      // Where the host lets us say so, it is sent that rather than the
+      // inspector's copy (see data/assets.js).
+      return imageAtWidth(this.item.image, IMAGE_WIDTH.card);
     },
     isLoaded() {
       return this.loadedSrc !== null && this.loadedSrc === this.shownSrc;

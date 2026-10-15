@@ -28,6 +28,14 @@
       content="DesignSense: make sense of generated design options. The app showing a study of 648 window designs in linked views."
     />
     <meta name="twitter:card" content="summary_large_image" />
+    <!-- Pictures are fetched without saying which page asked for them. A
+         gallery asks one host for dozens at once, and Google Drive counts
+         those against the referring page: measured in October 2026, the same
+         thumbnail answered 200 with no referrer and 429 with one, from a page
+         that had just loaded twelve. It also keeps a reader's own address,
+         which carries their dataset's link, away from whoever hosts their
+         pictures. -->
+    <meta name="referrer" content="no-referrer" />
     <!-- The SVG carries both palettes and follows the browser's theme; the
          .ico is for anything that will not take one, and the PNG is what iOS
          puts on a home screen (see icons/). -->
