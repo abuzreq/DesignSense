@@ -766,11 +766,31 @@
   padding: 0 24px;
   background: #272727;
 }
+/* The app's title (Demo.vue's ds-title): the mark and the name side by side,
+   the name one word in two weights. */
 .gp-brand {
-  font-size: 20px;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: #fff;
   text-decoration: none;
+}
+.gp-mark {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+}
+.gp-wordmark {
+  font-family: "DM Sans", Roboto, sans-serif;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  line-height: 1;
+}
+.gp-brand-strong {
+  font-weight: 700;
+}
+.gp-brand-light {
+  font-weight: 300;
 }
 .gp-name {
   padding-left: 14px;
