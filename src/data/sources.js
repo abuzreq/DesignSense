@@ -28,6 +28,10 @@ const ONEDRIVE_SHARES_API = "https://api.onedrive.com/v1.0/shares/";
  */
 const DRIVE_KEY =
   typeof __GOOGLE_API_KEY__ !== "undefined" ? __GOOGLE_API_KEY__ : "";
+/** Whether this build reads Google Drive folders: the Load dialog says so. */
+export const READS_DRIVE_FOLDERS = DRIVE_KEY !== "";
+// Where a build without a key sends people instead.
+const HOSTED_SITE = "designsense.app";
 const DRIVE_API = "https://www.googleapis.com/drive/v3/files";
 const DRIVE_FOLDER_PATH = /\/folders\/([A-Za-z0-9_-]{10,})/;
 const DRIVE_ID = /^[A-Za-z0-9_-]{10,}$/;
@@ -69,11 +73,19 @@ export function resolveSource(input) {
     if (folderId && DRIVE_KEY) {
       return { kind: "gdrive", folderId: folderId, link: url.href };
     }
+    if (folderId) {
+      // A build without a key: the hosted site has one, so say so first.
+      throw new LoadError(
+        "This copy of DesignSense can't read Google Drive folders; the one at " +
+          HOSTED_SITE +
+          " can. " +
+          CLOUD_HINT +
+          " The pictures can stay in Drive either way: a CSV whose img column" +
+          " holds Drive links is read as it should be."
+      );
+    }
     throw new LoadError(
-      "DesignSense can't read Google Drive folders. " +
-        CLOUD_HINT +
-        " The pictures can stay in Drive either way: a CSV whose img column" +
-        " holds Drive links is read as it should be."
+      "That Google Drive link doesn't point at a folder. Paste the link of the folder that holds data.csv, shared so anyone with the link can view it."
     );
   }
   if (host === "1drv.ms" || host === "onedrive.live.com") {

@@ -6,6 +6,26 @@ const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
+/*
+ * A `.env` file beside this config fills in what the environment leaves
+ * unset, so that a key a developer needs (GOOGLE_API_KEY, see below) lives in
+ * a file git ignores rather than in a shell profile. One KEY=value a line;
+ * blank lines and # comments are skipped, and surrounding quotes dropped.
+ * Netlify sets its variables itself, so the deploy has no file to read.
+ */
+function readDotEnv(file) {
+  if (!fs.existsSync(file)) return;
+  fs.readFileSync(file, 'utf8')
+    .split(/\r?\n/)
+    .forEach((line) => {
+      const match = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+      if (!match || line.trim().charAt(0) === '#') return;
+      const value = match[2].replace(/^(['"])(.*)\1$/, '$2');
+      if (process.env[match[1]] === undefined) process.env[match[1]] = value;
+    });
+}
+readDotEnv(path.resolve(__dirname, '.env'));
+
 // The site's own address, for what a search engine reads: the guide's
 // canonical link and the sitemap. Netlify sets URL to the site's primary
 // address -- designsense-beta.netlify.app while that is where it lives, and
@@ -369,9 +389,10 @@ module.exports = (env, argv) => {
       new webpack.DefinePlugin({
         __APP_VERSION__: JSON.stringify(require('./package.json').version),
         // The key that reads a Google Drive folder, taken from the build's
-        // environment rather than written down here: the repository keeps no
-        // key, a fork builds without one, and the deployed site has whichever
-        // key its own Netlify settings hold. It is public once compiled in --
+        // environment (or a .env file, read above) rather than written down
+        // here: the repository keeps no key, a fork builds without one, and
+        // the deployed site has whichever key its own Netlify settings hold.
+        // It is public once compiled in --
         // a browser has to carry it -- so it is meant to be restricted to
         // this site's referrer in the Cloud console. Unset, Drive folders are
         // refused exactly as they were before (see data/sources.js).

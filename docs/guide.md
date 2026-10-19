@@ -40,7 +40,7 @@ This guide follows one study from start to finish. It covers how the data is mad
 | --- | --- | --- |
 | [Generate](#generate) | A parametric model is run for every combination of its inputs, or for the combinations an optimiser picks, and each run is recorded | Grasshopper with Colibri, Galapagos or Octopus, or any tool of your own |
 | [Prepare](#prepare) | The runs are stored in one folder: `data.csv`, a picture of each option, and optionally a 3D model of each | Your computer |
-| [Load](#load) | You open the folder from your computer, or from a link once it is on a web server | DesignSense |
+| [Load](#load) | You open the folder from your computer, or from a link once it is on a web server or in a shared Google Drive folder | DesignSense |
 | [Understand](#understand) | Find the patterns, relationships and trade-offs in the design space, and work out which criteria matter | DesignSense: the [linked views](#look-around) |
 | [Narrow](#narrow) | Find the options that meet those criteria, and set promising ones aside | DesignSense: filters, shortlist, sets |
 | [Decide](#decide) | Choose, weighing measured and judged criteria together | DesignSense: goals, Compare, best trade-offs, weighted scores, your own criteria |
@@ -78,7 +78,7 @@ To set it up, connect the sliders that define your design space to Colibri Input
 Colibri writes **a folder** (`C:\Colibri` by default) that contains `data.csv` and one image per iteration. That folder is your study. [Prepare](#prepare) describes what is in it, and [Load](#load) explains how to open it.
 
 > [!NOTE]
-> **Coming from Design Explorer?** Design Explorer had you upload the Colibri folder to Google Drive and paste its link. DesignSense cannot read Google Drive folders. Open the folder from your computer instead, or put it on a web server such as a GitHub repository. [Load](#load) covers both.
+> **Coming from Design Explorer?** Design Explorer had you upload the Colibri folder to Google Drive and paste its link. That works in DesignSense too, at designsense.app: share the folder so anyone with the link can view it and paste its link. You can also open the folder from your computer, or put it on a web server such as a GitHub repository. [Load](#load) covers all three.
 
 ### With Grasshopper: an optimiser
 
@@ -166,7 +166,7 @@ Names are not case-sensitive. Colibri writes `in:` and `out:`. `min:` and `max:`
 - The `threeD` column and its `.json` scenes are read.
 - A `Description` column, which Design Explorer's samples use, provides the option names.
 - A settings file in the folder is ignored. You set goals, colours and layout in DesignSense.
-- Google Drive links do not work. See the note under [Generate](#generate).
+- A Google Drive folder link works at designsense.app, as it did in Design Explorer. See [From a link](#from-a-link).
 
 ## Load
 
@@ -198,8 +198,8 @@ Paste a link to a CSV file, or to a folder that contains `data.csv`.
 | Ends in `.csv`, `.tsv` or `.txt` | Reads that file, and looks for the files it names in the same place |
 | A file page on github.com | Reads the raw file behind the page |
 | Anything else | Treats it as a folder and reads `data.csv` inside it |
+| A Google Drive folder | Reads `data.csv` and the pictures and models beside it, when the folder is shared so anyone with the link can view it. This works at designsense.app; a copy you build yourself needs a Google API key, which the README explains |
 | A OneDrive folder | Works for some accounts only. Microsoft blocks the rest |
-| A Google Drive folder | Not read. Download the folder and choose it from your computer |
 
 **Putting a study on GitHub** is the simplest way to get a link that works for everyone:
 
@@ -226,7 +226,8 @@ The first time you load a study of your own, the **Your columns** dialog opens a
 | "No data.csv was found in that folder." | Check the link, or link to the CSV file itself. In a folder from your computer, the table must be a `.csv` file |
 | "That link opened a web page, not a CSV file." | On GitHub, open the file itself, not the folder or the repository |
 | "… denied access." or "Couldn't reach …" | The files are not public, or the server does not allow other sites to read them. Files on GitHub can be read |
-| "DesignSense can't read Google Drive folders." | Download the folder and choose it from your computer |
+| "This copy of DesignSense can't read Google Drive folders" | You are on a copy built without a Google API key. Use designsense.app, or download the folder and choose it from your computer |
+| "Google Drive denied access to that folder." | Share the folder so anyone with the link can view it, then load it again |
 | "Each column needs its own name …" | Two columns have the same header. Rename one of them |
 | "N image or model files named in the data could not be found." | If you opened the CSV on its own, choose its folder instead. Otherwise the names in the `img` column do not match the files, so check the spelling and the extension |
 | The pictures are missing, with no message | Rename the picture column to `img` |

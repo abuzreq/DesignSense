@@ -114,9 +114,17 @@
                 >Design Explorer example</a
               >). Keep everything in one folder on a web server, such as a
               GitHub repository — for a file on GitHub, the address of its
-              page works. Google Drive folders can't be read, and OneDrive
-              folders only from some accounts; download those and choose the
-              folder below.
+              page works.
+              <template v-if="readsDriveFolders">
+                A Google Drive folder works too, shared so anyone with the
+                link can view it, and a OneDrive folder from some accounts.
+                If a folder is refused, download it and choose it below.
+              </template>
+              <template v-else>
+                This copy can't read Google Drive folders (the one at
+                designsense.app can), and OneDrive folders only from some
+                accounts; download those and choose the folder below.
+              </template>
             </p>
             <p class="load-hint">
               Made in Grasshopper with Colibri? The guide has
@@ -215,8 +223,9 @@
                     it is the one that always works.
                   </p>
                   <p class="mb-0">
-                    In a folder from your computer or from OneDrive, where
-                    DesignSense can read the list of files, you can skip the
+                    In a folder from your computer, Google Drive or OneDrive,
+                    where DesignSense can read the list of files, you can skip
+                    the
                     extra image columns: a file named
                     <code>12_2.png</code> beside
                     <code>12.png</code> becomes that option's second view.
@@ -323,6 +332,7 @@
 
 <script>
 import { loadDataset, loadState } from "@/data/loader.js";
+import { READS_DRIVE_FOLDERS } from "@/data/sources.js";
 const isUrl = require("is-valid-http-url");
 import { PRESETS } from "@/data/presets.js";
 import {
@@ -347,6 +357,9 @@ export default {
     return {
       dialog: false,
       presets: PRESETS,
+      // Only a build with a Google API key reads a Drive folder; the hint
+      // under the link says which this is.
+      readsDriveFolders: READS_DRIVE_FOLDERS,
       selectedPreset: null,
       url: "",
       // Remounting the file input lets the same file be chosen again.

@@ -34,7 +34,8 @@ along with panel editing, clustering and the sensitivity reading.
 
 A study is a folder: `data.csv`, with a row for each option, beside the
 images and 3D models it names. Open the folder (or the CSV alone) from your
-computer, or paste a link to it on a web server. A study written for
+computer, or paste a link to it on a web server or in a shared Google Drive
+folder (on the hosted site; see *On cloud folders* below). A study written for
 [Design Explorer](https://tt-acm.github.io/DesignExplorer/), such as a folder
 from Colibri in Grasshopper, loads as it is.
 
@@ -66,14 +67,24 @@ which writes `dist/`, ready to serve as static files.
 build tools ask for. The same Node runs the evaluation harness under `eval/`,
 which needs 18 or newer for `fetch`.
 
-**On cloud folders:** the build needs no API keys of any kind. Google Drive
-folders are not read: listing one needs a key from the Google Cloud console,
-which a browser app cannot keep to itself, as every visitor's browser would
-carry it. OneDrive folders are read where Microsoft still allows it, which is
-not for an account whose OneDrive has moved to SharePoint, however the folder
-is shared. Both say so and suggest a web server instead, which needs no key:
-the app fetches `<folder>/data.csv` and resolves the file names in it against
-the same folder. A GitHub repository serves one through `raw.githubusercontent.com`.
+**On cloud folders:** a shared Google Drive folder is read where the build
+has a Google API key. Listing a folder is the one thing Drive refuses without
+one, and a browser app cannot keep a key to itself, since every visitor's
+browser carries it; the hosted site at designsense.app has one, restricted to
+its own address in the Google Cloud console. A build of your own reads the
+key from `GOOGLE_API_KEY`, either in the environment or in a `.env` file at
+the repository root (copy `.env.example` and fill it in; `.env` is ignored by
+git). Create the key in the Cloud console with the Google Drive API enabled,
+and restrict it to the address your copy is served from. Without a key, a
+Drive link is refused with a message that points at the hosted site. Reading
+a folder costs 300 quota units a visit, however many pictures it holds, as
+those come from Drive's thumbnail service, which asks for no key.
+
+OneDrive folders are read where Microsoft still allows it, which is not for
+an account whose OneDrive has moved to SharePoint, however the folder is
+shared. A web server needs no key: the app fetches `<folder>/data.csv` and
+resolves the file names in it against the same folder. A GitHub repository
+serves one through `raw.githubusercontent.com`.
 
 ## License
 

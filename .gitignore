@@ -23,3 +23,6 @@ eval/.cache/
 .vscode/
 .idea/
 .claude/
+
+# A build of your own: the key that reads a Google Drive folder (see README).
+.env
