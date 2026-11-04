@@ -76,6 +76,17 @@
             :tooltip="size.label"
             @click="setThumbnailSize(index)"
           />
+          <span class="ph-divider" />
+          <!-- The values under each picture, at any size wide enough for them. -->
+          <TipButton
+            small
+            small-icon
+            :btn-class="detailsShown ? 'ph-btn ph-btn--on' : 'ph-btn'"
+            icon="mdi-card-text-outline"
+            :disabled="!columnWide"
+            :tooltip="detailsTip"
+            @click="detailsOn = !detailsOn"
+          />
         </template>
       </PanelHeader>
 
@@ -299,7 +310,12 @@
                   style="display: flex; flex-direction: row; height: 100%; margin-left: 10px;"
                 >
                   <div id="gallery_axis"></div>
-                  <v-row dense class="images-container" id="images-container">
+                  <v-row
+                    dense
+                    class="images-container"
+                    id="images-container"
+                    :style="{ '--thumb-aspect': thumbAspect }"
+                  >
                     <v-col
                       v-if="leadingSpacerHeight(galleryItems.length) > 0"
                       cols="12"
@@ -312,16 +328,13 @@
                       v-for="card in windowedCards(galleryItems)"
                       :key="card.key"
                       :cols="possibleColSpans[colSpan]"
-                      :class="[
-                        'thumbnail_container',
-                        possibleColSpans[colSpan] > 3 ? 'top-thumbnails' : '',
-                      ]"
+                      class="thumbnail_container"
                     >
                       <GalleryCard
                         :item="card.item"
                         :card-id="cardSelector + card.item._id"
                         :control="cardControl"
-                        :show-details="possibleColSpans[colSpan] > 3"
+                        :show-details="detailsShown"
                         :detail-keys="detailKeys"
                         v-bind="cardState(card.item)"
                         @hover="onCardHover"
@@ -610,13 +623,13 @@
   padding-right: 0px;
 }
 
+/* Every picture sits in a frame of the same shape (see GalleryCard), so
+   the cards of a row are as tall as each other; the top is where they line
+   up, so a card whose details are opened grows downwards alone. */
 .thumbnail_container {
   display: flex;
   justify-content: center;
-  align-items: center;
-}
-.thumbnail_container.top-thumbnails {
-  align-items: start;
+  align-items: flex-start;
 }
 
 
@@ -728,6 +741,11 @@ function compareForSort(a, b, desc) {
 const ModelViewer = () =>
   import(/* webpackChunkName: "model-viewer" */ "@/components/ModelViewer.vue");
 
+// A column narrower than this has no room for a card's values beside their names.
+const MIN_DETAILS_WIDTH = 140;
+// How many pictures settle the shape of the gallery's frames.
+const ASPECT_SAMPLES = 12;
+
 export default {
   name: "AugmentedGridCards",
   components: {
@@ -761,11 +779,15 @@ export default {
         { icon: "mdi-view-comfy-outline", label: "Small thumbnails" },
         { icon: "mdi-view-grid-outline", label: "Medium thumbnails" },
         { icon: "mdi-square-rounded-outline", label: "Large thumbnails" },
-        {
-          icon: "mdi-card-text-outline",
-          label: "Details, to compare options side by side",
-        },
+        { icon: "mdi-view-column-outline", label: "Extra large thumbnails" },
       ],
+      // The values under each picture, asked for (see columnWide).
+      detailsOn: false,
+      // The thumbnails' width, measured: how wide a column is follows it.
+      thumbsWidth: 0,
+      // The shape of every thumbnail's frame: the pictures' own, from the
+      // first few to load (see imageLoaded), and 4:3 until then.
+      thumbAspect: "4 / 3",
       labels: ["S", "M", "L", "XL"],
       icons: ["mdi-snowflake", "mdi-leaf", "mdi-fire", "mdi-water"],
       sortFallback: "",
@@ -1047,6 +1069,23 @@ export default {
       if (!coloured || keys.indexOf(coloured) === -1) return keys;
       return [coloured].concat(keys.filter((key) => key !== coloured));
     },
+    /**
+     * Whether a column has room for a card's values under its picture: a
+     * name and a value side by side need about this much.
+     */
+    columnWide() {
+      if (!(this.thumbsWidth > 0)) return this.colSpan >= 2;
+      return this.thumbsWidth / this.columnsPerRow >= MIN_DETAILS_WIDTH;
+    },
+    detailsShown() {
+      return this.detailsOn && this.columnWide;
+    },
+    detailsTip() {
+      if (!this.columnWide) return "Show each option's values: choose larger thumbnails first";
+      return this.detailsOn
+        ? "Hide each option's values"
+        : "Show each option's values under its picture, to compare options side by side";
+    },
     columnsPerRow() {
       return Math.max(
         1,
@@ -1059,7 +1098,9 @@ export default {
     rowHeight() {
       if (this.measuredRowHeight > 0) return this.measuredRowHeight;
       // Pre-measurement fallback, scaled by tile size.
-      return [120, 190, 250, 380][this.colSpan] || 190;
+      let estimate = [120, 190, 250, 380][this.colSpan] || 190;
+      // The closed details panel's header under each picture.
+      return this.detailsShown ? estimate + 28 : estimate;
     },
   },
   mounted() {
@@ -1289,6 +1330,8 @@ export default {
      * `scheduleRowMeasure`), not after every render.
      */
     measureRowHeight() {
+      let thumbs = this.$el ? this.$el.querySelector(".images-container") : null;
+      if (thumbs && thumbs.clientWidth > 0) this.thumbsWidth = thumbs.clientWidth;
       let nodes = this.$el
         ? this.$el.querySelectorAll(".images-container > .thumbnail_container")
         : [];
@@ -1397,9 +1440,28 @@ export default {
       let remainingRows = Math.ceil((total - w.end) / this.columnsPerRow);
       return Math.max(0, remainingRows) * this.rowHeight;
     },
-    imageLoaded() {
+    imageLoaded(event) {
       this.numLoadedImages += 1;
+      this.noteAspect(event);
       this.scheduleRowMeasure();
+    },
+    /**
+     * The frame takes the middle shape of the first pictures to load, so a
+     * collection of one shape fills its frames and one of several shapes is
+     * framed by its usual one. Settled once that many are in: a frame that
+     * kept changing would move every card on the screen.
+     */
+    noteAspect(event) {
+      let img = event && event.target;
+      if (!img || !(img.naturalWidth > 0) || !(img.naturalHeight > 0)) return;
+      if (!this.aspectSamples) this.aspectSamples = [];
+      if (this.aspectSamples.length >= ASPECT_SAMPLES) return;
+      this.aspectSamples.push(img.naturalWidth / img.naturalHeight);
+      let sorted = this.aspectSamples.slice().sort((a, b) => a - b);
+      let middle = sorted[Math.floor(sorted.length / 2)];
+      // Within reason: a panorama or a strip would make every frame one.
+      let ratio = Math.max(0.5, Math.min(2.5, middle));
+      this.thumbAspect = String(Math.round(ratio * 1000) / 1000);
     },
     /**
      * Shows the sort dimension's value for whichever card is at the top of the
@@ -1844,6 +1906,16 @@ export default {
   watch: {
     showing3D: function(value) {
       if (!value) this.modelLoaded = false;
+    },
+    // Another collection: its pictures settle the frames' shape again.
+    "$store.state.rawData": function() {
+      this.aspectSamples = [];
+      this.thumbAspect = "4 / 3";
+    },
+    // Opening the details changes every row's height.
+    detailsShown: function() {
+      this.measuredRowHeight = 0;
+      Vue.nextTick(() => this.measureRowHeight());
     },
     colSpan: function() {
       // Tile size changed, so the cached row height no longer applies.

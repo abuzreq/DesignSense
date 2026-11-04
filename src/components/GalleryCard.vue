@@ -25,9 +25,10 @@
       @keydown.enter.prevent="$emit('inspect', item)"
       @keydown.space.prevent.stop="$emit('inspect', item)"
     >
-      <!-- Until it loads, a grey 4:3 box fills the column; then the card is
-           as wide as the picture, up to the column, and as tall as its
-           proportions make it. -->
+      <!-- The frame is the gallery's shape (--thumb-aspect) and fills the
+           column; the picture fits inside it, centred, whatever its own
+           shape, so every card in a row is the same size, grey until its
+           picture loads. -->
       <img
         class="card-image__img"
         :src="shownSrc"
@@ -92,7 +93,7 @@
       </button>
     </div>
 
-    <!-- Only the details layout shows a card's values, and only once opened. -->
+    <!-- The values, when the gallery asks for them, and only once opened. -->
     <v-expansion-panels v-if="showDetails" v-model="openPanel">
       <v-expansion-panel>
         <v-expansion-panel-header>
@@ -245,9 +246,9 @@ export default {
     },
   },
   methods: {
-    onLoad() {
+    onLoad(event) {
       this.loadedSrc = this.shownSrc;
-      this.$emit("load");
+      this.$emit("load", event);
     },
     // The fallback is inline, so it can't fail in turn.
     onError() {
@@ -274,7 +275,10 @@ export default {
 .thumbnail_card {
   position: relative;
   display: block;
-  max-width: 100%;
+  /* The whole column, so pictures grow with it rather than stopping at
+     their own size. */
+  width: 100%;
+  box-sizing: border-box;
   /*
    * The edge the chart's colour is painted on (see paintCardEdges). Reserved
    * whether or not there is a colour for it, the way SensitivityDialog's
@@ -300,7 +304,10 @@ export default {
 
 .card-image {
   position: relative;
+  box-sizing: border-box;
+  aspect-ratio: var(--thumb-aspect, 4 / 3);
   overflow: hidden;
+  background-color: #eceff1;
   /* Not inherit: that is now the outer radius, with the edge outside it. */
   border-radius: 4px;
   cursor: pointer;
@@ -312,22 +319,13 @@ export default {
   border-bottom-right-radius: 0;
 }
 
+/* Fitted, not cropped: a picture of another shape than the frame keeps all
+   of itself, with the frame's grey either side. */
 .card-image__img {
   display: block;
-  max-width: 100%;
-  height: auto;
-}
-
-/* The column is a flex box, so the card's width follows the picture; with no
-   picture yet that is nothing, and a box of no size is never loaded lazily. */
-.thumbnail_card--loading {
   width: 100%;
-}
-
-.thumbnail_card--loading .card-image__img {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  background-color: #eceff1;
+  height: 100%;
+  object-fit: contain;
 }
 
 .card-icon {
