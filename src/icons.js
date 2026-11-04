@@ -13,6 +13,7 @@
 import {
   mdiAlertCircleOutline,
   mdiArrowDown,
+  mdiArrowExpand,
   mdiArrowLeft,
   mdiArrowRight,
   mdiArrowUp,
@@ -77,6 +78,7 @@ import {
   mdiMenuDown,
   mdiMessageTextOutline,
   mdiMinus,
+  mdiNotePlusOutline,
   mdiPalette,
   mdiPaperclip,
   mdiPencil,
@@ -132,6 +134,7 @@ import {
 const ICONS = {
   "mdi-alert-circle-outline": mdiAlertCircleOutline,
   "mdi-arrow-down": mdiArrowDown,
+  "mdi-arrow-expand": mdiArrowExpand,
   "mdi-arrow-left": mdiArrowLeft,
   "mdi-arrow-right": mdiArrowRight,
   "mdi-arrow-up": mdiArrowUp,
@@ -196,6 +199,7 @@ const ICONS = {
   "mdi-menu-down": mdiMenuDown,
   "mdi-message-text-outline": mdiMessageTextOutline,
   "mdi-minus": mdiMinus,
+  "mdi-note-plus-outline": mdiNotePlusOutline,
   "mdi-palette": mdiPalette,
   "mdi-paperclip": mdiPaperclip,
   "mdi-pencil": mdiPencil,

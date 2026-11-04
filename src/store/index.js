@@ -71,6 +71,7 @@ import {
 // or as a histogram; see colorLevels for why the colours follow it.
 import { MAX_LEVELS } from "@/analysis/summary.js";
 import Papa from "papaparse";
+import { clampDockWidth, loadSetsDock, saveSetsDock } from "@/setsDock.js";
 
 const UI_MODE_KEY = "designsense-uiMode";
 // Undo depth for both the Expert selection and the Lite filters.
@@ -307,6 +308,9 @@ function builder(
       // closed. `pinned` is open until closed; unpinned it is open because the
       // pointer went to it or a set was just saved, and closes by itself.
       setsDrawer: { open: false, pinned: false },
+      // Docked, the sets are a column beside the panels instead of a drawer
+      // over them, and stay until undocked; kept as a preference (setsDock.js).
+      setsDock: loadSetsDock(),
 
       /*
        * Settings that belong to a view but have to be reachable from outside
@@ -759,6 +763,14 @@ function builder(
       setSetsDrawer(state, payload) {
         let open = !!payload.open;
         state.setsDrawer = { open: open, pinned: open && !!payload.pinned };
+      },
+      /** `{ docked?, width? }`: either or both; the rest stays as it is. */
+      setSetsDock(state, payload) {
+        let next = Object.assign({}, state.setsDock);
+        if (payload.docked !== undefined) next.docked = !!payload.docked;
+        if (payload.width !== undefined) next.width = clampDockWidth(payload.width);
+        state.setsDock = next;
+        saveSetsDock(next);
       },
       toggleInspectionMode(state, payload) {
         if (payload) {

@@ -556,7 +556,9 @@ export const COMMANDS = {
         ctx.store.commit("setClusteringPanelOpen", { value: false });
         return;
       }
+      // Docked or open, asked to close, the sets go back to the edge.
       if (args.view === "Sets") {
+        ctx.store.commit("setSetsDock", { docked: false });
         ctx.store.commit("setSetsDrawer", { open: false });
         return;
       }

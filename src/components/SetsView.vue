@@ -4,7 +4,7 @@
       <div class="sets-title">{{ isLite ? "Saved sets" : "Sets" }}</div>
       <v-tooltip bottom max-width="300">
         <template v-slot:activator="{ on }">
-          <span v-on="on">
+          <span v-on="on" class="sets-save">
             <v-btn small depressed color="primary" :disabled="selectedShown.length === 0" @click="save">
               <v-icon left small>{{
                 isLite ? "mdi-bookmark-plus-outline" : "mdi-plus"
@@ -15,21 +15,45 @@
         </template>
         <span>{{ saveTooltip }}</span>
       </v-tooltip>
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-btn
-            v-on="on"
-            icon
-            small
-            class="sets-hide"
-            aria-label="Hide the saved sets"
-            @click="$emit('close')"
-          >
-            <v-icon small>mdi-chevron-left</v-icon>
-          </v-btn>
-        </template>
-        <span>Hide</span>
-      </v-tooltip>
+      <div class="sets-header-controls">
+        <!-- Pinned, the sets stop being a drawer over the panels and become a
+             column beside them; unpinned, they go back to the edge. -->
+        <v-tooltip bottom max-width="260">
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              small
+              :color="docked ? 'primary' : undefined"
+              :aria-label="docked ? 'Unpin the saved sets' : 'Pin the saved sets beside the panels'"
+              :aria-pressed="String(docked)"
+              @click="$emit('toggle-dock')"
+            >
+              <v-icon small>{{ docked ? "mdi-pin" : "mdi-pin-outline" }}</v-icon>
+            </v-btn>
+          </template>
+          <span>{{
+            docked
+              ? "Unpin: back to a drawer at the left edge"
+              : "Pin beside the panels, so the sets stay in sight; drag its edge to resize it"
+          }}</span>
+        </v-tooltip>
+        <v-tooltip v-if="!docked" bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              small
+              class="sets-hide"
+              aria-label="Hide the saved sets"
+              @click="$emit('close')"
+            >
+              <v-icon small>mdi-chevron-left</v-icon>
+            </v-btn>
+          </template>
+          <span>Hide</span>
+        </v-tooltip>
+      </div>
       <!-- Clearing the saved work is in the help menu, where the rest of what
            is kept for a dataset is looked after. -->
     </div>
@@ -299,15 +323,21 @@
             </template>
             <span>Summary image of this set: its options pictured and ringed in the charts</span>
           </v-tooltip>
-          <v-spacer />
-          <button
-            v-if="!hasNote(id) && !openNotes[id]"
-            type="button"
-            class="set-note-toggle"
-            @click.stop="openNote(id)"
-          >
-            Add note
-          </button>
+          <!-- An icon rather than words, so the row fits a narrow column. -->
+          <v-tooltip v-if="!hasNote(id) && !openNotes[id]" bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                icon
+                x-small
+                v-on="on"
+                aria-label="Add a note to this set"
+                @click.stop="openNote(id)"
+              >
+                <v-icon small>mdi-note-plus-outline</v-icon>
+              </v-btn>
+            </template>
+            <span>Add a note</span>
+          </v-tooltip>
         </div>
 
         <textarea
@@ -333,6 +363,10 @@ import { operations } from "./operations";
 
 export default {
   name: "SetsView",
+  props: {
+    // A column beside the panels (see SetsDrawer), rather than a drawer.
+    docked: { type: Boolean, default: false },
+  },
   data: function() {
     return {
       // Sets whose empty note was opened with "Add note".
@@ -520,11 +554,14 @@ export default {
 .sets-hide {
   margin-right: -4px;
 }
+/* Stacked rather than side by side, so the column can be narrow: the title
+   with the pin and hide controls, then the save button on its own line. */
 .sets-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px 8px;
   padding: 10px 10px 8px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
@@ -620,21 +657,35 @@ export default {
 .cart-thumb-remove:focus-visible {
   opacity: 1;
 }
+/* Narrow, the button drops under the name rather than squeezing it. */
 .cart-save {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
   padding-top: 6px;
 }
 .cart-name {
-  flex: 1 1 auto;
+  flex: 1 1 120px;
   min-width: 0;
   padding: 3px 6px;
   border: 1px solid #cfd8dc;
   border-radius: 4px;
   font-size: 13px;
 }
+.sets-save {
+  order: 3;
+  flex: 1 0 100%;
+}
+.sets-header-controls {
+  order: 2;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
 .sets-title {
+  order: 1;
   flex: 1 1 auto;
   min-width: 0;
   font-size: 15px;
@@ -651,10 +702,10 @@ export default {
 .sets-list {
   flex: 1 1 auto;
   overflow-y: auto;
-  padding: 8px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .set-card {
   border: 1px solid rgba(0, 0, 0, 0.12);
@@ -741,16 +792,9 @@ export default {
 }
 .set-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
-}
-.set-note-toggle {
-  font-size: 12px;
-  color: #1976d2;
-  background: none;
-  border: 0;
-  cursor: pointer;
-  padding: 0 2px;
 }
 .set-note {
   display: block;
