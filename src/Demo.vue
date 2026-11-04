@@ -1520,10 +1520,10 @@ export default {
           "bottom"),
 
         tourStep(this, "lite", '.v-card[type="Grid"]', "Understand · Gallery",
-          "Start by looking at the options. The gallery shows every option as an image. Use the menu at the top to sort by any column and see how the designs change with it. The buttons on the right change the image size. Click an image to inspect that option, and click it again to stop inspecting.",
+          "Start by looking at the options. The gallery shows every option as an image. Use the menu at the top to sort by any column and see how the designs change with it. The buttons on the right change the image size, and the last one shows each option's values under its picture. Click an image to inspect that option, and click it again to stop inspecting. Point at an image for its own controls: − leaves that option out of the result and + brings it back, and the bookmark puts it on the shortlist.",
           "right"),
         tourStep(this, "lite", ".inspector_card", "Understand · A closer look",
-          "The inspector shows the option you clicked. Its line and its dot are highlighted in the charts, so you can see its form and its performance together. The first button lists its values next to the image. If the option has several views, you can switch between them here, and if it has a 3D model, the cube button opens it. On the right you can rate the option, write a note on it, and add it to the shortlist.",
+          "The inspector shows the option you clicked. Its line and its dot are highlighted in the charts, so you can see its form and its performance together. The first button lists its values next to the image. If the option has several views, you can switch between them here, and if it has a 3D model, the cube button opens it. On the right you can rate the option, write a note on it, enter its values for your own criteria, and add it to the shortlist.",
           "right", () => this.inspectTourOption()),
         tourStep(this, "lite", '.v-card[type="ParallelCoordinatesPlot"]', "Understand · Parallel coordinates",
           "Each axis is a dimension and each line is an option, so the lines together show the patterns in the whole collection. Drag an axis title to put two axes next to each other. Lines that run level between them mean the two dimensions rise together. Lines that cross mean one goes up as the other goes down. Use Axes to choose which dimensions are shown.",
@@ -1532,11 +1532,11 @@ export default {
           "One column sets the colours in every view: these lines, the dots in the scatterplot and the border of each image. Choose the column here, or click an axis title. The key next to it shows what the colours mean, and the palette button changes them.",
           "bottom"),
         tourStep(this, "lite", ".v-card[type='ScatterPlot']", "Understand · Scatterplot and overview",
-          "Each dot is an option, positioned by the two dimensions chosen at the top, so the scatterplot shows that one relationship in detail. The overview next to it shows every pair of dimensions at once, and you can click a pair there to plot it. Click a dot to inspect that option.",
+          "Each dot is an option, positioned by the two dimensions chosen at the top, so the scatterplot shows that one relationship in detail. The overview next to it shows every pair of dimensions at once, and you can click a pair there to plot it. Its expand button shows the pairs large, with axes, to filter by dragging on them and to choose and order the dimensions. Click a dot to inspect that option.",
           "left", () => this.openTourOverview()),
 
         tourStep(this, "lite", "#filter-bar", "Narrow · Your filters",
-          "To keep only the options that meet your criteria, drag along an axis, or drag a box in the scatterplot or over images in the gallery. Each filter appears here as a chip, and the count shows how many options match. Remove a chip to remove its filter. The arrows undo and redo your changes, and the last button clears every filter. Esc stops inspecting, and pressing it again clears the filters.",
+          "To keep only the options that meet your criteria, drag along an axis, or drag a box in the scatterplot or over images in the gallery. Each filter appears here as a chip, and the count shows how many options match. A chip's colour says where it came from: <b>blue</b> for a range or a box you dragged, <b>green</b> for options picked or left out by hand in the gallery, like the two left out here, <b>grey</b> for a zoom or an exclusion, and <b>orange</b> for the options of a restored hand-picked set. Several ranges on one dimension are joined by OR. Remove a chip to remove its filter; chips that don't fit wait under “+N”. The arrows undo and redo your changes, and the last button clears every filter. Esc stops inspecting, and pressing it again clears the filters.",
           "bottom", () => this.showTourFilter()),
         tourStep(this, "lite", "#assistant-bar", "Narrow · Ask or command",
           "Type a request in plain words, such as “price under 10000” or “what do these have in common”. The assistant carries it out or answers the question. Press / to jump here from anywhere.",
@@ -1544,11 +1544,14 @@ export default {
         tourStep(this, "lite", "#data-operations-bar", "Narrow · Navigate",
           "Zoom in makes the remaining options the whole collection. The charts rescale to fit them, and you can filter again within them. Exclude removes those options from the collection instead. Step back undoes the last zoom or exclusion, and Reset restores the whole collection.",
           "bottom"),
+        tourStep(this, "lite", ".vue-radial-menu-wrapper", "Narrow · Quick actions",
+          "Right-click anywhere in the workspace for the actions you use most, around the pointer: stop inspecting, put the result on the shortlist, clear every filter, save a set, zoom in, exclude, and undo. Point at a button to see what it does. Other controls appear where you need them: on an image when you point at it, on each chip to remove it, and in each panel's header.",
+          "right", () => this.openTourMenu()),
         tourStep(this, "lite", "#cart-chip", "Narrow · Your shortlist",
           "An option that a filter removes may still be worth pursuing, so you can set options aside on the shortlist. The badge shows how many are on it. The shortlist is not affected by filtering, zooming or switching modes, so your candidates stay there while you keep looking. From this menu you can add everything currently shown to the shortlist, save the shortlist as a set, or compare its options.",
           "bottom-end", () => this.fillTourCart()),
         tourStep(this, "lite", "#sets-drawer", "Narrow · Saved sets",
-          "A set saves the current options together with the filters that produced them. Restore a set later to continue from that point. You can keep several sets as alternative directions and compare them. Sets are kept in a drawer at the left edge. Move the pointer there or click the tab to open it.",
+          "A set saves the current options together with how you found them. A set saved from your filters lists them as chips, and Restore brings those filters back, so you can continue from that point. A set saved from the shortlist or a selection is marked <b>Hand-picked</b>: it holds exactly those options rather than filters, and restoring it shows them as one orange chip. You can keep several sets as alternative directions and compare them. Sets are kept in a drawer at the left edge: move the pointer there or click the tab to open it, and pin it to keep it beside the panels.",
           "right", () => this.openTourSets()),
 
         dialogTourStep(this, "lite", ".dims-dialog", "Decide · Goals and your own criteria",
@@ -1565,14 +1568,14 @@ export default {
           "Capture views as you work. Each capture saves the filters, goals and shortlist, with a note. You can present your captures in a meeting or turn them into a PDF report. This menu also has a CSV download of the remaining options and a link that opens the same dataset for someone else. The link contains only the data, without your filters or sets.",
           "bottom-end"),
         dialogTourStep(this, "lite", ".sm-card", "Share · Summary image",
-          "The summary puts the outcome on one image. It shows the shortlisted options, how they compare with the rest, and findings that you can edit. Download the image, or copy it into a slide, an email or a chat.",
+          "The summary puts the outcome on one image. It shows the shortlisted options, how they compare with the rest, and findings that you can edit. The checkboxes choose what it shows, down to the scatterplot's best trade-offs line. Download the image, or copy it into a slide, an email or a chat.",
           () => this.openTourSummary()),
 
         tourStep(this, "expert", "#ui-mode-toggle", "Expert mode",
           "Expert mode has everything you have seen so far and adds " + EXPERT_ADDS + ". In Expert you build a selection instead of filtering.",
           "bottom"),
         tourStep(this, "expert", "#selection-operations-bar", "Expert · Selection operations",
-          "Choose how each new selection combines with the current one: replace, add, subtract, toggle or intersect. You can also hold Shift to add, Ctrl to subtract, or both to intersect.",
+          "Choose how each new selection combines with the current one: replace, add, subtract, toggle or intersect. You can also hold Shift to add, Ctrl to subtract, or both to intersect. Click the count to see the selection spelled out as the steps that made it.",
           "bottom"),
         tourStep(this, "expert", "#sets-operations-bar", "Expert · Save and compare",
           "Add the selected options to the shortlist, save them as a set, or compare them side by side. Inverting the selection is under Navigate. Undo, redo and clear are next to the selection.",
@@ -2379,6 +2382,7 @@ export default {
       // here also means stepping backwards past one leaves nothing behind.
       this.closeTourDialogs();
       store.commit("setSetsDrawer", { open: false });
+      this.closeContextMenu();
       let switching = store.state.uiMode !== mode;
       if (switching) store.dispatch("setUiMode", mode);
       // Give the panels time to re-render, so the step finds its target. A
@@ -2408,6 +2412,7 @@ export default {
         this.layoutBeforeTour = null;
       }
       this.closeTourDialogs();
+      this.closeContextMenu();
       this.$store.commit("setSetsDrawer", { open: false });
     },
     /** Every dialog a step of the tour opens. */
@@ -2425,13 +2430,57 @@ export default {
       this.$store.dispatch("setRangeFilters", {
         ranges: { price: [4000, 12000], year: [2006, 2015] },
       });
+      // Two options left out by hand, so a gallery chip shows beside the
+      // ranges. Only while still in, so stepping back here leaves them out.
+      let store = this.$store;
+      store.getters.selectedShown.slice(0, 2).forEach((id) => {
+        if (store.getters.isSelectedInGallery(id)) {
+          store.dispatch("toggleGallerySelection", { id: id });
+        }
+      });
+    },
+    /**
+     * The right-click menu, opened in the middle of the workspace. A moment
+     * later than the step's own setup: the click on Next is still on its way
+     * to the document, where it closes any menu open.
+     */
+    openTourMenu() {
+      setTimeout(() => {
+        let workspace = this.$refs.workspace;
+        if (!workspace || !this.$refs.contextMenu) return;
+        let rect = workspace.getBoundingClientRect();
+        this.rightClickPos = {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2 + window.scrollY,
+        };
+        this.showContextMenu = true;
+        this.$refs.contextMenu.isOpen = true;
+      }, 0);
+      return 150;
+    },
+    closeContextMenu() {
+      this.showContextMenu = false;
+      if (this.$refs.contextMenu) this.$refs.contextMenu.isOpen = false;
     },
     /** A set to show, in the drawer opened to stay while the step points at it. */
     openTourSets() {
-      if (this.$store.state.setsIDs.length === 0) {
-        this.$store.dispatch("createSet");
+      let store = this.$store;
+      if (store.state.setsIDs.length === 0) {
+        store.dispatch("createSet");
       }
-      this.$store.commit("setSetsDrawer", { open: true, pinned: true });
+      // And one from the shortlist, so a Hand-picked set shows beside the
+      // one saved from filters. The shortlist itself stays for the steps
+      // that compare and summarise it.
+      let handPicked = store.state.setsIDs.some(
+        (id) => store.getters.setCriteriaChips(id) === null
+      );
+      if (!handPicked && store.state.cart.length > 0) {
+        store.dispatch("createSet", {
+          members: store.state.cart.slice(),
+          setName: "Shortlist picks",
+        });
+      }
+      store.commit("setSetsDrawer", { open: true, pinned: true });
       // The drawer slides in over 0.2s; the step is placed beside it after.
       return 300;
     },
