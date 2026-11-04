@@ -22,7 +22,16 @@
         <ColorKey />
         <PaletteMenu />
         <span class="ph-divider" />
-        <span class="ph-meta">{{ headerHint }}</span>
+        <!-- The hint is the first thing to give way in a narrow header, so
+             when it is cut short it can still be read whole on hover. -->
+        <v-tooltip key="pcp-hint" bottom max-width="320" :disabled="!hintCut">
+          <template v-slot:activator="{ on }">
+            <span ref="hint" v-on="on" class="ph-meta" :aria-label="headerHint">{{
+              headerHint
+            }}</span>
+          </template>
+          <span>{{ headerHint }}</span>
+        </v-tooltip>
       </template>
       <template v-slot:actions>
         <v-tooltip bottom>
@@ -233,6 +242,8 @@ export default {
   name: "ParCoordsView",
   data() {
     return {
+      // Whether the header hint is cut short, so its tooltip has something to add.
+      hintCut: false,
       excludedDimensions: [],
       headerHeight: PANEL_HEADER_HEIGHT,
       allKeys: [],
@@ -363,7 +374,15 @@ export default {
       return hint;
     },
   },
-  mounted() {},
+  mounted() {
+    // The hint is cut by the header around it, which changes width with the
+    // panel and with what else is in the header, so its own size says when.
+    if (typeof ResizeObserver !== "undefined" && this.$refs.hint) {
+      this.hintObserver = new ResizeObserver(() => this.measureHint());
+      this.hintObserver.observe(this.$refs.hint);
+    }
+    this.measureHint();
+  },
   created() {
     // Bookkeeping columns only: the picture and model ones are isAssetColumn's,
     // since a list can never cover "img_2" or "model3d_3".
@@ -405,6 +424,7 @@ export default {
     this.titleClickTimer = null;
   },
   beforeDestroy() {
+    if (this.hintObserver) this.hintObserver.disconnect();
     if (this.lineFrame) cancelAnimationFrame(this.lineFrame);
     if (this.knobFrame) cancelAnimationFrame(this.knobFrame);
     if (this.titleFrame) cancelAnimationFrame(this.titleFrame);
@@ -412,6 +432,10 @@ export default {
     this.cancelTitleClick();
   },
   watch: {
+    // A longer or shorter hint in the same room may be cut where it wasn't.
+    headerHint: function() {
+      this.$nextTick(this.measureHint);
+    },
     // The Rating axis appears with the first rating.
     hasRatings: function() {
       this.scheduleRefresh();
@@ -440,6 +464,10 @@ export default {
     },
   },
   methods: {
+    measureHint() {
+      let hint = this.$refs.hint;
+      this.hintCut = !!hint && hint.scrollWidth > hint.clientWidth + 1;
+    },
     /**
      * What an Expert axis brush selected, for describing the selection: the
      * range brushed, or the options themselves on an axis without one.
