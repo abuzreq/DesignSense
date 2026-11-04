@@ -9,6 +9,8 @@
  *   or set pictured, and their axes fit those.
  *   highlight: that shortlist or set ringed in the charts. Without it, its
  *   options are drawn like any other in the result.
+ *   front: the best trade-offs line in the scatterplot, when its two axes
+ *   have goals. Without it, the plot shows the options alone.
  *   pictures: "large", "medium" or "small": smaller pictures fit more
  *   options on the card (see SummaryCard's cardLayout).
  */
@@ -25,6 +27,7 @@ export const DEFAULT_SUMMARY_SETTINGS = Object.freeze({
   findings: true,
   context: true,
   highlight: true,
+  front: true,
   pictures: "large",
 });
 
@@ -70,5 +73,6 @@ export function shownFor(settings, summary) {
   return Object.assign({}, settings, {
     chart: !!(settings.chart && summary.chart),
     parallel: !!(settings.parallel && summary.parallel),
+    front: !!(settings.front && settings.chart && summary.chart),
   });
 }

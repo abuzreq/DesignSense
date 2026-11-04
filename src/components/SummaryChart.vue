@@ -35,7 +35,7 @@
         :r="radius"
         v-bind="style.selected"
       />
-      <path v-if="frontPath" :d="frontPath" v-bind="style.front" />
+      <path v-if="front && frontPath" :d="frontPath" v-bind="style.front" />
       <circle
         v-for="p in points.featured"
         :key="'f' + p.id"
@@ -97,6 +97,8 @@ export default {
     context: { type: Boolean, default: true },
     // The options on the card ringed; without it, not ringed.
     highlight: { type: Boolean, default: true },
+    // The best trade-offs line, when the plot has one; without it, none.
+    front: { type: Boolean, default: true },
     // The options on the card; the whole group when not given.
     ringed: { type: Set, default: null },
   },

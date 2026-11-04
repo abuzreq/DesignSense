@@ -101,6 +101,15 @@ export default {
         { key: "goals", label: "Goals", value: s.goals },
         { key: "featured", label: "Option pictures", value: s.featured },
         { key: "chart", label: "Scatterplot", value: s.chart, disabled: !!summary && !summary.chart },
+        // Only a plot whose two axes have goals has a line to hide.
+        {
+          key: "front",
+          label: "Best trade-offs line",
+          value: s.front,
+          disabled:
+            !s.chart ||
+            (!!summary && (!summary.chart || (summary.chart.steps || []).length < 2)),
+        },
         {
           key: "parallel",
           label: "Parallel coordinates",

@@ -52,6 +52,7 @@
             :chart="summary.chart"
             :context="showContext"
             :highlight="showHighlight"
+            :front="showFront"
             :ringed="ringed"
             :width="chartSize.width"
             :height="chartSize.scatter"
@@ -69,7 +70,7 @@
             <span v-if="showContext"><i class="lg rest"></i>Other options</span>
             <span><i class="lg selected"></i>{{ featuredWord }}</span>
             <span v-if="hasFeatured && showHighlight"><i class="lg featured"></i>On the card</span>
-            <span v-if="showScatter && summary.chart.steps.length > 1"
+            <span v-if="showScatter && showFront && summary.chart.steps.length > 1"
               ><i class="lg front"></i>Best trade-offs</span
             >
             <span v-if="showParallel">Parallel axes: better at the top</span>
@@ -171,9 +172,10 @@ export default {
     // The sentences as shown, after the user's edits: [{ id, text }].
     sentences: { type: Array, default: () => [] },
     // Which sections are shown: { goals, featured, chart, parallel, findings,
-    // context, highlight }, chart being the scatterplot, parallel the parallel
-    // coordinates, context the other options behind the result in both, and
-    // highlight the shortlist or set ringed there (see summarySettings.js).
+    // context, highlight, front }, chart being the scatterplot, front its
+    // best trade-offs line, parallel the parallel coordinates, context the
+    // other options behind the result in both, and highlight the shortlist
+    // or set ringed there (see summarySettings.js).
     show: {
       type: Object,
       default: () => ({ goals: true, featured: true, chart: true, parallel: false, findings: true }),
@@ -236,6 +238,9 @@ export default {
     },
     showContext() {
       return this.show.context !== false;
+    },
+    showFront() {
+      return this.show.front !== false;
     },
     showParallel() {
       return !!(this.show.parallel && this.summary.parallel);
