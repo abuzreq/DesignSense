@@ -1267,6 +1267,11 @@ function builder(
         }
         context.commit("clearDataStack");
         context.commit("setUiMode", { value: mode });
+        // Lite has no clusters, so the scatterplot's side column would come
+        // up empty; the matrix of dimension pairs takes their place.
+        if (state.isClusteringPanelOpen) {
+          context.commit("setMatrixPanelOpen", { value: true });
+        }
         context.commit("clearFilterHistory");
         context.commit("setFilters", { filters: carried });
         // The data already is the zoomed subset, so keep it instead of rebuilding.
