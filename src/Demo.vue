@@ -747,6 +747,7 @@
     <DimensionsDialog />
     <CompareDialog />
     <SensitivityDialog />
+    <MatrixDialog />
     <SummaryDialog />
     <FeedbackDialog v-model="isFeedbackOn" :from-error="feedbackFromError" />
     <ColumnsDialog />
@@ -1402,6 +1403,7 @@ import AssistantBar from "@/components/AssistantBar.vue";
 import DimensionsDialog from "@/components/DimensionsDialog.vue";
 import CompareDialog from "@/components/CompareDialog.vue";
 import SensitivityDialog from "@/components/SensitivityDialog.vue";
+import MatrixDialog from "@/components/MatrixDialog.vue";
 import SummaryDialog from "@/components/SummaryDialog.vue";
 import FeedbackDialog from "@/components/FeedbackDialog.vue";
 import ColumnsDialog from "@/components/ColumnsDialog.vue";
@@ -1467,6 +1469,7 @@ export default {
     DimensionsDialog,
     CompareDialog,
     SensitivityDialog,
+    MatrixDialog,
     SummaryDialog,
     FeedbackDialog,
     ColumnsDialog,

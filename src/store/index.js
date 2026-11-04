@@ -249,6 +249,8 @@ function builder(
       compareDialog: { open: false, source: "cart", ids: [], setID: null },
       // Whether the sensitivity reading is open.
       sensitivityDialog: { open: false },
+      // The matrix of dimension pairs, large (see MatrixDialog.vue).
+      matrixDialog: { open: false },
       // A message for the workspace's snackbar: { id, text, action }.
       notice: null,
       numericDimensions: getNumericDimensions(dataTypesMap).concat(
@@ -1078,6 +1080,9 @@ function builder(
       },
       setCompareDialog(state, payload) {
         state.compareDialog = Object.assign({}, state.compareDialog, payload);
+      },
+      setMatrixDialog(state, payload) {
+        state.matrixDialog = { open: !!payload.open };
       },
       setSensitivityDialog(state, payload) {
         state.sensitivityDialog = Object.assign(

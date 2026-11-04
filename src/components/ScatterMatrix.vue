@@ -1,13 +1,17 @@
 <template>
-  <div class="matrix-panel" :style="{ height: `${height}px` }">
+  <div
+    class="matrix-panel"
+    :class="{ 'matrix-panel--expanded': expanded }"
+    :style="{ height: `${height}px` }"
+  >
     <PanelHeader
       icon="mdi-view-grid-outline"
-      title="Overview"
-      :compact="width < 300"
+      :title="expanded ? 'Dimension pairs' : 'Overview'"
+      :compact="!expanded && width < 300"
     >
       <!-- A pulldown like the scatterplot's axes, so the choice takes one line. -->
       <DimensionPicker
-        :value="dims"
+        :value="shownDims"
         :items="dimensionChoices"
         multiple
         count-label="dimensions"
@@ -19,21 +23,45 @@
         class="ph-select matrix-dims-select"
         @change="onDimsChange"
       />
+      <span v-if="expanded" class="ph-meta">{{ expandedHint }}</span>
       <template v-slot:actions>
-        <v-tooltip bottom max-width="300">
+        <v-tooltip key="matrix-info" bottom max-width="300">
           <template v-slot:activator="{ on }">
             <v-icon v-on="on" small class="matrix-info"
               >mdi-information-outline</v-icon
             >
           </template>
+          <span>{{ infoText }}</span>
+        </v-tooltip>
+        <v-tooltip v-if="!expanded" key="matrix-expand" bottom max-width="280">
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              icon
+              small
+              class="ph-btn"
+              aria-label="Expand the overview"
+              @click="expand"
+            >
+              <v-icon small>mdi-arrow-expand</v-icon>
+            </v-btn>
+          </template>
           <span
-            >Every pair of the chosen dimensions, once: a plot above the
-            diagonal would be the one below it with the axes swapped. Click a
-            plot to show it large; the one on show is outlined, whichever way
-            round it is drawn there. The diagonal shows how each dimension's
-            values are spread.</span
+            >Show the pairs large, with axes, to brush on them and to choose
+            and order up to {{ maxExpanded }} dimensions</span
           >
         </v-tooltip>
+        <v-btn
+          v-else
+          key="matrix-close"
+          icon
+          small
+          class="ph-btn"
+          aria-label="Close"
+          @click="$emit('close')"
+        >
+          <v-icon small>mdi-close</v-icon>
+        </v-btn>
       </template>
     </PanelHeader>
 
@@ -42,12 +70,53 @@
     </p>
 
     <div ref="area" class="matrix-area">
-      <div
-        v-show="dims.length >= 2"
-        class="matrix-grid"
-        :style="{ width: `${geom.size}px`, height: `${geom.size}px` }"
-      >
+      <div v-show="dims.length >= 2" class="matrix-grid" :style="gridStyle">
         <canvas ref="canvas" class="matrix-canvas" />
+        <!-- Expanded: each column's values along the bottom, each row's up
+             the left, as the plots in them are drawn. -->
+        <svg
+          v-if="axes"
+          class="matrix-axes"
+          :width="geom.size + axisLeft"
+          :height="geom.size + axisBottom"
+          :style="{ left: -axisLeft + 'px' }"
+          aria-hidden="true"
+        >
+          <g
+            v-for="axis in axes.columns"
+            :key="'ax' + axis.dim"
+            :transform="`translate(${axisLeft + axis.at},${geom.size})`"
+          >
+            <line class="matrix-axis-line" x1="0" :x2="geom.cell" y1="0.5" y2="0.5" />
+            <g
+              v-for="tick in axis.ticks"
+              :key="tick.at"
+              :transform="`translate(${tick.at},0)`"
+            >
+              <line class="matrix-axis-line" y1="0" y2="4" />
+              <text class="matrix-axis-text" y="15" text-anchor="middle">{{
+                tick.label
+              }}</text>
+            </g>
+          </g>
+          <g
+            v-for="axis in axes.rows"
+            :key="'ay' + axis.dim"
+            :transform="`translate(${axisLeft},${axis.at})`"
+          >
+            <line class="matrix-axis-line" x1="-0.5" x2="-0.5" y1="0" :y2="geom.cell" />
+            <g
+              v-for="tick in axis.ticks"
+              :key="tick.at"
+              :transform="`translate(0,${tick.at})`"
+            >
+              <line class="matrix-axis-line" x1="-4" x2="0" />
+              <text class="matrix-axis-text" x="-6" dy="0.32em" text-anchor="end">{{
+                tick.label
+              }}</text>
+            </g>
+          </g>
+        </svg>
         <div
           v-for="cell in cells"
           :key="cell.key"
@@ -55,10 +124,14 @@
           :class="{
             'matrix-cell--diag': cell.diagonal,
             'matrix-cell--current': cell.current,
+            'matrix-cell--drop': cell.diagonal && dropDim === cell.dim,
           }"
           :style="cell.style"
-          :title="cell.title"
-          @click="pick(cell)"
+          :title="expanded ? null : cell.title"
+          @click="onCellClick(cell)"
+          @dragover="onDimDragOver(cell, $event)"
+          @dragleave="onDimDragLeave(cell)"
+          @drop="onDimDrop(cell, $event)"
         >
           <template v-if="cell.diagonal">
             <svg
@@ -71,6 +144,15 @@
                 v-for="(bar, i) in cell.bars"
                 :key="'b' + i"
                 class="matrix-bar"
+                :x="bar.x"
+                :y="bar.y"
+                :width="bar.w"
+                :height="bar.h"
+              />
+              <rect
+                v-for="(bar, i) in cell.selBars"
+                :key="'sb' + i"
+                class="matrix-bar matrix-bar--selected"
                 :x="bar.x"
                 :y="bar.y"
                 :width="bar.w"
@@ -93,21 +175,48 @@
                   r="2"
                 />
               </template>
+              <circle
+                v-for="(stem, i) in cell.selStems"
+                :key="'ss' + i"
+                class="matrix-stem-dot matrix-stem-dot--selected"
+                :cx="stem.x"
+                :cy="stem.y"
+                r="2.5"
+              />
             </svg>
-            <span class="matrix-name">{{ label(cell.dim) }}</span>
           </template>
-          <template v-else>
-            <div
-              v-for="(box, i) in cell.boxes"
-              :key="'box' + i"
-              class="matrix-box"
-              :style="box"
-            />
-            <div
-              v-if="cell.hover"
-              class="matrix-hover"
-              :style="cell.hover"
-            />
+          <div
+            v-for="(box, i) in cell.boxes"
+            :key="'box' + i"
+            class="matrix-box"
+            :style="box"
+          />
+          <div v-if="cell.hover" class="matrix-hover" :style="cell.hover" />
+          <!-- Expanded: a brush over every plot and every distribution. -->
+          <svg
+            v-if="expanded"
+            class="matrix-brush"
+            :data-key="cell.key"
+            :width="geom.cell"
+            :height="geom.cell"
+            @mousemove="onBrushMove(cell, $event)"
+            @mouseleave="binReadout = null"
+          />
+          <template v-if="cell.diagonal">
+            <span
+              class="matrix-name"
+              :class="{ 'matrix-name--draggable': expanded }"
+              :draggable="expanded ? 'true' : null"
+              :title="expanded ? 'Drag onto another name to move it there' : null"
+              @dragstart="onDimDragStart(cell, $event)"
+              @dragend="onDimDragEnd"
+              >{{ label(cell.dim) }}</span
+            >
+            <span
+              v-if="expanded && binReadout && binReadout.dim === cell.dim"
+              class="matrix-readout"
+              >{{ binReadout.text }}</span
+            >
           </template>
         </div>
       </div>
@@ -116,6 +225,7 @@
 </template>
 
 <script>
+import * as d3 from "d3";
 import { mapGetters, mapState } from "vuex";
 import TemplateView from "@/components/TemplateView.vue";
 import PanelHeader from "@/components/PanelHeader.vue";
@@ -124,9 +234,18 @@ import { columnKind, dimensionItems, displayName, INPUT, OUTPUT } from "@/column
 import { summarize } from "@/analysis/summary.js";
 import { isMissingFor } from "@/store/dimensions.js";
 import { SELECTED } from "@/stateColors.js";
+import { operations } from "@/components/operations.js";
 
 // Past this many dimensions the cells get too small to read in a side column.
 export const MAX_MATRIX_DIMS = 6;
+// Expanded over most of the window, the cells stay readable up to this many.
+// The overview shows the first MAX_MATRIX_DIMS of the same list.
+export const MAX_EXPANDED_DIMS = 10;
+// Expanded: room for the values along the bottom and up the left.
+const AXIS_LEFT = 44;
+const AXIS_BOTTOM = 22;
+// A drag shorter than this either way is a click, not a brush.
+const CLICK_SLOP = 3;
 const DEFAULT_MATRIX_DIMS = 4;
 // Space between cells, and between a cell's edge and its outermost points.
 const GAP = 3;
@@ -134,8 +253,15 @@ const INSET = 4;
 
 /**
  * A scatterplot matrix of a few chosen dimensions, for picking the pair the
- * scatterplot shows. It only reads the selection and the filters; brushing
- * stays in the full-size views.
+ * scatterplot shows. In the scatterplot's side column it only reads the
+ * selection and the filters.
+ *
+ * Expanded (MatrixDialog), the same matrix is large: axes on every row and
+ * column, more dimensions, names that drag to reorder them, and a brush on
+ * every plot and every distribution. A brush filters in Lite, as the
+ * scatterplot's does, and selects in Expert under the current operation;
+ * a click still picks the pair for the scatterplot. Both share the stored
+ * choice of dimensions and their order, so either shows what the other set.
  *
  * Only the half below the diagonal is drawn. The half above holds the same
  * pairs with the axes swapped, which is the same cloud reflected: twice the
@@ -147,6 +273,12 @@ const INSET = 4;
  * outline of the plot on show, filter boxes, the hovered option -- is plain
  * DOM driven by the store, so it follows changes without a redraw.
  */
+/** Tick labels that read as the values do: 2010 as 2010, 40000 as 40k past five digits. */
+function tickFormat(domain) {
+  let big = domain && Math.max(Math.abs(domain[0]), Math.abs(domain[1])) >= 1e5;
+  return d3.format(big ? "~s" : "~g");
+}
+
 export default {
   mixins: [TemplateView],
   name: "ScatterMatrix",
@@ -155,12 +287,22 @@ export default {
     // The pair the scatterplot shows, outlined here.
     xColumn: { type: String, default: null },
     yColumn: { type: String, default: null },
+    // Large, in its dialog, with axes and brushes (see above).
+    expanded: { type: Boolean, default: false },
   },
   data() {
     return {
       // Set by each rebuild: the grid's size, and each dimension's domain.
       geom: { k: 0, cell: 0, size: 0, dims: [] },
       domains: {},
+      // Expanded: the selected options, drawn over each distribution.
+      selectedRows: [],
+      // Expanded: the bin under the pointer, read out in its cell.
+      binReadout: null,
+      // Expanded: the name being dragged to a new place, and where it would go.
+      dragDim: null,
+      dropDim: null,
+      maxExpanded: MAX_EXPANDED_DIMS,
     };
   },
   computed: {
@@ -174,13 +316,90 @@ export default {
       let numeric = this.numericDimensions;
       return (this.storedDims || []).filter((dim) => numeric.includes(dim));
     },
+    maxDims() {
+      return this.expanded ? MAX_EXPANDED_DIMS : MAX_MATRIX_DIMS;
+    },
+    /** As many of the stored dimensions as fit here, in their order. */
+    shownDims() {
+      return this.dims.slice(0, this.maxDims);
+    },
     dimensionChoices() {
-      let full = this.dims.length >= MAX_MATRIX_DIMS;
+      let shown = this.shownDims;
+      let full = shown.length >= this.maxDims;
       return dimensionItems(this.numericDimensions).map((item) =>
         Object.assign(item, {
-          disabled: full && !this.dims.includes(item.value),
+          disabled: full && !shown.includes(item.value),
         })
       );
+    },
+    axisLeft() {
+      return this.expanded ? AXIS_LEFT : 0;
+    },
+    axisBottom() {
+      return this.expanded ? AXIS_BOTTOM : 0;
+    },
+    gridStyle() {
+      let style = {
+        width: `${this.geom.size}px`,
+        height: `${this.geom.size}px`,
+      };
+      if (this.expanded) {
+        style.marginLeft = `${AXIS_LEFT}px`;
+        style.marginBottom = `${AXIS_BOTTOM}px`;
+      }
+      return style;
+    },
+    infoText() {
+      if (!this.expanded) {
+        return "Every pair of the chosen dimensions, once: a plot above the diagonal would be the one below it with the axes swapped. Click a plot to show it large; the one on show is outlined, whichever way round it is drawn there. The diagonal shows how each dimension's values are spread. Expand it to brush on it.";
+      }
+      return (
+        "Every pair of the chosen dimensions, once, with how each one's values are spread on the diagonal. " +
+        (this.isLite
+          ? "Drag over a plot or a distribution to filter, and again for another range (OR); click inside a range to remove it. "
+          : "Drag over a plot or a distribution to select, combined with the current selection by the chosen operation. ") +
+        "Click a plot to show it in the scatterplot. Drag a name on the diagonal onto another to reorder the dimensions; the overview keeps the first " +
+        MAX_MATRIX_DIMS +
+        "."
+      );
+    },
+    expandedHint() {
+      return this.isLite
+        ? "Drag to filter · click a plot to show it in the scatterplot · drag a name to reorder"
+        : "Drag to select · click a plot to show it in the scatterplot · drag a name to reorder";
+    },
+    /** Expanded: the ticks along each column's foot and up each row's side. */
+    axes() {
+      if (!this.expanded) return null;
+      let { k, cell, dims } = this.geom;
+      if (k < 2 || cell <= 0) return null;
+      let count = Math.max(2, Math.floor(cell / 55));
+      let ticksFor = (dim, flip) => {
+        let domain = this.domains[dim];
+        if (!domain) return [];
+        let scale = d3
+          .scaleLinear()
+          .domain(domain)
+          .range([INSET, cell - INSET]);
+        let format = tickFormat(domain);
+        return scale.ticks(count).map((value) => ({
+          at: flip ? cell - scale(value) : scale(value),
+          label: format(value),
+        }));
+      };
+      return {
+        columns: dims.map((dim, col) => ({
+          dim: dim,
+          at: col * (cell + GAP),
+          ticks: ticksFor(dim, false),
+        })),
+        // The first row holds only a distribution, whose height is a count.
+        rows: dims.slice(1).map((dim, i) => ({
+          dim: dim,
+          at: (i + 1) * (cell + GAP),
+          ticks: ticksFor(dim, true),
+        })),
+      };
     },
     summaries() {
       void this.dimensionValuesVersion;
@@ -218,6 +437,8 @@ export default {
                   dim: xDim,
                   style: style,
                   title: displayName(xDim),
+                  // Expanded, a dimension's own ranges show on its distribution.
+                  boxes: this.expanded ? this.rangesOn(xDim) : [],
                 },
                 this.distribution(xDim)
               )
@@ -258,6 +479,12 @@ export default {
     },
     numericDimensions: function() {
       this.ensureDims();
+    },
+    // Expanded: the brushes follow the cells they sit in.
+    cells: function(newValue, oldValue) {
+      if (!this.expanded) return;
+      let keys = (list) => list.map((cell) => cell.key).join(",");
+      if (keys(newValue) !== keys(oldValue)) this.setupBrushes();
     },
   },
   created() {
@@ -311,10 +538,26 @@ export default {
       this.$store.commit("setViewSetting", { key: "matrixDims", value: picked });
     },
     onDimsChange(value) {
+      let next = value.slice(0, this.maxDims);
+      // The overview shows only the first few; those it doesn't show stay
+      // chosen, after the ones it does.
+      if (!this.expanded) {
+        let rest = this.dims
+          .slice(MAX_MATRIX_DIMS)
+          .filter((dim) => !next.includes(dim));
+        next = next.concat(rest);
+      }
       this.$store.commit("setViewSetting", {
         key: "matrixDims",
-        value: value.slice(0, MAX_MATRIX_DIMS),
+        value: next.slice(0, MAX_EXPANDED_DIMS),
       });
+    },
+    expand() {
+      this.$store.commit("setMatrixDialog", { open: true });
+    },
+    onCellClick(cell) {
+      // Expanded, a click is the brush's to read: it may be on a range.
+      if (!this.expanded) this.pick(cell);
     },
     pick(cell) {
       if (cell.diagonal) return;
@@ -325,12 +568,15 @@ export default {
       if (!this.chart) return;
       if (reset) {
         this.chart.unhighlightAll();
+        this.selectedRows = [];
       } else {
-        this.chart.highlight(
-          this.$store.getters.selectedDataInView(this.viewID),
-          this.isFilterActive
-        );
+        let selection = this.$store.getters.selectedDataInView(this.viewID);
+        this.chart.highlight(selection, this.isFilterActive);
+        if (this.expanded) this.selectedRows = selection || [];
       }
+    },
+    afterChartRebuilt() {
+      this.setupBrushes();
     },
 
     // Pixel positions within a cell, from the domains of the last rebuild.
@@ -351,14 +597,26 @@ export default {
       // Leave room at the top for the name.
       let top = Math.min(18, cell * 0.3);
       let usable = cell - top - 2;
-      let result = { bars: [], stems: [] };
+      let result = { bars: [], stems: [], selBars: [], selStems: [] };
       if (!summary || !summary.n || !summary.peak) return result;
+      // Expanded: the selected options' share of each bin, over the whole.
+      let selected = this.selectedCounts(dim, summary);
       let clampX = (x) => Math.max(0, Math.min(cell, x));
       if (summary.levels) {
         result.stems = summary.levels.map((level) => ({
           x: clampX(this.px(dim, level.value)),
           y: cell - 2 - (level.count / summary.peak) * usable,
         }));
+        if (selected) {
+          summary.levels.forEach((level) => {
+            let count = selected.get(level.value) || 0;
+            if (!count) return;
+            result.selStems.push({
+              x: clampX(this.px(dim, level.value)),
+              y: cell - 2 - (count / summary.peak) * usable,
+            });
+          });
+        }
       } else if (summary.bins) {
         let width = (summary.hi - summary.lo) / summary.bins.length;
         summary.bins.forEach((count, i) => {
@@ -372,6 +630,16 @@ export default {
             w: Math.max(0.5, x1 - x0 - 1),
             h: h,
           });
+          let mine = selected ? selected[i] : 0;
+          if (mine) {
+            let hs = (mine / summary.peak) * usable;
+            result.selBars.push({
+              x: x0 + 0.5,
+              y: cell - 2 - hs,
+              w: Math.max(0.5, x1 - x0 - 1),
+              h: hs,
+            });
+          }
         });
       }
       return result;
@@ -408,6 +676,277 @@ export default {
         };
       });
     },
+    /**
+     * Expanded: how many selected options fall in each of the summary's bins
+     * (or at each of its levels), or null when a selection would add nothing:
+     * none, or all of them.
+     */
+    selectedCounts(dim, summary) {
+      if (!this.expanded) return null;
+      let rows = this.selectedRows;
+      let total = (this.chartData || []).length;
+      if (!rows || rows.length === 0 || rows.length >= total) return null;
+      if (summary.levels) {
+        let counts = new Map();
+        rows.forEach((row) => {
+          let value = row[dim];
+          if (Number.isFinite(value)) counts.set(value, (counts.get(value) || 0) + 1);
+        });
+        return counts;
+      }
+      if (!summary.bins) return null;
+      let bins = summary.bins.length;
+      let width = (summary.hi - summary.lo) / bins;
+      let counts = new Array(bins).fill(0);
+      rows.forEach((row) => {
+        let value = row[dim];
+        if (!Number.isFinite(value) || !(width > 0)) return;
+        let i = Math.floor((value - summary.lo) / width);
+        counts[Math.max(0, Math.min(bins - 1, i))]++;
+      });
+      return counts;
+    },
+    /** Expanded: a dimension's own ranges, across its distribution. */
+    rangesOn(dim) {
+      let cell = this.geom.cell;
+      let clamp = (v) => Math.max(0, Math.min(cell, v));
+      return this.boxesFor([dim]).map((box) => {
+        let x0 = clamp(this.px(dim, box[dim][0]));
+        let x1 = clamp(this.px(dim, box[dim][1]));
+        return {
+          left: `${Math.min(x0, x1)}px`,
+          top: "0px",
+          width: `${Math.abs(x1 - x0)}px`,
+          height: `${cell}px`,
+        };
+      });
+    },
+    // Values back from pixel positions within a cell (see px and py).
+    valueAt(dim, x) {
+      let domain = this.domains[dim];
+      let span = this.geom.cell - 2 * INSET;
+      return domain[0] + ((x - INSET) / span) * (domain[1] - domain[0]);
+    },
+    valueAtY(dim, y) {
+      return this.valueAt(dim, this.geom.cell - y);
+    },
+    /**
+     * Expanded: a d3 brush on every cell, bound again whenever the cells are
+     * laid out again. The brush only draws the gesture; once let go it is
+     * cleared, and what the gesture did -- a filter's ranges, a selection --
+     * is what stays drawn.
+     */
+    setupBrushes() {
+      if (!this.expanded) return;
+      this.$nextTick(() => {
+        let cell = this.geom.cell;
+        if (!cell || !this.$el) return;
+        let byKey = {};
+        this.cells.forEach((c) => (byKey[c.key] = c));
+        let vm = this;
+        this.$el.querySelectorAll(".matrix-brush").forEach((node) => {
+          let target = byKey[node.getAttribute("data-key")];
+          if (!target) return;
+          let brush = target.diagonal
+            ? d3.brushX().extent([
+                [0, 0],
+                [cell, cell],
+              ])
+            : d3.brush().extent([
+                [0, 0],
+                [cell, cell],
+              ]);
+          brush
+            .on("start", function() {
+              if (!d3.event.sourceEvent) return;
+              vm.brushStart = d3.mouse(this);
+            })
+            .on("end", function() {
+              if (!d3.event.sourceEvent) return;
+              let selection = d3.event.selection;
+              if (selection) d3.select(this).call(brush.move, null);
+              vm.onBrushEnd(target, selection);
+            });
+          d3.select(node).call(brush);
+        });
+      });
+    },
+    onBrushEnd(cell, selection) {
+      let start = this.brushStart;
+      this.brushStart = null;
+      let small = (a, b) => Math.abs(b - a) < CLICK_SLOP;
+      let isClick =
+        !selection ||
+        (cell.diagonal
+          ? small(selection[0], selection[1])
+          : small(selection[0][0], selection[1][0]) &&
+            small(selection[0][1], selection[1][1]));
+      if (isClick) {
+        if (start) this.onBrushClick(cell, start);
+        return;
+      }
+      if (cell.diagonal) {
+        let dim = cell.dim;
+        let range = [this.valueAt(dim, selection[0]), this.valueAt(dim, selection[1])];
+        this.applyBrush(cell, [dim], { [dim]: range.sort((a, b) => a - b) });
+        return;
+      }
+      let [[x0, y0], [x1, y1]] = selection;
+      this.applyBrush(cell, [cell.x, cell.y], {
+        [cell.x]: [this.valueAt(cell.x, x0), this.valueAt(cell.x, x1)],
+        [cell.y]: [this.valueAtY(cell.y, y1), this.valueAtY(cell.y, y0)],
+      });
+    },
+    /**
+     * The ranges a cell shows in Lite, in data units, and whether they are
+     * its own filter or the crossing of each dimension's own brushes (see
+     * boxesIn): only its own can be added to or removed one by one here.
+     */
+    rangesIn(cell) {
+      if (cell.diagonal) return { boxes: this.boxesFor([cell.dim]), own: true };
+      let x = cell.x;
+      let y = cell.y;
+      let own = this.boxesFor([x, y]);
+      if (own.length > 0) return { boxes: own, own: true };
+      let xs = this.boxesFor([x]);
+      let ys = this.boxesFor([y]);
+      if (xs.length + ys.length === 0) return { boxes: [], own: true };
+      let boxes = [];
+      (xs.length ? xs : [{ [x]: this.domains[x] }]).forEach((bx) => {
+        (ys.length ? ys : [{ [y]: this.domains[y] }]).forEach((by) => {
+          boxes.push(Object.assign({}, bx, by));
+        });
+      });
+      return { boxes: boxes, own: false };
+    },
+    /**
+     * A finished drag. Lite adds the range to what the cell already holds
+     * (OR), as brushing again does in the scatterplot; a cell showing each
+     * dimension's own brushes crossed takes them over as its own. Expert
+     * selects what is inside, under the current operation.
+     */
+    applyBrush(cell, dims, box) {
+      if (this.isLite) {
+        let held = this.rangesIn(cell);
+        this.$store.dispatch("setBoxFilter", {
+          dims: dims,
+          boxes: held.boxes.concat([box]),
+          replace: held.own ? [] : dims,
+        });
+        return;
+      }
+      let ids = (this.chartData || [])
+        .filter((row) =>
+          dims.every((dim) => {
+            let value = row[dim];
+            return Number.isFinite(value) && value >= box[dim][0] && value <= box[dim][1];
+          })
+        )
+        .map((row) => row._id);
+      let operation = this.currentSelectionOperation;
+      // As in the scatterplot: an empty brush clears only under Replace.
+      if (ids.length === 0 && operation !== operations.REPLACE) return;
+      this.$store.dispatch("update", {
+        view: this.viewID,
+        selection: ids,
+        operation: operation,
+        step: { kind: "region", boxes: [box] },
+      });
+    },
+    /**
+     * A click: in Lite, inside one of the cell's own ranges, removes it;
+     * anywhere else on a plot, shows that pair in the scatterplot.
+     */
+    onBrushClick(cell, point) {
+      if (this.isLite) {
+        let held = this.rangesIn(cell);
+        if (held.own && held.boxes.length > 0) {
+          let dims = cell.diagonal ? [cell.dim] : [cell.x, cell.y];
+          let at = cell.diagonal
+            ? { [cell.dim]: this.valueAt(cell.dim, point[0]) }
+            : {
+                [cell.x]: this.valueAt(cell.x, point[0]),
+                [cell.y]: this.valueAtY(cell.y, point[1]),
+              };
+          let inside = (box) =>
+            dims.every((dim) => {
+              let range = box[dim];
+              return !range || (at[dim] >= range[0] && at[dim] <= range[1]);
+            });
+          let index = held.boxes.findIndex(inside);
+          if (index >= 0) {
+            this.$store.dispatch("setBoxFilter", {
+              dims: dims,
+              boxes: held.boxes.filter((box, i) => i !== index),
+            });
+            return;
+          }
+        }
+      }
+      if (!cell.diagonal) this.pick(cell);
+    },
+    /** Expanded: over a distribution, the bin under the pointer read out. */
+    onBrushMove(cell, event) {
+      if (!cell.diagonal) return;
+      let summary = this.summaries[cell.dim];
+      if (!summary || !summary.n) {
+        this.binReadout = null;
+        return;
+      }
+      let rect = event.currentTarget.getBoundingClientRect();
+      let value = this.valueAt(cell.dim, event.clientX - rect.left);
+      let format = tickFormat(this.domains[cell.dim]);
+      let selected = this.selectedCounts(cell.dim, summary);
+      let text = null;
+      if (summary.levels) {
+        let nearest = null;
+        summary.levels.forEach((level) => {
+          if (nearest === null || Math.abs(level.value - value) < Math.abs(nearest.value - value)) {
+            nearest = level;
+          }
+        });
+        if (nearest) {
+          text = format(nearest.value) + ": " + nearest.count;
+          if (selected) text += " (" + (selected.get(nearest.value) || 0) + " selected)";
+        }
+      } else if (summary.bins) {
+        let bins = summary.bins.length;
+        let width = (summary.hi - summary.lo) / bins;
+        let i = Math.max(0, Math.min(bins - 1, Math.floor((value - summary.lo) / width)));
+        let lo = summary.lo + i * width;
+        text = format(lo) + "\u2013" + format(lo + width) + ": " + summary.bins[i];
+        if (selected) text += " (" + selected[i] + " selected)";
+      }
+      this.binReadout = text ? { dim: cell.dim, text: text } : null;
+    },
+    // Reordering, expanded: a name on the diagonal dragged onto another.
+    onDimDragStart(cell, event) {
+      if (!this.expanded) return;
+      this.dragDim = cell.dim;
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", cell.dim);
+    },
+    onDimDragOver(cell, event) {
+      if (!this.dragDim || !cell.diagonal || cell.dim === this.dragDim) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      this.dropDim = cell.dim;
+    },
+    onDimDragLeave(cell) {
+      if (this.dropDim === cell.dim) this.dropDim = null;
+    },
+    onDimDrop(cell, event) {
+      if (!this.dragDim || !cell.diagonal) return;
+      event.preventDefault();
+      let next = this.dims.filter((dim) => dim !== this.dragDim);
+      next.splice(next.indexOf(cell.dim) + (this.dims.indexOf(this.dragDim) < this.dims.indexOf(cell.dim) ? 1 : 0), 0, this.dragDim);
+      this.onDimDragEnd();
+      this.$store.commit("setViewSetting", { key: "matrixDims", value: next });
+    },
+    onDimDragEnd() {
+      this.dragDim = null;
+      this.dropDim = null;
+    },
     hoverMark(item, xDim, yDim) {
       if (!item) return null;
       let x = item[xDim];
@@ -422,9 +961,11 @@ export default {
     Chart() {
       let area = this.$refs.area;
       let canvas = this.$refs.canvas;
-      let dims = this.dims.slice(0, MAX_MATRIX_DIMS);
+      let dims = this.shownDims;
       let k = dims.length;
-      let side = area ? Math.min(area.clientWidth, area.clientHeight) : 0;
+      let side = area
+        ? Math.min(area.clientWidth - this.axisLeft, area.clientHeight - this.axisBottom)
+        : 0;
       let cell = k > 0 ? Math.floor((side - GAP * (k - 1)) / k) : 0;
       if (k < 2 || cell < 12 || !canvas) {
         this.geom = { k: 0, cell: 0, size: 0, dims: [] };
@@ -668,6 +1209,75 @@ export default {
   box-sizing: border-box;
   border: 1px dashed #546e7a;
   background: rgba(0, 0, 0, 0.04);
+  pointer-events: none;
+}
+.matrix-panel--expanded {
+  border-left: none;
+}
+.matrix-panel--expanded .matrix-area {
+  margin: 12px 16px 8px;
+}
+.matrix-panel--expanded .matrix-dims-select {
+  max-width: 260px;
+}
+.matrix-axes {
+  position: absolute;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.matrix-axis-line {
+  stroke: #90a4ae;
+  stroke-width: 1;
+}
+.matrix-axis-text {
+  font-size: 10px;
+  fill: #546e7a;
+}
+.matrix-bar--selected {
+  fill: #5c8fc4;
+}
+.matrix-stem-dot--selected {
+  fill: #1f5fa8;
+}
+/* Over the points and the ranges, under the name, which drags. */
+.matrix-brush {
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  cursor: crosshair;
+}
+.matrix-brush ::v-deep .selection {
+  fill: rgba(33, 119, 180, 0.12);
+  stroke: rgb(33, 119, 180);
+}
+.matrix-name--draggable {
+  z-index: 1;
+  right: auto;
+  max-width: calc(100% - 8px);
+  padding: 0 4px;
+  margin-left: -4px;
+  border-radius: 3px;
+  background: rgba(243, 246, 249, 0.9);
+  cursor: grab;
+}
+.matrix-name--draggable:hover {
+  background: #e1e8ee;
+}
+.matrix-cell--drop {
+  border: 2px dashed #1565c0 !important;
+}
+.matrix-readout {
+  position: absolute;
+  z-index: 1;
+  right: 4px;
+  top: 18px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  color: #263238;
+  white-space: nowrap;
   pointer-events: none;
 }
 .matrix-hover {
