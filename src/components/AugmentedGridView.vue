@@ -815,9 +815,9 @@ const ASPECT_SAMPLES = 12;
 const DEFAULT_DETAIL_COUNT = 8;
 // How large a card's values read: the type, and the row it sits in.
 const VALUE_SIZES = [
-  { value: "small", short: "S", label: "Small", font: "11px", row: "18px" },
-  { value: "medium", short: "M", label: "Medium", font: "12.5px", row: "20px" },
-  { value: "large", short: "L", label: "Large", font: "14px", row: "23px" },
+  { value: "small", short: "S", label: "Small", font: "12.5px", row: "20px" },
+  { value: "medium", short: "M", label: "Medium", font: "14px", row: "23px" },
+  { value: "large", short: "L", label: "Large", font: "16px", row: "26px" },
 ];
 
 export default {

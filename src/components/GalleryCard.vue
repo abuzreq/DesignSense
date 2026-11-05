@@ -428,18 +428,18 @@ export default {
 /* The size is the gallery's choice (--values-font, --values-row), the same
    on every card so their rows stay level. */
 .card-values {
-  max-height: calc(8 * var(--values-row, 18px));
+  max-height: calc(8 * var(--values-row, 20px));
   overflow-y: auto;
   padding: 0 0 4px;
   border-top: 1px solid #eceff1;
-  font-size: var(--values-font, 11px);
-  line-height: var(--values-row, 18px);
+  font-size: var(--values-font, 12.5px);
+  line-height: var(--values-row, 20px);
 }
 .card-value-row {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  height: var(--values-row, 18px);
+  height: var(--values-row, 20px);
   padding: 0 6px;
 }
 .card-value-row:nth-child(even) {
