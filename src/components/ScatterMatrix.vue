@@ -202,6 +202,19 @@
             @mousemove="onBrushMove(cell, $event)"
             @mouseleave="binReadout = null"
           />
+          <!-- Expanded, Lite: one click to clear what a cell holds, beside
+               the click on a range that removes just that one. -->
+          <button
+            v-if="expanded && isLite && cell.boxes && cell.boxes.length > 0"
+            type="button"
+            class="matrix-clear"
+            :title="clearLabel(cell)"
+            :aria-label="clearLabel(cell)"
+            @mousedown.stop
+            @click.stop="clearCell(cell)"
+          >
+            <v-icon x-small>mdi-close</v-icon>
+          </button>
           <template v-if="cell.diagonal">
             <span
               class="matrix-name"
@@ -356,7 +369,7 @@ export default {
       return (
         "Every pair of the chosen dimensions, once, with how each one's values are spread on the diagonal. " +
         (this.isLite
-          ? "Drag over a plot or a distribution to filter, and again for another range (OR); click inside a range to remove it. "
+          ? "Drag over a plot or a distribution to filter, and again for another range (OR); click inside a range to remove it, or the × in a corner to clear them all. "
           : "Drag over a plot or a distribution to select, combined with the current selection by the chosen operation. ") +
         "Click a plot to show it in the scatterplot. Drag a name on the diagonal onto another to reorder the dimensions; the overview keeps the first " +
         MAX_MATRIX_DIMS +
@@ -365,7 +378,7 @@ export default {
     },
     expandedHint() {
       return this.isLite
-        ? "Drag to filter · click a plot to show it in the scatterplot · drag a name to reorder"
+        ? "Drag to filter · × clears a plot · click a plot to show it in the scatterplot · drag a name to reorder"
         : "Drag to select · click a plot to show it in the scatterplot · drag a name to reorder";
     },
     /** Expanded: the ticks along each column's foot and up each row's side. */
@@ -854,13 +867,14 @@ export default {
       });
     },
     /**
-     * A click: in Lite, inside one of the cell's own ranges, removes it;
+     * A click: in Lite, inside one of the ranges the cell shows, removes it
+     * (one crossed from axis brushes too: the rest become the plot's own);
      * anywhere else on a plot, shows that pair in the scatterplot.
      */
     onBrushClick(cell, point) {
       if (this.isLite) {
         let held = this.rangesIn(cell);
-        if (held.own && held.boxes.length > 0) {
+        if (held.boxes.length > 0) {
           let dims = cell.diagonal ? [cell.dim] : [cell.x, cell.y];
           let at = cell.diagonal
             ? { [cell.dim]: this.valueAt(cell.dim, point[0]) }
@@ -878,12 +892,26 @@ export default {
             this.$store.dispatch("setBoxFilter", {
               dims: dims,
               boxes: held.boxes.filter((box, i) => i !== index),
+              replace: held.own ? [] : dims,
             });
             return;
           }
         }
       }
       if (!cell.diagonal) this.pick(cell);
+    },
+    /**
+     * Every range a cell shows, gone: a plot's own filter and the axis
+     * brushes it shows crossed, or a distribution's ranges.
+     */
+    clearCell(cell) {
+      let dims = cell.diagonal ? [cell.dim] : [cell.x, cell.y];
+      this.$store.dispatch("setBoxFilter", { dims: dims, boxes: [], replace: dims });
+    },
+    clearLabel(cell) {
+      return cell.diagonal
+        ? "Clear the ranges on " + displayName(cell.dim)
+        : "Clear this plot's ranges";
     },
     /** Expanded: over a distribution, the bin under the pointer read out. */
     onBrushMove(cell, event) {
@@ -1267,11 +1295,31 @@ export default {
 .matrix-cell--drop {
   border: 2px dashed #1565c0 !important;
 }
+.matrix-clear {
+  position: absolute;
+  z-index: 2;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #b0bec5;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+}
+.matrix-clear:hover,
+.matrix-clear:focus-visible {
+  border-color: #455a64;
+  background: #fff;
+}
 .matrix-readout {
   position: absolute;
   z-index: 1;
   right: 4px;
-  top: 18px;
+  top: 22px;
   padding: 0 4px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.9);
