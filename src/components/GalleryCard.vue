@@ -6,6 +6,7 @@
     class="thumbnail_card"
     :class="{
       hovered: isHovered,
+      'thumbnail_card--dimmed': isDimmed,
       'thumbnail_card--shortlisted': inCart,
       'thumbnail_card--loading': !isLoaded,
     }"
@@ -252,6 +253,10 @@ export default {
     viewCount() {
       return this.item.images ? this.item.images.length : 0;
     },
+    /** Unselected (Expert) or left out (Lite): the picture and edge fade. */
+    isDimmed() {
+      return this.control === "gallery" ? !this.inGallery : this.transparent;
+    },
     imageClasses() {
       if (this.control === "gallery") {
         return {
@@ -342,7 +347,7 @@ export default {
    * thumbnails and scales the cells to nine tenths for the same reason --
    * white has to separate one from the next.
    */
-  border: 3px solid transparent;
+  border: 3px solid var(--card-edge, transparent);
   /* Three for the edge outside the picture's own four. */
   border-radius: 7px;
   background-color: #fff;
@@ -501,14 +506,21 @@ export default {
   opacity: 1;
 }
 
+/* Dimmed, but still easy to tell apart: the options not selected stay
+   readable at a glance, a step behind the ones that are. */
 .thumbnail_card .card-image.transparent {
-  opacity: 0.35;
+  opacity: 0.6;
 }
 
 /* Lite: unselected options stay in the pool, dimmed. Only the picture fades,
    so the card's select button stays readable. */
 .card-image.gallery-dimmed > .card-image__img {
-  opacity: 0.3;
+  opacity: 0.6;
+}
+
+/* Its coloured edge softened too, less than the picture. */
+.thumbnail_card--dimmed {
+  border-color: color-mix(in srgb, var(--card-edge, transparent) 85%, transparent);
 }
 
 /*

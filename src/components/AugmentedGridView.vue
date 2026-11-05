@@ -2012,8 +2012,10 @@ export default {
       cards.forEach((node) => {
         let id = node.id.substring(this.cardSelector.length);
         let datum = this.$store.getters.dataMap[id];
+        // A variable rather than the border itself, so a dimmed card can
+        // soften its edge (see GalleryCard's thumbnail_card--dimmed).
         d3.select(node).style(
-          "border-color",
+          "--card-edge",
           on && datum ? this.colorize(datum) : null
         );
       });
