@@ -206,7 +206,7 @@
           </template>
           <span>{{
             !hasSideRoom
-              ? "Widen the panel to show the overview of dimension pairs."
+              ? "Make the panel wider or taller to show the overview of dimension pairs."
               : sidePanel === "matrix"
               ? "Hide the overview."
               : "Show an overview of dimension pairs, and pick the plot from it."
@@ -235,7 +235,7 @@
         </v-tooltip>
       </template>
     </PanelHeader>
-    <div class="scatter-body">
+    <div class="scatter-body" :class="{ 'scatter-body--below': sideBelow }">
       <div
         :id="viewID"
         ref="scatter"
@@ -245,11 +245,11 @@
       <div
         v-if="sidePanel === 'matrix'"
         class="side-view"
-        :style="{ width: `${sideWidth}px`, height: `${plotHeight}px` }"
+        :style="{ width: `${sideWidth}px`, height: `${sideHeight}px` }"
       >
         <ScatterMatrix
           :width="sideWidth"
-          :height="plotHeight"
+          :height="sideHeight"
           :x-column="xColumn"
           :y-column="yColumn"
         />
@@ -258,11 +258,11 @@
         v-if="can('clustering')"
         v-show="sidePanel === 'clusters'"
         class="cluster-view"
-        :style="{ width: `${sideWidth}px`, height: `${plotHeight}px` }"
+        :style="{ width: `${sideWidth}px`, height: `${sideHeight}px` }"
       >
         <ClusterView
           :width="sideWidth"
-          :height="plotHeight"
+          :height="sideHeight"
           :defaultEnableContext="true"
           :x="x"
           :y="y"
@@ -295,6 +295,19 @@
 .scatter-plot {
   flex: 0 0 auto;
   position: relative;
+}
+/* Under the plot: the plot centred in what the side column leaves. */
+.scatter-body--below {
+  flex-direction: column;
+}
+.scatter-body--below .scatter-plot {
+  margin: auto 0;
+}
+/* The side column's own edge faces the plot, now above it. */
+.scatter-body--below ::v-deep .matrix-panel,
+.scatter-body--below ::v-deep .clusters-panel {
+  border-left: none;
+  border-top: 1px solid #e3e8ee;
 }
 .cluster-view,
 .side-view {
@@ -484,8 +497,11 @@ const CANVAS_THRESHOLD = 2000;
 // Roughly how much room each tick label gets along each axis.
 const X_TICK_SPACING = 70;
 const Y_TICK_SPACING = 45;
-// Below this panel width the matrix stays closed.
+// Below this panel width the matrix stays closed, unless it fits underneath.
 const MIN_SIDE_PANEL_WIDTH = 520;
+// A panel taller than it is wide puts the matrix or the clusters under the
+// plot rather than beside it, once there is this much height for both.
+const MIN_BELOW_HEIGHT = 480;
 
 export default {
   mixins: [TemplateView],
@@ -541,13 +557,23 @@ export default {
         this.$store.commit("setViewSetting", { key: "scatterY", value: value });
       },
     },
-    // Too narrow a panel leaves neither the plot nor the matrix readable.
+    // Too small a panel leaves neither the plot nor the matrix readable.
     hasSideRoom() {
-      return this.width >= MIN_SIDE_PANEL_WIDTH;
+      return this.width >= MIN_SIDE_PANEL_WIDTH || this.sideBelow;
+    },
+    /**
+     * Whether the side column goes under the plot. The plot is drawn square,
+     * so in a panel taller than it is wide the room beside it is what a
+     * square leaves over, and the room below it is the rest of the height:
+     * below, both the plot and the matrix come out larger.
+     */
+    sideBelow() {
+      return this.plotHeight > this.width && this.plotHeight >= MIN_BELOW_HEIGHT;
     },
     /**
      * What the side column shows: the matrix of dimension pairs, the
-     * clusters (an Expert tool), or nothing. It takes 40% of the width.
+     * clusters (an Expert tool), or nothing. Beside the plot it takes 40% of
+     * the width; under it, at least 40% of the height (see sideHeight).
      */
     sidePanel() {
       if (this.isMatrixPanelOpen) return this.hasSideRoom ? "matrix" : null;
@@ -555,15 +581,32 @@ export default {
       return null;
     },
     sideWidth() {
-      return Math.round(this.width * 0.4);
+      return this.sideBelow ? this.width : Math.round(this.width * 0.4);
+    },
+    // Under the plot: 40% of the height, or all that a square plot leaves.
+    sideHeight() {
+      if (!this.sideBelow) return this.plotHeight;
+      return Math.max(
+        Math.round(this.plotHeight * 0.4),
+        this.plotHeight - this.width
+      );
     },
     // Without a side column the plot takes the whole panel; the axes add
     // ticks as they get longer.
     // Never below zero: a panel is briefly unmeasured while it mounts, and
     // a negative size reaches the plot's svg as an invalid attribute.
     plotWidth() {
-      if (this.sidePanel) return Math.max(0, this.width - this.sideWidth);
+      if (this.sidePanel && !this.sideBelow) {
+        return Math.max(0, this.width - this.sideWidth);
+      }
       return Math.max(0, this.width);
+    },
+    /** The plot's share of the room below the header. */
+    plotAreaHeight() {
+      if (this.sidePanel && this.sideBelow) {
+        return Math.max(0, this.plotHeight - this.sideHeight);
+      }
+      return this.plotHeight;
     },
     /** The room below the header, which the side panels take all of. */
     plotHeight() {
@@ -577,7 +620,7 @@ export default {
      */
     plotDrawHeight() {
       let tallest = Math.max(MIN_PLOT_HEIGHT, this.plotWidth);
-      return Math.min(this.plotHeight, tallest);
+      return Math.min(this.plotAreaHeight, tallest);
     },
     compactHeader() {
       return this.width < 640;
@@ -697,6 +740,10 @@ export default {
   watch: {
     // Opening, closing or switching the side column resizes the plot.
     sidePanel: function() {
+      this.scheduleRefresh();
+    },
+    // So does moving it from beside the plot to under it.
+    sideBelow: function() {
       this.scheduleRefresh();
     },
     // Custom values or ratings changed in place; redraw if this plot shows them.
