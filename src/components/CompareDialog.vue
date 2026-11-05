@@ -392,6 +392,28 @@ export default {
         ? "Remove from the shortlist"
         : "Remove from this comparison";
     },
+    /**
+     * Each numeric dimension's spread and largest size over the whole
+     * collection, so a row is written as the gallery writes that dimension.
+     */
+    valueScales() {
+      let rows = this.$store.state.rawData || [];
+      let scales = {};
+      this.$store.state.numericDimensions.forEach((dim) => {
+        let lo = Infinity;
+        let hi = -Infinity;
+        let biggest = 0;
+        rows.forEach((row) => {
+          let value = row[dim];
+          if (typeof value !== "number" || !isFinite(value)) return;
+          if (value < lo) lo = value;
+          if (value > hi) hi = value;
+          if (Math.abs(value) > biggest) biggest = Math.abs(value);
+        });
+        scales[dim] = { span: hi > lo ? hi - lo : 0, magnitude: biggest };
+      });
+      return scales;
+    },
     /** One row a dimension, with its values already read and formatted. */
     rows() {
       // A rating given in this dialog moves the weighted dimensions it feeds.
@@ -564,16 +586,20 @@ export default {
         ? "Back to the order they were picked in"
         : "Sort by " + label + ", largest first";
     },
-    /** A value as the gallery's details list shows it; custom and weighted values are rounded. */
+    /**
+     * A value as the gallery's cards write it: a number to the precision its
+     * spread over the whole collection calls for, large ones compacted, the
+     * same way in every column of a row (see valueScales); text as it is.
+     */
     formatParam(item, param) {
       let value = item ? item[param] : undefined;
       let bounds = this.fixedBoundsOf(param);
-      if (bounds) {
-        return typeof value === "number" && isFinite(value)
-          ? formatValue(value, bounds[1] - bounds[0])
-          : "—";
+      if (typeof value === "number" && isFinite(value)) {
+        let scale = this.valueScales[param] || {};
+        let span = bounds ? bounds[1] - bounds[0] : scale.span || 0;
+        return formatValue(value, span, scale.magnitude);
       }
-      return value;
+      return bounds ? "—" : value;
     },
     viewsOf(col) {
       return col.row.images || [];
