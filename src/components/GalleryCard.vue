@@ -509,19 +509,25 @@ export default {
 /* Dimmed, but still easy to tell apart: the options not selected stay
    readable at a glance, a step behind the ones that are. */
 .thumbnail_card .card-image.transparent {
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 /* Lite: unselected options stay in the pool, dimmed. Only the picture fades,
    so the card's select button stays readable. */
 .card-image.gallery-dimmed > .card-image__img {
-  opacity: 0.6;
+  opacity: 0.5;
+}
+
+/* Under the pointer, a dimmed picture shows in full, to be looked at. */
+.thumbnail_card .card-image.transparent:hover,
+.card-image.gallery-dimmed:hover > .card-image__img {
+  opacity: 1;
 }
 
 /* Its coloured edge softened too, further than the picture, so a row of
    dimmed cards doesn't read as a row of outlines. */
 .thumbnail_card--dimmed {
-  border-color: color-mix(in srgb, var(--card-edge, transparent) 45%, transparent);
+  border-color: color-mix(in srgb, var(--card-edge, transparent) 25%, transparent);
 }
 
 /*
