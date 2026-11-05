@@ -518,9 +518,10 @@ export default {
   opacity: 0.6;
 }
 
-/* Its coloured edge softened too, less than the picture. */
+/* Its coloured edge softened too, further than the picture, so a row of
+   dimmed cards doesn't read as a row of outlines. */
 .thumbnail_card--dimmed {
-  border-color: color-mix(in srgb, var(--card-edge, transparent) 85%, transparent);
+  border-color: color-mix(in srgb, var(--card-edge, transparent) 45%, transparent);
 }
 
 /*
