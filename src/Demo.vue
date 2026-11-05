@@ -511,7 +511,7 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="isOpeningDialogOn" max-width="840px">
+    <v-dialog v-model="isOpeningDialogOn" max-width="1040px">
       <v-card class="ds-welcome">
         <v-card-title class="text-h5">
           Welcome to DesignSense
@@ -559,13 +559,6 @@
                   >
                 </button>
               </div>
-              <a
-                class="ds-welcome-video-out"
-                :href="videoLinks.intro"
-                target="_blank"
-                rel="noopener"
-                >Open on YouTube ↗</a
-              >
             </div>
           </div>
           <!-- Two cards, because there are two questions a first visit asks:
@@ -1164,8 +1157,8 @@ body {
   line-height: 1.6;
 }
 .ds-welcome-video {
-  flex: 0 1 300px;
-  min-width: 240px;
+  flex: 0 1 400px;
+  min-width: 260px;
 }
 .ds-welcome-video-frame {
   position: relative;
@@ -1225,16 +1218,6 @@ body {
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.01em;
-}
-.ds-welcome-video-out {
-  display: inline-block;
-  margin-top: 6px;
-  font-size: 12px;
-  color: #546e7a !important;
-  text-decoration: none;
-}
-.ds-welcome-video-out:hover {
-  text-decoration: underline;
 }
 .ds-welcome-choices {
   display: flex;
@@ -1969,7 +1952,7 @@ export default {
       appVersion: APP_VERSION,
       guideSections: GUIDE_SECTIONS,
       guideLinks: { home: guideHref(), link: guideHref(GUIDE_SECTIONS.link) },
-      videoLinks: { intro: videoHref("intro"), tutorial: videoHref("tutorial") },
+      videoLinks: { tutorial: videoHref("tutorial") },
       // The welcome's intro player, put in once its picture is clicked.
       introEmbed: videoEmbed("intro"),
       introPlaying: false,
