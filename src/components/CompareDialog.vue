@@ -41,7 +41,16 @@
           >
         </div>
 
-        <div v-else class="cmp-grid" :style="gridStyle">
+        <!-- Two grids with the same columns: the options' names, pictures,
+             ratings and notes stay at the top while their values scroll
+             under them; sideways the two move together (onRowsScroll). -->
+        <div
+          v-if="columns.length > 0"
+          ref="top"
+          class="cmp-top"
+          @wheel="onTopWheel"
+        >
+          <div class="cmp-grid" :style="gridStyle">
           <!-- Names, and the two controls that change what the comparison holds -->
           <div class="cmp-label cmp-head cmp-sort-hint">
             <v-icon x-small>mdi-cursor-default-click-outline</v-icon>
@@ -129,7 +138,16 @@
           >
             <OptionNote :item="col.row" show-text />
           </div>
+          </div>
+        </div>
 
+        <div
+          v-if="columns.length > 0"
+          ref="rows"
+          class="cmp-rows"
+          @scroll="onRowsScroll"
+        >
+          <div class="cmp-grid" :style="gridStyle">
           <template v-for="block in blocks">
             <div :key="block.key + '-block'" class="cmp-block">
               <button
@@ -196,6 +214,7 @@
               </div>
             </template>
           </template>
+          </div>
         </div>
       </v-card-text>
     </v-card>
@@ -229,6 +248,7 @@ import {
   rowSummary,
 } from "@/store/compare.js";
 import { RATING_DIMENSION } from "@/ratings.js";
+import { orderDimensions } from "@/dimensionOrder.js";
 
 /** Dimensions the user built here, rather than columns the file carried. */
 function isDerived(kind) {
@@ -278,7 +298,7 @@ export default {
       allDimensions: (state) => state.allDimensions,
       dimensionValuesVersion: (state) => state.dimensionValuesVersion,
     }),
-    ...mapGetters(["rawDataMap", "isInCart", "fixedBoundsOf"]),
+    ...mapGetters(["rawDataMap", "isInCart", "fixedBoundsOf", "goalDims"]),
     open: {
       get() {
         return this.dialogState.open;
@@ -396,40 +416,59 @@ export default {
         });
     },
     /**
-     * Outputs first, since they are what an option is judged on, then the
-     * inputs that produced them. Anything unprefixed falls to "Other", so a
-     * file without in:/out: columns still compares.
+     * In the order the gallery's values are (dimensionOrder.js): the goals
+     * an option is judged by, then the other outputs, then the inputs that
+     * produced them; numbers before categories in each. Anything unprefixed
+     * falls to "Other", so a file without in:/out: columns still compares.
      */
     blocks() {
+      let goals = this.goalDims;
+      let numeric = this.$store.state.numericDimensions;
+      let ordered = (list) => {
+        let byDim = {};
+        list.forEach((row) => (byDim[row.dim] = row));
+        return orderDimensions(
+          list.map((row) => row.dim),
+          { kindOf: columnKind, isNumeric: (dim) => numeric.includes(dim) }
+        ).map((dim) => byDim[dim]);
+      };
       let rows = this.rows;
+      let rest = rows.filter((row) => !goals.includes(row.dim));
       let blocks = [
         {
-          key: "derived",
-          title: "Custom & weighted",
-          // The dimensions the user built are the ones they came to weigh up,
-          // so they sit first; folded away until asked for, since most
-          // comparisons are about the file's own columns.
-          rows: rows.filter((row) => isDerived(row.kind)),
-          collapsible: true,
+          key: "goals",
+          title: "Goals",
+          rows: ordered(rows.filter((row) => goals.includes(row.dim))),
+          collapsible: false,
         },
         {
           key: "outputs",
           title: "Outputs",
-          rows: rows.filter((row) => row.kind === OUTPUT),
+          rows: ordered(rest.filter((row) => row.kind === OUTPUT)),
           collapsible: false,
         },
         {
           key: "inputs",
           title: "Inputs",
-          rows: rows.filter((row) => row.kind === INPUT),
+          rows: ordered(rest.filter((row) => row.kind === INPUT)),
           collapsible: false,
+        },
+        {
+          key: "derived",
+          title: "Custom & weighted",
+          // Folded away until asked for, since most comparisons are about
+          // the file's own columns; one with a goal is up with the goals.
+          rows: ordered(rest.filter((row) => isDerived(row.kind))),
+          collapsible: true,
         },
         {
           key: "other",
           title: "Other",
-          rows: rows.filter(
-            (row) =>
-              row.kind !== OUTPUT && row.kind !== INPUT && !isDerived(row.kind)
+          rows: ordered(
+            rest.filter(
+              (row) =>
+                row.kind !== OUTPUT && row.kind !== INPUT && !isDerived(row.kind)
+            )
           ),
           // Collapsed only when it is the sideshow. A file without "in:" and
           // "out:" columns has nothing else, so folding it away would leave
@@ -462,6 +501,25 @@ export default {
     },
   },
   methods: {
+    /** The heads follow the values sideways. */
+    onRowsScroll() {
+      let top = this.$refs.top;
+      let rows = this.$refs.rows;
+      if (top && rows && top.scrollLeft !== rows.scrollLeft) {
+        top.scrollLeft = rows.scrollLeft;
+      }
+    },
+    /** Scrolling over the heads scrolls the values, which they follow. */
+    onTopWheel(event) {
+      let rows = this.$refs.rows;
+      if (!rows) return;
+      let dx = event.deltaX || (event.shiftKey ? event.deltaY : 0);
+      let dy = event.shiftKey ? 0 : event.deltaY;
+      if (!dx && !dy) return;
+      event.preventDefault();
+      rows.scrollLeft += dx;
+      rows.scrollTop += dy;
+    },
     onDialogKey(e) {
       // The dialog handles Escape itself; keep keys from workspace shortcuts.
       e.stopPropagation();
@@ -568,12 +626,28 @@ export default {
   font-size: 12px;
   color: #546e7a;
 }
-/* The columns scroll sideways in here, never the workspace behind. */
+/* The heads on top, the values scrolling under them; never the
+   workspace behind. */
 .cmp-body {
+  display: flex;
+  flex-direction: column;
   max-height: 78vh;
   padding: 0 !important;
-  overflow-x: auto;
-  overflow-y: auto;
+  /* Over the scrollable dialog's own scrolling of its text. */
+  overflow: hidden !important;
+}
+.cmp-top {
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-bottom: 1px solid #cfd8dc;
+  box-shadow: 0 2px 4px -2px rgba(38, 50, 56, 0.18);
+  position: relative;
+  z-index: 3;
+}
+.cmp-rows {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 .cmp-empty {
   padding: 48px 16px;
