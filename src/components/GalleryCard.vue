@@ -361,7 +361,7 @@ export default {
   box-sizing: border-box;
   aspect-ratio: var(--thumb-aspect, 4 / 3);
   overflow: hidden;
-  background-color: #eceff1;
+  background-color: #eef1f4;
   /* Not inherit: that is now the outer radius, with the edge outside it. */
   border-radius: 4px;
   cursor: pointer;
@@ -380,6 +380,36 @@ export default {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+/* Until its picture arrives, the frame shimmers: a soft light passing
+   across it says something is on its way, where a still grey box looked
+   empty. Still, for anyone who asks for less motion. */
+.thumbnail_card--loading .card-image {
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  background-size: 250% 100%;
+  animation: card-shimmer 1.4s ease-in-out infinite;
+}
+.thumbnail_card--loading .card-image__img {
+  opacity: 0;
+}
+@keyframes card-shimmer {
+  from {
+    background-position: 125% 0;
+  }
+  to {
+    background-position: -25% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .thumbnail_card--loading .card-image {
+    animation: none;
+  }
 }
 
 .card-icon {
