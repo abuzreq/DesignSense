@@ -20,6 +20,8 @@ export const GUIDE_SECTIONS = {
   narrow: "narrow",
   decide: "decide",
   share: "share",
+  // What Expert mode changes, on a page of its own.
+  expert: "expert-mode",
 };
 
 // The guide as a page of its own, beside the app's.
