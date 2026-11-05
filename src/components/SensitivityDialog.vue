@@ -24,14 +24,29 @@
         <!-- Each dimension on its own, before any pair of them: where its
              values sit and how far they spread. Two rows of tiles, and the
              rest on request, so the sensitivity reading stays in view. -->
+        <!-- Four sections, each a card that folds away: the dimensions start
+             folded, as the overview to come back to, so the readings below
+             are in view at once. -->
         <section class="ax-section">
           <div class="ax-head">
-            <span class="ax-head-title">Dimensions</span>
-            <span class="ax-head-meta"
-              >Average, standard deviation and how the values spread; the band
-              is one standard deviation either side of the average.</span
+            <button
+              type="button"
+              class="ax-toggle"
+              :aria-expanded="String(sectionOpen.dims)"
+              @click="toggleSection('dims')"
             >
+              <v-icon small class="ax-chevron">{{
+                sectionOpen.dims ? "mdi-chevron-down" : "mdi-chevron-right"
+              }}</v-icon>
+              <span class="ax-head-title">Dimensions</span>
+            </button>
+            <span class="ax-head-meta">{{
+              sectionOpen.dims
+                ? "Average, standard deviation and how the values spread; the band is one standard deviation either side of the average."
+                : dimsSummary
+            }}</span>
           </div>
+          <div v-show="sectionOpen.dims">
           <div v-if="summary.length === 0" class="sx-guide-line">
             This collection has no numeric dimensions.
           </div>
@@ -133,6 +148,7 @@
                 : "Show all " + summary.length + " dimensions"
             }}
           </button>
+          </div>
         </section>
 
         <!-- Values far outside the rest, which a front or a correlation can
@@ -140,7 +156,17 @@
              or excluded from the exploration. -->
         <section class="ax-section">
           <div class="ax-head">
-            <span class="ax-head-title">Outliers</span>
+            <button
+              type="button"
+              class="ax-toggle"
+              :aria-expanded="String(sectionOpen.outliers)"
+              @click="toggleSection('outliers')"
+            >
+              <v-icon small class="ax-chevron">{{
+                sectionOpen.outliers ? "mdi-chevron-down" : "mdi-chevron-right"
+              }}</v-icon>
+              <span class="ax-head-title">Outliers</span>
+            </button>
             <v-tooltip bottom max-width="380">
               <template v-slot:activator="{ on }">
                 <v-icon v-on="on" small class="sx-info"
@@ -166,6 +192,46 @@
               </span>
             </v-tooltip>
             <span class="ax-head-meta">{{ outlierSummary }}</span>
+          </div>
+          <div v-show="sectionOpen.outliers">
+          <!-- What to do with them, in one row beside the switch that leaves
+               them out, then which dimensions they are on. -->
+          <div class="ax-toolbar">
+            <template v-if="outliers.ids.size > 0">
+              <v-switch
+                v-model="leaveOutOutliers"
+                inset
+                dense
+                hide-details
+                label="Leave out of the analysis"
+                class="ax-switch"
+              />
+              <span class="ax-toolbar-rule" />
+              <v-btn
+                small
+                outlined
+                color="primary"
+                :disabled="outliersInData.length === 0"
+                @click="selectOutliers"
+                >Select them</v-btn
+              >
+              <v-tooltip bottom max-width="320">
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    v-on="on"
+                    small
+                    outlined
+                    :disabled="outliersInData.length === 0"
+                    @click="excludeOutliers"
+                    >Exclude from exploration</v-btn
+                  >
+                </template>
+                <span
+                  >Takes them out of every panel, as Exclude does with a
+                  selection. Step back, in the toolbar, brings them back.</span
+                >
+              </v-tooltip>
+            </template>
             <v-spacer />
             <v-checkbox
               v-if="hasPrefixes"
@@ -202,42 +268,6 @@
               <p v-else class="ax-quiet">
                 No option stands far outside the rest.
               </p>
-              <div v-if="outliers.ids.size > 0" class="ax-actions">
-                <v-switch
-                  v-model="leaveOutOutliers"
-                  inset
-                  dense
-                  hide-details
-                  label="Leave out of the analysis"
-                  class="ax-switch"
-                />
-                <v-spacer />
-                <v-btn
-                  small
-                  text
-                  color="primary"
-                  :disabled="outliersInData.length === 0"
-                  @click="selectOutliers"
-                  >Select them</v-btn
-                >
-                <v-tooltip bottom max-width="320">
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      v-on="on"
-                      small
-                      text
-                      :disabled="outliersInData.length === 0"
-                      @click="excludeOutliers"
-                      >Exclude from exploration</v-btn
-                    >
-                  </template>
-                  <span
-                    >Takes them out of every panel, as Exclude does with a
-                    selection. Step back, in the toolbar, brings them
-                    back.</span
-                  >
-                </v-tooltip>
-              </div>
               <p v-if="outliersExcluded > 0" class="ax-note">
                 {{ optionCount(outliersExcluded) }}
                 {{ outliersExcluded === 1 ? "is" : "are" }} out of the
@@ -268,6 +298,7 @@
               </div>
             </div>
           </div>
+          </div>
         </section>
 
         <!-- The options no other beats on every goal, and those just behind
@@ -275,35 +306,60 @@
              Dimensions. -->
         <section class="ax-section">
           <div class="ax-head">
-            <span class="ax-head-title">Best trade-offs</span>
+            <button
+              type="button"
+              class="ax-toggle"
+              :aria-expanded="String(sectionOpen.tradeoffs)"
+              @click="toggleSection('tradeoffs')"
+            >
+              <v-icon small class="ax-chevron">{{
+                sectionOpen.tradeoffs ? "mdi-chevron-down" : "mdi-chevron-right"
+              }}</v-icon>
+              <span class="ax-head-title">Best trade-offs</span>
+            </button>
             <span v-if="tradeOffMeta" class="ax-head-meta">{{
               tradeOffMeta
             }}</span>
-            <v-btn small text color="primary" class="ax-link" @click="setGoals"
-              >Set goals</v-btn
-            >
-            <v-spacer />
-            <v-btn-toggle
-              v-if="hasTradeOffs"
-              v-model="keepFronts"
-              mandatory
-              dense
-              class="ax-measures"
-            >
-              <v-tooltip
-                v-for="choice in frontChoices"
-                :key="choice.value"
-                bottom
-                max-width="320"
+          </div>
+          <div v-show="sectionOpen.tradeoffs">
+          <!-- How many fronts, and keeping them, together; the goals they
+               are over at the far end. -->
+          <div class="ax-toolbar">
+            <template v-if="hasTradeOffs">
+              <span class="ax-toolbar-label">Keep</span>
+              <v-btn-toggle
+                v-model="keepFronts"
+                mandatory
+                dense
+                class="ax-measures"
               >
-                <template v-slot:activator="{ on }">
-                  <v-btn v-on="on" small :value="choice.value">{{
-                    choice.text
-                  }}</v-btn>
-                </template>
-                <span>{{ choice.note }}</span>
-              </v-tooltip>
-            </v-btn-toggle>
+                <v-tooltip
+                  v-for="choice in frontChoices"
+                  :key="choice.value"
+                  bottom
+                  max-width="320"
+                >
+                  <template v-slot:activator="{ on }">
+                    <v-btn v-on="on" small :value="choice.value">{{
+                      choice.text
+                    }}</v-btn>
+                  </template>
+                  <span>{{ choice.note }}</span>
+                </v-tooltip>
+              </v-btn-toggle>
+              <v-btn
+                small
+                depressed
+                color="primary"
+                :disabled="best.kept.length === 0"
+                @click="keepTradeOffs"
+                >Keep the best trade-offs</v-btn
+              >
+            </template>
+            <v-spacer />
+            <v-btn small text color="primary" class="ax-link" @click="setGoals">
+              <v-icon left small>mdi-scale-balance</v-icon>Set goals</v-btn
+            >
           </div>
           <div v-if="!hasTradeOffs" class="sx-guide-line">
             Set goals on two or more outputs under Dimensions to keep the
@@ -313,16 +369,6 @@
             <div class="ax-split-main">
               <p class="ax-lead">{{ tradeOffPreview }}</p>
               <CaveatChips :caveats="tradeOffCaveats" />
-              <div class="ax-actions">
-                <v-btn
-                  small
-                  depressed
-                  color="primary"
-                  :disabled="best.kept.length === 0"
-                  @click="keepTradeOffs"
-                  >Keep the best trade-offs</v-btn
-                >
-              </div>
             </div>
             <div class="ax-split-plot">
               <MiniScatter
@@ -363,11 +409,22 @@
               </p>
             </div>
           </div>
+          </div>
         </section>
 
         <section class="ax-section">
           <div class="ax-head">
-            <span class="ax-head-title">Sensitivity</span>
+            <button
+              type="button"
+              class="ax-toggle"
+              :aria-expanded="String(sectionOpen.sensitivity)"
+              @click="toggleSection('sensitivity')"
+            >
+              <v-icon small class="ax-chevron">{{
+                sectionOpen.sensitivity ? "mdi-chevron-down" : "mdi-chevron-right"
+              }}</v-icon>
+              <span class="ax-head-title">Sensitivity</span>
+            </button>
             <v-tooltip bottom max-width="420">
               <template v-slot:activator="{ on }">
                 <v-icon v-on="on" small class="sx-info"
@@ -411,7 +468,12 @@
               </span>
             </v-tooltip>
             <span class="ax-head-meta">Which inputs move which outputs</span>
-            <v-spacer />
+          </div>
+          <div v-show="sectionOpen.sensitivity">
+          <!-- One row: the measure, then what it is read over -- counts, not
+               a chip per dimension, which ran across the dialog -- then the
+               download. -->
+          <div class="ax-toolbar">
             <!-- The three measures, each explained in its tooltip. -->
             <v-btn-toggle
               v-model="measure"
@@ -433,6 +495,34 @@
                 <span>{{ choice.note }}</span>
               </v-tooltip>
             </v-btn-toggle>
+            <span class="ax-toolbar-rule" />
+            <span class="ax-toolbar-label">Inputs</span>
+            <DimensionPicker
+              v-model="inputs"
+              :items="dimensionChoices"
+              multiple
+              count-label="inputs"
+              placeholder="None"
+              dense
+              outlined
+              hide-details
+              aria-label="Inputs"
+              class="sx-select sx-picker"
+            />
+            <span class="ax-toolbar-label">Outputs</span>
+            <DimensionPicker
+              v-model="outputs"
+              :items="dimensionChoices"
+              multiple
+              count-label="outputs"
+              placeholder="None"
+              dense
+              outlined
+              hide-details
+              aria-label="Outputs"
+              class="sx-select sx-picker"
+            />
+            <v-spacer />
             <v-tooltip bottom>
               <template v-slot:activator="{ on }">
                 <v-btn
@@ -450,33 +540,6 @@
               <span>Download the sensitivity numbers as CSV</span>
             </v-tooltip>
           </div>
-
-        <div class="sx-pickers">
-          <DimensionPicker
-            v-model="inputs"
-            :items="dimensionChoices"
-            label="Inputs"
-            multiple
-            small-chips
-            deletable-chips
-            dense
-            outlined
-            hide-details
-            class="sx-picker"
-          />
-          <DimensionPicker
-            v-model="outputs"
-            :items="dimensionChoices"
-            label="Outputs"
-            multiple
-            small-chips
-            deletable-chips
-            dense
-            outlined
-            hide-details
-            class="sx-picker"
-          />
-        </div>
 
         <!-- What a reading rests on and what to doubt in it. -->
         <CaveatChips class="sx-caveats" :caveats="caveats" />
@@ -551,6 +614,12 @@
                     </template>
                   </div>
                 </div>
+                <!-- What the colours mean, under the grid they colour. -->
+                <div class="sx-legend" aria-hidden="true">
+                  <span>{{ legendEnds[0] }}</span>
+                  <span class="sx-legend-ramp" :style="{ background: legendRamp }" />
+                  <span>{{ legendEnds[1] }}</span>
+                </div>
               </div>
 
               <!-- One output at a time, its inputs sorted by magnitude. -->
@@ -598,6 +667,7 @@
             </div>
           </template>
         </template>
+        </div>
         </section>
       </v-card-text>
     </v-card>
@@ -662,6 +732,27 @@ const COUNT_LABEL_LEVELS = 8;
 const TICK_LEVELS = 6;
 // A far-out chip's tooltip names this many options on each side, then counts.
 const NAMED_OUTLIERS = 10;
+
+// Which of the four sections are open, kept between visits. The dimensions
+// start folded: an overview to open when wanted, while the readings below it
+// are what the dialog is opened for.
+const SECTIONS_KEY = "designsense-analysis-sections-v1";
+const DEFAULT_SECTIONS = { dims: false, outliers: true, tradeoffs: true, sensitivity: true };
+
+function loadSections() {
+  let open = Object.assign({}, DEFAULT_SECTIONS);
+  try {
+    let saved = JSON.parse(localStorage.getItem(SECTIONS_KEY) || "null");
+    if (saved && typeof saved === "object") {
+      Object.keys(open).forEach((key) => {
+        if (typeof saved[key] === "boolean") open[key] = saved[key];
+      });
+    }
+  } catch (e) {
+    /* the defaults */
+  }
+  return open;
+}
 
 // How many fronts "Keep the best trade-offs" keeps (see paretoFronts).
 const FRONTS = [
@@ -766,6 +857,8 @@ export default {
       tradeX: null,
       tradeY: null,
       frontChoices: FRONTS,
+      // Which sections are open, kept between visits (see SECTIONS_KEY).
+      sectionOpen: loadSections(),
     };
   },
   created() {
@@ -1131,6 +1224,30 @@ export default {
           return Math.abs(b.value) - Math.abs(a.value);
         });
     },
+    /** The dimensions, folded: how many, and how many have far-out values. */
+    dimsSummary() {
+      let count = this.summary.length;
+      if (count === 0) return "No numeric dimensions";
+      let far = Object.keys(this.outliers.byDim || {}).length;
+      return (
+        count +
+        (count === 1 ? " dimension" : " dimensions") +
+        (far > 0 ? " · " + far + " with far-out values" : "") +
+        " · open to see how each one's values spread"
+      );
+    },
+    /** The matrix's colours, low to high, as one gradient. */
+    legendRamp() {
+      let stops = [0, 0.25, 0.5, 0.75, 1].map(
+        (t) => interpolateRdBu(t) + " " + t * 100 + "%"
+      );
+      return "linear-gradient(to right, " + stops.join(", ") + ")";
+    },
+    legendEnds() {
+      return this.measure === "beta"
+        ? ["−1 lowers the output", "+1 raises it"]
+        : ["−1 move opposite", "+1 move together"];
+    },
     matrixStyle() {
       let columns = this.result ? this.result.outputs.length : 0;
       return {
@@ -1408,6 +1525,18 @@ export default {
         )
       );
       this.$nextTick(this.measureDims);
+    },
+    toggleSection(key) {
+      this.sectionOpen = Object.assign({}, this.sectionOpen, {
+        [key]: !this.sectionOpen[key],
+      });
+      try {
+        localStorage.setItem(SECTIONS_KEY, JSON.stringify(this.sectionOpen));
+      } catch (e) {
+        /* kept until the page is reloaded */
+      }
+      // The tiles are measured only while they show.
+      if (key === "dims" && this.sectionOpen.dims) this.$nextTick(this.measureDims);
     },
     /** Whether the tiles run past the two rows the collapsed grid shows. */
     measureDims() {
@@ -1948,21 +2077,18 @@ export default {
   border-color: #d5dce4;
 }
 
+/* A grey ground, so each section reads as a card of its own on it. */
 .sx-body {
   flex: 1 1 auto;
-  padding: 12px 16px 16px !important;
+  padding: 14px 16px 18px !important;
+  background: #f3f5f7;
   color: #263238;
   font-size: 13px;
 }
-.sx-pickers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.sx-picker {
-  flex: 1 1 320px;
-  min-width: 240px;
+/* Compact: a count, not a chip per dimension. */
+.sx-picker.sx-select {
+  flex: 0 1 150px;
+  max-width: 170px;
 }
 
 .sx-guide {
@@ -1994,17 +2120,69 @@ export default {
 }
 
 /* --- The sections ------------------------------------------------------ */
+.ax-section {
+  padding: 12px 16px 14px;
+  border: 1px solid #e0e6eb;
+  border-radius: 10px;
+  background: #fff;
+}
 .ax-section + .ax-section {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #e3e8ee;
+  margin-top: 14px;
 }
 .ax-head {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 4px 8px;
-  margin-bottom: 8px;
+}
+/* An open section's head has its content below it. */
+.ax-head + * {
+  margin-top: 10px;
+}
+.ax-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: -4px;
+  padding: 2px 4px 2px 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+.ax-toggle:hover .ax-head-title {
+  color: #1565c0;
+}
+.ax-toggle:focus-visible {
+  outline: 2px solid var(--ds-focus, #1565c0);
+}
+.ax-chevron.v-icon {
+  color: #78909c;
+}
+/* A section's controls in one row under its head. */
+.ax-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-bottom: 12px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #f7f9fa;
+}
+.ax-toolbar .v-btn.v-btn:not(.v-btn--icon) {
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ax-toolbar-label {
+  font-size: 12px;
+  color: #546e7a;
+}
+.ax-toolbar-rule {
+  align-self: stretch;
+  width: 1px;
+  margin: 2px 2px;
+  background: #dfe5ea;
 }
 .ax-head-title {
   font-size: 15px;
@@ -2380,10 +2558,34 @@ export default {
   text-decoration: underline;
 }
 
-/* The matrix scrolls sideways inside the dialog, never the page. */
+/* The matrix scrolls inside the dialog, never the page, its heads staying
+   put both ways, so a long list of inputs still reads against its outputs. */
 .sx-scroll {
-  overflow-x: auto;
-  padding-bottom: 6px;
+  max-height: 56vh;
+  overflow: auto;
+  padding-bottom: 2px;
+}
+.sx-scroll .sx-colhead,
+.sx-scroll .sx-corner {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.sx-scroll .sx-corner {
+  z-index: 3;
+}
+.sx-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #78909c;
+}
+.sx-legend-ramp {
+  flex: 0 1 200px;
+  height: 8px;
+  border-radius: 4px;
 }
 .sx-matrix {
   display: grid;
@@ -2432,7 +2634,7 @@ export default {
   align-items: center;
   gap: 6px;
   padding: 0 10px;
-  min-height: 34px;
+  min-height: 30px;
   border-right: 1px solid #e3e8ee;
   border-bottom: 1px solid #e3e8ee;
   font-size: 13px;
@@ -2453,7 +2655,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 34px;
+  min-height: 30px;
   border-right: 1px solid #e3e8ee;
   border-bottom: 1px solid #e3e8ee;
   font-size: 13px;
