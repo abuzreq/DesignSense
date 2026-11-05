@@ -1905,17 +1905,6 @@ export default {
     // A click inspects; clicking the inspected option again stops inspecting.
     inspect(item) {
       this.inspectedFromHere = true;
-      // With a model on screen the panel stays on its option while the pointer
-      // wanders, so the store already counts the wandered-over option as the
-      // hovered one: clicking it would read as "clicked the inspected option
-      // again" and stop inspecting. A click here means "show me this one".
-      let pinned = this.showing3D && this.modelLoaded && this.inspectedItem;
-      if (pinned && item._id !== this.inspectedItem._id) {
-        this.modelLoaded = false;
-        this.inspectedItem = item;
-        this.$store.commit("hover", { hovered: item });
-        return;
-      }
       this.$store.dispatch("inspectByClick", { item: item });
     },
     unhover(item) {
@@ -2201,10 +2190,11 @@ export default {
     },
     hovered: function(newValue, oldValue) {
       // The hovered card outlines itself (see GalleryCard).
-      // A loaded model stays put: swapping it out on every option the pointer
-      // crosses would throw away a scene the user waited for. Clicking still
-      // moves inspection.
-      if (newValue && !(this.showing3D && this.modelLoaded)) {
+      // The inspector always shows the option inspected, wherever it was
+      // picked. With the 3D view on, that unloads the model on screen and
+      // shows the new option's "Load 3D model" prompt (see ModelViewer's
+      // model.url watcher), so another model loads only when asked for.
+      if (newValue) {
         this.inspectedItem = newValue;
       }
       // A hover that just leaves an option (e.g. while Space-hovering) keeps
