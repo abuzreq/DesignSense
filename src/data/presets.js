@@ -1,5 +1,7 @@
 /*
- * The sample datasets offered in the load dialog. Also how feedback tells a
+ * The sample datasets offered in the load dialog, in the order it lists
+ * them: the one that travels with the app, then the richest studies first.
+ * Also how feedback tells a
  * sample, whose link is public, from a user's own data, whose link is never
  * reported (see feedback.js). `id` is what a link names a sample by
  * (see appLinks.js), so it must not change once links to it are out.
@@ -28,28 +30,6 @@ export const PRESETS = [
     },
   },
   {
-    id: "box",
-    name: "Simple Box",
-    url:
-      "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv",
-    info: "A simple red box (from https://tt-acm.github.io/DesignExplorer/)",
-  },
-  {
-    id: "facade",
-    name: "Façade Design",
-    url:
-      "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/facade/data.csv",
-    info: "Façade panel variations",
-  },
-  {
-    id: "aia",
-    name: "AIA Building",
-    url:
-      "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/AIA%20building.csv",
-    info:
-      "The AIA building dataset (from https://tt-acm.github.io/DesignExplorer/)",
-  },
-  {
     id: "windows",
     name: "Windows Exploration",
     url:
@@ -58,12 +38,12 @@ export const PRESETS = [
       "Exploring impact of windows on lighting/heating (from https://tt-acm.github.io/DesignExplorer/)",
   },
   {
-    id: "massing",
-    name: "Massing Study",
+    id: "aia",
+    name: "AIA Building",
     url:
-      "https://raw.githubusercontent.com/Zohrehhasanpur/GalleryDesignDataset/main/data.csv",
+      "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/AIA%20building.csv",
     info:
-      "A generative design dataset exploring different massing for an arts gallery project.",
+      "The AIA building dataset (from https://tt-acm.github.io/DesignExplorer/)",
   },
   {
     id: "rezoning",
@@ -78,6 +58,28 @@ export const PRESETS = [
     url:
       "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/solar/data.csv",
     info: "Solar analysis for a tower placement",
+  },
+  {
+    id: "massing",
+    name: "Massing Study",
+    url:
+      "https://raw.githubusercontent.com/Zohrehhasanpur/GalleryDesignDataset/main/data.csv",
+    info:
+      "A generative design dataset exploring different massing for an arts gallery project.",
+  },
+  {
+    id: "facade",
+    name: "Façade Design",
+    url:
+      "https://raw.githubusercontent.com/abuzreq/ds_datasets/refs/heads/main/facade/data.csv",
+    info: "Façade panel variations",
+  },
+  {
+    id: "box",
+    name: "Simple Box",
+    url:
+      "https://raw.githubusercontent.com/tt-acm/DesignExplorer/gh-pages/design_explorer_data/LittleRedBox.csv",
+    info: "A simple red box (from https://tt-acm.github.io/DesignExplorer/)",
   },
   {
     id: "malaeeb",
