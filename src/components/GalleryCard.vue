@@ -102,7 +102,7 @@
         type="button"
         class="card-details-toggle"
         :aria-expanded="String(valuesOpen)"
-        @click="toggleValues"
+        @click="$emit('toggle-values', item)"
       >
         <span>Values</span>
         <svg class="card-chevron" viewBox="0 0 24 24" aria-hidden="true">
@@ -190,6 +190,9 @@ export default {
     detailGoals: { type: Object, default: () => ({}) },
     // The dimension the colours follow; its row shows the card's colour.
     colorColumn: { type: String, default: "" },
+    // Whether the values show: the gallery's choice, made for a whole row
+    // of cards at once (see its openRows).
+    valuesOpen: { type: Boolean, default: false },
   },
   data() {
     return {
@@ -197,8 +200,6 @@ export default {
       // The source the image last finished loading. A card handed another
       // option keeps it, so a picture the two share counts as loaded at once.
       loadedSrc: null,
-      // Whether this card's values are showing.
-      valuesOpen: false,
       isHovered: false,
       inCart: false,
     };
@@ -265,7 +266,10 @@ export default {
     // Cards are reused for other items as the gallery scrolls and filters.
     "item._id": function() {
       this.failed = false;
-      this.valuesOpen = false;
+    },
+    // The gallery scrolls a newly opened list to where the others are.
+    valuesOpen: function(open) {
+      if (open) this.$nextTick(() => this.$emit("values-open", this.$refs.values));
     },
   },
   methods: {
@@ -276,13 +280,6 @@ export default {
     // The fallback is inline, so it can't fail in turn.
     onError() {
       this.failed = true;
-    },
-    toggleValues() {
-      this.valuesOpen = !this.valuesOpen;
-      // The gallery scrolls a newly opened list to where the others are.
-      if (this.valuesOpen) {
-        this.$nextTick(() => this.$emit("values-open", this.$refs.values));
-      }
     },
     label: displayName,
     goalMark(param) {

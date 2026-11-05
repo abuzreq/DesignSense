@@ -383,7 +383,9 @@
                         :detail-scales="detailScales"
                         :detail-goals="detailGoals"
                         :color-column="colorColumn"
+                        :values-open="openRows.has(Math.floor(card.index / columnsPerRow))"
                         @values-open="onValuesOpen"
+                        @toggle-values="onToggleValues"
                         v-bind="cardState(card.item)"
                         @hover="onCardHover"
                         @inspect="inspect"
@@ -856,6 +858,10 @@ export default {
       // The values under each picture, asked for (see columnWide).
       detailsOn: false,
       valueSizes: VALUE_SIZES,
+      // The options whose values were opened, id -> true. Rows are opened
+      // through them (see openRows), so they stay open whichever row their
+      // options move to. Replaced rather than changed, for reactivity.
+      openValueIds: {},
       // The thumbnails' width, measured: how wide a column is follows it.
       thumbsWidth: 0,
       // The shape of every thumbnail's frame: the pictures' own, from the
@@ -1147,6 +1153,26 @@ export default {
     },
     detailItems() {
       return dimensionItems(this.orderedDetailKeys);
+    },
+    /** Where each option is in the gallery's order. */
+    galleryIndexById() {
+      let map = new Map();
+      this.galleryItems.forEach((item, index) => map.set(String(item._id), index));
+      return map;
+    },
+    /**
+     * The rows whose values show: the ones holding an option opened there,
+     * at the current size and order. A size that changes which options share
+     * a row opens the rows those options are in now, every card in them.
+     */
+    openRows() {
+      let rows = new Set();
+      if (!this.detailsShown) return rows;
+      Object.keys(this.openValueIds).forEach((id) => {
+        let row = this.rowOf(id);
+        if (row !== null) rows.add(row);
+      });
+      return rows;
     },
     /**
      * The shape of the pictures' frames, and the size of the cards' values
@@ -1499,6 +1525,9 @@ export default {
       let seen = 0;
       for (let i = 0; i < nodes.length && seen < 24; i++) {
         if (nodes[i].querySelector(".thumbnail_card--loading")) continue;
+        // A row with its values open is taller than the rest; the estimate
+        // is for the closed ones.
+        if (nodes[i].querySelector(".card-values")) continue;
         seen += 1;
         h = Math.max(h, nodes[i].offsetHeight);
       }
@@ -1574,13 +1603,13 @@ export default {
       previous.forEach((key) => {
         if (!taken.has(key)) free.push(key);
       });
-      let cards = items.map((item) => {
+      let cards = items.map((item, i) => {
         let key = next.get(item._id);
         if (key === undefined) {
           key = free.length > 0 ? free.pop() : this.nextCardKey++;
           next.set(item._id, key);
         }
-        return { item: item, key: key };
+        return { item: item, key: key, index: w.start + i };
       });
       this.cardKeys = next;
       return cards;
@@ -1622,6 +1651,27 @@ export default {
       });
     },
     /** A card's values just opened: to where the others are. */
+    /**
+     * A card's values toggle: opens its row by remembering the option, or
+     * closes it by forgetting every remembered option the row holds.
+     */
+    onToggleValues(item) {
+      let row = this.rowOf(item._id);
+      if (row === null) return;
+      let next = Object.assign({}, this.openValueIds);
+      if (this.openRows.has(row)) {
+        Object.keys(next).forEach((id) => {
+          if (this.rowOf(id) === row) delete next[id];
+        });
+      } else {
+        next[item._id] = true;
+      }
+      this.openValueIds = next;
+    },
+    rowOf(id) {
+      let index = this.galleryIndexById.get(String(id));
+      return index === undefined ? null : Math.floor(index / this.columnsPerRow);
+    },
     onValuesOpen(node) {
       if (node && this.valuesScrollTop > 0) node.scrollTop = this.valuesScrollTop;
     },
@@ -2097,6 +2147,11 @@ export default {
     "$store.state.rawData": function() {
       this.aspectSamples = [];
       this.thumbAspect = "4 / 3";
+      this.openValueIds = {};
+    },
+    // Turned off, the values start closed when they are next turned on.
+    detailsOn: function(on) {
+      if (!on) this.openValueIds = {};
     },
     // Opening the details changes every row's height.
     detailsShown: function() {
