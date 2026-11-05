@@ -288,6 +288,15 @@ The next four sections cover the four tasks. You will rarely do them once and in
 - **Strengths and weaknesses.** **Compare** shows up to eight options side by side, and marks where they differ. See [Compare as you go](#compare-as-you-go).
 - **New criteria.** Looking at alternatives often brings up criteria that are not in the data. You might notice, for example, that the deep-set windows on the south face look right. Record an observation like this as a note on the option. [Decide](#decide) explains how to turn it into a dimension of its own.
 
+The example below shows how four common patterns look in the parallel coordinates and in the scatterplot, using the same options for both.
+
+<!-- live: patterns -->
+![Four patterns as the parallel coordinates and the scatterplot show them: rising together, a trade-off, no relationship, and outliers](img/patterns.svg)
+
+*Two dimensions, A and B. An axis without a goal has its low values at the bottom, as drawn here. An axis with a goal has its better values at the top. When both axes have goals, level lines therefore mean that the two goals improve together, and crossing lines mean that they conflict.*
+
+Expert mode adds two more aids: **clusters**, which group similar options and show one picture for each group, and **Analysis**, which reports the spread of every dimension, the outliers, and which inputs affect which outputs. See [Expert mode](#expert-mode).
+
 ### The overview, expanded
 
 The **expand** button on the Overview opens it over most of the window, with axes on every row and column. It is the same overview, so what you choose there shows beside the scatterplot too.
@@ -300,15 +309,6 @@ The **expand** button on the Overview opens it over most of the window, with axe
 ![The expanded overview of four dimensions, with a range brushed on two of them](img/guide-matrix.jpg)
 
 *Daylight, cooling, heating and lighting. A box on the daylight–cooling plot and a range on the heating histogram filter the options, and the plots and histograms show the selected ones in blue.*
-
-The example below shows how four common patterns look in the parallel coordinates and in the scatterplot, using the same options for both.
-
-<!-- live: patterns -->
-![Four patterns as the parallel coordinates and the scatterplot show them: rising together, a trade-off, no relationship, and outliers](img/patterns.svg)
-
-*Two dimensions, A and B. An axis without a goal has its low values at the bottom, as drawn here. An axis with a goal has its better values at the top. When both axes have goals, level lines therefore mean that the two goals improve together, and crossing lines mean that they conflict.*
-
-Expert mode adds two more aids: **clusters**, which group similar options and show one picture for each group, and **Analysis**, which reports the spread of every dimension, the outliers, and which inputs affect which outputs. See [Expert mode](#expert-mode).
 
 ## Narrow
 
