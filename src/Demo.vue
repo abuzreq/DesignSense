@@ -588,7 +588,7 @@
                 <!-- On YouTube, in a tab of its own: nothing of theirs loads
                      here until it is asked for. -->
                 <a :href="videoLinks.tutorial" target="_blank" rel="noopener"
-                  ><v-icon small>mdi-play-circle-outline</v-icon>Watch the full
+                  ><v-icon small>mdi-play-circle-outline</v-icon>Watch full
                   tutorial</a
                 >
                 <!-- A real link, so it can be opened in a tab of its own,
