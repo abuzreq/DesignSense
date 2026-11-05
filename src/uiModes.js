@@ -31,8 +31,6 @@ const FEATURES = {
   // Selecting/unselecting in the gallery narrows the results; unselected
   // options stay in the gallery, dimmed.
   galleryFiltering: [true, false],
-  // Adding or removing the current selection to or from an existing set.
-  setEditing: [false, true],
   // Pinning and the continuous-inspection toggle.
   inspectionControls: [false, true],
   // The clusters panel beside the scatterplot.

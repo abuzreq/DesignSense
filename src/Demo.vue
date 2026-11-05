@@ -1396,7 +1396,7 @@ const BAR_ROOMY = 1600;
 // exactly that much, 56 and 80, rather than by a fresh guess.
 const BAR_TIGHT = { lite: 1226, expert: 1360 };
 const EXPERT_ADDS =
-  "selection operations and the lasso, clusters, editing sets, inspection controls, the analysis panel, and layout editing";
+  "selection operations and the lasso, clusters, inspection controls, the analysis panel, and layout editing";
 import { applySelectionCursor } from "@/components/selectionCursors.js";
 
 import AssistantBar from "@/components/AssistantBar.vue";

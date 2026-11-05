@@ -546,9 +546,27 @@ function builder(
       /** The boxes brushed over exactly these dimensions, for charts that draw them. */
       boxesFor: (state) => (dims) => boxesFor(state.filters, dims),
       filterChips: (state) => state.filters.map(describeChip),
-      // Lite: the saved set whose filters are exactly the current ones.
-      matchingSetID: (state) => {
-        if (state.uiMode !== UI_MODES.LITE) return null;
+      /**
+       * The saved set the workspace is showing: in Lite, the one whose
+       * filters are exactly the current ones; in Expert, the one whose
+       * options are exactly the selection.
+       */
+      matchingSetID: (state, getters) => {
+        if (state.uiMode !== UI_MODES.LITE) {
+          void state.selectionVersion;
+          let selected = new Set(
+            Object.keys(getters.selectedInMarking(state.defaultMarkingID))
+          );
+          if (selected.size === 0) return null;
+          let id = state.setsIDs.find((setID) => {
+            let members = state.setsMap[setID] || [];
+            return (
+              members.length === selected.size &&
+              members.every((member) => selected.has(String(member)))
+            );
+          });
+          return id === undefined ? null : id;
+        }
         let id = state.setsIDs.find((setID) =>
           sameFilterList(setFilters(state, setID), state.filters)
         );
@@ -1925,18 +1943,6 @@ function builder(
             label: metadata ? metadata.name : "Saved set",
             ids: members,
           },
-        });
-      },
-      updateSet(context, payload) {
-        let members = context.getters.selectedShown;
-        if (members.length === 0) {
-          context.commit("showNotice", { text: "Select options first: only the selected options in view are saved or shortlisted." });
-          return;
-        }
-        context.commit("updateSet", {
-          setID: payload.setID,
-          members: members,
-          operation: payload.operation,
         });
       },
       /** Deletes a set, and offers to undo that. */

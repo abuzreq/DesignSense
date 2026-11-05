@@ -179,11 +179,7 @@
         v-for="id in setsIDs"
         :key="id"
         class="set-card"
-        :class="{
-          'set-card--active': matchingSetID === id,
-          'set-card--pickable': !isLite,
-        }"
-        @click="onCardClick(id)"
+        :class="{ 'set-card--active': matchingSetID === id }"
       >
         <div class="set-card-head">
           <input
@@ -235,7 +231,10 @@
         </div>
 
         <div class="set-actions">
-          <v-tooltip v-if="isLite" bottom max-width="260">
+          <!-- One way back to a set, in both modes. Lite brings back its
+               filters; Expert its options, combined with the selection by
+               the current operation, which the button names. -->
+          <v-tooltip bottom max-width="260">
             <template v-slot:activator="{ on }">
               <v-btn
                 v-on="on"
@@ -246,41 +245,13 @@
                 @click.stop="restore(id)"
               >
                 <v-icon left x-small>{{
-                  matchingSetID === id ? "mdi-check" : "mdi-restore"
+                  matchingSetID === id ? "mdi-check" : restoreIcon
                 }}</v-icon>
-                {{ matchingSetID === id ? "Showing" : "Restore" }}
+                {{ matchingSetID === id ? "Showing" : restoreLabel }}
               </v-btn>
             </template>
-            <span>{{
-              matchingSetID === id
-                ? "The current filters are this set's filters"
-                : "Replace the current filters with this set's filters. Undo brings yours back."
-            }}</span>
+            <span>{{ restoreTip(id) }}</span>
           </v-tooltip>
-          <template v-if="can('setEditing')">
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <v-btn v-on="on" x-small icon color="blue" @click.stop="addToSet(id)">
-                  <v-icon small>mdi-plus</v-icon>
-                </v-btn>
-              </template>
-              <span>Add the selected options to this set</span>
-            </v-tooltip>
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on }">
-                <v-btn
-                  v-on="on"
-                  x-small
-                  icon
-                  color="blue"
-                  @click.stop="removeFromSet(id)"
-                >
-                  <v-icon small>mdi-minus</v-icon>
-                </v-btn>
-              </template>
-              <span>Remove the selected options from this set</span>
-            </v-tooltip>
-          </template>
           <v-tooltip bottom>
             <template v-slot:activator="{ on }">
               <v-btn
@@ -360,6 +331,7 @@
 <script>
 import { mapGetters, mapState } from "vuex";
 import { operations } from "./operations";
+import { operationIcon, operationPhrase } from "./operationIcons.js";
 
 export default {
   name: "SetsView",
@@ -383,6 +355,7 @@ export default {
       dataLength: (state) => state.data.length,
       setsCounter: (state) => state.setsCounter,
       hovered: (state) => state.hovered,
+      currentSelectionOperation: (state) => state.currentSelectionOperation,
     }),
     ...mapGetters([
       "can",
@@ -409,13 +382,25 @@ export default {
           : "Select options first: a set saves the selected options in view.";
       }
       if (!this.isLite) {
-        return "Save the " + count.toLocaleString() + " selected options as a set. Click a set later to bring its options back; the current selection operation applies.";
+        return "Save the " + count.toLocaleString() + " selected options as a set. Restore the set later to bring its options back, combined with the selection by the current operation.";
       }
       return (
         "Save the " +
         count.toLocaleString() +
         " selected options and the filters that found them. Restore the set later to bring those filters back."
       );
+    },
+    /** Expert's restore is the current operation; Replace reads as restoring. */
+    restoreOperation() {
+      return this.isLite ? operations.REPLACE : this.currentSelectionOperation;
+    },
+    restoreLabel() {
+      let operation = this.restoreOperation;
+      return !operation || operation === operations.REPLACE ? "Restore" : operation;
+    },
+    restoreIcon() {
+      if (this.isLite || this.restoreOperation === operations.REPLACE) return "mdi-restore";
+      return operationIcon(this.restoreOperation);
     },
     emptyText() {
       return this.isLite
@@ -489,17 +474,19 @@ export default {
     save() {
       this.$store.dispatch("createSet");
     },
+    /** Only from its button, in both modes, so a stray click changes nothing. */
     restore(id) {
-      this.$store.dispatch("restoreSet", { setID: id, operation: operations.REPLACE });
+      this.$store.dispatch("restoreSet", { setID: id, operation: this.restoreOperation });
     },
-    onCardClick(id) {
-      // Lite restores only from its button, so a stray click never replaces
-      // the filters.
-      if (this.isLite) return;
-      this.$store.dispatch("restoreSet", {
-        setID: id,
-        operation: this.$store.state.currentSelectionOperation,
-      });
+    restoreTip(id) {
+      let showing = this.matchingSetID === id;
+      if (this.isLite) {
+        return showing
+          ? "The current filters are this set's filters"
+          : "Replace the current filters with this set's filters. Undo brings yours back.";
+      }
+      if (showing) return "The selection is this set's options";
+      return "Click to " + operationPhrase(this.restoreOperation) + ". Undo brings yours back.";
     },
     remove(id) {
       this.$delete(this.openNotes, id);
@@ -526,18 +513,6 @@ export default {
     },
     onNameKeydown(event) {
       if (event.key === "Enter" || event.key === "Escape") event.target.blur();
-    },
-    addToSet(id) {
-      this.$store.dispatch("updateSet", {
-        setID: id,
-        operation: operations.ADD,
-      });
-    },
-    removeFromSet(id) {
-      this.$store.dispatch("updateSet", {
-        setID: id,
-        operation: operations.SUBTRACT,
-      });
     },
   },
 };
@@ -713,12 +688,6 @@ export default {
   border-radius: 6px;
   padding: 6px 8px 8px;
   background: #fff;
-}
-.set-card--pickable {
-  cursor: pointer;
-}
-.set-card--pickable:hover {
-  background: #f5f9ff;
 }
 .set-card--active {
   border-left-color: #43a047;
