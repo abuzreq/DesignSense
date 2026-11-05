@@ -428,19 +428,21 @@ export default {
 }
 /* Eight rows, then it scrolls; the gallery keeps every open card's list at
    the same place, so a row stays a row across the cards. */
+/* The size is the gallery's choice (--values-font, --values-row), the same
+   on every card so their rows stay level. */
 .card-values {
-  max-height: calc(8 * 18px);
+  max-height: calc(8 * var(--values-row, 18px));
   overflow-y: auto;
   padding: 0 0 4px;
   border-top: 1px solid #eceff1;
-  font-size: 11px;
-  line-height: 18px;
+  font-size: var(--values-font, 11px);
+  line-height: var(--values-row, 18px);
 }
 .card-value-row {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  height: 18px;
+  height: var(--values-row, 18px);
   padding: 0 6px;
 }
 .card-value-row:nth-child(even) {

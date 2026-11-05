@@ -76,6 +76,10 @@
         parent.selectedItems.length + " " + countLabel
       }}</span>
     </template>
+    <!-- Above the list, inside the menu: settings that go with the choice. -->
+    <template v-if="$scopedSlots['prepend-item'] || $slots['prepend-item']" v-slot:prepend-item>
+      <slot name="prepend-item" />
+    </template>
   </v-autocomplete>
 </template>
 

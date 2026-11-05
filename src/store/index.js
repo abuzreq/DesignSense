@@ -331,6 +331,8 @@ function builder(
         matrixDims: null,
         // The values a gallery card lists, in order; null for the default.
         detailDims: null,
+        // How large they read: "small", "medium" or "large".
+        detailTextSize: "small",
       },
       ...dimensions.state,
       ...goals.state,

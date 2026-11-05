@@ -90,9 +90,38 @@
             hide-details
             placeholder="Values"
             aria-label="Values shown on each card"
+            :title="detailKeys.length + ' values shown on each card'"
+            :menu-props="{ minWidth: 220 }"
             class="ph-select gallery-values-select"
             @change="onDetailDimsChange"
-          />
+          >
+            <!-- How large the values read, at the top of the menu that
+                 chooses them. Pressing a size keeps the menu open. -->
+            <template v-slot:prepend-item>
+              <div class="values-size">
+                <span class="values-size-label">Text size</span>
+                <v-btn-toggle
+                  :value="detailTextSize"
+                  mandatory
+                  dense
+                  color="primary"
+                  class="values-size-toggle"
+                >
+                  <v-btn
+                    v-for="size in valueSizes"
+                    :key="size.value"
+                    x-small
+                    :value="size.value"
+                    :aria-label="size.label + ' text'"
+                    @mousedown.prevent
+                    @click="setDetailTextSize(size.value)"
+                    >{{ size.short }}</v-btn
+                  >
+                </v-btn-toggle>
+              </div>
+              <v-divider />
+            </template>
+          </DimensionPicker>
           <TipButton
             small
             small-icon
@@ -329,7 +358,7 @@
                     dense
                     class="images-container"
                     id="images-container"
-                    :style="{ '--thumb-aspect': thumbAspect }"
+                    :style="containerStyle"
                   >
                     <v-col
                       v-if="leadingSpacerHeight(galleryItems.length) > 0"
@@ -629,9 +658,32 @@
   color: white;
 }
 
+/* Narrow: the count says how many, and is cut short rather than wrapping. */
 .gallery-values-select {
-  flex: 0 1 150px !important;
-  max-width: 170px;
+  flex: 0 1 75px !important;
+  max-width: 85px;
+}
+.gallery-values-select ::v-deep .v-select__selections {
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow: hidden;
+}
+.gallery-values-select ::v-deep .ds-picker-count {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.values-size {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+}
+.values-size-label {
+  font-size: 12px;
+  color: #546e7a;
 }
 
 /* Every picture sits in a frame of the same shape (see GalleryCard), so
@@ -759,6 +811,12 @@ const MIN_DETAILS_WIDTH = 140;
 const ASPECT_SAMPLES = 12;
 // How many values a card lists until the user picks them.
 const DEFAULT_DETAIL_COUNT = 8;
+// How large a card's values read: the type, and the row it sits in.
+const VALUE_SIZES = [
+  { value: "small", short: "S", label: "Small", font: "11px", row: "18px" },
+  { value: "medium", short: "M", label: "Medium", font: "12.5px", row: "20px" },
+  { value: "large", short: "L", label: "Large", font: "14px", row: "23px" },
+];
 
 export default {
   name: "AugmentedGridCards",
@@ -797,6 +855,7 @@ export default {
       ],
       // The values under each picture, asked for (see columnWide).
       detailsOn: false,
+      valueSizes: VALUE_SIZES,
       // The thumbnails' width, measured: how wide a column is follows it.
       thumbsWidth: 0,
       // The shape of every thumbnail's frame: the pictures' own, from the
@@ -890,6 +949,7 @@ export default {
       colorColumn: (state) => state.colorColumn,
       uiMode: (state) => state.uiMode,
       storedDetailDims: (state) => state.viewSettings.detailDims,
+      detailTextSize: (state) => state.viewSettings.detailTextSize || "small",
     }),
     ...mapGetters([
       "colorScale",
@@ -1087,6 +1147,18 @@ export default {
     },
     detailItems() {
       return dimensionItems(this.orderedDetailKeys);
+    },
+    /**
+     * The shape of the pictures' frames, and the size of the cards' values
+     * (see GalleryCard): set once here, read by every card.
+     */
+    containerStyle() {
+      let size = VALUE_SIZES.find((s) => s.value === this.detailTextSize) || VALUE_SIZES[0];
+      return {
+        "--thumb-aspect": this.thumbAspect,
+        "--values-font": size.font,
+        "--values-row": size.row,
+      };
     },
     /**
      * Columns of web addresses: still there to pick, but no default lists
@@ -1523,6 +1595,9 @@ export default {
       let w = this.visibleWindow(total);
       let remainingRows = Math.ceil((total - w.end) / this.columnsPerRow);
       return Math.max(0, remainingRows) * this.rowHeight;
+    },
+    setDetailTextSize(size) {
+      this.$store.commit("setViewSetting", { key: "detailTextSize", value: size });
     },
     /** Kept in reading order, whatever order they were picked in. */
     onDetailDimsChange(value) {
