@@ -1,15 +1,13 @@
 <template>
   <div class="sets-view">
     <div class="sets-header">
-      <div class="sets-title">{{ isLite ? "Saved sets" : "Sets" }}</div>
+      <div class="sets-title">Saved sets</div>
       <v-tooltip bottom max-width="300">
         <template v-slot:activator="{ on }">
           <span v-on="on" class="sets-save">
             <v-btn small depressed color="primary" :disabled="selectedShown.length === 0" @click="save">
-              <v-icon left small>{{
-                isLite ? "mdi-bookmark-plus-outline" : "mdi-plus"
-              }}</v-icon>
-              {{ isLite ? "Save" : "New set" }}
+              <v-icon left small>mdi-bookmark-plus-outline</v-icon>
+              Save
             </v-btn>
           </span>
         </template>
@@ -405,7 +403,7 @@ export default {
     emptyText() {
       return this.isLite
         ? "Nothing saved yet. Filter the collection, then save the results here to come back to them later."
-        : "No sets yet. Select options, then click New set.";
+        : "No saved sets yet. Select options, then click Save.";
     },
   },
   watch: {

@@ -66,7 +66,7 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { mapState } from "vuex";
 import SetsView from "@/components/SetsView.vue";
 import {
   DOCK_DEFAULT_WIDTH,
@@ -119,7 +119,6 @@ export default {
       setsMap: (state) => state.setsMap,
       cartCount: (state) => state.cart.length,
     }),
-    ...mapGetters(["isLite"]),
     open() {
       return this.drawer.open;
     },
@@ -139,7 +138,7 @@ export default {
       return Object.keys(this.setsMap || {}).length;
     },
     title() {
-      return this.isLite ? "Saved sets" : "Sets";
+      return "Saved sets";
     },
   },
   watch: {

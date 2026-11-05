@@ -575,7 +575,7 @@ export const COMMANDS = {
   /* ---- sets and session -------------------------------------------------- */
   "set.create": {
     title: "Save the results as a set",
-    group: "Sets",
+    group: "Saved sets",
     run(ctx, args) {
       if (ctx.getters.selectedShown.length === 0) return { message: "Nothing is selected to save." };
       ctx.store.dispatch("createSet", { setName: args.name || null });
@@ -584,7 +584,7 @@ export const COMMANDS = {
   },
   "set.restore": {
     title: "Bring a set back",
-    group: "Sets",
+    group: "Saved sets",
     run(ctx, args) {
       if (!ctx.state.setsMap[args.set]) return { message: "There is no set called " + args.set + "." };
       // Bringing a set back means selecting exactly its members.
@@ -593,7 +593,7 @@ export const COMMANDS = {
   },
   "set.update": {
     title: "Add to or remove from a set",
-    group: "Sets",
+    group: "Saved sets",
     run(ctx, args) {
       if (!ctx.state.setsMap[args.set]) return { message: "There is no set called " + args.set + "." };
       // What "these" are: the selection in Expert, the result set in Lite.
@@ -614,7 +614,7 @@ export const COMMANDS = {
   },
   "set.clear": {
     title: "Delete every set",
-    group: "Sets",
+    group: "Saved sets",
     run(ctx) {
       let ids = Object.keys(ctx.state.setsMap || {});
       if (ids.length === 0) return { message: "There are no sets." };
@@ -624,7 +624,7 @@ export const COMMANDS = {
   },
   "set.delete": {
     title: "Delete a set",
-    group: "Sets",
+    group: "Saved sets",
     run(ctx, args) {
       if (!ctx.state.setsMap[args.set]) return { message: "There is no set called " + args.set + "." };
       ctx.store.commit("removeSet", { setID: args.set });
