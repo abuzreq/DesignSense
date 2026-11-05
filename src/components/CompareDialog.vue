@@ -166,7 +166,9 @@
               <span v-else class="cmp-block-text">{{ block.title }}</span>
             </div>
 
-            <template v-for="row in rowsOf(block)">
+            <!-- Every other row shaded, as a card's values are, so the eye
+                 can follow a row across the columns. -->
+            <template v-for="(row, r) in rowsOf(block)">
               <button
                 :key="row.dim + '-label'"
                 type="button"
@@ -174,6 +176,7 @@
                 :class="{
                   'cmp-same': row.same,
                   'cmp-sorted': sortDim === row.dim,
+                  'cmp-row-alt': r % 2 === 1,
                 }"
                 :title="sortTitle(row.label, row.dim)"
                 @click="sortBy(row.dim)"
@@ -192,7 +195,7 @@
                 v-for="(text, i) in row.texts"
                 :key="row.dim + '-' + i"
                 class="cmp-cell cmp-value"
-                :class="{ 'cmp-same': row.same }"
+                :class="{ 'cmp-same': row.same, 'cmp-row-alt': r % 2 === 1 }"
               >
                 <span class="cmp-text">{{ text }}</span>
                 <v-tooltip v-if="row.summary.maxIndex === i" bottom>
@@ -795,8 +798,16 @@ export default {
   white-space: nowrap;
 }
 /* Nothing to choose between on this row, so it recedes. */
-.cmp-same {
+/* A row where every option has the same value can't help choose between
+   them, so it steps back. Its contents fade, not the row itself: the row
+   names stay put over the values scrolling under them, and a faded name
+   would let those show through. */
+.cmp-same > * {
   opacity: 0.45;
+}
+.cmp-row-alt,
+.cmp-label.cmp-row-alt {
+  background: #f7f9fa;
 }
 /* Which direction is good is the reader's to decide, so neither is coloured. */
 .cmp-mark-high {
