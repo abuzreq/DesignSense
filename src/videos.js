@@ -15,3 +15,16 @@ export const VIDEOS = {
 export function videoHref(name) {
   return "https://youtu.be/" + VIDEOS[name];
 }
+
+/**
+ * A video's player, to embed: on YouTube's privacy-enhanced domain, which
+ * sets no cookies until the video plays, and playing as soon as it is in,
+ * since it is only ever put in after a click. Only the welcome embeds one.
+ */
+export function videoEmbed(name) {
+  return (
+    "https://www.youtube-nocookie.com/embed/" +
+    VIDEOS[name] +
+    "?autoplay=1&rel=0&modestbranding=1"
+  );
+}

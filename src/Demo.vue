@@ -521,11 +521,53 @@
           </v-btn>
         </v-card-title>
         <v-card-text class="ds-welcome-body">
-          <p class="ds-welcome-lead">
-            Explore a collection of design options through their pictures and
-            data: understand the design space, narrow it to the options worth
-            pursuing, decide between them, and share the result.
-          </p>
+          <!-- What it is, beside a minute of it. The player is YouTube's,
+               so it is put in only when the picture is clicked: until then
+               nothing of theirs loads here. -->
+          <div class="ds-welcome-intro">
+            <p class="ds-welcome-lead">
+              Explore a collection of design options through their pictures
+              and data: understand the design space, narrow it to the options
+              worth pursuing, decide between them, and share the result.
+            </p>
+            <div class="ds-welcome-video">
+              <div class="ds-welcome-video-frame">
+                <!-- The page sends no referrer (public/index.html), and
+                     YouTube's player refuses to play without one (its
+                     "Error 153"): this frame alone sends the site's origin. -->
+                <iframe
+                  v-if="introPlaying"
+                  :src="introEmbed"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  title="DesignSense in one minute"
+                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                  allowfullscreen
+                  frameborder="0"
+                />
+                <button
+                  v-else
+                  type="button"
+                  class="ds-welcome-video-play"
+                  aria-label="Watch the one-minute intro"
+                  @click="introPlaying = true"
+                >
+                  <span class="ds-welcome-video-button" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                  </span>
+                  <span class="ds-welcome-video-caption"
+                    >Watch the one-minute intro</span
+                  >
+                </button>
+              </div>
+              <a
+                class="ds-welcome-video-out"
+                :href="videoLinks.intro"
+                target="_blank"
+                rel="noopener"
+                >Open on YouTube ↗</a
+              >
+            </div>
+          </div>
           <!-- Two cards, because there are two questions a first visit asks:
                how this works, and what to look at. One button leads in each
                card -- the tour, which is the dialog's one filled button, and
@@ -1107,10 +1149,92 @@ body {
     padding: 4px 20px 8px !important;
   }
 }
+/* The lead beside the video; stacked when there is no room for both. */
+.ds-welcome-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 24px;
+  margin-bottom: 24px;
+}
 .ds-welcome-lead {
-  margin-bottom: 24px !important;
+  flex: 1 1 300px;
+  margin-bottom: 0 !important;
   font-size: 15px;
   line-height: 1.6;
+}
+.ds-welcome-video {
+  flex: 0 1 300px;
+  min-width: 240px;
+}
+.ds-welcome-video-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #263238;
+}
+.ds-welcome-video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+/* The app's own picture of the player, until it is asked for. */
+.ds-welcome-video-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  background: linear-gradient(135deg, #37474f 0%, #263238 55%, #1c2a31 100%);
+  color: #fff;
+  cursor: pointer;
+}
+.ds-welcome-video-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #e53935;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 0.12s;
+}
+.ds-welcome-video-button svg {
+  width: 26px;
+  height: 26px;
+  margin-left: 3px;
+  fill: #fff;
+}
+.ds-welcome-video-play:hover .ds-welcome-video-button,
+.ds-welcome-video-play:focus-visible .ds-welcome-video-button {
+  transform: scale(1.08);
+}
+.ds-welcome-video-play:focus-visible {
+  outline: 3px solid rgba(144, 202, 249, 0.9);
+  outline-offset: -3px;
+}
+.ds-welcome-video-caption {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+.ds-welcome-video-out {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #546e7a !important;
+  text-decoration: none;
+}
+.ds-welcome-video-out:hover {
+  text-decoration: underline;
 }
 .ds-welcome-choices {
   display: flex;
@@ -1473,7 +1597,7 @@ import { loadColumnRoles } from "@/data/columnRoles.js";
 import { errorState } from "@/errors.js";
 import { APP_VERSION } from "@/feedback.js";
 import { GUIDE_SECTIONS, guideHref } from "@/guide.js";
-import { videoHref } from "@/videos.js";
+import { videoEmbed, videoHref } from "@/videos.js";
 import { presetById, presetFor } from "@/data/presets.js";
 import { pendingAppLink } from "@/appLinks.js";
 import StoryReportDialog from "@/components/StoryReportDialog.vue";
@@ -1846,6 +1970,9 @@ export default {
       guideSections: GUIDE_SECTIONS,
       guideLinks: { home: guideHref(), link: guideHref(GUIDE_SECTIONS.link) },
       videoLinks: { intro: videoHref("intro"), tutorial: videoHref("tutorial") },
+      // The welcome's intro player, put in once its picture is clicked.
+      introEmbed: videoEmbed("intro"),
+      introPlaying: false,
       // Whether the guide has been asked for in this workspace.
       guideSeen: false,
       showWelcomeAtStart: readShowWelcome(),
@@ -2220,6 +2347,11 @@ export default {
     },
   },
   watch: {
+    // Closing the welcome takes the player out, which stops the video; it
+    // opens on the picture again next time.
+    isOpeningDialogOn(open) {
+      if (!open) this.introPlaying = false;
+    },
     showWelcomeAtStart(value) {
       writeShowWelcome(value);
     },
