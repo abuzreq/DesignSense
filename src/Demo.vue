@@ -525,26 +525,18 @@
             Explore a collection of design options through their pictures and
             data: understand the design space, narrow it to the options worth
             pursuing, decide between them, and share the result.
-            <a
-              class="ds-welcome-video"
-              :href="videoLinks.intro"
-              target="_blank"
-              rel="noopener"
-              ><v-icon small color="blue darken-1">mdi-play-circle-outline</v-icon>
-              Watch the one-minute intro</a
-            >
           </p>
-          <!-- Two pairs, because there are two questions a first visit asks:
-               how this works, and what to look at. The tour walks it, the
-               video shows it and the guide reads it; the sample is at hand
-               and your own data is a folder away. -->
+          <!-- Two cards, because there are two questions a first visit asks:
+               how this works, and what to look at. One button leads in each
+               card -- the tour, which is the dialog's one filled button, and
+               the data -- and the rest are links. -->
           <div class="ds-welcome-choices">
-            <div class="ds-welcome-choice">
-              <div class="ds-welcome-choice-head">
+            <section class="ds-welcome-choice">
+              <h3 class="ds-welcome-choice-head">
                 <v-icon color="blue darken-1">mdi-map-marker-path</v-icon>
                 New here?
-              </div>
-              <p>Walk through it once, watch it, or read it up front.</p>
+              </h3>
+              <p>A few minutes' walk through the four tasks, on sample data.</p>
               <div class="ds-welcome-choice-actions">
                 <v-btn
                   color="blue darken-1"
@@ -556,55 +548,52 @@
                   "
                   >Take the tour</v-btn
                 >
+              </div>
+              <div class="ds-welcome-more">
                 <!-- On YouTube, in a tab of its own: nothing of theirs loads
                      here until it is asked for. -->
-                <v-btn
-                  color="blue darken-1"
-                  outlined
-                  depressed
-                  :href="videoLinks.tutorial"
-                  target="_blank"
-                  rel="noopener"
-                >
-                  <v-icon left small>mdi-play-circle-outline</v-icon>
-                  Watch the video</v-btn
+                <a :href="videoLinks.tutorial" target="_blank" rel="noopener"
+                  ><v-icon small>mdi-play-circle-outline</v-icon>Watch the
+                  video</a
                 >
                 <!-- A real link, so it can be opened in a tab of its own,
                      though a plain click keeps it in the dialog. -->
-                <v-btn
-                  color="blue darken-1"
-                  outlined
-                  depressed
+                <a
                   :href="guideLinks.home"
                   target="_blank"
                   @click.prevent="openGuide()"
-                >
-                  <v-icon left small>mdi-book-open-page-variant-outline</v-icon>
-                  Read the guide</v-btn
+                  ><v-icon small>mdi-book-open-page-variant-outline</v-icon
+                  >Read the guide</a
                 >
               </div>
-            </div>
-            <div class="ds-welcome-choice">
-              <div class="ds-welcome-choice-head">
+            </section>
+            <section class="ds-welcome-choice">
+              <h3 class="ds-welcome-choice-head">
                 <v-icon color="teal">mdi-eye-outline</v-icon>
                 {{ welcomeDataset.title }}
-              </div>
+              </h3>
               <p>Bring your own: a folder, a CSV file or a link.</p>
+              <!-- Two equals: the same outline and colour, so neither pulls
+                   against the tour's button or the other. -->
               <div class="ds-welcome-choice-actions">
                 <v-btn
-                  color="teal"
-                  dark
+                  color="teal darken-1"
+                  outlined
                   depressed
                   :disabled="loadState.loading"
                   @click="isOpeningDialogOn = false"
-                  >{{ welcomeDataset.action }}</v-btn
                 >
-                <LoadDataModal label="Load own data" />
+                  <v-icon left small>mdi-eye-outline</v-icon>
+                  {{ welcomeDataset.action }}</v-btn
+                >
+                <LoadDataModal label="Load own data" outlined />
               </div>
-            </div>
+            </section>
           </div>
-          <div class="ds-welcome-layout">
-            <div class="ds-welcome-layout-head">{{ layoutQuestion }}</div>
+          <section class="ds-welcome-layout" aria-labelledby="ds-welcome-layout-head">
+            <h3 id="ds-welcome-layout-head" class="ds-welcome-layout-head">
+              {{ layoutQuestion }}
+            </h3>
             <p class="ds-welcome-layout-help">
               The charts and the pictures share the screen. Pick where you
               would like them; you can change it whenever you like from
@@ -613,51 +602,45 @@
               >
               in the toolbar, or by dragging the edge between two panels.
             </p>
-            <div class="ds-welcome-layout-choices">
+            <!-- One choice of several, as radio buttons are: arrow keys move
+                 it, and only the chosen card is a tab stop. -->
+            <div
+              class="ds-welcome-layout-choices"
+              role="radiogroup"
+              aria-labelledby="ds-welcome-layout-head"
+            >
               <button
-                v-for="preset in layoutPresets"
+                v-for="(preset, index) in layoutPresets"
                 :key="preset.id"
+                ref="welcomeLayouts"
                 type="button"
+                role="radio"
                 class="ds-welcome-layout-btn"
                 :class="{
                   'ds-welcome-layout-btn--on': layoutPreset === preset.id,
                 }"
                 :title="preset.description"
-                :aria-pressed="String(layoutPreset === preset.id)"
+                :aria-checked="String(layoutPreset === preset.id)"
+                :tabindex="welcomeLayoutTabStop === index ? 0 : -1"
                 @click="chooseWelcomeLayout(preset.id)"
+                @keydown="onWelcomeLayoutKey(index, $event)"
               >
-                <LayoutPresetFigure :preset="preset.id" />
-                <span class="ds-welcome-layout-name">
-                  {{ preset.name }}
-                  <v-icon
-                    v-if="layoutPreset === preset.id"
-                    x-small
-                    color="primary"
-                    >mdi-check</v-icon
-                  >
+                <span class="ds-welcome-layout-check" aria-hidden="true">
+                  <v-icon x-small color="white">mdi-check</v-icon>
                 </span>
+                <LayoutPresetFigure :preset="preset.id" />
+                <span class="ds-welcome-layout-name">{{ preset.name }}</span>
               </button>
             </div>
-          </div>
+          </section>
           <p class="ds-welcome-privacy">
             <v-icon small color="green darken-2">mdi-shield-check-outline</v-icon>
             Your data is read in this browser and never uploaded; your work is
             kept here too.
           </p>
-          <!-- The guide is a button above now, so it is not repeated here. -->
-          <div class="ds-welcome-links">
-            <a href="#" @click.prevent="openFeedback(false)">Send feedback</a>
-            <span>·</span>
-            <span
-              >Built by
-              <a href="https://abuzreq.com/" target="_blank" rel="noopener"
-                >Ahmed Abuzuraiq</a
-              ></span
-            >
-            <span>·</span>
-            <span>v{{ appVersion }}</span>
-          </div>
         </v-card-text>
+        <!-- The footer: the setting for next time on the left, who made it
+             and how to reach them on the right, then the way out. -->
         <v-card-actions class="ds-welcome-actions">
           <v-checkbox
             v-model="showWelcomeAtStart"
@@ -666,6 +649,18 @@
             label="Show this when DesignSense opens"
           />
           <v-spacer />
+          <div class="ds-welcome-links">
+            <a href="#" @click.prevent="openFeedback(false)">Send feedback</a>
+            <span aria-hidden="true">·</span>
+            <span
+              >Built by
+              <a href="https://abuzreq.com/" target="_blank" rel="noopener"
+                >Ahmed Abuzuraiq</a
+              ></span
+            >
+            <span aria-hidden="true">·</span>
+            <span>v{{ appVersion }}</span>
+          </div>
           <v-btn text @click="isOpeningDialogOn = false">Close</v-btn>
         </v-card-actions>
       </v-card>
@@ -1093,7 +1088,7 @@ body {
 .ds-welcome .v-card__title {
   flex-wrap: nowrap;
   word-break: normal;
-  padding: 20px 28px 8px !important;
+  padding: 24px 32px 8px !important;
 }
 @media (max-width: 600px) {
   .ds-welcome .v-card__title {
@@ -1101,7 +1096,7 @@ body {
   }
 }
 .ds-welcome-body {
-  padding: 8px 28px 12px !important;
+  padding: 8px 32px 8px !important;
   color: #37474f !important;
 }
 @media (max-width: 600px) {
@@ -1113,84 +1108,113 @@ body {
   }
 }
 .ds-welcome-lead {
-  margin-bottom: 20px;
+  margin-bottom: 24px !important;
   font-size: 15px;
   line-height: 1.6;
-}
-.ds-welcome-video {
-  white-space: nowrap;
-  text-decoration: none;
-}
-.ds-welcome-video:hover {
-  text-decoration: underline;
 }
 .ds-welcome-choices {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin: 4px 0 20px;
+  gap: 20px;
+  margin: 0 0 28px;
 }
-/* The two actions in a card sit on one line, and wrap rather than squeeze. */
-.ds-welcome-choice-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
 .ds-welcome-choice {
   flex: 1 1 260px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 16px 18px;
+  padding: 20px 22px;
   border: 1px solid #e3e8eb;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 .ds-welcome-choice-head {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: 8px;
+  margin: 0 0 8px;
   font-size: 15px;
   font-weight: 600;
   color: #263238;
 }
 .ds-welcome-choice p {
   flex: 1 1 auto;
-  margin-bottom: 14px;
+  margin-bottom: 18px !important;
   font-size: 13px;
   line-height: 1.5;
 }
-/* The load dialog's own button, brought in line with the other two. */
+/* A card's buttons each take its width, one under the other: the two data
+   buttons come out the same size, and the tour's lines up with them. */
+.ds-welcome-choice-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+}
+/* The load dialog's own button, brought in line with the sample's. */
 .ds-welcome-choice .container {
+  width: 100% !important;
+  max-width: none;
   padding: 0 !important;
   margin: 0;
+}
+.ds-welcome-choice .load-data-button {
+  width: 100%;
+}
+/* The tour's companions: links, so the tour is the one thing to press. */
+.ds-welcome-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+.ds-welcome-more a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #1565c0;
+  text-decoration: none;
+}
+.ds-welcome-more a .v-icon {
+  color: inherit;
+}
+.ds-welcome-more a:hover,
+.ds-welcome-more a:focus-visible {
+  text-decoration: underline;
 }
 .ds-welcome-privacy {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 20px 0 8px;
+  gap: 8px;
+  margin: 24px 0 4px !important;
   font-size: 13px;
   color: #2e7d32;
+}
+.ds-welcome-actions {
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 12px 20px 14px 32px !important;
+  border-top: 1px solid #eceff1;
+  background: #fafbfc;
+}
+.ds-welcome-actions .v-input--selection-controls {
+  margin-top: 0;
+  padding-top: 0;
+}
+.ds-welcome-actions .v-label {
+  font-size: 13px;
 }
 .ds-welcome-links {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 4px 8px;
-  font-size: 13px;
+  font-size: 12px;
   color: #78909c;
 }
-.ds-welcome-actions {
-  padding: 10px 20px 14px 28px !important;
-  border-top: 1px solid #eceff1;
-}
-.ds-welcome-actions .v-input--selection-controls {
-  margin-top: 0;
-}
-.ds-welcome-actions .v-label {
-  font-size: 13px;
+.ds-welcome-links a {
+  color: #546e7a;
 }
 /* The arrangements at the head of the layout menu. */
 .ds-layout-picks {
@@ -1218,51 +1242,88 @@ body {
 /* A section of its own, not a fourth entry point: this is a choice about
    the workspace, and it has to be worth reading on the tenth visit too. */
 .ds-welcome-layout {
-  margin-top: 24px;
-  padding: 18px 20px 20px;
-  border: 1px solid #e0e6eb;
-  border-radius: 10px;
-  background: #fafbfc;
+  padding-top: 24px;
+  border-top: 1px solid #eceff1;
 }
 .ds-welcome-layout-head {
+  margin: 0;
   font-size: 15px;
   font-weight: 600;
   color: #263238;
 }
 .ds-welcome-layout-help {
-  margin: 6px 0 14px;
+  margin: 6px 0 16px !important;
   font-size: 13px;
   line-height: 1.45;
   color: #546e7a;
 }
 .ds-welcome-layout-choices {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
 }
+/* Cards of a radio group: every one the same, the chosen one blue all
+   over -- edge, wash, name and the tick in its corner. */
 .ds-welcome-layout-btn {
-  display: block;
-  padding: 7px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 10px 10px;
   border: 1px solid #cfd8dc;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
   cursor: pointer;
   text-align: center;
+  transition: border-color 0.12s, box-shadow 0.12s, background-color 0.12s;
 }
 .ds-welcome-layout-btn:hover {
-  border-color: #90caf9;
+  border-color: #90a4ae;
+  box-shadow: 0 2px 6px rgba(38, 50, 56, 0.12);
 }
-.ds-welcome-layout-btn--on {
+.ds-welcome-layout-btn:focus {
+  outline: none;
+}
+.ds-welcome-layout-btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.35);
+}
+.ds-welcome-layout-btn--on,
+.ds-welcome-layout-btn--on:hover {
   border-color: #1565c0;
+  background: #f3f8fe;
   box-shadow: 0 0 0 1px #1565c0 inset;
+}
+/* On the card's corner, clear of the drawing. */
+.ds-welcome-layout-check {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #1565c0;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.12s, transform 0.12s;
+}
+.ds-welcome-layout-btn--on .ds-welcome-layout-check {
+  opacity: 1;
+  transform: none;
 }
 .ds-welcome-layout-name {
   display: block;
-  margin-top: 7px;
+  margin-top: 8px;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.25;
   color: #37474f;
+}
+.ds-welcome-layout-btn--on .ds-welcome-layout-name {
+  color: #0d47a1;
 }
 .ds-shortcuts-heading {
   margin: 12px 0 4px;
@@ -2002,6 +2063,11 @@ export default {
         ? "Drag the edge between two panels to resize them, or edit the layout to move one."
         : "Drag the edge between two panels to resize them.";
     },
+    /** The arrangement card Tab reaches: the chosen one, else the first. */
+    welcomeLayoutTabStop() {
+      let index = this.layoutPresets.findIndex((p) => p.id === this.layoutPreset);
+      return index < 0 ? 0 : index;
+    },
     layoutQuestion() {
       return this.layoutAsked
         ? "How your workspace is arranged"
@@ -2306,6 +2372,17 @@ export default {
       this.$store.commit(panel.shown ? "closeLayout" : "openLayout", {
         type: panel.type,
       });
+    },
+    /** Arrow keys move the choice of arrangement, as in any radio group. */
+    onWelcomeLayoutKey(index, event) {
+      let step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+      if (!step) return;
+      event.preventDefault();
+      let count = this.layoutPresets.length;
+      let next = (index + step + count) % count;
+      this.chooseWelcomeLayout(this.layoutPresets[next].id);
+      let buttons = this.$refs.welcomeLayouts || [];
+      if (buttons[next]) buttons[next].focus();
     },
     chooseWelcomeLayout(id) {
       this.$store.commit("applyLayoutPreset", { id: id });

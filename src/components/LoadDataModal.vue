@@ -4,8 +4,10 @@
       <v-dialog v-model="dialog" width="760" overlay-opacity="0.5">
         <template v-slot:activator="{ on, attrs }">
           <v-btn
-            color="red lighten-2"
-            dark
+            :color="outlined ? 'teal darken-1' : 'red lighten-2'"
+            :dark="!outlined"
+            :outlined="outlined"
+            :depressed="outlined"
             :small="compact"
             class="load-data-button"
             :title="label"
@@ -352,6 +354,9 @@ export default {
     // stands beside the sample; the dialog offers both a sample and your own,
     // so everywhere else keeps the shorter name.
     label: { type: String, default: "Load Data" },
+    // Outlined in the welcome's colour, beside the sample's button there,
+    // so neither of the two outweighs the other.
+    outlined: { type: Boolean, default: false },
   },
   data() {
     return {
