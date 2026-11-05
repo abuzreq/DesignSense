@@ -93,35 +93,44 @@
       </button>
     </div>
 
-    <!-- The values, when the gallery asks for them, and only once opened. -->
-    <v-expansion-panels v-if="showDetails" v-model="openPanel">
-      <v-expansion-panel>
-        <v-expansion-panel-header>
-          <template v-slot:default="{ open }">
-            <span v-if="!open" class="details-hint">Expand for Details</span>
-          </template>
-        </v-expansion-panel-header>
-        <v-expansion-panel-content>
-          <v-list v-if="openPanel === 0">
-            <v-list-item
-              v-for="param in detailKeys"
-              :key="param"
-              style="min-height: 28px;"
-            >
-              <v-list-item-content style="font-weight: bold; padding: 6px 0;"
-                ><DimensionName :name="param"
-              /></v-list-item-content>
-              <v-list-item-content
-                style="padding: 6px 0;"
-                class="justify-center"
-              >
-                {{ formatParam(param) }}
-              </v-list-item-content>
-            </v-list-item>
-          </v-list>
-        </v-expansion-panel-content>
-      </v-expansion-panel>
-    </v-expansion-panels>
+    <!-- The values, when the gallery asks for them, and only once opened:
+         the same dimensions in the same order on every card, so a row reads
+         across the cards, and their scrolling moves together (see the
+         gallery's syncValuesScroll). -->
+    <div v-if="showDetails" class="card-details">
+      <button
+        type="button"
+        class="card-details-toggle"
+        :aria-expanded="String(valuesOpen)"
+        @click="toggleValues"
+      >
+        <span>Values</span>
+        <svg class="card-chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path :d="valuesOpen ? icons.up : icons.down" />
+        </svg>
+      </button>
+      <div v-if="valuesOpen" ref="values" class="card-values">
+        <div v-for="param in detailKeys" :key="param" class="card-value-row">
+          <span class="card-value-name" :title="nameTitle(param)">
+            <i
+              v-if="param === colorColumn"
+              class="card-value-swatch"
+              :style="{ background: swatch }"
+            />
+            <span class="card-value-label">{{ label(param) }}</span>
+            <span v-if="goalMark(param)" class="card-value-goal">{{
+              goalMark(param)
+            }}</span>
+          </span>
+          <span
+            class="card-value"
+            :class="{ 'card-value--missing': isMissing(param) }"
+            :title="valueTitle(param)"
+            >{{ formatParam(param) }}</span
+          >
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -129,15 +138,16 @@
 import {
   mdiBookmarkCheck,
   mdiBookmarkPlusOutline,
+  mdiChevronDown,
+  mdiChevronUp,
   mdiImageMultiple,
   mdiMinus,
   mdiPlus,
 } from "@mdi/js";
 import { formatValue } from "@/store/filters.js";
-import { optionName } from "@/columns.js";
+import { GOAL_MARKS, displayName, optionName } from "@/columns.js";
 import { FALLBACK_IMAGE } from "@/components/constants.js";
 import { IMAGE_WIDTH, imageAtWidth } from "@/data/assets.js";
-import DimensionName from "@/components/DimensionName.vue";
 
 const ICONS = Object.freeze({
   plus: mdiPlus,
@@ -145,6 +155,8 @@ const ICONS = Object.freeze({
   views: mdiImageMultiple,
   inCart: mdiBookmarkCheck,
   addToCart: mdiBookmarkPlusOutline,
+  up: mdiChevronUp,
+  down: mdiChevronDown,
 });
 
 /**
@@ -155,7 +167,6 @@ const ICONS = Object.freeze({
  */
 export default {
   name: "GalleryCard",
-  components: { DimensionName },
   props: {
     item: { type: Object, required: true },
     cardId: { type: String, required: true },
@@ -172,6 +183,13 @@ export default {
     checked: { type: Boolean, default: false },
     showDetails: { type: Boolean, default: false },
     detailKeys: { type: Array, default: () => [] },
+    // Per dimension listed, how its values are written: { span, magnitude }
+    // over the whole collection, so a column reads the same on every card.
+    detailScales: { type: Object, default: () => ({}) },
+    // Per dimension with a goal, "max" or "min".
+    detailGoals: { type: Object, default: () => ({}) },
+    // The dimension the colours follow; its row shows the card's colour.
+    colorColumn: { type: String, default: "" },
   },
   data() {
     return {
@@ -179,8 +197,8 @@ export default {
       // The source the image last finished loading. A card handed another
       // option keeps it, so a picture the two share counts as loaded at once.
       loadedSrc: null,
-      // The details panel's open index; undefined while closed.
-      openPanel: undefined,
+      // Whether this card's values are showing.
+      valuesOpen: false,
       isHovered: false,
       inCart: false,
     };
@@ -222,6 +240,11 @@ export default {
       // inspector's copy (see data/assets.js).
       return imageAtWidth(this.item.image, IMAGE_WIDTH.card);
     },
+    // The colour the card's edge is painted (see the gallery's paintCardEdges).
+    swatch() {
+      if (!this.colorColumn) return null;
+      return this.$store.getters.colorize(this.item);
+    },
     isLoaded() {
       return this.loadedSrc !== null && this.loadedSrc === this.shownSrc;
     },
@@ -242,7 +265,7 @@ export default {
     // Cards are reused for other items as the gallery scrolls and filters.
     "item._id": function() {
       this.failed = false;
-      this.openPanel = undefined;
+      this.valuesOpen = false;
     },
   },
   methods: {
@@ -254,16 +277,45 @@ export default {
     onError() {
       this.failed = true;
     },
-    /** Custom and weighted values are rounded; "—" when missing. */
-    formatParam(param) {
+    toggleValues() {
+      this.valuesOpen = !this.valuesOpen;
+      // The gallery scrolls a newly opened list to where the others are.
+      if (this.valuesOpen) {
+        this.$nextTick(() => this.$emit("values-open", this.$refs.values));
+      }
+    },
+    label: displayName,
+    goalMark(param) {
+      let goal = GOAL_MARKS[this.detailGoals[param]];
+      return goal ? goal.mark : "";
+    },
+    nameTitle(param) {
+      let goal = GOAL_MARKS[this.detailGoals[param]];
+      return displayName(param) + (goal ? " (" + goal.title.toLowerCase() + ")" : "");
+    },
+    isMissing(param) {
       // Rows are not reactive (see store/rows.js): the version redraws edits.
       void this.$store.state.dimensionValuesVersion;
       let value = this.item[param];
-      let bounds = this.$store.getters.fixedBoundsOf(param);
-      if (!bounds) return value;
-      return typeof value === "number" && isFinite(value)
-        ? formatValue(value, bounds[1] - bounds[0])
-        : "—";
+      return value === undefined || value === null || value === "" ||
+        (typeof value === "number" && !isFinite(value));
+    },
+    /**
+     * Numbers to the precision their spread calls for, large ones compacted
+     * (12.4k), every card's the same way; text as it is; "—" when missing.
+     */
+    formatParam(param) {
+      void this.$store.state.dimensionValuesVersion;
+      if (this.isMissing(param)) return "—";
+      let value = this.item[param];
+      if (typeof value !== "number") return String(value);
+      let scale = this.detailScales[param] || {};
+      return formatValue(value, scale.span || 0, scale.magnitude);
+    },
+    // The value as it is in the data, where rounding or cutting short hid some.
+    valueTitle(param) {
+      if (this.isMissing(param)) return "No value";
+      return String(this.item[param]);
     },
   },
 };
@@ -339,9 +391,98 @@ export default {
   height: 12px;
 }
 
-.details-hint {
-  text-align: center;
-  font-size: smaller;
+/* The values: a slim toggle, then name and value in two columns, the
+   same rows in the same order on every card. Plain elements, as the rest
+   of the card is (see the top), and sized to the card's caption text. */
+.card-details {
+  border-top: 1px solid #eceff1;
+}
+.card-details-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 20px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 0 0 4px 4px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  color: #546e7a;
+  cursor: pointer;
+}
+.card-details-toggle:hover {
+  background: #f5f7f8;
+  color: #263238;
+}
+.card-details-toggle:focus-visible {
+  outline: 2px solid var(--ds-focus);
+  outline-offset: -2px;
+}
+.card-chevron {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+/* Eight rows, then it scrolls; the gallery keeps every open card's list at
+   the same place, so a row stays a row across the cards. */
+.card-values {
+  max-height: calc(8 * 18px);
+  overflow-y: auto;
+  padding: 0 0 4px;
+  border-top: 1px solid #eceff1;
+  font-size: 11px;
+  line-height: 18px;
+}
+.card-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  height: 18px;
+  padding: 0 6px;
+}
+.card-value-row:nth-child(even) {
+  background: #f7f9fa;
+}
+.card-value-name {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #546e7a;
+}
+.card-value-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-value-goal {
+  flex: 0 0 auto;
+  color: #78909c;
+}
+.card-value-swatch {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+.card-value {
+  flex: 0 1 auto;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: #263238;
+}
+.card-value--missing {
+  font-weight: 400;
+  color: #b0bec5;
 }
 
 .thumbnail_card:not(.hovered) .card-image.under_drag_selection {

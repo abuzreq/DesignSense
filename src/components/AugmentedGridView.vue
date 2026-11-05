@@ -77,7 +77,22 @@
             @click="setThumbnailSize(index)"
           />
           <span class="ph-divider" />
-          <!-- The values under each picture, at any size wide enough for them. -->
+          <!-- The values under each picture, at any size wide enough for them,
+               and which of them. -->
+          <DimensionPicker
+            v-if="detailsShown"
+            :value="detailKeys"
+            :items="detailItems"
+            multiple
+            count-label="values"
+            dense
+            outlined
+            hide-details
+            placeholder="Values"
+            aria-label="Values shown on each card"
+            class="ph-select gallery-values-select"
+            @change="onDetailDimsChange"
+          />
           <TipButton
             small
             small-icon
@@ -336,6 +351,10 @@
                         :control="cardControl"
                         :show-details="detailsShown"
                         :detail-keys="detailKeys"
+                        :detail-scales="detailScales"
+                        :detail-goals="detailGoals"
+                        :color-column="colorColumn"
+                        @values-open="onValuesOpen"
                         v-bind="cardState(card.item)"
                         @hover="onCardHover"
                         @inspect="inspect"
@@ -610,17 +629,9 @@
   color: white;
 }
 
-::v-deep .v-expansion-panel--active > .v-expansion-panel-header {
-  min-height: 24px;
-}
-
-::v-deep .v-expansion-panel-header {
-  padding: 0px;
-  min-height: 24px;
-}
-::v-deep div.v-expansion-panel-content__wrap {
-  padding-left: 0px;
-  padding-right: 0px;
+.gallery-values-select {
+  flex: 0 1 150px !important;
+  max-width: 170px;
 }
 
 /* Every picture sits in a frame of the same shape (see GalleryCard), so
@@ -663,14 +674,15 @@ import OptionNote from "@/components/OptionNote.vue";
 import CustomDimensionControl from "@/components/CustomDimensionControl.vue";
 import GalleryCard from "@/components/GalleryCard.vue";
 import ImageSwitcher from "@/components/ImageSwitcher.vue";
-import { DETAIL_BLACKLIST } from "@/store/compare.js";
+import { DETAIL_BLACKLIST, isLinkColumn } from "@/store/compare.js";
 import { isAssetColumn } from "@/data/assets.js";
 import TipButton from "@/components/TipButton.vue";
 import DimensionName from "@/components/DimensionName.vue";
 import DimensionPicker from "@/components/DimensionPicker.vue";
 import { formatValue } from "@/store/filters.js";
 import { asRows } from "@/store/rows.js";
-import { dimensionItems, optionName } from "@/columns.js";
+import { columnKind, dimensionItems, optionName } from "@/columns.js";
+import { orderDimensions } from "@/dimensionOrder.js";
 
 import PanelHeader from "@/components/PanelHeader.vue";
 
@@ -745,6 +757,8 @@ const ModelViewer = () =>
 const MIN_DETAILS_WIDTH = 140;
 // How many pictures settle the shape of the gallery's frames.
 const ASPECT_SAMPLES = 12;
+// How many values a card lists until the user picks them.
+const DEFAULT_DETAIL_COUNT = 8;
 
 export default {
   name: "AugmentedGridCards",
@@ -875,6 +889,7 @@ export default {
 
       colorColumn: (state) => state.colorColumn,
       uiMode: (state) => state.uiMode,
+      storedDetailDims: (state) => state.viewSettings.detailDims,
     }),
     ...mapGetters([
       "colorScale",
@@ -889,6 +904,8 @@ export default {
       "isSelectedInGallery",
       "gallerySelectedCount",
       "isInCart",
+      "goalDims",
+      "goalOf",
     ]),
     /** Whether the inspected option is on the shortlist. */
     inspectedInCart() {
@@ -1058,16 +1075,80 @@ export default {
         (x) => DETAIL_BLACKLIST.indexOf(x) === -1 && !isAssetColumn(x)
       );
     },
+    /** Every dimension a card could list, in reading order (dimensionOrder.js). */
+    orderedDetailKeys() {
+      let goals = this.goalDims;
+      let numeric = this.numericDimensions;
+      return orderDimensions(this.filteredKeys, {
+        hasGoal: (dim) => goals.includes(dim),
+        kindOf: columnKind,
+        isNumeric: (dim) => numeric.includes(dim),
+      });
+    },
+    detailItems() {
+      return dimensionItems(this.orderedDetailKeys);
+    },
     /**
-     * What a card lists when it is large enough to show its values, with
-     * whatever the colours follow at the top. The mat says which options are
-     * high or low; the first row says by how much.
+     * Columns of web addresses: still there to pick, but no default lists
+     * them, as Compare doesn't -- a card has no room for an address.
+     */
+    linkDetailKeys() {
+      let rows = (this.rawChartData || []).slice(0, 50);
+      return this.filteredKeys.filter(
+        (dim) =>
+          !this.numericDimensions.includes(dim) &&
+          isLinkColumn(dim, rows.map((row) => row[dim]))
+      );
+    },
+    /**
+     * What a card lists: the dimensions chosen in the header, or else the
+     * first few in reading order. Whatever the colours follow comes first,
+     * as the card's edge shows it.
      */
     detailKeys() {
-      let keys = this.filteredKeys;
+      let ordered = this.orderedDetailKeys;
+      let chosen = (this.storedDetailDims || []).filter((dim) =>
+        ordered.includes(dim)
+      );
+      let links = this.linkDetailKeys;
+      let keys =
+        chosen.length > 0
+          ? chosen
+          : ordered.filter((dim) => !links.includes(dim)).slice(0, DEFAULT_DETAIL_COUNT);
       let coloured = this.colorColumn;
-      if (!coloured || keys.indexOf(coloured) === -1) return keys;
-      return [coloured].concat(keys.filter((key) => key !== coloured));
+      if (!coloured || ordered.indexOf(coloured) === -1) return keys;
+      let rest = keys.filter((key) => key !== coloured);
+      return [coloured].concat(chosen.length > 0 ? rest : rest.slice(0, DEFAULT_DETAIL_COUNT - 1));
+    },
+    /** How each listed number is written, the same on every card (see GalleryCard). */
+    detailScales() {
+      let rows = this.rawChartData || [];
+      let scales = {};
+      this.detailKeys.forEach((dim) => {
+        if (!this.numericDimensions.includes(dim)) return;
+        let lo = Infinity;
+        let hi = -Infinity;
+        let biggest = 0;
+        rows.forEach((row) => {
+          let value = row[dim];
+          if (typeof value !== "number" || !isFinite(value)) return;
+          if (value < lo) lo = value;
+          if (value > hi) hi = value;
+          if (Math.abs(value) > biggest) biggest = Math.abs(value);
+        });
+        let bounds = this.$store.getters.fixedBoundsOf(dim);
+        let span = bounds ? bounds[1] - bounds[0] : hi > lo ? hi - lo : 0;
+        scales[dim] = { span: span, magnitude: biggest };
+      });
+      return scales;
+    },
+    detailGoals() {
+      let goals = {};
+      this.goalDims.forEach((dim) => {
+        let goal = this.goalOf(dim);
+        if (goal) goals[dim] = goal;
+      });
+      return goals;
     },
     /**
      * Whether a column has room for a card's values under its picture: a
@@ -1104,6 +1185,9 @@ export default {
     },
   },
   mounted() {
+    // Not reactive: nothing renders from it.
+    this.valuesScrollTop = 0;
+    this.$el.addEventListener("scroll", this.syncValuesScroll, true);
     Vue.nextTick(() => {
       this.attachGalleryScrollListener();
       this.measureRowHeight();
@@ -1439,6 +1523,32 @@ export default {
       let w = this.visibleWindow(total);
       let remainingRows = Math.ceil((total - w.end) / this.columnsPerRow);
       return Math.max(0, remainingRows) * this.rowHeight;
+    },
+    /** Kept in reading order, whatever order they were picked in. */
+    onDetailDimsChange(value) {
+      let ordered = this.orderedDetailKeys.filter((dim) => value.includes(dim));
+      this.$store.commit("setViewSetting", { key: "detailDims", value: ordered });
+    },
+    /**
+     * Open cards' values scroll together: the same rows in the same order,
+     * so the row at the top of one is the row at the top of all. Scroll
+     * events don't bubble, so this listens in the capture phase. Moving the
+     * others fires their own scroll events, which find them already where
+     * the first one is and stop there.
+     */
+    syncValuesScroll(event) {
+      let target = event.target;
+      if (!target || !target.classList || !target.classList.contains("card-values")) return;
+      let top = target.scrollTop;
+      if (Math.abs(top - this.valuesScrollTop) < 1) return;
+      this.valuesScrollTop = top;
+      this.$el.querySelectorAll(".card-values").forEach((node) => {
+        if (node !== target && Math.abs(node.scrollTop - top) >= 1) node.scrollTop = top;
+      });
+    },
+    /** A card's values just opened: to where the others are. */
+    onValuesOpen(node) {
+      if (node && this.valuesScrollTop > 0) node.scrollTop = this.valuesScrollTop;
     },
     imageLoaded(event) {
       this.numLoadedImages += 1;
@@ -1899,6 +2009,7 @@ export default {
     if (this._measureTimer) clearTimeout(this._measureTimer);
     if (this._scrollRaf) cancelAnimationFrame(this._scrollRaf);
     window.removeEventListener("keydown", this.onWindowKeydown);
+    this.$el.removeEventListener("scroll", this.syncValuesScroll, true);
     if (this.unsubscribeStore) this.unsubscribeStore();
     this.$store.commit("removeView", { view: this.viewID });
   },

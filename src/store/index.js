@@ -329,6 +329,8 @@ function builder(
         scatterY: null,
         // The dimensions of the scatterplot matrix, in order.
         matrixDims: null,
+        // The values a gallery card lists, in order; null for the default.
+        detailDims: null,
       },
       ...dimensions.state,
       ...goals.state,
