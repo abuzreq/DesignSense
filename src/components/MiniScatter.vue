@@ -81,6 +81,7 @@ import * as d3 from "d3";
 import { mapGetters } from "vuex";
 import { GOAL_MARKS, displayName } from "@/columns.js";
 import { axisTickFormat } from "@/components/axisFormat.js";
+import { scaleOf } from "@/textSize.js";
 
 const MARGIN = { top: 8, right: 10, bottom: 34, left: 46 };
 const BASE_COLOR = "#cfd8dc";
@@ -118,7 +119,7 @@ export default {
     isMissing: { type: Function, default: defaultIsMissing },
   },
   data() {
-    return { MARGIN: MARGIN, width: 320 };
+    return { width: 320 };
   },
   mounted() {
     this.measure();
@@ -133,11 +134,24 @@ export default {
   },
   computed: {
     ...mapGetters(["goalOf"]),
+    /**
+     * The room around the plot, the side and foot that hold the tick labels
+     * and the axis names growing with the reader's text size.
+     */
+    MARGIN() {
+      let scale = scaleOf(this.$store.state.textSize);
+      return {
+        top: MARGIN.top,
+        right: MARGIN.right,
+        bottom: Math.round(MARGIN.bottom * scale),
+        left: Math.round(MARGIN.left * scale),
+      };
+    },
     innerWidth() {
-      return Math.max(10, this.width - MARGIN.left - MARGIN.right);
+      return Math.max(10, this.width - this.MARGIN.left - this.MARGIN.right);
     },
     innerHeight() {
-      return Math.max(10, this.height - MARGIN.top - MARGIN.bottom);
+      return Math.max(10, this.height - this.MARGIN.top - this.MARGIN.bottom);
     },
     frameStyle() {
       return { width: this.width + "px", height: this.height + "px" };
@@ -214,7 +228,7 @@ export default {
     },
     drawSignature() {
       // Everything a redraw depends on, read so the watcher follows it.
-      return [this.grouped, this.xScale, this.yScale, this.width, this.height];
+      return [this.grouped, this.xScale, this.yScale, this.width, this.height, this.MARGIN];
     },
   },
   watch: {
@@ -280,15 +294,15 @@ export default {
       ctx.clearRect(0, 0, this.width, this.height);
       ctx.save();
       ctx.beginPath();
-      ctx.rect(MARGIN.left, MARGIN.top, this.innerWidth, this.innerHeight);
+      ctx.rect(this.MARGIN.left, this.MARGIN.top, this.innerWidth, this.innerHeight);
       ctx.clip();
       let x = this.xScale;
       let y = this.yScale;
       let dot = (row, radius) => {
-        ctx.moveTo(MARGIN.left + x(Number(row[this.x])) + radius, MARGIN.top + y(Number(row[this.y])));
+        ctx.moveTo(this.MARGIN.left + x(Number(row[this.x])) + radius, this.MARGIN.top + y(Number(row[this.y])));
         ctx.arc(
-          MARGIN.left + x(Number(row[this.x])),
-          MARGIN.top + y(Number(row[this.y])),
+          this.MARGIN.left + x(Number(row[this.x])),
+          this.MARGIN.top + y(Number(row[this.y])),
           radius,
           0,
           2 * Math.PI

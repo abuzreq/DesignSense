@@ -52,12 +52,16 @@ export default {
 .panel-header-icon.v-icon {
   color: #546e7a;
 }
+/* Clipped rather than spilled over the toggles on the right, should larger
+   text leave its controls more than the room there is; the ellipsising hint
+   gives way first. */
 .panel-header-main {
   display: flex;
   align-items: center;
   gap: 4px;
   flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
 }
 .panel-header-actions {
   display: flex;

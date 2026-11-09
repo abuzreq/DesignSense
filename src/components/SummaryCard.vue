@@ -301,6 +301,9 @@ export default {
 </script>
 
 <style scoped>
+/* Fixed sizes, whatever the reader's text size: the card becomes an image,
+   and has to look the same wherever it is sent. The two below are what it
+   used to inherit from Vuetify's rem-based card text. */
 .summary-card {
   box-sizing: border-box;
   display: flex;
@@ -309,6 +312,8 @@ export default {
   background: #ffffff;
   color: #263238;
   font-family: Roboto, "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 22px;
   overflow: hidden;
 }
 .sc-head {

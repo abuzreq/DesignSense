@@ -3,7 +3,7 @@
     <PanelHeader
       icon="mdi-chart-timeline-variant"
       title="Parallel coordinates"
-      :compact="width < 640"
+      :compact="width < 640 * textScale"
     >
       <template v-slot:default>
         <span class="ph-label">Colour</span>
@@ -93,6 +93,7 @@
 </template>
 
 <script>
+import { scaleOf, textPx } from "@/textSize.js";
 import "parcoord-es/dist/parcoords.css";
 
 import ParCoords from "parcoord-es";
@@ -341,10 +342,16 @@ export default {
     visibleAxisCount() {
       return this.axisOptions.filter((dim) => this.isAxisShown(dim)).length;
     },
+    /** Larger text needs a wider panel before the header has room for its title. */
+    textScale() {
+      return scaleOf(this.$store.state.textSize);
+    },
     /** Room above the axes for the titles: one row, or two. */
     chartMargin() {
+      // Read so the margin follows the reader's text size (textPx isn't reactive).
+      void this.$store.state.textSize;
       return {
-        top: TITLE_MARGIN_TOP + (this.titleRows - 1) * TITLE_ROW_HEIGHT,
+        top: textPx(TITLE_MARGIN_TOP) + (this.titleRows - 1) * textPx(TITLE_ROW_HEIGHT),
         right: 20,
         bottom: 12,
         left: 20,
@@ -1135,7 +1142,7 @@ export default {
         // Rows run from the one nearest the axes upward, so the leftmost
         // title keeps the place a single row would have given it.
         let row = at % rows;
-        label.attr("x", center - x).attr("y", -row * TITLE_ROW_HEIGHT);
+        label.attr("x", center - x).attr("y", -row * textPx(TITLE_ROW_HEIGHT));
         // Down the axis's own x, whatever the title was nudged to.
         let group = d3.select(node.parentNode);
         let leader = group
@@ -1149,7 +1156,7 @@ export default {
           .merge(leader)
           .attr("x1", 0)
           .attr("x2", 0)
-          .attr("y1", (d) => -d * TITLE_ROW_HEIGHT - 6)
+          .attr("y1", (d) => -d * textPx(TITLE_ROW_HEIGHT) - 6)
           .attr("y2", -2);
       });
       this.fittedTitlesKey = measured ? key : null;
@@ -1615,7 +1622,7 @@ export default {
     //array of tuples where each is [x,y,text]  for the tooltip
     createTooltip(specs) {
       // add rectangles
-      var fontSize = 14;
+      var fontSize = textPx(14);
       var padding = 2;
       var rectHeight = fontSize + 2 * padding; //based on font size
 

@@ -307,10 +307,14 @@ export default {
   font-size: 12px;
   color: rgba(0, 0, 0, 0.55);
 }
+/* A page of the PDF: fixed sizes, whatever the reader's text size (see the
+   summary card's own). */
 .sr-page {
   overflow: hidden;
   margin-bottom: 14px;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.18);
+  font-size: 14px;
+  line-height: 22px;
 }
 .sr-note {
   margin-top: 6px;
