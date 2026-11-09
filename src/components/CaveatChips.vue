@@ -62,7 +62,7 @@ export default {
   background: #f1f4f6;
   color: #546e7a;
   font-size: var(--ds-fs-sm);
-  line-height: 20px;
+  line-height: calc(20px * var(--ds-text-scale));
   cursor: help;
 }
 .caveat--warn {

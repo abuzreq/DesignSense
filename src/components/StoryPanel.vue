@@ -215,7 +215,7 @@ export default {
   background: #263238;
   color: #fff;
   font-size: var(--ds-fs-sm);
-  line-height: 20px;
+  line-height: calc(20px * var(--ds-text-scale));
   text-align: center;
 }
 .sp-name {

@@ -349,7 +349,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 10px;
   font-size: var(--ds-fs-xs);
-  line-height: 16px;
+  line-height: calc(16px * var(--ds-text-scale));
   white-space: nowrap;
   cursor: pointer;
 }

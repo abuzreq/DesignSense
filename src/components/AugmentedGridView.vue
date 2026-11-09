@@ -539,7 +539,7 @@
   min-width: 240px;
   height: var(--inspector-image-height, 38vh);
   width: auto;
-  font-size: small;
+  font-size: var(--ds-fs-md);
   opacity: 0.8;
 }
 ::v-deep .inspected_image {

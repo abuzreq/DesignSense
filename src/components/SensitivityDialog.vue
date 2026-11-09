@@ -2280,7 +2280,7 @@ export default {
   gap: 6px;
   min-width: 0;
   font-size: var(--ds-fs-md);
-  line-height: 18px;
+  line-height: calc(18px * var(--ds-text-scale));
   color: #37474f;
 }
 .ax-dim-name {
@@ -2293,7 +2293,7 @@ export default {
   padding: 0 5px;
   border-radius: 3px;
   font-size: var(--ds-fs-xs);
-  line-height: 16px;
+  line-height: calc(16px * var(--ds-text-scale));
   background: #eceff1;
   color: #607d8b;
 }
@@ -2411,7 +2411,7 @@ export default {
   transform: translateX(-50%);
   margin-bottom: 2px;
   font-size: var(--ds-fs-xs);
-  line-height: 13px;
+  line-height: calc(13px * var(--ds-text-scale));
   color: #546e7a;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -2422,7 +2422,7 @@ export default {
   flex: 0 0 15px;
   margin-bottom: 2px;
   font-size: var(--ds-fs-xs);
-  line-height: 15px;
+  line-height: calc(15px * var(--ds-text-scale));
   color: #78909c;
   font-variant-numeric: tabular-nums;
 }
@@ -2436,7 +2436,7 @@ export default {
   justify-content: space-between;
   gap: 6px;
   font-size: var(--ds-fs-sm);
-  line-height: 16px;
+  line-height: calc(16px * var(--ds-text-scale));
   color: #78909c;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;

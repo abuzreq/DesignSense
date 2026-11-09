@@ -561,7 +561,7 @@ export default {
   background: var(--ds-shortlist);
   color: #fff;
   font-size: var(--ds-fs-xs);
-  line-height: 18px;
+  line-height: calc(18px * var(--ds-text-scale));
   text-align: center;
 }
 .cart-empty {
@@ -718,7 +718,7 @@ export default {
 }
 .set-count {
   font-size: var(--ds-fs-sm);
-  line-height: 18px;
+  line-height: calc(18px * var(--ds-text-scale));
   padding: 0 7px;
   border-radius: 9px;
   background: #e3eaf2;
@@ -732,7 +732,7 @@ export default {
 }
 .set-chip {
   font-size: var(--ds-fs-xs);
-  line-height: 18px;
+  line-height: calc(18px * var(--ds-text-scale));
   padding: 0 7px;
   border-radius: 9px;
   max-width: 100%;

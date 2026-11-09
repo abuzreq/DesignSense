@@ -226,7 +226,7 @@
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.12);
   font-size: var(--ds-fs-sm);
-  line-height: 18px;
+  line-height: calc(18px * var(--ds-text-scale));
   white-space: nowrap;
   cursor: pointer;
 }

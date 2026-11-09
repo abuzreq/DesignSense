@@ -79,6 +79,74 @@ html:root {
 }
 
 /*
+ * Vuetify's own text, onto the scale. It writes most of its sizes in rem,
+ * which the root above scales, but these in pixels: chips, badges, form
+ * fields and their labels, messages, tooltips. Each gets its step here, and
+ * the box around it the same multiplier, so text never comes to fill its
+ * box at the larger sizes. Icon-only buttons keep their size: an icon is not
+ * text.
+ *
+ * The same goes for any box sized to hold text: a dialog of a fixed width is
+ * given it as `min(calc(Npx * var(--ds-text-scale)), 94vw)` (Vuetify passes
+ * a width that isn't a number straight to the style), a header's picker
+ * likewise, so their text wraps at the same words at every size.
+ */
+.v-application .v-chip.v-size--x-small {
+  font-size: var(--ds-fs-2xs);
+  height: calc(16px * var(--ds-text-scale));
+}
+.v-application .v-chip.v-size--small {
+  font-size: var(--ds-fs-sm);
+  height: calc(24px * var(--ds-text-scale));
+  border-radius: calc(12px * var(--ds-text-scale));
+}
+.v-application .v-chip.v-size--default {
+  font-size: var(--ds-fs-base);
+  height: calc(32px * var(--ds-text-scale));
+  border-radius: calc(16px * var(--ds-text-scale));
+}
+/* A badge sits on the corner of an icon, which doesn't grow: past 125% it
+   would cover it, so it stops there, its count with it. */
+.v-application .v-badge__badge {
+  --badge-scale: min(var(--ds-text-scale), 1.25);
+  font-size: calc(12px * var(--badge-scale));
+  height: calc(20px * var(--badge-scale));
+  min-width: calc(20px * var(--badge-scale));
+  border-radius: calc(10px * var(--badge-scale));
+  padding: calc(4px * var(--badge-scale)) calc(6px * var(--badge-scale));
+}
+.v-application .v-input,
+.v-application .v-label {
+  font-size: var(--ds-fs-xl);
+}
+.v-application .v-input .v-label {
+  height: calc(20px * var(--ds-text-scale));
+  line-height: calc(20px * var(--ds-text-scale));
+}
+.v-application .v-input input {
+  max-height: calc(32px * var(--ds-text-scale));
+}
+.v-application .v-messages {
+  font-size: var(--ds-fs-sm);
+}
+.v-application .v-messages__message {
+  line-height: calc(12px * var(--ds-text-scale));
+}
+.v-tooltip__content {
+  font-size: var(--ds-fs-base) !important;
+  line-height: calc(22px * var(--ds-text-scale)) !important;
+}
+.v-application .v-btn:not(.v-btn--icon):not(.v-btn--fab):not(.v-btn--round).v-size--x-small {
+  height: calc(20px * var(--ds-text-scale));
+}
+.v-application .v-btn:not(.v-btn--icon):not(.v-btn--fab):not(.v-btn--round).v-size--small {
+  height: calc(28px * var(--ds-text-scale));
+}
+.v-application .v-btn:not(.v-btn--icon):not(.v-btn--fab):not(.v-btn--round).v-size--default {
+  height: calc(36px * var(--ds-text-scale));
+}
+
+/*
  * The wordmark's typeface, for the app's name in the bar and nothing else.
  * One variable file covering 300 to 700, the latin subset, 36 kB, served from
  * here rather than from Google: the name is worth a light weight beside a bold
