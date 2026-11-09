@@ -677,7 +677,8 @@
                 Text size
               </h3>
               <p class="ds-welcome-layout-help">
-                Larger text across the whole interface. Kept in this browser.
+                Larger text and icons across the whole interface. Kept in this
+                browser.
               </p>
             </div>
             <div
@@ -700,13 +701,12 @@
                 @keydown="onTextSizeKey(index, $event)"
               >
                 <!-- Each sample at the size it stands for, whatever is in
-                     effect now: a fixed size, not a step of the scale. -->
-                <span
-                  class="ds-welcome-text-sample"
-                  :style="{ fontSize: Math.round(18 * size.scale) + 'px' }"
-                  aria-hidden="true"
-                  >Aa</span
-                >
+                     effect now: fixed sizes, not steps of the scale, and an
+                     icon held at its own scale (see the style). -->
+                <span class="ds-welcome-text-sample" aria-hidden="true">
+                  <span :style="{ fontSize: Math.round(16 * size.scale) + 'px' }">Aa</span>
+                  <v-icon :size="Math.round(16 * size.scale)">mdi-image-outline</v-icon>
+                </span>
                 <span class="ds-welcome-layout-name">{{ size.label }}</span>
               </button>
             </div>
@@ -1475,37 +1475,38 @@ body {
 .ds-welcome-layout-btn--on .ds-welcome-layout-name {
   color: #0d47a1;
 }
-/* Text size: the same card group as the layouts, beside its heading. */
+/* Text size: a compact row of choices beside its heading, lighter than
+   the layout cards above it, as a setting rather than a decision. */
 .ds-welcome-text {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 24px;
-  margin-top: 24px;
-  padding-top: 20px;
+  gap: 10px 20px;
+  margin-top: 18px;
+  padding-top: 14px;
   border-top: 1px solid #eceff1;
 }
 .ds-welcome-text-intro {
-  flex: 1 1 220px;
+  flex: 1 1 200px;
 }
 .ds-welcome-text-intro .ds-welcome-layout-help {
-  margin-bottom: 0 !important;
+  margin: 2px 0 0 !important;
 }
 .ds-welcome-text-choices {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(84px, 1fr));
-  gap: 10px;
-  flex: 2 1 420px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 0 1 auto;
 }
 .ds-welcome-text-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  min-height: 72px;
-  padding: 8px 6px;
+  min-width: calc(76px * var(--ds-text-scale));
+  padding: 5px 10px 6px;
   border: 1px solid #cfd8dc;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #fff;
   cursor: pointer;
   transition: border-color 0.12s, box-shadow 0.12s, background-color 0.12s;
@@ -1529,13 +1530,29 @@ body {
 .ds-welcome-text-btn--on .ds-welcome-layout-name {
   color: #0d47a1;
 }
+/* The letters and the icon on one baseline, each at the size the choice
+   gives it. The icon's size is in pixels already, so the icon scale in
+   effect is set aside for it. */
 .ds-welcome-text-sample {
+  --ds-icon-scale: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-weight: 600;
   line-height: 1.1;
   color: #37474f;
 }
+.ds-welcome-text-sample .v-icon {
+  color: #546e7a;
+}
+.ds-welcome-text-btn--on .ds-welcome-text-sample,
+.ds-welcome-text-btn--on .ds-welcome-text-sample .v-icon {
+  color: #0d47a1;
+}
 .ds-welcome-text-btn .ds-welcome-layout-name {
-  margin-top: 6px;
+  margin-top: 3px;
+  font-size: var(--ds-fs-sm);
+  font-weight: 500;
 }
 .ds-shortcuts-heading {
   margin: 12px 0 4px;
