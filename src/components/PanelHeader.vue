@@ -39,7 +39,7 @@ export default {
   background: #f7f9fb;
   border-bottom: 1px solid #e3e8ee;
   color: #37474f;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .panel-header-title {
   display: flex;
@@ -69,7 +69,7 @@ export default {
 /* Controls placed in the header. */
 .panel-header ::v-deep .ph-label {
   color: #546e7a;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   font-weight: 500;
   white-space: nowrap;
 }
@@ -85,7 +85,7 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #546e7a;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
 }
 .panel-header ::v-deep .ph-divider {
   flex: 0 0 auto;
@@ -98,7 +98,7 @@ export default {
   flex: 0 1 160px;
   min-width: 90px;
   margin: 0 2px 0 4px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .panel-header ::v-deep .ph-select--narrow {
   flex: 0 0 68px;

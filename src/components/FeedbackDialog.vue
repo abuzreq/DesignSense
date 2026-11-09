@@ -302,7 +302,7 @@ export default {
 }
 .fb-lead {
   margin-bottom: 8px;
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
   color: #37474f;
 }
 .fb-lead--error {
@@ -327,7 +327,7 @@ export default {
   border-radius: 4px;
 }
 .fb-note {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #78909c;
 }
 .fb-privacy {
@@ -335,7 +335,7 @@ export default {
   align-items: flex-start;
   gap: 6px;
   margin: 10px 0 0;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.4;
   color: #2e7d32;
 }
@@ -345,7 +345,7 @@ export default {
 }
 .fb-details {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: #546e7a;
 }
 .fb-details summary {
@@ -356,7 +356,7 @@ export default {
   overflow: auto;
   margin-top: 4px;
   padding: 6px 8px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   white-space: pre-wrap;
   word-break: break-word;
   background: #f5f7f8;

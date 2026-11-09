@@ -147,7 +147,7 @@ export default {
 }
 .pm-head {
   height: 28px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -162,10 +162,10 @@ export default {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .pm-note {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   white-space: normal;
   line-height: 1.3;
 }
@@ -181,7 +181,7 @@ export default {
 }
 .pm-foot {
   padding: 8px 12px 4px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.35;
   color: #78909c;
 }

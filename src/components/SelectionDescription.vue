@@ -438,7 +438,7 @@ export default {
   padding: 0 7px;
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 10px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   line-height: 16px;
   white-space: nowrap;
   cursor: default;
@@ -488,7 +488,7 @@ export default {
 /* AND and OR, alike wherever they join. */
 .sd-op {
   flex: 0 0 auto;
-  font-size: 10px;
+  font-size: var(--ds-fs-2xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   opacity: 0.85;
@@ -502,7 +502,7 @@ export default {
   margin-top: 10px;
   padding-top: 8px;
   border-top: 1px solid #e3e8ee;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #37474f;
 }
 .sd-history-head {
@@ -523,7 +523,7 @@ export default {
 }
 .sd-panel > .sd-note {
   margin: 8px 0 0;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.45;
 }
 </style>

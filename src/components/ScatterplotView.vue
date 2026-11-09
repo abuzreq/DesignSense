@@ -320,7 +320,7 @@
   fill: currentColor;
 }
 ::v-deep .axis .tick text {
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
 }
 
 div ::v-deep .axis line {
@@ -354,7 +354,7 @@ div ::v-deep .trend-line {
 }
 div ::v-deep .trend-label {
   fill: #263238;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   font-variant-numeric: tabular-nums;
   text-anchor: end;
   pointer-events: none;

@@ -956,11 +956,11 @@
   padding: 8px 16px;
   border-radius: 8px 8px 0 0;
   color: #fff;
-  font-size: 15px;
+  font-size: var(--ds-fs-lg);
   font-weight: 600;
 }
 .v-tour .v-step__content {
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
   line-height: 1.5;
   text-align: left;
 }
@@ -1005,7 +1005,7 @@ body {
    32px buttons under a 10px label, the group had become hard to read and
    hard to hit; a 60px bar buys all three a step back. */
 .v-app-bar .v-btn--icon.v-size--default .v-icon {
-  font-size: 22px;
+  font-size: var(--ds-fs-3xl);
   width: 22px;
   height: 22px;
 }
@@ -1017,7 +1017,7 @@ body {
   margin: 0 2px;
 }
 .ui-mode-toggle .v-btn {
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   letter-spacing: 0.04em;
 }
 .ds-layout-slot {
@@ -1032,7 +1032,7 @@ body {
 .ds-title {
   flex: 0 0 auto;
   margin-right: 2px;
-  font-size: 18px !important;
+  font-size: var(--ds-fs-2xl) !important;
   /* The mark and the name side by side; the name stays one inline run, its
      two halves set close rather than spaced as flex items. */
   display: flex;
@@ -1116,7 +1116,7 @@ body {
   height: 32px !important;
 }
 .ds-history .v-btn--icon.v-size--default .v-icon {
-  font-size: 20px;
+  font-size: var(--ds-fs-3xl);
   width: 20px;
   height: 20px;
 }
@@ -1127,7 +1127,7 @@ body {
 }
 @media (max-width: 600px) {
   .ds-welcome .v-card__title {
-    font-size: 20px !important;
+    font-size: var(--ds-fs-3xl) !important;
   }
 }
 .ds-welcome-body {
@@ -1153,7 +1153,7 @@ body {
 .ds-welcome-lead {
   flex: 1 1 300px;
   margin-bottom: 0 !important;
-  font-size: 15px;
+  font-size: var(--ds-fs-lg);
   line-height: 1.6;
 }
 .ds-welcome-video {
@@ -1215,7 +1215,7 @@ body {
   outline-offset: -3px;
 }
 .ds-welcome-video-caption {
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 500;
   letter-spacing: 0.01em;
 }
@@ -1239,14 +1239,14 @@ body {
   align-items: center;
   gap: 8px;
   margin: 0 0 8px;
-  font-size: 15px;
+  font-size: var(--ds-fs-lg);
   font-weight: 600;
   color: #263238;
 }
 .ds-welcome-choice p {
   flex: 1 1 auto;
   margin-bottom: 18px !important;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   line-height: 1.5;
 }
 /* A card's buttons each take its width, one under the other: the two data
@@ -1274,7 +1274,7 @@ body {
   flex-wrap: wrap;
   gap: 4px 18px;
   margin-top: 12px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .ds-welcome-more a {
   display: inline-flex;
@@ -1295,7 +1295,7 @@ body {
   align-items: center;
   gap: 8px;
   margin: 24px 0 4px !important;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: #2e7d32;
 }
 .ds-welcome-actions {
@@ -1310,14 +1310,14 @@ body {
   padding-top: 0;
 }
 .ds-welcome-actions .v-label {
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .ds-welcome-links {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 8px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #78909c;
 }
 .ds-welcome-links a {
@@ -1329,7 +1329,7 @@ body {
 }
 .ds-layout-picks-head {
   margin-bottom: 4px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1342,7 +1342,7 @@ body {
 .ds-layout-tip {
   max-width: 230px;
   margin-top: 7px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.35;
   color: #78909c;
 }
@@ -1354,13 +1354,13 @@ body {
 }
 .ds-welcome-layout-head {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--ds-fs-lg);
   font-weight: 600;
   color: #263238;
 }
 .ds-welcome-layout-help {
   margin: 6px 0 16px !important;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   line-height: 1.45;
   color: #546e7a;
 }
@@ -1424,7 +1424,7 @@ body {
 .ds-welcome-layout-name {
   display: block;
   margin-top: 8px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 600;
   line-height: 1.25;
   color: #37474f;
@@ -1439,7 +1439,7 @@ body {
 .ds-shortcuts {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
 }
 .ds-shortcuts td {
   padding: 4px 8px 4px 0;
@@ -1455,7 +1455,7 @@ body {
   background: #eceff1;
   color: #263238;
   box-shadow: none;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .ds-work-area {
   position: relative;

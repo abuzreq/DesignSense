@@ -1163,7 +1163,7 @@ export default {
 .matrix-hint {
   flex: 0 0 auto;
   margin: 6px 10px 4px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #546e7a;
 }
 .matrix-area {
@@ -1225,7 +1225,7 @@ export default {
   left: 4px;
   right: 4px;
   top: 2px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   font-weight: 600;
   color: #37474f;
   white-space: nowrap;
@@ -1259,7 +1259,7 @@ export default {
   stroke-width: 1;
 }
 .matrix-axis-text {
-  font-size: 10px;
+  font-size: var(--ds-fs-2xs);
   fill: #546e7a;
 }
 .matrix-bar--selected {
@@ -1323,7 +1323,7 @@ export default {
   padding: 0 4px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.9);
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   color: #263238;
   white-space: nowrap;
   pointer-events: none;

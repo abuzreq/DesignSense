@@ -170,7 +170,7 @@ export default {
   padding: 8px 8px 4px 14px;
 }
 .sp-title {
-  font-size: 16px;
+  font-size: var(--ds-fs-xl);
   font-weight: 500;
 }
 .sp-count {
@@ -178,7 +178,7 @@ export default {
   padding: 0 7px;
   border-radius: 10px;
   background: #eceff1;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
 }
 .sp-capture {
   width: calc(100% - 24px) !important;
@@ -186,7 +186,7 @@ export default {
 }
 .sp-empty {
   padding: 8px 16px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   line-height: 1.5;
   color: rgba(0, 0, 0, 0.6);
 }
@@ -214,7 +214,7 @@ export default {
   border-radius: 50%;
   background: #263238;
   color: #fff;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 20px;
   text-align: center;
 }
@@ -224,7 +224,7 @@ export default {
   padding: 2px 4px;
   border: 1px solid transparent;
   border-radius: 3px;
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
   font-weight: 500;
 }
 .sp-name:hover,
@@ -234,7 +234,7 @@ export default {
 }
 .sp-meta {
   margin: 2px 0 6px 26px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: rgba(0, 0, 0, 0.55);
 }
 .sp-note {
@@ -242,7 +242,7 @@ export default {
   padding: 6px 8px;
   border: 1px solid rgba(0, 0, 0, 0.18);
   border-radius: 4px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   line-height: 1.4;
   resize: vertical;
 }
@@ -260,7 +260,7 @@ export default {
 .sp-actions .v-btn {
   min-width: 0 !important;
   padding: 0 6px !important;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   letter-spacing: normal;
   text-transform: none;
 }

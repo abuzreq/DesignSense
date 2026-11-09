@@ -502,12 +502,12 @@ export default {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 .sm-heading {
-  font-size: 18px;
+  font-size: var(--ds-fs-2xl);
   font-weight: 500;
 }
 .sm-meta {
   margin-left: 14px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: rgba(0, 0, 0, 0.6);
 }
 .sm-body {
@@ -527,7 +527,7 @@ export default {
 }
 .sm-note {
   margin-top: 10px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: rgba(0, 0, 0, 0.7);
 }
 .sm-side {
@@ -536,7 +536,7 @@ export default {
 }
 .sm-label {
   margin-bottom: 4px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -547,7 +547,7 @@ export default {
   align-items: flex-start;
   gap: 5px;
   margin-top: 6px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.35;
   color: rgba(0, 0, 0, 0.55);
 }
@@ -564,7 +564,7 @@ export default {
   margin-bottom: 8px;
 }
 .sm-sentence ::v-deep textarea {
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   line-height: 1.4;
 }
 .sm-reset {
@@ -575,14 +575,14 @@ export default {
 }
 .sm-hint {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: rgba(0, 0, 0, 0.55);
 }
 .sm-actions {
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 .sm-error {
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: #c62828;
 }
 </style>

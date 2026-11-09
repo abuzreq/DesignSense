@@ -641,18 +641,18 @@ export default {
   padding: 8px 12px 8px 16px !important;
 }
 .cmp-title-text {
-  font-size: 18px;
+  font-size: var(--ds-fs-2xl);
   font-weight: 500;
 }
 .cmp-count {
   margin-left: 10px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 400;
   color: #546e7a;
 }
 .cmp-overflow {
   padding: 0 16px 8px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #546e7a;
 }
 /* The heads on top, the values scrolling under them; never the
@@ -689,7 +689,7 @@ export default {
   /* Fixed columns, so the grid is wider than the card and scrolls. */
   width: max-content;
   min-width: 100%;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 /* The names stay put while the options scroll past them. */
 /* A label is a button when it sorts, so it has to give back the look of the
@@ -730,7 +730,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   color: #90a4ae;
 }
 .cmp-sort-hint .v-icon {
@@ -758,7 +758,7 @@ export default {
   border: 1px solid #cfd8dc;
   border-radius: 12px;
   background: #f5f8fa;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #546e7a;
   cursor: pointer;
 }
@@ -772,7 +772,7 @@ export default {
   z-index: 2;
   background: #fff;
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #546e7a;
   border-right: 1px solid #e3e8ee;
   border-bottom: 1px solid #eceff1;
@@ -862,7 +862,7 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;

@@ -671,7 +671,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 4px;
   color: #fff;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   padding: 4px 22px 4px 28px;
   outline: none;
 }
@@ -689,7 +689,7 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 6px 12px 7px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: rgba(255, 255, 255, 0.72);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -728,7 +728,7 @@ export default {
   border-radius: 4px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
   padding: 4px 0;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: rgba(255, 255, 255, 0.9);
 }
 .assistant-reply {
@@ -741,12 +741,12 @@ export default {
   margin-bottom: 2px;
 }
 .assistant-reply-text {
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   line-height: 1.35;
   opacity: 0.92;
 }
 .assistant-reply-note {
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   opacity: 0.55;
 }
 .assistant-reply--unknown .assistant-reply-text,
@@ -765,7 +765,7 @@ export default {
 }
 .assistant-hint {
   padding: 6px 10px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   font-style: italic;
   opacity: 0.55;
 }
@@ -773,7 +773,7 @@ export default {
   display: flex;
   gap: 10px;
   padding: 2px 10px 6px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   opacity: 0.8;
@@ -817,14 +817,14 @@ export default {
 }
 .assistant-item-hint {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   opacity: 0.55;
   flex: 0 0 auto;
 }
 .assistant-item-why {
   width: 12px;
   text-align: right;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   opacity: 0.5;
   flex: 0 0 auto;
 }
@@ -833,7 +833,7 @@ export default {
   align-items: center;
   gap: 6px;
   padding: 5px 10px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   cursor: pointer;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin-top: 2px;
@@ -854,7 +854,7 @@ export default {
   padding: 6px 10px 8px;
 }
 .assistant-card-lead {
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   opacity: 0.7;
   margin-bottom: 10px;
 }
@@ -862,7 +862,7 @@ export default {
   margin-bottom: 8px;
 }
 .assistant-group-name {
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   opacity: 0.6;
@@ -872,7 +872,7 @@ export default {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   padding: 2px 6px 2px 8px;
   border-radius: 3px;
   cursor: pointer;
@@ -888,11 +888,11 @@ export default {
 .assistant-group-item-hint {
   margin-left: auto;
   flex: 0 0 auto;
-  font-size: 10px;
+  font-size: var(--ds-fs-2xs);
   opacity: 0.5;
 }
 .assistant-card-note {
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   opacity: 0.7;
   margin-top: 10px;
 }

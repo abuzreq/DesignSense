@@ -516,7 +516,7 @@ export default {
 <style scoped>
 .load-title {
   padding: 20px 24px 8px !important;
-  font-size: 20px !important;
+  font-size: var(--ds-fs-3xl) !important;
 }
 .load-body {
   padding: 8px 24px 4px !important;
@@ -535,7 +535,7 @@ export default {
   align-items: center;
   gap: 6px;
   margin: 0 0 10px;
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
   font-weight: 600;
   color: #263238;
 }
@@ -567,7 +567,7 @@ export default {
 }
 .load-hint {
   margin: 10px 0 0 !important;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.5;
   color: #546e7a;
 }
@@ -595,7 +595,7 @@ export default {
   padding: 10px 12px;
   border-radius: 6px;
   background: #f5f7f8;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.5;
   color: #455a64;
 }
@@ -608,7 +608,7 @@ export default {
 .load-help ::v-deep .v-expansion-panel-header {
   min-height: 40px;
   padding: 0 4px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .load-help-title {
   display: inline-flex;
@@ -619,12 +619,12 @@ export default {
 }
 .load-help ::v-deep .v-expansion-panel-content__wrap {
   padding: 0 4px 8px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: #37474f;
 }
 .load-help h4 {
   margin: 14px 0 6px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 600;
   color: #263238;
 }
@@ -632,7 +632,7 @@ export default {
   background: #eceff1;
   color: #263238;
   box-shadow: none;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
 }
 .load-footer {
   flex-wrap: wrap;
@@ -645,7 +645,7 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #2e7d32;
 }
 /* A file is being dragged over the dialog. */

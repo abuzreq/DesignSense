@@ -1174,7 +1174,7 @@ export default {
   padding: 10px 12px 10px 16px !important;
 }
 .dims-title-text {
-  font-size: 18px;
+  font-size: var(--ds-fs-2xl);
   font-weight: 500;
   min-width: 0;
   overflow: hidden;
@@ -1185,7 +1185,7 @@ export default {
   max-height: 70vh;
 }
 .dims-intro {
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   line-height: 1.45;
   color: rgba(0, 0, 0, 0.7);
 }
@@ -1201,7 +1201,7 @@ export default {
 }
 .dims-origin {
   margin-left: 6px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   font-weight: 400;
   color: rgba(0, 0, 0, 0.55);
 }
@@ -1223,12 +1223,12 @@ export default {
   margin: 14px 0 6px;
 }
 .dims-section-title {
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
   font-weight: 600;
   color: #263238;
 }
 .dims-section-meta {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.45;
   color: rgba(0, 0, 0, 0.6);
 }
@@ -1244,7 +1244,7 @@ export default {
   font-weight: 500;
 }
 .goal-fixed {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: rgba(0, 0, 0, 0.55);
 }
 .goal-toggle.v-btn-toggle {
@@ -1255,7 +1255,7 @@ export default {
   height: 26px !important;
   min-width: 0;
   padding: 0 9px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   letter-spacing: 0;
   text-transform: none;
 }
@@ -1265,7 +1265,7 @@ export default {
   border: none;
   background: none;
   color: #1565c0;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   cursor: pointer;
 }
 .goals-more:hover {
@@ -1284,7 +1284,7 @@ export default {
   gap: 4px;
 }
 .dims-preview {
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: rgba(0, 0, 0, 0.7);
 }
 /* Dimension, slider, percentage, direction and remove on one line. */
@@ -1299,7 +1299,7 @@ export default {
 }
 .term-head {
   padding: 8px 0 2px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   letter-spacing: 0.02em;
   color: rgba(0, 0, 0, 0.5);
 }
@@ -1324,7 +1324,7 @@ export default {
 }
 .term-share ::v-deep input {
   text-align: right;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-variant-numeric: tabular-nums;
 }
 .term-share ::v-deep .v-text-field__suffix {
@@ -1332,7 +1332,7 @@ export default {
 }
 .dims-reference {
   margin: 16px 0 0;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.45;
   color: rgba(0, 0, 0, 0.6);
 }
@@ -1348,7 +1348,7 @@ export default {
   padding: 0 6px !important;
   letter-spacing: 0;
   text-transform: none;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
 }
 /* The direction disagrees with the dimension's goal. */
 .term-flip--conflict.v-btn {
@@ -1362,7 +1362,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 0 8px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   color: rgba(0, 0, 0, 0.55);
 }
 .term-conflict {

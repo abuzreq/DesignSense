@@ -5,7 +5,7 @@
  */
 .lv {
   padding: 16px 18px 12px;
-  font-size: 14px;
+  font-size: calc(14px * var(--ds-text-scale));
   line-height: 1.5;
   color: #37474f;
   background: #fff;
@@ -21,7 +21,7 @@
 .lv .lv-choice {
   padding: 5px 13px;
   font: inherit;
-  font-size: 13px;
+  font-size: calc(13px * var(--ds-text-scale));
   color: #455a64;
   background: #fff;
   border: 1px solid #cfd8dc;
@@ -45,14 +45,14 @@
   margin: 10px 0 0;
 }
 .lv .lv-hint {
-  font-size: 13px;
+  font-size: calc(13px * var(--ds-text-scale));
   color: #607d8b;
 }
 .lv .lv-clear {
   margin-left: 4px;
   padding: 0 8px;
   font: inherit;
-  font-size: 12px;
+  font-size: calc(12px * var(--ds-text-scale));
   color: #1565c0;
   background: none;
   border: 1px solid #90caf9;
@@ -72,19 +72,19 @@
   font-family: inherit;
 }
 .lv-kicker {
-  font-size: 10px;
+  font-size: calc(10px * var(--ds-text-scale));
   font-weight: 700;
   letter-spacing: 0.6px;
   fill: #78909c;
 }
 .lv-axis {
-  font-size: 13px;
+  font-size: calc(13px * var(--ds-text-scale));
   font-weight: 600;
   fill: #263238;
   text-anchor: middle;
 }
 .lv-end {
-  font-size: 10px;
+  font-size: calc(10px * var(--ds-text-scale));
   fill: #90a4ae;
   text-anchor: end;
 }
@@ -122,7 +122,7 @@
 }
 .lv-slider-name small {
   margin-left: 6px;
-  font-size: 12px;
+  font-size: calc(12px * var(--ds-text-scale));
   font-weight: 400;
   color: #78909c;
 }
@@ -152,7 +152,7 @@
   border-top: 1px solid #eceff1;
 }
 .lv-row--head {
-  font-size: 12px;
+  font-size: calc(12px * var(--ds-text-scale));
   font-weight: 600;
   color: #546e7a;
   background: #f4f6f8;
@@ -174,7 +174,7 @@
   text-align: right;
 }
 .lv-num small {
-  font-size: 11px;
+  font-size: calc(11px * var(--ds-text-scale));
   color: #90a4ae;
 }
 .lv-score {
@@ -212,7 +212,7 @@
     grid-template-columns: 18px minmax(52px, 1fr) repeat(4, minmax(34px, 0.7fr)) 34px;
     gap: 0 4px;
     padding: 6px 8px;
-    font-size: 11px;
+    font-size: calc(11px * var(--ds-text-scale));
   }
   /* No room for the bar: the number says it. */
   .lv-bar {

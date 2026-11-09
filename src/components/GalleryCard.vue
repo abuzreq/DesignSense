@@ -441,7 +441,7 @@ export default {
   border-radius: 0 0 4px 4px;
   background: transparent;
   font: inherit;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   color: #546e7a;
   cursor: pointer;
 }
@@ -645,7 +645,7 @@ export default {
   border-radius: 9px;
   background: rgba(38, 50, 56, 0.75);
   color: #fff;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   line-height: 18px;
 }
 

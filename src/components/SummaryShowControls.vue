@@ -157,7 +157,7 @@ export default {
 }
 .ssc-hint {
   display: block;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.3;
   color: rgba(0, 0, 0, 0.55);
 }
@@ -173,7 +173,7 @@ export default {
 .ssc-size-label {
   display: block;
   margin-bottom: 3px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: rgba(0, 0, 0, 0.7);
 }
 .ssc-size-toggle .v-btn {

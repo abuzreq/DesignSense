@@ -153,7 +153,7 @@ export default {
 /* The low end before the bar, the high end after it. */
 .ck-end {
   order: 1;
-  font-size: 10px;
+  font-size: var(--ds-fs-2xs);
   color: #78909c;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;

@@ -60,7 +60,7 @@ export default {
   height: 36px !important;
 }
 .toolbar-group-label {
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   line-height: 12px;
   letter-spacing: 0.02em;
   color: #b0bec5;

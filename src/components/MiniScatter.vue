@@ -346,12 +346,12 @@ export default {
 }
 .ms-axis text {
   fill: #78909c;
-  font-size: 10px;
+  font-size: var(--ds-fs-2xs);
   font-variant-numeric: tabular-nums;
 }
 .ms-axis .ms-title {
   fill: #455a64;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   font-weight: 600;
 }
 .ms-fence {
@@ -371,7 +371,7 @@ export default {
   flex-wrap: wrap;
   gap: 2px 12px;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   color: #546e7a;
 }
 .ms-key {

@@ -225,7 +225,7 @@
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.12);
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 18px;
   white-space: nowrap;
   cursor: pointer;
@@ -240,13 +240,13 @@
 }
 .selection-panel {
   padding: 10px 12px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .selection-panel-head {
   margin-bottom: 8px;
 }
 .held-hint {
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   opacity: 0.8;
   white-space: nowrap;
 }
@@ -274,7 +274,7 @@
   display: flex;
   align-items: center;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
 }
 .operation-container.selected {
   padding-right: 6px;
@@ -299,7 +299,7 @@
   text-transform: none;
   letter-spacing: 0;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   padding: 0 4px !important;
   min-width: 0 !important;
 }

@@ -61,7 +61,7 @@ export default {
   border-radius: 11px;
   background: #f1f4f6;
   color: #546e7a;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 20px;
   cursor: help;
 }
@@ -78,7 +78,7 @@ export default {
 }
 .caveat-tip-line {
   display: block;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.45;
 }
 .caveat-tip-line + .caveat-tip-line {

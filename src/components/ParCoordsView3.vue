@@ -286,7 +286,7 @@ export default {
 
 #tooltip {
   font-family: sans-serif;
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
   font-weight: bold;
   color: black;
 }

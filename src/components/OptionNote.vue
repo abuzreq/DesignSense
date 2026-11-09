@@ -140,7 +140,7 @@ export default {
 }
 .on-head {
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: #455a64;
 }
 .on-foot {
@@ -149,7 +149,7 @@ export default {
   margin-top: 4px;
 }
 .on-hint {
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   color: #90a4ae;
 }
 .on-activator {
@@ -166,7 +166,7 @@ export default {
   width: 100%;
   padding: 2px 4px;
   text-align: left;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.35;
   color: #5d4037;
   background: #fff8e1;

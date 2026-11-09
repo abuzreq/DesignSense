@@ -2236,7 +2236,7 @@ function sameAxisItems(drawn, wanted, span) {
 
 #tooltip {
   font-family: sans-serif;
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
   font-weight: bold;
   color: black;
 }
@@ -2256,7 +2256,7 @@ function sameAxisItems(drawn, wanted, span) {
   transform: translate(0px, -10px);
 }
 ::v-deep .parcoords g.axis .tick text {
-  font-size: 10px;
+  font-size: var(--ds-fs-2xs);
   fill: #78909c;
   font-variant-numeric: tabular-nums;
 }
@@ -2272,7 +2272,7 @@ function sameAxisItems(drawn, wanted, span) {
   stroke: #b0bec5 !important;
 }
 ::v-deep .parcoords text.label {
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   cursor: pointer;
 }
 /* Joins a lifted title to the axis below it. */

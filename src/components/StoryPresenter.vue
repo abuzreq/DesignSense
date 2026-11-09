@@ -106,18 +106,18 @@ export default {
   min-width: 0;
 }
 .spr-title {
-  font-size: 18px;
+  font-size: var(--ds-fs-2xl);
   font-weight: 500;
 }
 .spr-count {
   margin-right: 10px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 400;
   opacity: 0.7;
 }
 .spr-note {
   margin-top: 4px;
-  font-size: 15px;
+  font-size: var(--ds-fs-lg);
   line-height: 1.45;
   opacity: 0.92;
   white-space: pre-line;

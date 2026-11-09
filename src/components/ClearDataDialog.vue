@@ -162,7 +162,7 @@ function listed(words) {
 <style scoped>
 .cd-lead {
   margin-bottom: 8px;
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
   color: #455a64;
 }
 .cd-all {
@@ -183,12 +183,12 @@ function listed(words) {
   color: #263238;
 }
 .cd-count {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #78909c;
 }
 .cd-help {
   margin-left: 32px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.3;
   color: #90a4ae;
 }

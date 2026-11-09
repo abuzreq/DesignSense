@@ -86,7 +86,7 @@ export default {
   border-color: #1565c0;
 }
 .switcher-count {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #546e7a;
   white-space: nowrap;
 }

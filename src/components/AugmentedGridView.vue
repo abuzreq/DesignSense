@@ -644,7 +644,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 600;
   color: #37474f;
 }
@@ -684,7 +684,7 @@
   padding: 6px 12px;
 }
 .values-size-label {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #546e7a;
 }
 

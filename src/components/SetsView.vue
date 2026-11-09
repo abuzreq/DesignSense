@@ -550,7 +550,7 @@ export default {
   gap: 6px;
 }
 .cart-title {
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 600;
   color: #37474f;
 }
@@ -560,13 +560,13 @@ export default {
   border-radius: 10px;
   background: var(--ds-shortlist);
   color: #fff;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   line-height: 18px;
   text-align: center;
 }
 .cart-empty {
   margin: 4px 0 0;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.35;
   color: #546e7a;
 }
@@ -645,7 +645,7 @@ export default {
   padding: 3px 6px;
   border: 1px solid #cfd8dc;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .sets-save {
   order: 3;
@@ -661,7 +661,7 @@ export default {
   order: 1;
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 15px;
+  font-size: var(--ds-fs-lg);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -669,7 +669,7 @@ export default {
 }
 .sets-empty {
   margin: 12px 10px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: rgba(0, 0, 0, 0.6);
 }
 .sets-list {
@@ -699,7 +699,7 @@ export default {
 .set-name {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
   font-weight: 500;
   color: inherit;
   border: 1px solid transparent;
@@ -717,7 +717,7 @@ export default {
   background: #fff;
 }
 .set-count {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 18px;
   padding: 0 7px;
   border-radius: 9px;
@@ -731,7 +731,7 @@ export default {
   margin: 6px 0;
 }
 .set-chip {
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   line-height: 18px;
   padding: 0 7px;
   border-radius: 9px;
@@ -767,7 +767,7 @@ export default {
   display: block;
   width: 100%;
   margin-top: 6px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 4px;
   padding: 4px 6px;

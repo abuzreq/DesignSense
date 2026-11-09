@@ -808,7 +808,7 @@ export default {
   border: 1px solid #eceff1;
   border-radius: 4px;
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: #546e7a;
 }
 
@@ -850,7 +850,7 @@ export default {
 
 .mv-name {
   max-width: 100%;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 500;
   color: #37474f;
   overflow: hidden;
@@ -860,7 +860,7 @@ export default {
 
 .mv-chip {
   padding: 1px 8px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #546e7a;
@@ -870,7 +870,7 @@ export default {
 
 .mv-note {
   max-width: 320px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.4;
   color: #546e7a;
 }
@@ -892,7 +892,7 @@ export default {
 
 .mv-webgl {
   padding: 16px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.4;
   color: #546e7a;
 }

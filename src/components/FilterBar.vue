@@ -285,7 +285,7 @@ export default {
   width: 100%;
 }
 .filter-count {
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   white-space: nowrap;
 }
 .filter-count--none strong {
@@ -295,7 +295,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 2px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   white-space: nowrap;
 }
 .filter-set-name {
@@ -304,7 +304,7 @@ export default {
   text-overflow: ellipsis;
 }
 .filter-hint {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   opacity: 0.75;
   white-space: nowrap;
   min-width: 0;
@@ -348,7 +348,7 @@ export default {
   padding: 0 7px;
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 10px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   line-height: 16px;
   white-space: nowrap;
   cursor: pointer;
@@ -358,7 +358,7 @@ export default {
 }
 .filter-more-head {
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .filter-more-chips {
   display: flex;
@@ -379,7 +379,7 @@ export default {
   border-radius: 16px;
 }
 .filter-chip-or {
-  font-size: 10px;
+  font-size: var(--ds-fs-2xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   opacity: 0.85;

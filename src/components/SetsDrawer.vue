@@ -365,7 +365,7 @@ export default {
 .sets-handle-label {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   white-space: nowrap;
@@ -376,7 +376,7 @@ export default {
   border-radius: 7px;
   background: #fff;
   color: #263238;
-  font-size: 10px;
+  font-size: var(--ds-fs-2xs);
   font-weight: 600;
   line-height: 14px;
   text-align: center;

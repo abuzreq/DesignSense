@@ -107,7 +107,7 @@ export default {
 .gdlg-title {
   flex: 0 0 auto;
   padding: 10px 12px 10px 20px !important;
-  font-size: 18px !important;
+  font-size: var(--ds-fs-2xl) !important;
 }
 .gdlg-body.v-card__text {
   padding: 24px 28px 28px !important;

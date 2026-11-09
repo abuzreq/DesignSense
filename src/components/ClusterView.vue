@@ -188,7 +188,7 @@
   padding: 8px 8px 0;
 }
 .clusters-dims-select {
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .clusters-dims-select.v-input--dense ::v-deep .v-input__slot {
   min-height: 32px !important;
@@ -205,7 +205,7 @@
 .clusters-hint {
   flex: 0 0 auto;
   margin: 6px 10px 2px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #546e7a;
 }
 .clusters-grid {
@@ -217,7 +217,7 @@
 }
 .clusters-empty {
   margin: 16px 8px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: #546e7a;
   text-align: center;
 }
@@ -298,7 +298,7 @@
   gap: 4px;
   padding: 3px 8px;
   border-top: 1px solid #eef1f4;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #455a64;
   white-space: nowrap;
 }

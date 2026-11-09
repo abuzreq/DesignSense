@@ -2023,7 +2023,7 @@ export default {
   padding: 0 8px 0 16px;
 }
 .sx-title {
-  font-size: 16px;
+  font-size: var(--ds-fs-xl);
   font-weight: 600;
   color: #263238;
   white-space: nowrap;
@@ -2035,7 +2035,7 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #546e7a;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
 }
 .sx-info.v-icon {
   margin: 0 4px 0 6px;
@@ -2047,7 +2047,7 @@ export default {
 }
 .sx-tip-line {
   display: block;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.45;
 }
 .sx-tip-line + .sx-tip-line {
@@ -2066,7 +2066,7 @@ export default {
 .sx-select {
   flex: 0 0 240px;
   max-width: 240px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .sx-select ::v-deep .v-input__control > .v-input__slot {
   min-height: 28px !important;
@@ -2083,7 +2083,7 @@ export default {
   padding: 14px 16px 18px !important;
   background: #f3f5f7;
   color: #263238;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 /* Compact: a count, not a chip per dimension. */
 .sx-picker.sx-select {
@@ -2097,13 +2097,13 @@ export default {
 }
 .sx-guide-line {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
   line-height: 1.5;
   color: #37474f;
 }
 .sx-guide-quiet {
   margin: 8px 0 0;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.5;
   color: #78909c;
 }
@@ -2112,7 +2112,7 @@ export default {
   background: #eceff1;
   box-shadow: none;
   color: #455a64;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
 }
 /* One line of caveats under the pickers; each says the rest on hover. */
 .sx-caveats {
@@ -2175,7 +2175,7 @@ export default {
   text-transform: none;
 }
 .ax-toolbar-label {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #546e7a;
 }
 .ax-toolbar-rule {
@@ -2185,12 +2185,12 @@ export default {
   background: #dfe5ea;
 }
 .ax-head-title {
-  font-size: 15px;
+  font-size: var(--ds-fs-lg);
   font-weight: 600;
   color: #263238;
 }
 .ax-head-meta {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #78909c;
 }
 .ax-actions {
@@ -2210,7 +2210,7 @@ export default {
   padding: 0;
 }
 .ax-switch ::v-deep .v-label {
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: #37474f;
 }
 .ax-check.v-input {
@@ -2219,11 +2219,11 @@ export default {
   padding: 0;
 }
 .ax-check ::v-deep .v-label {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
 }
 .ax-note {
   margin: 6px 0 0;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.45;
   color: #78909c;
 }
@@ -2237,7 +2237,7 @@ export default {
 .ax-measures .v-btn.v-btn {
   height: 26px !important;
   padding: 0 10px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   letter-spacing: 0;
   text-transform: none;
 }
@@ -2279,7 +2279,7 @@ export default {
   align-items: center;
   gap: 6px;
   min-width: 0;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   line-height: 18px;
   color: #37474f;
 }
@@ -2292,7 +2292,7 @@ export default {
   flex: 0 0 auto;
   padding: 0 5px;
   border-radius: 3px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   line-height: 16px;
   background: #eceff1;
   color: #607d8b;
@@ -2327,7 +2327,7 @@ export default {
   align-items: center;
   justify-content: center;
   border-bottom: none;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #90a4ae;
 }
 /* One standard deviation either side of the average, behind the bars. */
@@ -2410,7 +2410,7 @@ export default {
   left: 50%;
   transform: translateX(-50%);
   margin-bottom: 2px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   line-height: 13px;
   color: #546e7a;
   font-variant-numeric: tabular-nums;
@@ -2421,7 +2421,7 @@ export default {
   position: relative;
   flex: 0 0 15px;
   margin-bottom: 2px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   line-height: 15px;
   color: #78909c;
   font-variant-numeric: tabular-nums;
@@ -2435,7 +2435,7 @@ export default {
   display: flex;
   justify-content: space-between;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 16px;
   color: #78909c;
   font-variant-numeric: tabular-nums;
@@ -2468,7 +2468,7 @@ export default {
   margin-top: 6px;
 }
 .ax-plot-label {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #78909c;
 }
 .ax-plot-picker.sx-select {
@@ -2494,7 +2494,7 @@ export default {
   border-left: 3px solid transparent;
   background: #fff;
   color: #37474f;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   text-align: left;
   cursor: pointer;
 }
@@ -2526,7 +2526,7 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #78909c;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   font-variant-numeric: tabular-nums;
 }
 .ax-quiet {
@@ -2551,7 +2551,7 @@ export default {
   border: none;
   background: none;
   color: #1565c0;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   cursor: pointer;
 }
 .ax-more:hover {
@@ -2579,7 +2579,7 @@ export default {
   align-items: center;
   gap: 8px;
   margin-top: 8px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   color: #78909c;
 }
 .sx-legend-ramp {
@@ -2613,19 +2613,19 @@ export default {
 }
 .sx-colname {
   display: block;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 600;
   line-height: 1.3;
 }
 .sx-r2 {
   margin-top: 2px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   font-variant-numeric: tabular-nums;
   color: #546e7a;
 }
 .sx-colwarn {
   margin-top: 2px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   line-height: 1.35;
   color: #b26500;
 }
@@ -2637,7 +2637,7 @@ export default {
   min-height: 30px;
   border-right: 1px solid #e3e8ee;
   border-bottom: 1px solid #e3e8ee;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   color: #37474f;
 }
 .sx-rowname {
@@ -2649,7 +2649,7 @@ export default {
   border-radius: 3px;
   background: #eceff1;
   color: #78909c;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
 }
 .sx-cell {
   display: flex;
@@ -2658,7 +2658,7 @@ export default {
   min-height: 30px;
   border-right: 1px solid #e3e8ee;
   border-bottom: 1px solid #e3e8ee;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
@@ -2706,7 +2706,7 @@ export default {
 }
 .sx-bars-label {
   color: #546e7a;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 500;
 }
 .sx-bar-row {
@@ -2723,7 +2723,7 @@ export default {
 }
 .sx-bar-label {
   min-width: 0;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
 }
 .sx-bar-track {
   position: relative;
@@ -2748,12 +2748,12 @@ export default {
 /* Whether raising the input helps or hurts, for an output with a goal. */
 .sx-bar-effect {
   min-width: 56px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #78909c;
 }
 .sx-bar-value {
   text-align: right;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-variant-numeric: tabular-nums;
   color: #37474f;
 }

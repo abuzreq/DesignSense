@@ -416,7 +416,7 @@ export default {
 }
 .cols-lead {
   padding: 4px 24px 8px;
-  font-size: 14px;
+  font-size: var(--ds-fs-base);
   color: #455a64;
 }
 .cols-summary {
@@ -428,7 +428,7 @@ export default {
 .cols-pill {
   padding: 2px 10px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   background: #eceff1;
   color: #37474f;
 }
@@ -455,13 +455,13 @@ export default {
 }
 .cols-section {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 600;
   color: #37474f;
 }
 .cols-help {
   margin: 2px 0 8px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #607d8b;
 }
 .cols-table {
@@ -480,7 +480,7 @@ export default {
 }
 .cols-row--head > * {
   min-height: 24px;
-  font-size: 11px;
+  font-size: var(--ds-fs-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -493,20 +493,20 @@ export default {
   gap: 6px;
   min-width: 0;
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--ds-fs-md);
   font-weight: 500;
 }
 .cols-prefix {
   flex: 0 0 auto;
   padding: 0 5px;
-  font-size: 10px;
+  font-size: var(--ds-fs-2xs);
   font-family: monospace;
   color: #78909c;
   border: 1px solid #cfd8dc;
   border-radius: 3px;
 }
 .cols-range {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #607d8b;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -514,7 +514,7 @@ export default {
 .cols-toggle .v-btn {
   text-transform: none;
   letter-spacing: 0;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
 }
 .cols-group {
   margin-top: 16px;
@@ -526,7 +526,7 @@ export default {
 }
 .cols-chip {
   padding: 1px 8px;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   background: #f5f7f8;
   border: 1px solid #e0e6e9;
   border-radius: 10px;
@@ -536,14 +536,14 @@ export default {
 }
 .cols-warnings {
   margin: 4px 0 0;
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #6d4c41;
 }
 .cols-actions {
   padding: 10px 16px !important;
 }
 .cols-foot {
-  font-size: 12px;
+  font-size: var(--ds-fs-sm);
   color: #78909c;
 }
 </style>

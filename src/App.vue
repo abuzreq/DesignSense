@@ -50,7 +50,33 @@ export default {
  * answer to line length rather than to this list. And a few sizes are relative
  * on purpose -- the goal arrow after a dimension's name is 0.85em, so it
  * follows whatever it is set beside rather than any step here.
+ *
+ * The steps are the tokens below, and every interface size is one of them:
+ * a new rule picks a step, never a pixel size. All of them are multiplied by
+ * --ds-text-scale, the reader's text size (src/textSize.js: 100% to 150%),
+ * and so is the root size Vuetify's own rem-based text is measured in. The
+ * guide multiplies its own sizes by the same scale. What becomes an image or
+ * a PDF -- the summary card, the story report's pages -- keeps fixed sizes,
+ * so it looks the same wherever it is sent.
  */
+:root {
+  --ds-text-scale: 1;
+  --ds-fs-2xs: calc(10px * var(--ds-text-scale));
+  --ds-fs-xs: calc(11px * var(--ds-text-scale));
+  --ds-fs-sm: calc(12px * var(--ds-text-scale));
+  --ds-fs-md: calc(13px * var(--ds-text-scale));
+  --ds-fs-base: calc(14px * var(--ds-text-scale));
+  --ds-fs-lg: calc(15px * var(--ds-text-scale));
+  --ds-fs-xl: calc(16px * var(--ds-text-scale));
+  --ds-fs-2xl: calc(18px * var(--ds-text-scale));
+  --ds-fs-3xl: calc(20px * var(--ds-text-scale));
+  --ds-fs-4xl: calc(24px * var(--ds-text-scale));
+}
+/* html:root, not html: Vuetify sets the root size itself, and this has to
+   win whichever stylesheet comes last. */
+html:root {
+  font-size: calc(16px * var(--ds-text-scale));
+}
 
 /*
  * The wordmark's typeface, for the app's name in the bar and nothing else.
