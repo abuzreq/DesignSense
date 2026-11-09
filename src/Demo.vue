@@ -512,7 +512,7 @@
     </v-dialog>
 
     <v-dialog v-model="isOpeningDialogOn" max-width="min(calc(1040px * var(--ds-text-scale)), 94vw)">
-      <v-card class="ds-welcome">
+      <v-card ref="welcomeCard" class="ds-welcome" :class="{ 'ds-welcome--tight': welcomeTight }">
         <v-card-title class="text-h5">
           Welcome to DesignSense
           <v-spacer />
@@ -529,8 +529,18 @@
               Explore a collection of design options through their pictures
               and data: understand the design space, narrow it to the options
               worth pursuing, decide between them, and share the result.
+              <!-- Where the picture has no room (see fitWelcome), a link in
+                   its place, which brings the player in. -->
+              <a
+                v-if="welcomeTight && !introPlaying"
+                href="#"
+                class="ds-welcome-lead-video"
+                @click.prevent="introPlaying = true"
+                ><v-icon small color="#e53935">mdi-play-circle-outline</v-icon
+                >Watch the one-minute intro</a
+              >
             </p>
-            <div class="ds-welcome-video">
+            <div v-if="!welcomeTight || introPlaying" class="ds-welcome-video">
               <div class="ds-welcome-video-frame">
                 <!-- The page sends no referrer (public/index.html), and
                      YouTube's player refuses to play without one (its
@@ -610,7 +620,7 @@
               <p>Bring your own: a folder, a CSV file or a link.</p>
               <!-- Two equals: the same outline and colour, so neither pulls
                    against the tour's button or the other. -->
-              <div class="ds-welcome-choice-actions">
+              <div class="ds-welcome-choice-actions ds-welcome-choice-actions--pair">
                 <v-btn
                   color="teal darken-1"
                   outlined
@@ -623,19 +633,25 @@
                 >
                 <LoadDataModal label="Load own data" outlined />
               </div>
+              <p class="ds-welcome-privacy">
+                <v-icon small color="green darken-2">mdi-shield-check-outline</v-icon>
+                Read in this browser, never uploaded; your work stays here too.
+              </p>
             </section>
           </div>
+          <!-- The two settings side by side, each a heading, a line and a
+               row of choices; one under the other where they do not fit. -->
+          <div class="ds-welcome-settings">
           <section class="ds-welcome-layout" aria-labelledby="ds-welcome-layout-head">
             <h3 id="ds-welcome-layout-head" class="ds-welcome-layout-head">
               {{ layoutQuestion }}
             </h3>
             <p class="ds-welcome-layout-help">
-              The charts and the pictures share the screen. Pick where you
-              would like them; you can change it whenever you like from
+              Where the charts and pictures go. Change it later from
               <v-icon small color="#546e7a"
                 >mdi-view-dashboard-edit-outline</v-icon
               >
-              in the toolbar, or by dragging the edge between two panels.
+              in the toolbar, or by dragging a panel's edge.
             </p>
             <!-- One choice of several, as radio buttons are: arrow keys move
                  it, and only the chosen card is a tab stop. -->
@@ -677,8 +693,7 @@
                 Text size
               </h3>
               <p class="ds-welcome-layout-help">
-                Larger text and icons across the whole interface. Kept in this
-                browser.
+                For text and icons everywhere. Kept in this browser.
               </p>
             </div>
             <div
@@ -711,11 +726,7 @@
               </button>
             </div>
           </section>
-          <p class="ds-welcome-privacy">
-            <v-icon small color="green darken-2">mdi-shield-check-outline</v-icon>
-            Your data is read in this browser and never uploaded; your work is
-            kept here too.
-          </p>
+          </div>
         </v-card-text>
         <!-- The footer: the setting for next time on the left, who made it
              and how to reach them on the right, then the way out. -->
@@ -1166,7 +1177,7 @@ body {
 .ds-welcome .v-card__title {
   flex-wrap: nowrap;
   word-break: normal;
-  padding: 24px 32px 8px !important;
+  padding: 18px 28px 4px !important;
 }
 @media (max-width: 600px) {
   .ds-welcome .v-card__title {
@@ -1174,7 +1185,7 @@ body {
   }
 }
 .ds-welcome-body {
-  padding: 8px 32px 8px !important;
+  padding: 6px 28px 12px !important;
   color: #37474f !important;
 }
 @media (max-width: 600px) {
@@ -1190,18 +1201,34 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 16px 24px;
-  margin-bottom: 24px;
+  gap: 12px 24px;
+  margin-bottom: 16px;
 }
 .ds-welcome-lead {
   flex: 1 1 300px;
   margin-bottom: 0 !important;
   font-size: var(--ds-fs-lg);
-  line-height: 1.6;
+  line-height: 1.55;
+}
+/* Fixed in size, so a larger text size gives its room to the words. */
+/* The tighter form (see fitWelcome): the video as a link in the lead, and
+   no notes under the settings' headings. */
+.ds-welcome-lead-video {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+.ds-welcome--tight .ds-welcome-layout-help {
+  display: none;
+}
+.ds-welcome--tight .ds-welcome-layout-head {
+  margin-bottom: 8px;
 }
 .ds-welcome-video {
-  flex: 0 1 400px;
-  min-width: 260px;
+  flex: 0 1 272px;
+  min-width: 220px;
 }
 .ds-welcome-video-frame {
   position: relative;
@@ -1265,15 +1292,15 @@ body {
 .ds-welcome-choices {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  margin: 0 0 28px;
+  gap: 16px;
+  margin: 0 0 16px;
 }
 .ds-welcome-choice {
   flex: 1 1 260px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 20px 22px;
+  padding: 14px 18px;
   border: 1px solid #e3e8eb;
   border-radius: 10px;
 }
@@ -1281,29 +1308,34 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 8px;
+  margin: 0 0 4px;
   font-size: var(--ds-fs-lg);
   font-weight: 600;
   color: #263238;
 }
 .ds-welcome-choice p {
   flex: 1 1 auto;
-  margin-bottom: 18px !important;
+  margin-bottom: 12px !important;
   font-size: var(--ds-fs-md);
   line-height: 1.5;
 }
-/* A card's buttons each take its width, one under the other: the two data
-   buttons come out the same size, and the tour's lines up with them. */
+/* The two cards alike: a heading, a line, the card's buttons across its
+   width, and one small line under them -- the tour's links, the data's
+   privacy. The two data buttons sit side by side at the same width, and
+   wrap rather than squeeze their words. */
 .ds-welcome-choice-actions {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
   width: 100%;
+}
+.ds-welcome .ds-welcome-choice-actions > .v-btn.v-btn,
+.ds-welcome .ds-welcome-choice-actions > .container {
+  flex: 1 1 0;
+  min-width: max-content;
 }
 /* The load dialog's own button, brought in line with the sample's. */
 .ds-welcome-choice .container {
-  width: 100% !important;
   max-width: none;
   padding: 0 !important;
   margin: 0;
@@ -1316,7 +1348,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 18px;
-  margin-top: 12px;
+  margin-top: 10px;
   font-size: var(--ds-fs-md);
 }
 .ds-welcome-more a {
@@ -1333,18 +1365,18 @@ body {
 .ds-welcome-more a:focus-visible {
   text-decoration: underline;
 }
-.ds-welcome-privacy {
+.ds-welcome-choice .ds-welcome-privacy {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 24px 0 4px !important;
-  font-size: var(--ds-fs-md);
+  gap: 6px;
+  margin: 10px 0 0 !important;
+  font-size: var(--ds-fs-sm);
   color: #2e7d32;
 }
 .ds-welcome-actions {
   flex-wrap: wrap;
   gap: 4px 16px;
-  padding: 12px 20px 14px 32px !important;
+  padding: 8px 16px 8px 28px !important;
   border-top: 1px solid #eceff1;
   background: #fafbfc;
 }
@@ -1389,11 +1421,20 @@ body {
   line-height: 1.35;
   color: #78909c;
 }
-/* A section of its own, not a fourth entry point: this is a choice about
-   the workspace, and it has to be worth reading on the tenth visit too. */
-.ds-welcome-layout {
-  padding-top: 24px;
+/* The settings: the arrangement and the text size, side by side under a
+   rule. Not a fourth entry point: choices about the workspace, worth
+   reading on the tenth visit too. */
+.ds-welcome-settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px 32px;
+  padding-top: 14px;
   border-top: 1px solid #eceff1;
+}
+.ds-welcome-layout {
+  flex: 1 1 calc(440px * var(--ds-text-scale));
+  min-width: 0;
 }
 .ds-welcome-layout-head {
   margin: 0;
@@ -1402,15 +1443,15 @@ body {
   color: #263238;
 }
 .ds-welcome-layout-help {
-  margin: 6px 0 16px !important;
+  margin: 2px 0 10px !important;
   font-size: var(--ds-fs-md);
   line-height: 1.45;
   color: #546e7a;
 }
 .ds-welcome-layout-choices {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(calc(96px * var(--ds-text-scale)), 1fr));
+  gap: 8px;
 }
 /* Cards of a radio group: every one the same, the chosen one blue all
    over -- edge, wash, name and the tick in its corner. */
@@ -1419,9 +1460,9 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 10px 10px;
+  padding: 8px 8px 6px;
   border: 1px solid #cfd8dc;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #fff;
   cursor: pointer;
   text-align: center;
@@ -1466,7 +1507,7 @@ body {
 }
 .ds-welcome-layout-name {
   display: block;
-  margin-top: 8px;
+  margin-top: 5px;
   font-size: var(--ds-fs-md);
   font-weight: 600;
   line-height: 1.25;
@@ -1475,22 +1516,10 @@ body {
 .ds-welcome-layout-btn--on .ds-welcome-layout-name {
   color: #0d47a1;
 }
-/* Text size: a compact row of choices beside its heading, lighter than
-   the layout cards above it, as a setting rather than a decision. */
+/* Text size: a compact row of choices, lighter than the layout cards
+   beside it, as a setting rather than a decision. */
 .ds-welcome-text {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px 20px;
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid #eceff1;
-}
-.ds-welcome-text-intro {
-  flex: 1 1 200px;
-}
-.ds-welcome-text-intro .ds-welcome-layout-help {
-  margin: 2px 0 0 !important;
+  flex: 0 1 auto;
 }
 .ds-welcome-text-choices {
   display: flex;
@@ -2080,6 +2109,9 @@ export default {
       // The welcome's intro player, put in once its picture is clicked.
       introEmbed: videoEmbed("intro"),
       introPlaying: false,
+      // The welcome in its tighter form, for a window it does not fit whole
+      // at the text size in effect (see fitWelcome).
+      welcomeTight: false,
       // Whether the guide has been asked for in this workspace.
       guideSeen: false,
       showWelcomeAtStart: readShowWelcome(),
@@ -2271,7 +2303,7 @@ export default {
         !presetFor(loadState.link);
       return shared
         ? { title: "Shared with you", action: "Look at it" }
-        : { title: "Look around", action: "Try on a sample dataset" };
+        : { title: "Look around", action: "Try a sample" };
     },
     storeNotice() {
       return this.$store.state.notice;
@@ -2313,8 +2345,8 @@ export default {
     },
     layoutQuestion() {
       return this.layoutAsked
-        ? "How your workspace is arranged"
-        : "How would you like your workspace arranged?";
+        ? "Workspace arrangement"
+        : "Arrange your workspace";
     },
     layoutPreset() {
       return this.$store.state.layoutPreset;
@@ -2468,8 +2500,16 @@ export default {
   watch: {
     // Closing the welcome takes the player out, which stops the video; it
     // opens on the picture again next time.
-    isOpeningDialogOn(open) {
-      if (!open) this.introPlaying = false;
+    // Immediate: the welcome can be open from the start.
+    isOpeningDialogOn: {
+      immediate: true,
+      handler(open) {
+        if (!open) this.introPlaying = false;
+        else this.fitWelcome();
+      },
+    },
+    textSize() {
+      this.fitWelcome();
     },
     showWelcomeAtStart(value) {
       writeShowWelcome(value);
@@ -2926,7 +2966,30 @@ export default {
       if (el.clientHeight > 0) this.workspaceHeight = el.clientHeight;
     },
     // Resizing rebuilds every chart, so wait until the size settles.
+    /**
+     * The welcome is meant to be seen whole, without scrolling. Laid out in
+     * full first and measured against the room a dialog has (90% of the
+     * window's height); where that is too little -- a short window, a large
+     * text size -- the tighter form takes the video's picture and the
+     * settings' notes out. Both renders happen before the next paint.
+     */
+    fitWelcome(tries = 10) {
+      if (!this.isOpeningDialogOn) return;
+      this.welcomeTight = false;
+      this.$nextTick(() => {
+        let card = this.$refs.welcomeCard;
+        let el = card && card.$el;
+        // The dialog puts its content in lazily: until then, try again.
+        if (!el || el.offsetHeight === 0) {
+          if (tries > 0) setTimeout(() => this.fitWelcome(tries - 1), 100);
+          return;
+        }
+        this.welcomeTight = el.offsetHeight > window.innerHeight * 0.9;
+      });
+    },
     onWorkspaceResize() {
+      clearTimeout(this.welcomeFitTimer);
+      this.welcomeFitTimer = setTimeout(() => this.fitWelcome(), 150);
       this.windowWidth = window.innerWidth;
       clearTimeout(this.resizeTimer);
       this.resizeTimer = setTimeout(this.measureWorkspace, 150);
