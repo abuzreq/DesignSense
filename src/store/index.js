@@ -72,6 +72,7 @@ import {
 import { MAX_LEVELS } from "@/analysis/summary.js";
 import Papa from "papaparse";
 import { clampDockWidth, loadSetsDock, saveSetsDock } from "@/setsDock.js";
+import { applyTextSize, loadTextSize, parseTextSize, saveTextSize } from "@/textSize.js";
 
 const UI_MODE_KEY = "designsense-uiMode";
 // Undo depth for both the Expert selection and the Lite filters.
@@ -313,6 +314,8 @@ function builder(
       // Docked, the sets are a column beside the panels instead of a drawer
       // over them, and stay until undocked; kept as a preference (setsDock.js).
       setsDock: loadSetsDock(),
+      // The reader's text size (textSize.js), which views redraw for.
+      textSize: loadTextSize(),
 
       /*
        * Settings that belong to a view but have to be reachable from outside
@@ -787,6 +790,13 @@ function builder(
       setSetsDrawer(state, payload) {
         let open = !!payload.open;
         state.setsDrawer = { open: open, pinned: open && !!payload.pinned };
+      },
+      /** A text size's id: saved, and put into effect at once. */
+      setTextSize(state, id) {
+        let size = parseTextSize(id);
+        state.textSize = size;
+        saveTextSize(size);
+        applyTextSize(size);
       },
       /** `{ docked?, width? }`: either or both; the rest stays as it is. */
       setSetsDock(state, payload) {

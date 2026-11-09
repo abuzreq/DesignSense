@@ -814,10 +814,12 @@ const ASPECT_SAMPLES = 12;
 // How many values a card lists until the user picks them.
 const DEFAULT_DETAIL_COUNT = 8;
 // How large a card's values read: the type, and the row it sits in.
+// Each at the reader's text size too (see textSize.js).
+const scaled = (px) => "calc(" + px + "px * var(--ds-text-scale))";
 const VALUE_SIZES = [
-  { value: "small", short: "S", label: "Small", font: "12.5px", row: "20px" },
-  { value: "medium", short: "M", label: "Medium", font: "14px", row: "23px" },
-  { value: "large", short: "L", label: "Large", font: "16px", row: "26px" },
+  { value: "small", short: "S", label: "Small", font: scaled(12.5), row: scaled(20) },
+  { value: "medium", short: "M", label: "Medium", font: scaled(14), row: scaled(23) },
+  { value: "large", short: "L", label: "Large", font: scaled(16), row: scaled(26) },
 ];
 
 export default {

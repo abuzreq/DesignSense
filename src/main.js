@@ -1,5 +1,6 @@
 import Vue from "vue";
 import App from "./App";
+import { applyTextSize, loadTextSize } from "@/textSize.js";
 
 import router from "./router";
 import store from "./store";
@@ -105,6 +106,10 @@ function mountApp(data, dataTypesMap, options) {
 }
 
 configureLoader({ mount: mountApp });
+
+// The reader's text size, in effect before anything is drawn, so the first
+// paint is already at it (see textSize.js).
+applyTextSize(loadTextSize());
 
 // A placeholder collection, until the first dataset finishes loading.
 mountApp([{ _id: "1" }, { _id: "2" }, { _id: "3" }, { _id: "4" }], {

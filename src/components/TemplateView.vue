@@ -61,6 +61,7 @@ export default {
       hovered: (state) => state.hovered,
       colorColumn: (state) => state.colorColumn,
       uiMode: (state) => state.uiMode,
+      textSize: (state) => state.textSize,
     }),
   },
   mounted() {
@@ -180,6 +181,10 @@ export default {
     },
     // Modes differ in brush type and in whether filters are drawn as brushes.
     uiMode: function () {
+      this.scheduleRefresh();
+    },
+    // Labels drawn in code read the text size when the chart is built.
+    textSize: function () {
       this.scheduleRefresh();
     },
   },

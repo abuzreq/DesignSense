@@ -453,6 +453,7 @@ div ::v-deep svg.scatter-svg.lasso-mode circle.point,
 }
 </style>
 <script>
+import { textPx } from "@/textSize.js";
 import * as d3 from "d3";
 // Called as `lasso()`, not `d3.lasso()`: a module namespace is sealed, so the
 // old line that hung it on d3 fails silently under a bundler that keeps them
@@ -1547,7 +1548,7 @@ class ScatterPlot {
           .attr("y", xAxisLabelOffset)
           .attr("fill", "black")
           .text(xAxisLabel)
-          .style("font-size", "12px");
+          .style("font-size", textPx(12) + "px");
         g.select(".y.axis")
           .call(
             d3
@@ -1566,7 +1567,7 @@ class ScatterPlot {
           )
           .text(yAxisLabel)
           .attr("fill", "black")
-          .style("font-size", "12px");
+          .style("font-size", textPx(12) + "px");
 
         if (!useCanvas) {
           circles
@@ -1616,7 +1617,7 @@ class ScatterPlot {
           brushLabel
             .append("text")
             .attr("class", axis)
-            .attr("font-size", 11)
+            .attr("font-size", textPx(11))
             .attr("fill", "#1e3a5f")
             .attr("stroke", "white")
             .attr("stroke-width", 3)
@@ -1958,7 +1959,7 @@ class ScatterPlot {
             yScale(item[yColumn]),
             "(" + item[xColumn] + "," + item[yColumn] + ")",
           ];
-          var fontSize = 14;
+          var fontSize = textPx(14);
           var padding = 2;
           var rectHeight = fontSize + 2 * padding;
           var rectWidth = specs[2].length * 10;

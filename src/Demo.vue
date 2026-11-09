@@ -668,6 +668,49 @@
               </button>
             </div>
           </section>
+          <!-- How large the interface's text is: one scale for every step of
+               the type scale (see textSize.js), in effect as soon as it is
+               pressed, so this dialog shows it first. -->
+          <section class="ds-welcome-text" aria-labelledby="ds-welcome-text-head">
+            <div class="ds-welcome-text-intro">
+              <h3 id="ds-welcome-text-head" class="ds-welcome-layout-head">
+                Text size
+              </h3>
+              <p class="ds-welcome-layout-help">
+                Larger text across the whole interface. Kept in this browser.
+              </p>
+            </div>
+            <div
+              class="ds-welcome-text-choices"
+              role="radiogroup"
+              aria-labelledby="ds-welcome-text-head"
+            >
+              <button
+                v-for="(size, index) in textSizes"
+                :key="size.id"
+                ref="welcomeTextSizes"
+                type="button"
+                role="radio"
+                class="ds-welcome-text-btn"
+                :class="{ 'ds-welcome-text-btn--on': textSize === size.id }"
+                :aria-checked="String(textSize === size.id)"
+                :aria-label="size.label + ', ' + Math.round(size.scale * 100) + '%'"
+                :tabindex="textSize === size.id ? 0 : -1"
+                @click="chooseTextSize(size.id)"
+                @keydown="onTextSizeKey(index, $event)"
+              >
+                <!-- Each sample at the size it stands for, whatever is in
+                     effect now: a fixed size, not a step of the scale. -->
+                <span
+                  class="ds-welcome-text-sample"
+                  :style="{ fontSize: Math.round(18 * size.scale) + 'px' }"
+                  aria-hidden="true"
+                  >Aa</span
+                >
+                <span class="ds-welcome-layout-name">{{ size.label }}</span>
+              </button>
+            </div>
+          </section>
           <p class="ds-welcome-privacy">
             <v-icon small color="green darken-2">mdi-shield-check-outline</v-icon>
             Your data is read in this browser and never uploaded; your work is
@@ -1432,6 +1475,68 @@ body {
 .ds-welcome-layout-btn--on .ds-welcome-layout-name {
   color: #0d47a1;
 }
+/* Text size: the same card group as the layouts, beside its heading. */
+.ds-welcome-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #eceff1;
+}
+.ds-welcome-text-intro {
+  flex: 1 1 220px;
+}
+.ds-welcome-text-intro .ds-welcome-layout-help {
+  margin-bottom: 0 !important;
+}
+.ds-welcome-text-choices {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(84px, 1fr));
+  gap: 10px;
+  flex: 2 1 420px;
+}
+.ds-welcome-text-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 72px;
+  padding: 8px 6px;
+  border: 1px solid #cfd8dc;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s, background-color 0.12s;
+}
+.ds-welcome-text-btn:hover {
+  border-color: #90a4ae;
+  box-shadow: 0 2px 6px rgba(38, 50, 56, 0.12);
+}
+.ds-welcome-text-btn:focus {
+  outline: none;
+}
+.ds-welcome-text-btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.35);
+}
+.ds-welcome-text-btn--on,
+.ds-welcome-text-btn--on:hover {
+  border-color: #1565c0;
+  background: #f3f8fe;
+  box-shadow: 0 0 0 1px #1565c0 inset;
+}
+.ds-welcome-text-btn--on .ds-welcome-layout-name {
+  color: #0d47a1;
+}
+.ds-welcome-text-sample {
+  font-weight: 600;
+  line-height: 1.1;
+  color: #37474f;
+}
+.ds-welcome-text-btn .ds-welcome-layout-name {
+  margin-top: 6px;
+}
 .ds-shortcuts-heading {
   margin: 12px 0 4px;
   color: #37474f;
@@ -1581,6 +1686,7 @@ import { errorState } from "@/errors.js";
 import { APP_VERSION } from "@/feedback.js";
 import { GUIDE_SECTIONS, guideHref } from "@/guide.js";
 import { videoEmbed, videoHref } from "@/videos.js";
+import { TEXT_SIZES } from "@/textSize.js";
 import { presetById, presetFor } from "@/data/presets.js";
 import { pendingAppLink } from "@/appLinks.js";
 import StoryReportDialog from "@/components/StoryReportDialog.vue";
@@ -2174,6 +2280,12 @@ export default {
         : "Drag the edge between two panels to resize them.";
     },
     /** The arrangement card Tab reaches: the chosen one, else the first. */
+    textSizes() {
+      return TEXT_SIZES;
+    },
+    textSize() {
+      return this.$store.state.textSize;
+    },
     welcomeLayoutTabStop() {
       let index = this.layoutPresets.findIndex((p) => p.id === this.layoutPreset);
       return index < 0 ? 0 : index;
@@ -2489,6 +2601,20 @@ export default {
       });
     },
     /** Arrow keys move the choice of arrangement, as in any radio group. */
+    chooseTextSize(id) {
+      this.$store.commit("setTextSize", id);
+    },
+    /** Arrow keys move the text size, as in any radio group. */
+    onTextSizeKey(index, event) {
+      let step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+      if (!step) return;
+      event.preventDefault();
+      let sizes = this.textSizes;
+      let next = Math.min(sizes.length - 1, Math.max(0, index + step));
+      this.chooseTextSize(sizes[next].id);
+      let buttons = this.$refs.welcomeTextSizes || [];
+      if (buttons[next]) buttons[next].focus();
+    },
     onWelcomeLayoutKey(index, event) {
       let step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
       if (!step) return;
