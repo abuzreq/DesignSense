@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="open" width="700" scrollable @keydown="onDialogKey">
+  <v-dialog v-model="open" width="min(calc(700px * var(--ds-text-scale)), 94vw)" scrollable @keydown="onDialogKey">
     <!-- Built only while shown: its coverage counts read every row, and would
          otherwise re-render with every value entered anywhere. -->
     <v-card v-if="contentShown" class="dims-dialog">

@@ -1,7 +1,7 @@
 <template>
   <v-container style="width: auto; padding: 0 4px">
     <div class="text-center">
-      <v-dialog v-model="dialog" width="760" overlay-opacity="0.5">
+      <v-dialog v-model="dialog" width="min(calc(760px * var(--ds-text-scale)), 94vw)" overlay-opacity="0.5">
         <template v-slot:activator="{ on, attrs }">
           <v-btn
             :color="outlined ? 'teal darken-1' : 'red lighten-2'"

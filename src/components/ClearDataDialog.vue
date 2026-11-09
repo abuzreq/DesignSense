@@ -1,5 +1,5 @@
 <template>
-  <v-dialog :value="value" max-width="480" @input="$emit('input', $event)">
+  <v-dialog :value="value" max-width="min(calc(480px * var(--ds-text-scale)), 94vw)" @input="$emit('input', $event)">
     <v-card v-if="value" class="cd-card">
       <v-card-title>Clear data</v-card-title>
       <v-card-text class="cd-body">

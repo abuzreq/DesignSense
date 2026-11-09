@@ -464,7 +464,7 @@
       </v-menu>
     </v-app-bar>
 
-    <v-dialog v-model="isShareLinkModalOn" max-width="620px">
+    <v-dialog v-model="isShareLinkModalOn" max-width="min(calc(620px * var(--ds-text-scale)), 94vw)">
       <v-card>
         <v-card-title>Share this dataset</v-card-title>
         <v-card-text>
@@ -511,7 +511,7 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="isOpeningDialogOn" max-width="1040px">
+    <v-dialog v-model="isOpeningDialogOn" max-width="min(calc(1040px * var(--ds-text-scale)), 94vw)">
       <v-card class="ds-welcome">
         <v-card-title class="text-h5">
           Welcome to DesignSense
@@ -744,7 +744,7 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="isShortcutsDialogOn" max-width="640px" scrollable>
+    <v-dialog v-model="isShortcutsDialogOn" max-width="min(calc(640px * var(--ds-text-scale)), 94vw)" scrollable>
       <v-card>
         <v-card-title>
           Keyboard shortcuts &amp; gestures
@@ -775,7 +775,7 @@
     <!-- What of this dataset's work to delete: all of it unless some is left out. -->
     <ClearDataDialog v-model="isClearWorkDialogOn" />
 
-    <v-dialog v-model="isTourDialogOn" max-width="460px">
+    <v-dialog v-model="isTourDialogOn" max-width="min(calc(460px * var(--ds-text-scale)), 94vw)">
       <v-card>
         <v-card-title>Start the tour?</v-card-title>
         <v-card-text>
@@ -800,7 +800,7 @@
     </v-dialog>
     <!-- A link in the guide that opens a sample, with the user's own data on
          screen. -->
-    <v-dialog :value="!!sampleAsked" max-width="460px" @input="sampleAsked = null">
+    <v-dialog :value="!!sampleAsked" max-width="min(calc(460px * var(--ds-text-scale)), 94vw)" @input="sampleAsked = null">
       <v-card v-if="sampleAsked">
         <v-card-title>Open the sample?</v-card-title>
         <v-card-text>
@@ -1686,7 +1686,7 @@ import { errorState } from "@/errors.js";
 import { APP_VERSION } from "@/feedback.js";
 import { GUIDE_SECTIONS, guideHref } from "@/guide.js";
 import { videoEmbed, videoHref } from "@/videos.js";
-import { TEXT_SIZES } from "@/textSize.js";
+import { TEXT_SIZES, scaleOf } from "@/textSize.js";
 import { presetById, presetFor } from "@/data/presets.js";
 import { pendingAppLink } from "@/appLinks.js";
 import StoryReportDialog from "@/components/StoryReportDialog.vue";
@@ -2396,8 +2396,11 @@ export default {
      * assistant.
      */
     barLevel() {
-      if (this.windowWidth < BAR_TIGHT[this.isLite ? "lite" : "expert"]) return "tight";
-      if (this.isExpert && this.windowWidth >= BAR_ROOMY) return "roomy";
+      // Larger text makes every label on the bar wider, so the bar needs
+      // that much more window before it can spread out.
+      let width = this.windowWidth / scaleOf(this.$store.state.textSize);
+      if (width < BAR_TIGHT[this.isLite ? "lite" : "expert"]) return "tight";
+      if (this.isExpert && width >= BAR_ROOMY) return "roomy";
       return "normal";
     },
     /**

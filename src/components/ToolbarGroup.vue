@@ -59,9 +59,12 @@ export default {
   width: 36px !important;
   height: 36px !important;
 }
+/* Its own room either side: at the larger text sizes a label is wider than
+   the buttons above it, and two such labels would otherwise run together. */
 .toolbar-group-label {
+  padding: 0 calc(4px * var(--ds-text-scale));
   font-size: var(--ds-fs-xs);
-  line-height: 12px;
+  line-height: calc(12px * var(--ds-text-scale));
   letter-spacing: 0.02em;
   color: #b0bec5;
   white-space: nowrap;

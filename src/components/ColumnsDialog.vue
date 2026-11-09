@@ -1,5 +1,5 @@
 <template>
-  <v-dialog :value="open" max-width="720" scrollable @input="onInput">
+  <v-dialog :value="open" max-width="min(calc(720px * var(--ds-text-scale)), 94vw)" scrollable @input="onInput">
     <v-card v-if="open" class="cols-card">
       <v-card-title class="cols-title">
         Your columns

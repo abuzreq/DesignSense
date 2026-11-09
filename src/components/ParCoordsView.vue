@@ -26,7 +26,13 @@
              when it is cut short it can still be read whole on hover. -->
         <v-tooltip key="pcp-hint" bottom max-width="320" :disabled="!hintCut">
           <template v-slot:activator="{ on }">
-            <span ref="hint" v-on="on" class="ph-meta" :aria-label="headerHint">{{
+            <span
+              ref="hint"
+              v-on="on"
+              class="ph-meta"
+              :class="{ 'pcp-hint--stub': hintStub }"
+              :aria-label="headerHint"
+            >{{
               headerHint
             }}</span>
           </template>
@@ -245,6 +251,8 @@ export default {
     return {
       // Whether the header hint is cut short, so its tooltip has something to add.
       hintCut: false,
+      // Cut to a letter or two, which reads as a stray mark rather than a hint.
+      hintStub: false,
       excludedDimensions: [],
       headerHeight: PANEL_HEADER_HEIGHT,
       allKeys: [],
@@ -474,6 +482,12 @@ export default {
     measureHint() {
       let hint = this.$refs.hint;
       this.hintCut = !!hint && hint.scrollWidth > hint.clientWidth + 1;
+      // Room for less than "Drag along": hidden, though still measured, so it
+      // comes back when the panel widens. Measured in its own font size, so
+      // the same at every text size.
+      this.hintStub =
+        this.hintCut &&
+        hint.clientWidth < 5 * parseFloat(getComputedStyle(hint).fontSize);
     },
     /**
      * What an Expert axis brush selected, for describing the selection: the
@@ -2303,6 +2317,9 @@ function sameAxisItems(drawn, wanted, span) {
   flex: 0 0 auto;
   position: relative;
   margin: auto 0;
+}
+.pcp-hint--stub {
+  visibility: hidden;
 }
 </style>
 

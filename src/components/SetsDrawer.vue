@@ -328,7 +328,8 @@ export default {
 /* Not positioned itself, so the drawer inside is placed against the work area. */
 .sets-rail {
   box-sizing: border-box;
-  flex: 0 0 16px;
+  /* As wide as its sideways label needs, at any text size. */
+  flex: 0 0 calc(16px * var(--ds-text-scale));
   display: flex;
   align-items: center;
   background: #eceff1;
@@ -344,7 +345,7 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  width: 15px;
+  width: calc(15px * var(--ds-text-scale));
   padding: 10px 0;
   border: none;
   border-radius: 0 6px 6px 0;
@@ -378,7 +379,7 @@ export default {
   color: #263238;
   font-size: var(--ds-fs-2xs);
   font-weight: 600;
-  line-height: 14px;
+  line-height: calc(14px * var(--ds-text-scale));
   text-align: center;
 }
 /* Beside the panels rather than over them, so no shadow: a border, like

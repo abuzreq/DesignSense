@@ -530,8 +530,10 @@ export default {
   font-size: var(--ds-fs-md);
   color: rgba(0, 0, 0, 0.7);
 }
+/* Wider with larger text, so its labels don't wrap word by word; the card
+   beside it scales down to whatever room is left. */
 .sm-side {
-  flex: 0 0 360px;
+  flex: 0 0 calc(360px * var(--ds-text-scale));
   min-width: 0;
 }
 .sm-label {
@@ -576,6 +578,7 @@ export default {
 .sm-hint {
   margin-top: 4px;
   font-size: var(--ds-fs-sm);
+  line-height: 1.35;
   color: rgba(0, 0, 0, 0.55);
 }
 .sm-actions {

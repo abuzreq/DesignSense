@@ -435,7 +435,7 @@ export default {
   justify-content: center;
   gap: 2px;
   width: 100%;
-  height: 20px;
+  height: calc(20px * var(--ds-text-scale));
   padding: 0 6px;
   border: 0;
   border-radius: 0 0 4px 4px;
@@ -503,8 +503,11 @@ export default {
   height: 8px;
   border-radius: 2px;
 }
+/* Never shrunk to make room for the name: a number cut to "2…" says
+   nothing, a name cut to "Cooling[k…" still says which. Only a long text
+   value, past 60% of the row, is cut. */
 .card-value {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   max-width: 60%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -646,7 +649,7 @@ export default {
   background: rgba(38, 50, 56, 0.75);
   color: #fff;
   font-size: var(--ds-fs-xs);
-  line-height: 18px;
+  line-height: calc(18px * var(--ds-text-scale));
 }
 
 /* Its own corner, so it is never mistaken for Lite's select button above
@@ -728,7 +731,7 @@ export default {
   top: 7px;
   left: 7px;
   height: 18px;
-  line-height: 18px;
+  line-height: calc(18px * var(--ds-text-scale));
   width: 18px;
   font-size: 0.85em;
   font-weight: bold;

@@ -1,5 +1,5 @@
 <template>
-  <v-dialog :value="value" max-width="560" @input="onInput">
+  <v-dialog :value="value" max-width="min(calc(560px * var(--ds-text-scale)), 94vw)" @input="onInput">
     <v-card class="fb-card">
       <v-card-title class="fb-title">
         {{ sent ? "Thank you" : "Send feedback" }}

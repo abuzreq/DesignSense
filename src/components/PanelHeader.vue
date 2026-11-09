@@ -99,28 +99,31 @@ export default {
   background: #dde3ea;
 }
 .panel-header ::v-deep .ph-select {
-  flex: 0 1 160px;
-  min-width: 90px;
+  flex: 0 1 calc(160px * var(--ds-text-scale));
+  min-width: calc(90px * var(--ds-text-scale));
   margin: 0 2px 0 4px;
   font-size: var(--ds-fs-md);
 }
 .panel-header ::v-deep .ph-select--narrow {
-  flex: 0 0 68px;
-  min-width: 68px;
+  flex: 0 0 calc(68px * var(--ds-text-scale));
+  min-width: calc(68px * var(--ds-text-scale));
 }
 /* For one holding a dimension's name, which runs to three words. The floor
    keeps a crowded header from squeezing it back to an initial or two; the
-   hint beside it ellipsises, and gives way first. */
+   hint beside it ellipsises, and gives way first. Past 130% the floor stops
+   growing: a full-width floor at 150% pushed the colour key out of the
+   parallel coordinates' header, and a name cut a little short is the
+   smaller loss. */
 .panel-header ::v-deep .ph-select--wide {
-  flex: 0 1 180px;
-  min-width: 150px;
+  flex: 0 1 calc(180px * var(--ds-text-scale));
+  min-width: calc(150px * min(var(--ds-text-scale), 1.3));
 }
 .panel-header
   ::v-deep
   .ph-select.v-input--dense
   > .v-input__control
   > .v-input__slot {
-  min-height: 28px !important;
+  min-height: calc(28px * var(--ds-text-scale)) !important;
   padding: 0 2px 0 8px !important;
   background: #fff;
 }
