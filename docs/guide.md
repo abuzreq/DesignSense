@@ -267,6 +267,8 @@ All the views show the same options and stay in step: when you filter, select or
 
 **Quick actions.** Right-click anywhere in the workspace for the actions you use most, in a ring around the pointer: stop inspecting, shortlist the result, clear the filters, save a set, zoom in, exclude, and undo.
 
+**Text size.** The welcome screen sets how large the interface's text is: Default, Large, Larger or Largest, up to half again as large. Every label, chart and dialog follows it, and the choice is kept in this browser. Exported images and reports keep their own fixed sizes.
+
 **Lite and Expert.** DesignSense starts in Lite mode, where you narrow the options with filters. Expert mode, switched on in the toolbar, builds a selection step by step instead and adds tools of its own; [Expert mode](#expert-mode) explains the difference. Everything before that page works in Lite.
 
 The next four sections cover the four tasks. You will rarely do them once and in order: what you learn while deciding may send you back to narrow in a different way, and sharing a result often starts another round. The examples all use the 648 window designs shown at the top of this guide. Imagine an architect who has to choose a few of them to show a client.
