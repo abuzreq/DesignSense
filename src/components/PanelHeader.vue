@@ -1,5 +1,5 @@
 <template>
-  <div class="panel-header">
+  <div class="panel-header" :class="{ 'panel-header--compact': compact }">
     <div class="panel-header-title" :title="title">
       <v-icon small class="panel-header-icon">{{ icon }}</v-icon>
       <span v-if="!compact">{{ title }}</span>
@@ -21,7 +21,8 @@ export default {
   props: {
     icon: { type: String, required: true },
     title: { type: String, required: true },
-    // Narrow panels keep only the icon.
+    // Narrow panels keep only the title's icon, and their text buttons only
+    // their words.
     compact: { type: Boolean, default: false },
   },
 };
@@ -32,7 +33,9 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 40px;
+  /* Grows with the icon buttons in it (PANEL_HEADER_HEIGHT, in layout.js,
+     is this at 100%). */
+  height: calc(40px * var(--ds-control-scale));
   padding: 0 6px 0 10px;
   box-sizing: border-box;
   flex: 0 0 auto;
@@ -137,8 +140,8 @@ export default {
   border-color: #d5dce4;
 }
 .panel-header ::v-deep .ph-btn.v-btn--icon {
-  width: 28px;
-  height: 28px;
+  width: calc(28px * var(--ds-control-scale));
+  height: calc(28px * var(--ds-control-scale));
   border-radius: 6px;
   color: #546e7a;
 }
@@ -146,8 +149,14 @@ export default {
   color: #1565c0;
   background: rgba(21, 101, 192, 0.12);
 }
+/* A narrow header's text buttons keep their words and lose their icons:
+   "Dimensions" says what the scales did not, and at the larger text sizes
+   the room went to the colour key. */
+.panel-header--compact ::v-deep .ph-text-btn .v-icon {
+  display: none;
+}
 .panel-header ::v-deep .ph-text-btn.v-btn {
-  height: 28px;
+  height: calc(28px * var(--ds-text-scale));
   padding: 0 8px;
   text-transform: none;
   letter-spacing: normal;

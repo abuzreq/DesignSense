@@ -99,7 +99,7 @@
 </template>
 
 <script>
-import { scaleOf, textPx } from "@/textSize.js";
+import { controlScaleOf, scaleOf, textPx } from "@/textSize.js";
 import "parcoord-es/dist/parcoords.css";
 
 import ParCoords from "parcoord-es";
@@ -254,7 +254,6 @@ export default {
       // Cut to a letter or two, which reads as a stray mark rather than a hint.
       hintStub: false,
       excludedDimensions: [],
-      headerHeight: PANEL_HEADER_HEIGHT,
       allKeys: [],
       keysBlackList: [],
       graphCentriodPoints: null,
@@ -271,6 +270,10 @@ export default {
     };
   },
   computed: {
+    /** The panel header's height, which grows with its icon buttons. */
+    headerHeight() {
+      return Math.round(PANEL_HEADER_HEIGHT * controlScaleOf(this.$store.state.textSize));
+    },
     ...mapState({
       numericDimensions: (state) => state.numericDimensions,
       nonNumericDimensions: (state) => state.nonNumericDimensions,
@@ -922,12 +925,13 @@ export default {
     /**
      * The baseline of a value label for a knob at `y`, clear of its thumb
      * (14px tall): above it, or below it where the top of the chart would cut
-     * the label off. A label box runs from 14px above its baseline to 4px
-     * below (see createTooltip).
+     * the label off. A label is about its font size tall above its baseline
+     * (see createTooltip), and that grows with the reader's text size.
      */
     knobTooltipY(y) {
+      let label = textPx(14);
       let above = y - 12;
-      return above - 14 < -this.chart.margin().top ? y + 22 : above;
+      return above - label < -this.chart.margin().top ? y + 8 + label : above;
     },
     knobY(yscale, value, nullY) {
       let y = Number.isFinite(value) ? yscale(value) : NaN;
@@ -1633,53 +1637,45 @@ export default {
       }
       this.createTooltip(clickedDataSet);
     },
-    //array of tuples where each is [x,y,text]  for the tooltip
+    /**
+     * A value label on each axis, for [x, y, text] triples: the text first,
+     * then a box fitted to what it measures, so it fits at any text size.
+     * (It used to guess ten pixels a character, which the larger sizes and
+     * wide figures outgrew.)
+     */
     createTooltip(specs) {
-      // add rectangles
-      var fontSize = textPx(14);
-      var padding = 2;
-      var rectHeight = fontSize + 2 * padding; //based on font size
+      let fontSize = textPx(14);
+      let padX = textPx(5);
+      let padY = textPx(2);
+      let svg = this.chart.svg;
 
-      this.chart.svg
-        .selectAll("rect[id='tooltip']")
-        .data(specs)
-        .enter()
-        .append("rect")
-        .attr("x", function(d) {
-          return d[0] - d[2].length * 5;
-        })
-        .attr("y", function(d) {
-          return d[1] - rectHeight + 2 * padding;
-        })
-        .attr("rx", "2")
-        .attr("ry", "2")
-        .attr("id", "tooltip")
-        .attr("fill", "grey")
-        .attr("opacity", 1)
-        .attr("width", function(d) {
-          return d[2].length * 10;
-        })
-        .attr("height", rectHeight);
-
-      // add text on top of rectangle
-      this.chart.svg
+      let texts = svg
         .selectAll("text[id='tooltip']")
         .data(specs)
         .enter()
         .append("text")
-        .attr("x", function(d) {
-          return d[0];
-        })
-        .attr("y", function(d) {
-          return d[1];
-        })
+        .attr("x", (d) => d[0])
+        .attr("y", (d) => d[1])
         .attr("id", "tooltip")
         .attr("fill", "white")
         .attr("text-anchor", "middle")
         .attr("font-size", fontSize)
-        .text(function(d) {
-          return d[2];
-        });
+        .text((d) => d[2]);
+
+      // Measured once drawn, then each box goes in under its text.
+      texts.each(function() {
+        let box = this.getBBox();
+        svg
+          .insert("rect", () => this)
+          .attr("id", "tooltip")
+          .attr("x", box.x - padX)
+          .attr("y", box.y - padY)
+          .attr("width", box.width + 2 * padX)
+          .attr("height", box.height + 2 * padY)
+          .attr("rx", 2)
+          .attr("ry", 2)
+          .attr("fill", "grey");
+      });
     },
     getHoveredLines(mouseClick, tolerance) {
       var hovered = [];

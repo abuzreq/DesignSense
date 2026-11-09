@@ -71,6 +71,12 @@ export default {
   --ds-fs-2xl: calc(18px * var(--ds-text-scale));
   --ds-fs-3xl: calc(20px * var(--ds-text-scale));
   --ds-fs-4xl: calc(24px * var(--ds-text-scale));
+  /* Icons, at two rates (see src/textSize.js). An icon that goes with text
+     grows with it; an icon-only control at half the rate, 125% at the
+     largest size. --ds-icon-scale is the one an icon is drawn at: the
+     text's, except inside an icon-only control, which sets it below. */
+  --ds-control-scale: calc(1 + (var(--ds-text-scale) - 1) / 2);
+  --ds-icon-scale: var(--ds-text-scale);
 }
 /* html:root, not html: Vuetify sets the root size itself, and this has to
    win whichever stylesheet comes last. */
@@ -83,8 +89,7 @@ html:root {
  * which the root above scales, but these in pixels: chips, badges, form
  * fields and their labels, messages, tooltips. Each gets its step here, and
  * the box around it the same multiplier, so text never comes to fill its
- * box at the larger sizes. Icon-only buttons keep their size: an icon is not
- * text.
+ * box at the larger sizes. Icons have rules of their own, below.
  *
  * The same goes for any box sized to hold text: a dialog of a fixed width is
  * given it as `min(calc(Npx * var(--ds-text-scale)), 94vw)` (Vuetify passes
@@ -105,15 +110,14 @@ html:root {
   height: calc(32px * var(--ds-text-scale));
   border-radius: calc(16px * var(--ds-text-scale));
 }
-/* A badge sits on the corner of an icon, which doesn't grow: past 125% it
-   would cover it, so it stops there, its count with it. */
+/* A badge sits on the corner of an icon button, so it grows as the button
+   does: faster, and it would come to cover the icon. */
 .v-application .v-badge__badge {
-  --badge-scale: min(var(--ds-text-scale), 1.25);
-  font-size: calc(12px * var(--badge-scale));
-  height: calc(20px * var(--badge-scale));
-  min-width: calc(20px * var(--badge-scale));
-  border-radius: calc(10px * var(--badge-scale));
-  padding: calc(4px * var(--badge-scale)) calc(6px * var(--badge-scale));
+  font-size: calc(12px * var(--ds-control-scale));
+  height: calc(20px * var(--ds-control-scale));
+  min-width: calc(20px * var(--ds-control-scale));
+  border-radius: calc(10px * var(--ds-control-scale));
+  padding: calc(4px * var(--ds-control-scale)) calc(6px * var(--ds-control-scale));
 }
 .v-application .v-input,
 .v-application .v-label {
@@ -144,6 +148,84 @@ html:root {
 }
 .v-application .v-btn:not(.v-btn--icon):not(.v-btn--fab):not(.v-btn--round).v-size--default {
   height: calc(36px * var(--ds-text-scale));
+}
+
+/*
+ * Icons. Every v-icon is drawn 1em square (MdiIcon.vue), so its font size
+ * is its size. A size given as a prop already comes out of Vuetify times
+ * --ds-icon-scale (plugins/vuetify.js); these are the sizes Vuetify's own
+ * stylesheet gives, at the same scale. Inside an icon-only control the
+ * scale is the control's, and the control's box grows by it too, so an
+ * icon keeps its margin in its button at every size. Anything else that
+ * draws an icon -- a glyph over a card, the rating's stars -- writes its
+ * size as calc(Npx * var(--ds-icon-scale)) and gets the same treatment.
+ */
+/* ds-icon-control: for an icon that acts as a control without being an
+   icon button, such as an info icon beside a header's buttons. */
+.v-application .v-btn--icon,
+.v-application .v-btn--fab,
+.ds-icon-control {
+  --ds-icon-scale: var(--ds-control-scale);
+}
+.v-application .v-icon.v-icon {
+  font-size: calc(24px * var(--ds-icon-scale));
+}
+.v-application .v-icon.v-icon.v-icon--dense {
+  font-size: calc(20px * var(--ds-icon-scale));
+}
+.v-application .v-btn__content .v-icon.v-icon--left,
+.v-application .v-btn__content .v-icon.v-icon--right {
+  font-size: calc(18px * var(--ds-icon-scale));
+  height: calc(18px * var(--ds-icon-scale));
+  width: calc(18px * var(--ds-icon-scale));
+}
+.v-application .v-btn--icon.v-size--x-small .v-icon {
+  font-size: calc(18px * var(--ds-icon-scale));
+  height: calc(18px * var(--ds-icon-scale));
+  width: calc(18px * var(--ds-icon-scale));
+}
+.v-application .v-btn--icon.v-size--small .v-icon,
+.v-application .v-btn--icon.v-size--default .v-icon {
+  font-size: calc(24px * var(--ds-icon-scale));
+  height: calc(24px * var(--ds-icon-scale));
+  width: calc(24px * var(--ds-icon-scale));
+}
+.v-application .v-btn--icon.v-size--x-small {
+  height: calc(20px * var(--ds-control-scale));
+  width: calc(20px * var(--ds-control-scale));
+}
+.v-application .v-btn--icon.v-size--small {
+  height: calc(28px * var(--ds-control-scale));
+  width: calc(28px * var(--ds-control-scale));
+}
+.v-application .v-btn--icon.v-size--default {
+  height: calc(36px * var(--ds-control-scale));
+  width: calc(36px * var(--ds-control-scale));
+}
+.v-application .v-btn--icon.v-size--large {
+  height: calc(44px * var(--ds-control-scale));
+  width: calc(44px * var(--ds-control-scale));
+}
+.v-application .v-chip .v-icon {
+  font-size: calc(24px * var(--ds-icon-scale));
+}
+.v-application .v-chip .v-chip__close.v-icon {
+  font-size: calc(18px * var(--ds-icon-scale));
+  max-height: calc(18px * var(--ds-icon-scale));
+  max-width: calc(18px * var(--ds-icon-scale));
+}
+.v-application .v-alert__icon.v-icon {
+  font-size: calc(24px * var(--ds-icon-scale));
+}
+/* A field's arrow and a checkbox's box are sized by the box around them. */
+.v-application .v-input__icon {
+  height: calc(24px * var(--ds-icon-scale));
+  min-width: calc(24px * var(--ds-icon-scale));
+  width: calc(24px * var(--ds-icon-scale));
+}
+.v-application .v-input--selection-controls__input {
+  height: calc(24px * var(--ds-icon-scale));
+  width: calc(24px * var(--ds-icon-scale));
 }
 
 /*

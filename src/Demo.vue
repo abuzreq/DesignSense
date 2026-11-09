@@ -1048,13 +1048,13 @@ body {
    32px buttons under a 10px label, the group had become hard to read and
    hard to hit; a 60px bar buys all three a step back. */
 .v-app-bar .v-btn--icon.v-size--default .v-icon {
-  font-size: var(--ds-fs-3xl);
-  width: 22px;
-  height: 22px;
+  font-size: calc(20px * var(--ds-icon-scale));
+  width: calc(22px * var(--ds-icon-scale));
+  height: calc(22px * var(--ds-icon-scale));
 }
 .v-app-bar .v-toolbar__content .v-btn--icon.v-size--default {
-  width: 36px !important;
-  height: 36px !important;
+  width: calc(36px * var(--ds-control-scale)) !important;
+  height: calc(36px * var(--ds-control-scale)) !important;
 }
 .ui-mode-toggle {
   margin: 0 2px;
@@ -1084,8 +1084,8 @@ body {
 }
 .ds-mark {
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
+  width: calc(30px * var(--ds-control-scale));
+  height: calc(30px * var(--ds-control-scale));
 }
 .ds-wordmark {
   font-family: "DM Sans", Roboto, sans-serif;
@@ -1155,13 +1155,13 @@ body {
 }
 /* Undo, redo and clear sit a size down, beside the text they act on. */
 .v-app-bar .ds-history .v-btn.v-btn--icon.v-size--default {
-  width: 32px !important;
-  height: 32px !important;
+  width: calc(32px * var(--ds-control-scale)) !important;
+  height: calc(32px * var(--ds-control-scale)) !important;
 }
 .ds-history .v-btn--icon.v-size--default .v-icon {
-  font-size: var(--ds-fs-3xl);
-  width: 20px;
-  height: 20px;
+  font-size: calc(20px * var(--ds-icon-scale));
+  width: calc(20px * var(--ds-icon-scale));
+  height: calc(20px * var(--ds-icon-scale));
 }
 .ds-welcome .v-card__title {
   flex-wrap: nowrap;
@@ -1236,16 +1236,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 54px;
-  height: 54px;
+  width: calc(54px * var(--ds-control-scale));
+  height: calc(54px * var(--ds-control-scale));
   border-radius: 50%;
   background: #e53935;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
   transition: transform 0.12s;
 }
 .ds-welcome-video-button svg {
-  width: 26px;
-  height: 26px;
+  width: calc(26px * var(--ds-control-scale));
+  height: calc(26px * var(--ds-control-scale));
   margin-left: 3px;
   fill: #fff;
 }
@@ -1654,8 +1654,9 @@ function writeShowWelcome(value) {
     /* kept for this visit only */
   }
 }
-// The app bar's height: 36px buttons with an 11px label under them, and room
-// around. Everything that sits below the bar is offset by this.
+// The app bar's height at 100%: 36px buttons with an 11px label under them,
+// and room around. It grows with its buttons at larger text sizes (see
+// barHeight). Everything that sits below the bar is offset by it.
 const BAR_HEIGHT = 60;
 /**
  * Where the toolbar changes shape, by window width. Measured against what the
@@ -1686,7 +1687,7 @@ import { errorState } from "@/errors.js";
 import { APP_VERSION } from "@/feedback.js";
 import { GUIDE_SECTIONS, guideHref } from "@/guide.js";
 import { videoEmbed, videoHref } from "@/videos.js";
-import { TEXT_SIZES, scaleOf } from "@/textSize.js";
+import { TEXT_SIZES, controlScaleOf, scaleOf } from "@/textSize.js";
 import { presetById, presetFor } from "@/data/presets.js";
 import { pendingAppLink } from "@/appLinks.js";
 import StoryReportDialog from "@/components/StoryReportDialog.vue";
@@ -2084,7 +2085,6 @@ export default {
       // mount at their final size. Re-measured on mount and on window resize.
       workspaceWidth: document.documentElement.clientWidth,
       workspaceHeight: Math.max(0, document.documentElement.clientHeight - BAR_HEIGHT),
-      barHeight: BAR_HEIGHT,
       // For fitting the toolbar; kept current on every resize, not debounced.
       windowWidth: window.innerWidth,
     };
@@ -2282,6 +2282,10 @@ export default {
     /** The arrangement card Tab reaches: the chosen one, else the first. */
     textSizes() {
       return TEXT_SIZES;
+    },
+    /** Taller as its icon buttons grow, at the controls' rate (see textSize.js). */
+    barHeight() {
+      return Math.round(BAR_HEIGHT * controlScaleOf(this.$store.state.textSize));
     },
     textSize() {
       return this.$store.state.textSize;

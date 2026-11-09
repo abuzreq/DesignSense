@@ -53,11 +53,11 @@ export default {
 .toolbar-group-buttons {
   display: flex;
   align-items: center;
-  height: 36px;
+  height: calc(36px * var(--ds-control-scale));
 }
 .toolbar-group-buttons ::v-deep .v-btn.v-btn--icon {
-  width: 36px !important;
-  height: 36px !important;
+  width: calc(36px * var(--ds-control-scale)) !important;
+  height: calc(36px * var(--ds-control-scale)) !important;
 }
 /* Its own room either side: at the larger text sizes a label is wider than
    the buttons above it, and two such labels would otherwise run together. */

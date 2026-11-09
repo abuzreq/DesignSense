@@ -4,6 +4,8 @@ import {
   DEFAULT_TEXT_SIZE,
   TEXT_SIZES,
   applyTextSize,
+  controlScaleOf,
+  iconSizeCss,
   parseTextSize,
   scaleOf,
   textPx,
@@ -31,4 +33,21 @@ test("sizes set in code follow the size in effect", () => {
   assert.equal(textPx(11), 14);
   applyTextSize("default");
   assert.equal(textPx(14), 14);
+});
+
+test("icon-only controls grow at half the text's rate", () => {
+  assert.deepEqual(
+    TEXT_SIZES.map((s) => controlScaleOf(s.id)),
+    [1, 1.075, 1.15, 1.25]
+  );
+  assert.equal(controlScaleOf("nope"), 1);
+});
+
+test("an icon's size in pixels follows the icon scale; others pass through", () => {
+  assert.equal(iconSizeCss(16), "calc(16px * var(--ds-icon-scale, 1))");
+  assert.equal(iconSizeCss("18"), "calc(18px * var(--ds-icon-scale, 1))");
+  assert.equal(iconSizeCss("12.5px"), "calc(12.5px * var(--ds-icon-scale, 1))");
+  assert.equal(iconSizeCss("1.2em"), "1.2em");
+  assert.equal(iconSizeCss(undefined), undefined);
+  assert.equal(iconSizeCss(""), undefined);
 });

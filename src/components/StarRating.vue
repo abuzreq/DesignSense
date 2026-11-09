@@ -81,7 +81,10 @@
   .star-empty polygon {
     fill: #dcdcdc;
   }
+  /* Drawn beside the compared values, so as large as they are. */
   .star-rating svg {
+    width: calc(24px * var(--ds-icon-scale));
+    height: calc(24px * var(--ds-icon-scale));
     cursor: pointer;
   }
   </style>

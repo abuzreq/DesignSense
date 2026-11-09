@@ -66,3 +66,31 @@ export function applyTextSize(id) {
 export function textPx(px) {
   return Math.round(px * current);
 }
+
+/*
+ * Icons, at two rates. One that goes with text -- in a text button, a chip,
+ * a field, beside a label -- grows with the text, so the two keep the
+ * proportion they have at 100%. One that stands for a control on its own --
+ * an icon button, a glyph over a card's picture -- grows at half the rate,
+ * to 125% at the largest size: it is recognised by its shape rather than
+ * read, is already drawn at 16 to 24px, and sits in bars and corners that
+ * would have to grow with it. App.vue holds both as CSS variables, and
+ * --ds-icon-scale is whichever of them applies where an icon is drawn.
+ */
+
+/** The rate for icon-only controls, and for the bars and boxes that hold them. */
+export function controlScaleOf(id) {
+  return 1 + (scaleOf(id) - 1) / 2;
+}
+
+/**
+ * A Vuetify icon size -- 16, "18" or "18px" -- as CSS that follows the
+ * icon's scale where it is drawn. Anything else (an em size, a calc) is
+ * passed on as it is, and no size stays none.
+ */
+export function iconSizeCss(size) {
+  if (size === undefined || size === null || size === "") return undefined;
+  let match = /^(\d+(?:\.\d+)?)(px)?$/.exec(String(size).trim());
+  if (!match) return String(size);
+  return `calc(${match[1]}px * var(--ds-icon-scale, 1))`;
+}

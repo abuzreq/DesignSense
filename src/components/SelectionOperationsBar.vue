@@ -281,8 +281,8 @@
 }
 /* Over Vuetify's 48px for a toolbar's icon buttons. */
 .operation-container .v-btn.v-btn--icon {
-  width: 26px !important;
-  height: 26px !important;
+  width: calc(26px * var(--ds-control-scale)) !important;
+  height: calc(26px * var(--ds-control-scale)) !important;
 }
 .operation-container ::v-deep .v-icon__component,
 .operation-container ::v-deep .v-icon__svg {

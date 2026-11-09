@@ -612,12 +612,14 @@ export default {
   opacity: 1;
   animation: ds-inspected-pulse var(--ds-pulse);
 }
+/* An icon-only control over a picture: the controls' rate (App.vue). */
 .cart-thumb-remove {
+  --ds-icon-scale: var(--ds-control-scale);
   position: absolute;
   top: 2px;
   right: 2px;
-  width: 18px;
-  height: 18px;
+  width: calc(18px * var(--ds-control-scale));
+  height: calc(18px * var(--ds-control-scale));
   display: flex;
   align-items: center;
   justify-content: center;

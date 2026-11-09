@@ -75,7 +75,7 @@
         </v-tooltip>
         <v-tooltip bottom max-width="300">
           <template v-slot:activator="{ on }">
-            <v-icon v-on="on" small class="clusters-info"
+            <v-icon v-on="on" small class="clusters-info ds-icon-control"
               >mdi-information-outline</v-icon
             >
           </template>
@@ -269,6 +269,8 @@
 }
 /* The operation badge sits over the image, and firms up on hover. */
 .cluster-op {
+  /* An icon-only control over a picture: the controls' rate (App.vue). */
+  --ds-icon-scale: var(--ds-control-scale);
   position: absolute;
   top: 4px;
   right: 4px;
@@ -276,8 +278,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: calc(20px * var(--ds-control-scale));
+  height: calc(20px * var(--ds-control-scale));
   border-radius: 4px;
   background: rgba(21, 101, 192, 0.75);
   opacity: 0.8;

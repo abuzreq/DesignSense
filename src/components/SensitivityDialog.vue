@@ -2054,8 +2054,8 @@ export default {
   margin-top: 8px;
 }
 .sx-btn.v-btn--icon {
-  width: 28px;
-  height: 28px;
+  width: calc(28px * var(--ds-control-scale));
+  height: calc(28px * var(--ds-control-scale));
   border-radius: 6px;
   color: #546e7a;
 }

@@ -27,7 +27,7 @@
       <template v-slot:actions>
         <v-tooltip key="matrix-info" bottom max-width="300">
           <template v-slot:activator="{ on }">
-            <v-icon v-on="on" small class="matrix-info"
+            <v-icon v-on="on" small class="matrix-info ds-icon-control"
               >mdi-information-outline</v-icon
             >
           </template>

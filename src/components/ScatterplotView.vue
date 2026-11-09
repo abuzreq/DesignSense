@@ -315,8 +315,8 @@
   overflow: hidden;
 }
 .ph-svg-icon {
-  width: 18px;
-  height: 18px;
+  width: calc(18px * var(--ds-icon-scale));
+  height: calc(18px * var(--ds-icon-scale));
   fill: currentColor;
 }
 ::v-deep .axis .tick text {
@@ -453,7 +453,7 @@ div ::v-deep svg.scatter-svg.lasso-mode circle.point,
 }
 </style>
 <script>
-import { textPx } from "@/textSize.js";
+import { controlScaleOf, textPx } from "@/textSize.js";
 import * as d3 from "d3";
 // Called as `lasso()`, not `d3.lasso()`: a module namespace is sealed, so the
 // old line that hung it on d3 fails silently under a bundler that keeps them
@@ -535,13 +535,16 @@ export default {
       showTrend: false,
       // `{ fit, scope, reason }` for the line last fitted, for its tooltip.
       trendInfo: null,
-      headerHeight: PANEL_HEADER_HEIGHT,
       // Set on the panel as a custom property, so the rects d3 makes inside
       // the svg can be given it from the stylesheet.
       plotCursor: PLOT_CROSSHAIR,
     };
   },
   computed: {
+    /** The panel header's height, which grows with its icon buttons. */
+    headerHeight() {
+      return Math.round(PANEL_HEADER_HEIGHT * controlScaleOf(this.$store.state.textSize));
+    },
     xColumn: {
       get() {
         return this.$store.state.viewSettings.scatterX || this.xFallback;

@@ -412,15 +412,18 @@ export default {
   }
 }
 
+/* The card's controls over its picture are icon-only controls, so they and
+   their boxes grow at the controls' rate (App.vue); the small glyphs set
+   beside text -- the views count, the Values chevron -- grow with it. */
 .card-icon {
-  width: 16px;
-  height: 16px;
+  width: calc(16px * var(--ds-control-scale));
+  height: calc(16px * var(--ds-control-scale));
   fill: #fff;
 }
 
 .card-icon--x-small {
-  width: 12px;
-  height: 12px;
+  width: calc(12px * var(--ds-icon-scale));
+  height: calc(12px * var(--ds-icon-scale));
 }
 
 /* The values: a slim toggle, then name and value in two columns, the
@@ -454,8 +457,8 @@ export default {
   outline-offset: -2px;
 }
 .card-chevron {
-  width: 14px;
-  height: 14px;
+  width: calc(14px * var(--ds-icon-scale));
+  height: calc(14px * var(--ds-icon-scale));
   fill: currentColor;
 }
 /* Eight rows, then it scrolls; the gallery keeps every open card's list at
@@ -659,8 +662,8 @@ export default {
   position: absolute;
   bottom: 4px;
   right: 4px;
-  width: 24px;
-  height: 24px;
+  width: calc(24px * var(--ds-control-scale));
+  height: calc(24px * var(--ds-control-scale));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -690,8 +693,8 @@ export default {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 24px;
-  height: 24px;
+  width: calc(24px * var(--ds-control-scale));
+  height: calc(24px * var(--ds-control-scale));
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -710,8 +713,8 @@ export default {
 /* Inside the selected card's outline, not on it: the same place checked or
    not, clear of the corner. */
 .image_checkbox {
-  width: 18px;
-  height: 18px;
+  width: calc(18px * var(--ds-control-scale));
+  height: calc(18px * var(--ds-control-scale));
   display: inline;
   position: absolute;
   top: 7px;
@@ -730,9 +733,9 @@ export default {
   position: absolute;
   top: 7px;
   left: 7px;
-  height: 18px;
-  line-height: calc(18px * var(--ds-text-scale));
-  width: 18px;
+  height: calc(18px * var(--ds-control-scale));
+  line-height: calc(18px * var(--ds-control-scale));
+  width: calc(18px * var(--ds-control-scale));
   font-size: 0.85em;
   font-weight: bold;
   border-radius: 50%;
